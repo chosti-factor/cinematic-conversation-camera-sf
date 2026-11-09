@@ -36,7 +36,7 @@ namespace CCC
 			a_s.sideOffset = ReadFloat(a_path, L"Camera", L"fSideOffset", a_s.sideOffset);
 			a_s.heightOffset = ReadFloat(a_path, L"Camera", L"fHeightOffset", a_s.heightOffset);
 			a_s.lookHeightOffset = ReadFloat(a_path, L"Camera", L"fLookHeightOffset", a_s.lookHeightOffset);
-			a_s.blendSeconds = std::max(0.0f, ReadFloat(a_path, L"Camera", L"fBlendSeconds", a_s.blendSeconds));
+			a_s.blendSeconds = (std::max)(0.0f, ReadFloat(a_path, L"Camera", L"fBlendSeconds", a_s.blendSeconds));
 
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
 		}
