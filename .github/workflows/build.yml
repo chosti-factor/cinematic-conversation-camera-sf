@@ -1,0 +1,47 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+        with:
+          xmake-version: latest
+          actions-cache-folder: .xmake-cache
+
+      - name: Configure
+        run: xmake config -y -m releasedbg
+
+      - name: Build
+        run: xmake build -y -v
+
+      - name: Package mod files
+        shell: pwsh
+        run: |
+          $out = "package/Data/SFSE/Plugins"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $dll = Get-ChildItem -Recurse -Path build -Filter "CinematicConversationCameraSF.dll" | Select-Object -First 1
+          $pdb = Get-ChildItem -Recurse -Path build -Filter "CinematicConversationCameraSF.pdb" | Select-Object -First 1
+          if (-not $dll) { throw "DLL not found" }
+          Copy-Item $dll.FullName $out
+          if ($pdb) { Copy-Item $pdb.FullName $out }
+          Copy-Item "data/SFSE/Plugins/CinematicConversationCameraSF.ini" $out
+          Copy-Item LICENSE package/
+          Copy-Item README.md package/
+
+      - name: Upload mod
+        uses: actions/upload-artifact@v4
+        with:
+          name: CinematicConversationCameraSF
+          path: package/
