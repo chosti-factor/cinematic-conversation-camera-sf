@@ -77,6 +77,11 @@ namespace CCC
 		std::int32_t fovExperiment{ 0 };
 		float        fovExperimentValue{ 50.0f };
 
+		// Field of view of the conversation shots, in degrees. 0 = leave the game's own
+		// (30, a tight close-up). Sets the game's fDialogueCameraFailsafeFPFOV, which the
+		// game appears to read when its dialogue camera starts.
+		float dialogueFov{ 0.0f };
+
 		static Settings& Get();
 		void             Load();
 	};
