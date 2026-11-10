@@ -758,6 +758,23 @@ namespace CCC
 				REX::INFO("Per-frame task: {} ticks on the main thread, {} on other threads so far", g_ticksMain, g_ticksOther.load());
 			}
 
+			// Diagnostic: record every camera mode change, to see exactly which modes the game
+			// passes through (and for how long) when a conversation opens and closes.
+			if (Settings::Get().debugLog) {
+				static int  lastState = -2;
+				static auto lastChange = std::chrono::steady_clock::now();
+				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+					const int state = CurrentCameraStateIndex(cam);
+					if (state != lastState) {
+						const auto t = std::chrono::steady_clock::now();
+						REX::INFO("Camera mode {} -> {} (previous mode lasted {} ms)", lastState, state,
+							std::chrono::duration_cast<std::chrono::milliseconds>(t - lastChange).count());
+						lastState = state;
+						lastChange = t;
+					}
+				}
+			}
+
 			bool reveal = false;
 			bool restore = false;
 
@@ -860,7 +877,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.10 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
