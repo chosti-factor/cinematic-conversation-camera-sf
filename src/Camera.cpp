@@ -76,9 +76,127 @@ namespace CCC::Camera
 		return pose;
 	}
 
-	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
+	namespace
+	{
+		// How the camera's facing, up and side directions are stored in its rotation
+		// matrix: as columns or rows, which index holds each, and with which sign.
+		struct Axes
+		{
+			bool  columns{ true };
+			int   forward{ 1 };
+			int   up{ 2 };
+			int   side{ 0 };
+			float forwardSign{ 1.0f };
+			float upSign{ 1.0f };
+			float sideSign{ 1.0f };  // sign relative to cross(forward, up)
+		};
+
+		std::optional<Axes> g_axes;
+
+		RE::NiPoint3 Vector(const RE::NiMatrix3& a_m, bool a_columns, int a_i)
+		{
+			return a_columns ?
+				RE::NiPoint3{ a_m.entry[0][a_i], a_m.entry[1][a_i], a_m.entry[2][a_i] } :
+				RE::NiPoint3{ a_m.entry[a_i][0], a_m.entry[a_i][1], a_m.entry[a_i][2] };
+		}
+
+		void SetVector(RE::NiMatrix3& a_m, bool a_columns, int a_i, const RE::NiPoint3& a_v)
+		{
+			if (a_columns) {
+				a_m.entry[0][a_i] = a_v.x;
+				a_m.entry[1][a_i] = a_v.y;
+				a_m.entry[2][a_i] = a_v.z;
+			} else {
+				a_m.entry[a_i][0] = a_v.x;
+				a_m.entry[a_i][1] = a_v.y;
+				a_m.entry[a_i][2] = a_v.z;
+			}
+		}
+
+		float Dot(const RE::NiPoint3& a, const RE::NiPoint3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+	}
+
+	bool IsCalibrated() { return g_axes.has_value(); }
+
+	bool Calibrate(RE::NiAVObject* a_root, const RE::NiPoint3& a_speakerHead)
 	{
 		if (!a_root) {
+			return IsCalibrated();
+		}
+		const auto& m = a_root->world.rotate;
+		const auto  toSpeaker = Normalized(Sub(a_speakerHead, a_root->world.translate));
+		if (!toSpeaker) {
+			return IsCalibrated();
+		}
+		const RE::NiPoint3 worldUp{ 0.0f, 0.0f, 1.0f };
+
+		// Try both storage layouts; keep the one whose best axis points most directly at the speaker.
+		Axes  best{};
+		float bestForward = -1.0f;
+		float bestUp = -1.0f;
+		for (const bool columns : { true, false }) {
+			int   f = 0;
+			float fDot = 0.0f;
+			for (int i = 0; i < 3; ++i) {
+				const float d = Dot(Vector(m, columns, i), *toSpeaker);
+				if (std::abs(d) > std::abs(fDot)) {
+					fDot = d;
+					f = i;
+				}
+			}
+			int   u = -1;
+			float uDot = 0.0f;
+			for (int i = 0; i < 3; ++i) {
+				if (i == f) {
+					continue;
+				}
+				const float d = Dot(Vector(m, columns, i), worldUp);
+				if (u < 0 || std::abs(d) > std::abs(uDot)) {
+					uDot = d;
+					u = i;
+				}
+			}
+			if (std::abs(fDot) > bestForward) {
+				bestForward = std::abs(fDot);
+				bestUp = std::abs(uDot);
+				best.columns = columns;
+				best.forward = f;
+				best.up = u;
+				best.side = 3 - f - u;
+				best.forwardSign = fDot >= 0.0f ? 1.0f : -1.0f;
+				best.upSign = uDot >= 0.0f ? 1.0f : -1.0f;
+				const auto fv = Scale(Vector(m, columns, f), best.forwardSign);
+				const auto uv = Scale(Vector(m, columns, u), best.upSign);
+				best.sideSign = Dot(Vector(m, columns, best.side), Cross(fv, uv)) >= 0.0f ? 1.0f : -1.0f;
+			}
+		}
+
+		// The vanilla camera points at the speaker's face, so the facing axis should line up
+		// closely. Below this, the game probably wasn't aimed at them yet; try again next time.
+		constexpr float kMinForward = 0.85f;
+		constexpr float kMinUp = 0.6f;
+		const bool      confident = bestForward >= kMinForward && bestUp >= kMinUp;
+
+		REX::INFO("Camera axes: {} forward={}{} up={}{} side={}{} (forward match {:.2f}, up match {:.2f}) {}",
+			best.columns ? "columns" : "rows",
+			best.forwardSign > 0 ? "+" : "-", best.forward,
+			best.upSign > 0 ? "+" : "-", best.up,
+			best.sideSign > 0 ? "+" : "-", best.side,
+			bestForward, bestUp,
+			confident ? (g_axes ? "(confirmed)" : "(learned)") : "(not confident, ignored)");
+		REX::INFO("Vanilla camera at ({:.2f}, {:.2f}, {:.2f}), speaker head at ({:.2f}, {:.2f}, {:.2f})",
+			a_root->world.translate.x, a_root->world.translate.y, a_root->world.translate.z,
+			a_speakerHead.x, a_speakerHead.y, a_speakerHead.z);
+
+		if (confident) {
+			g_axes = best;
+		}
+		return IsCalibrated();
+	}
+
+	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
+	{
+		if (!a_root || !g_axes) {
 			return false;
 		}
 		const auto forward = Normalized(Sub(a_pose.lookAt, a_pose.position));
@@ -92,12 +210,12 @@ namespace CCC::Camera
 		}
 		const auto up = Cross(*right, *forward);
 
-		// Columns are right / forward / up, the Creation Engine camera convention
-		// (the same layout Cinematic Conversation Camera uses in Skyrim).
+		// Build the rotation in the same layout the game's own dialogue camera uses.
+		const auto&   ax = *g_axes;
 		RE::NiMatrix3 rot{};
-		rot.entry[0][0] = right->x;  rot.entry[0][1] = forward->x;  rot.entry[0][2] = up.x;
-		rot.entry[1][0] = right->y;  rot.entry[1][1] = forward->y;  rot.entry[1][2] = up.y;
-		rot.entry[2][0] = right->z;  rot.entry[2][1] = forward->z;  rot.entry[2][2] = up.z;
+		SetVector(rot, ax.columns, ax.forward, Scale(*forward, ax.forwardSign));
+		SetVector(rot, ax.columns, ax.up, Scale(up, ax.upSign));
+		SetVector(rot, ax.columns, ax.side, Scale(Cross(*forward, up), ax.sideSign));
 
 		const auto mode = Settings::Get().poseMode;
 

@@ -224,6 +224,18 @@ namespace CCC
 			}
 
 			auto* root = camera->cameraRoot.get();
+
+			// The game's dialogue camera has just run and is aimed at the speaker. Learn its
+			// axis convention from that before we overwrite it. Checked once per conversation
+			// for confirmation; retried every half second until we have a confident answer.
+			if (g_state.framesThisConversation == 1 || (!Camera::IsCalibrated() && g_state.framesThisConversation % 30 == 0)) {
+				Camera::Calibrate(root, *npcHead);
+			}
+			if (!Camera::IsCalibrated()) {
+				LogFailure("camera axis convention not learned yet; leaving vanilla camera");
+				return;
+			}
+
 			if (!Camera::Apply(root, *pose, delta)) {
 				LogFailure("could not apply pose");
 				return;
@@ -292,7 +304,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		return true;
 	}
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.1.2 loaded (enabled={}, shotMode={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.1.3 loaded (enabled={}, shotMode={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.poseMode);
 	return true;
 }
