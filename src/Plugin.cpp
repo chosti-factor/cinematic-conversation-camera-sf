@@ -109,7 +109,17 @@ namespace CCC
 		constexpr auto kRepairRetry = 16ms;
 		constexpr auto kRepairTimeout = 1800ms;
 		constexpr std::uint32_t kRepairSettleFrames = 6;
-		constexpr std::uint32_t kRepairMaxCycles = 3;
+		// One attempt only. 0.3.9 crashed inside the game while switching camera modes on a
+		// second attempt (Linden, Ryujin HQ), so a failed rebuild now just keeps the camera on
+		// the other person for that conversation.
+		constexpr std::uint32_t kRepairMaxCycles = 1;
+
+		// SFSE runs our per-frame task on whichever thread drains its queue: sometimes the
+		// main thread, sometimes a job thread (the 0.3.9 crash was on "BSJobs 9"). Changing
+		// camera modes or visibility is only done on ticks that land on the main thread.
+		DWORD         g_mainThreadId = 0;
+		std::uint64_t g_ticksMain = 0;
+		std::atomic_uint64_t g_ticksOther{ 0 };
 
 		bool                                  g_lastGameplayFirstPerson = false;
 		bool                                  g_restoreFirstPersonPending = false;
@@ -540,10 +550,27 @@ namespace CCC
 			return head ? head->z - player->GetPosition().z : 0.0f;
 		}
 
+		// Asking the game for its dialogue camera when no conversation is live crashes it.
+		bool ReturnToDialogueCamera(RE::PlayerCamera* a_camera)
+		{
+			static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
+			auto*                          ui = RE::UI::GetSingleton();
+			auto*                          speaker = Speaker();
+			if (!ui || !ui->IsMenuOpen(dialogueMenu) || !speaker || !Camera::HeadPosition(speaker)) {
+				REX::WARN("Conversation is no longer live; not returning to the dialogue camera");
+				End();
+				return false;
+			}
+			a_camera->SetCameraState(RE::CameraState::kDialogue);
+			return true;
+		}
+
 		void FailRepair(RE::PlayerCamera* a_camera, const char* a_why)
 		{
 			REX::WARN("First-person body repair failed ({}); the player won't be shown this conversation", a_why);
-			a_camera->SetCameraState(RE::CameraState::kDialogue);
+			if (!ReturnToDialogueCamera(a_camera)) {
+				return;
+			}
 			g_repair = Repair{};
 			g_state.needsBodyRepair = false;  // don't retry; bodyReady stays false
 			g_lastHookTime = std::chrono::steady_clock::now();
@@ -628,7 +655,7 @@ namespace CCC
 				}
 				g_repair.stage = RepairStage::kRestoreDialogue;
 				g_repair.nextRetry = a_now + 32ms;
-				a_camera->SetCameraState(RE::CameraState::kDialogue);
+				ReturnToDialogueCamera(a_camera);
 				return;
 			}
 			case RepairStage::kRestoreDialogue:
@@ -637,7 +664,9 @@ namespace CCC
 					g_repair.stageStart = a_now;
 					g_repair.settleFrames = 0;
 				} else if (a_now >= g_repair.nextRetry) {
-					a_camera->SetCameraState(RE::CameraState::kDialogue);
+					if (!ReturnToDialogueCamera(a_camera)) {
+						return;
+					}
 					g_repair.nextRetry = a_now + 32ms;
 				}
 				return;
@@ -721,6 +750,14 @@ namespace CCC
 
 		void Watchdog()
 		{
+			if (::GetCurrentThreadId() != g_mainThreadId) {
+				++g_ticksOther;
+				return;
+			}
+			if (++g_ticksMain == 3000) {
+				REX::INFO("Per-frame task: {} ticks on the main thread, {} on other threads so far", g_ticksMain, g_ticksOther.load());
+			}
+
 			bool reveal = false;
 			bool restore = false;
 
@@ -815,6 +852,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		REX::WARN("Could not install the first/third-person camera hooks; the body cycle will be visible");
 	}
 
+	CCC::g_mainThreadId = ::GetCurrentThreadId();
 	if (const auto* tasks = SFSE::GetTaskInterface()) {
 		tasks->AddPermanentTask([]() { CCC::Watchdog(); });
 	} else {
@@ -822,7 +860,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.9 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.10 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
