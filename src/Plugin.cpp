@@ -129,6 +129,10 @@ namespace CCC
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
 		std::uint32_t                         g_repairMaskedFrames = 0;
+		// The player's own third-person view, refreshed every frame they are in third person
+		// outside a conversation. Used to return to it seamlessly when a conversation ends.
+		std::optional<Camera::Pose> g_thirdPersonView;
+
 		bool                                  g_viewCandidateKnown = false;
 		bool                                  g_viewCandidateFirst = false;
 		std::chrono::steady_clock::time_point g_viewCandidateSince{};
@@ -538,10 +542,6 @@ namespace CCC
 				}
 			}
 		}
-
-		// The player's own third-person view, refreshed every frame they are in third person
-		// outside a conversation. Used to return to it seamlessly when a conversation ends.
-		std::optional<Camera::Pose> g_thirdPersonView;
 
 		void RememberThirdPersonView()
 		{
