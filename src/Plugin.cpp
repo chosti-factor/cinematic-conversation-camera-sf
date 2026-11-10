@@ -56,6 +56,8 @@ namespace CCC
 			bool                                  bodyReady{ true };         // safe to show the player
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
+			std::optional<RE::NiPoint3>           smoothNpcHead{};
+			std::optional<RE::NiPoint3>           smoothPlayerHead{};
 			bool                                  holdingExit{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
 		} g_state;
@@ -283,11 +285,39 @@ namespace CCC
 			g_state.lastFrame = now;
 			++g_state.framesThisConversation;
 
-			const auto npcHead = Camera::HeadPosition(speaker);
-			const auto playerHead = Camera::HeadPosition(player);
+			auto npcHead = Camera::HeadPosition(speaker);
+			auto playerHead = Camera::HeadPosition(player);
 			if (!npcHead || !playerHead) {
 				LogFailure("head position unavailable; leaving vanilla camera");
 				return;
+			}
+
+			// Follow the heads through a short low-pass filter instead of frame by frame. Raw
+			// bone positions are sampled mid-animation on a worker thread, so tracking them
+			// directly made the picture vibrate when someone walked; this also steadies the
+			// shot against idle head bob. Large jumps (teleports, body rebuild) snap.
+			{
+				const float k = 1.0f - std::exp(-(std::clamp(delta, 0.0f, 0.1f)) / (std::max)(s.followSmoothing, 0.001f));
+				auto        follow = [k](std::optional<RE::NiPoint3>& a_state, const RE::NiPoint3& a_raw) {
+                    if (!a_state) {
+                        a_state = a_raw;
+                    } else {
+                        const float dx = a_raw.x - a_state->x, dy = a_raw.y - a_state->y, dz = a_raw.z - a_state->z;
+                        if (dx * dx + dy * dy + dz * dz > 4.0f) {
+                            a_state = a_raw;
+                        } else {
+                            a_state->x += dx * k;
+                            a_state->y += dy * k;
+                            a_state->z += dz * k;
+                        }
+                    }
+                    return *a_state;
+				};
+				if (g_state.framesThisConversation == 1) {
+					REX::INFO("Head heights: npc {:.3f}, player {:.3f} (difference {:+.3f} m)", npcHead->z, playerHead->z, playerHead->z - npcHead->z);
+				}
+				npcHead = follow(g_state.smoothNpcHead, *npcHead);
+				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
 			}
 
 			if (g_repair.stage == RepairStage::kSettle) {
@@ -574,6 +604,11 @@ namespace CCC
 				if (camera && g_state.active && g_state.needsBodyRepair) {
 					StepRepair(camera, now);
 				}
+				// While the game cycles through first and third person for the body repair,
+				// keep the picture on our last shot so the cycle isn't visible.
+				if (camera && g_state.active && g_repair.stage != RepairStage::kIdle && g_state.lastPose && Settings::Get().cameraTarget == 1) {
+					Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
+				}
 				if (camera && g_restoreFirstPersonPending) {
 					StepFirstPersonRestore(camera, now);
 				}
@@ -625,7 +660,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
