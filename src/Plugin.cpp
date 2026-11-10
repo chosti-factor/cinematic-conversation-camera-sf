@@ -677,11 +677,20 @@ namespace CCC
 				REX::INFO("Body repair: attempt {} (head {:.2f} m above feet, {} ms into the conversation)", g_repair.attempts + 1, PlayerHeadAboveFeet(),
 					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 				g_repairMaskedFrames = 0;
-				g_repair.stage = RepairStage::kAcquireFirst;
 				g_repair.stageStart = a_now;
 				g_repair.deadline = a_now + kRepairTimeout;
 				g_state.restoreFirstPerson = true;
-				a_camera->ForceFirstPerson();  // once; never repeated within an attempt
+				// With some NPCs (seated or busy ones, in the 0.3.13 log) the game refuses to
+				// leave its dialogue camera for first person. On every second attempt, ask for
+				// third person directly instead of going through first person.
+				if (g_repair.attempts % 2 == 1) {
+					REX::INFO("Body repair: this attempt asks for third person directly");
+					g_repair.stage = RepairStage::kAcquireThird;
+					a_camera->ForceThirdPerson();
+				} else {
+					g_repair.stage = RepairStage::kAcquireFirst;
+					a_camera->ForceFirstPerson();  // once; never repeated within an attempt
+				}
 				return;
 			}
 			if (!Speaker()) {
@@ -950,7 +959,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.13 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.14 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
