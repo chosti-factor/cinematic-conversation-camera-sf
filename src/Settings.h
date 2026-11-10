@@ -23,7 +23,13 @@ namespace CCC
 
 		// After the last line, hold our final shot this long, then hand back to the game's
 		// own camera while it finishes closing the conversation (about 1.5 s in total).
-		float exitHoldSeconds{ 0.25f };
+		float exitHoldSeconds{ 0.5f };
+
+		// Shot used when the near character is sitting: camera this far in front of their
+		// head (toward the other person), to the side, and above it.
+		float seatedForward{ 0.25f };
+		float seatedSide{ 0.45f };
+		float seatedHeight{ 0.12f };
 
 		// Seconds of smoothing when the camera follows a moving head. Higher = steadier
 		// but slower to follow.
