@@ -99,6 +99,7 @@ namespace CCC
 			std::uint32_t                         cycle{ 0 };
 			std::uint32_t                         attempts{ 0 };
 			bool                                  early{ false };  // started on the conversation's first frames
+			std::optional<Camera::Pose>           earlyHeld{};     // what to show during an early rebuild
 			std::chrono::steady_clock::time_point nextAttemptAt{};
 			std::optional<RE::NiPoint3>           lastHead{};
 			std::chrono::steady_clock::time_point lastHeadSample{};
@@ -654,8 +655,8 @@ namespace CCC
 		// so it reads as the first-person view lingering a beat before the cut to the NPC.
 		const Camera::Pose* HeldPose()
 		{
-			if (g_repair.early && g_firstPersonView) {
-				return &*g_firstPersonView;
+			if (g_repair.early && g_repair.earlyHeld) {
+				return &*g_repair.earlyHeld;
 			}
 			return g_state.lastPose ? &*g_state.lastPose : nullptr;
 		}
@@ -758,7 +759,7 @@ namespace CCC
 		// again later (not immediately: 0.3.12 kept re-requesting first person every 16 ms for
 		// 1.8 s, which left the body stuck in a T-pose). After the last attempt, give up and
 		// keep the player out of frame for this conversation.
-		void AbortAttempt(RE::PlayerCamera* a_camera, std::chrono::steady_clock::time_point a_now, const char* a_why)
+		void AbortAttempt(RE::PlayerCamera* a_camera, std::chrono::steady_clock::time_point a_now, const char* a_why, bool a_refused = false)
 		{
 			if (!a_camera->QCameraEquals(RE::CameraState::kDialogue) && !ReturnToDialogueCamera(a_camera)) {
 				return;  // conversation is over; End() already ran
@@ -767,7 +768,9 @@ namespace CCC
 			g_repair = Repair{};
 			g_repair.attempts = attempts;
 			g_lastHookTime = a_now;
-			if (attempts >= kRepairMaxAttempts) {
+			// When the game refuses to leave its dialogue camera (seated NPCs, in every log so
+			// far), it refuses every time; further attempts only make the picture flicker.
+			if (attempts >= kRepairMaxAttempts || a_refused) {
 				REX::WARN("Body repair: attempt {} failed ({}); giving up. The player will be kept out of frame this conversation", attempts, a_why);
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = false;
@@ -806,6 +809,24 @@ namespace CCC
 					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 				g_repairMaskedFrames = 0;
 				g_repair.early = early;
+				if (early) {
+					// The player's first-person view, moved a little forward along its own line
+					// of sight: during the rebuild the full body appears at the player's position,
+					// and a camera exactly at the eyes ends up inside the head.
+					auto        held = *g_firstPersonView;
+					const float dx = held.lookAt.x - held.position.x, dy = held.lookAt.y - held.position.y, dz = held.lookAt.z - held.position.z;
+					const float len = std::sqrt(dx * dx + dy * dy + dz * dz);
+					if (len > 1e-3f) {
+						const float k = 0.25f / len;
+						held.position.x += dx * k;
+						held.position.y += dy * k;
+						held.position.z += dz * k;
+						held.lookAt.x += dx * k;
+						held.lookAt.y += dy * k;
+						held.lookAt.z += dz * k;
+					}
+					g_repair.earlyHeld = held;
+				}
 				g_repair.stageStart = a_now;
 				g_repair.deadline = a_now + kRepairTimeout;
 				g_state.restoreFirstPerson = true;
@@ -838,7 +859,7 @@ namespace CCC
 					g_repair.stage = RepairStage::kHoldFirst;
 					g_repair.stageStart = a_now;
 				} else if (a_now - g_repair.stageStart > kRepairAcquire) {
-					return AbortAttempt(a_camera, a_now, "the game did not switch to first person");
+					return AbortAttempt(a_camera, a_now, "the game did not switch to first person", true);
 				}
 				return;
 			case RepairStage::kHoldFirst:
@@ -855,7 +876,7 @@ namespace CCC
 					g_repair.stage = RepairStage::kHoldThird;
 					g_repair.stageStart = a_now;
 				} else if (a_now - g_repair.stageStart > kRepairAcquire) {
-					return AbortAttempt(a_camera, a_now, "the game did not switch to third person");
+					return AbortAttempt(a_camera, a_now, "the game did not switch to third person", true);
 				}
 				return;
 			case RepairStage::kHoldThird:
@@ -913,6 +934,11 @@ namespace CCC
 					return AbortAttempt(a_camera, a_now, "the full body was not built");
 				}
 				REX::INFO("Body repair: done on attempt {}; head {:.2f} m above feet; shot held for {} frames during the cycle", g_repair.attempts + 1, height, g_repairMaskedFrames);
+				if (g_repair.early) {
+					// Nothing of the conversation has been shown yet, so the first shot of the NPC
+					// can be the normal over-the-shoulder one.
+					g_state.povNpcShot = false;
+				}
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = true;
@@ -1112,7 +1138,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.18 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.19 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
