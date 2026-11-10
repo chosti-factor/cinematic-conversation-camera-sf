@@ -380,6 +380,70 @@ namespace CCC::Camera
 		}
 	}
 
+	namespace
+	{
+		// A node's world transform computed from its local transform right now. At the time
+		// our camera hooks run, the game has set the camera root's local transform for this
+		// frame but may not have refreshed its world transform yet; in dialogue that goes
+		// unnoticed (the root barely moves), but when the game jumps between first person,
+		// third person and dialogue, the stale value gave one wrongly aimed frame per jump.
+		RE::NiTransform FreshWorld(const RE::NiAVObject* a_node)
+		{
+			const auto* parent = a_node->parent;
+			if (!parent) {
+				return a_node->local;
+			}
+			const auto&     pw = parent->world;
+			RE::NiTransform out = a_node->world;
+			out.rotate = a_node->local.rotate * pw.rotate;
+			out.translate = Add(pw.translate, Scale(pw.rotate.Transpose() * a_node->local.translate, pw.scale));
+			out.scale = pw.scale * a_node->local.scale;
+			return out;
+		}
+	}
+
+	namespace
+	{
+		// FreshWorld is only right if the game keeps the camera root's local transform up to
+		// date. Don't assume: trust it only after it has matched the stored world transform
+		// for a run of frames (which it will whenever the camera is steady), and use the
+		// stored world transform until then.
+		std::atomic_bool g_trustLocal{ false };
+		std::uint32_t    g_localAgreeFrames = 0;
+
+		RE::NiTransform RootWorld(const RE::NiAVObject* a_root)
+		{
+			const auto fresh = FreshWorld(a_root);
+			if (!g_trustLocal.load(std::memory_order_acquire)) {
+				const auto  d = Sub(fresh.translate, a_root->world.translate);
+				const bool  agree = Length(d) < 0.02f && MatrixError(fresh.rotate, a_root->world.rotate) < 0.02f;
+				g_localAgreeFrames = agree ? g_localAgreeFrames + 1 : 0;
+				if (g_localAgreeFrames >= 20) {
+					g_trustLocal.store(true, std::memory_order_release);
+					REX::INFO("Camera root local transform is kept current by the game; using it for exact per-frame placement");
+				}
+				return a_root->world;
+			}
+			return fresh;
+		}
+	}
+
+	std::optional<Pose> PoseOf(RE::NiAVObject* a_root)
+	{
+		if (!a_root || !g_axes) {
+			return std::nullopt;
+		}
+		const auto world = RootWorld(a_root);
+		const auto forward = Scale(Vector(world.rotate, g_axes->columns, g_axes->forward), g_axes->forwardSign);
+		if (!Finite(world.translate) || !Finite(forward)) {
+			return std::nullopt;
+		}
+		Pose pose;
+		pose.position = world.translate;
+		pose.lookAt = Add(world.translate, Scale(forward, 5.0f));
+		return pose;
+	}
+
 	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
 	{
 		(void)a_delta;
@@ -399,7 +463,7 @@ namespace CCC::Camera
 		if (!cam || cam->parent != a_root) {
 			return false;
 		}
-		const auto& pw = a_root->world;
+		const auto pw = RootWorld(a_root);
 
 		if (g_renderCam != cam) {
 			RestoreRender();
@@ -450,7 +514,7 @@ namespace CCC::Camera
 		if (g_renderCam) {
 			g_renderCam->local = g_savedRenderLocal;
 			if (const auto* parent = g_renderCam->parent) {
-				const auto& pw = parent->world;
+				const auto pw = RootWorld(parent);
 				if (g_compose == Compose::kLocalTimesParent) {
 					g_renderCam->world.rotate = g_savedRenderLocal.rotate * pw.rotate;
 					g_renderCam->world.translate = Add(pw.translate, Scale(pw.rotate.Transpose() * g_savedRenderLocal.translate, pw.scale));

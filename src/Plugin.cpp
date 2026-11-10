@@ -63,6 +63,8 @@ namespace CCC
 			std::uint32_t                         reRepairs{ 0 };
 			std::optional<RE::NiPoint3>           smoothNpcHead{};
 			std::optional<RE::NiPoint3>           smoothPlayerHead{};
+			bool                                  startedFirstPerson{ false };
+			bool                                  loggedReturnPose{ false };
 			bool                                  holdingExit{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
 		} g_state;
@@ -174,6 +176,7 @@ namespace CCC
 			g_state.active = true;
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
+			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -293,7 +296,19 @@ namespace CCC
 					g_state.holdStarted = now;
 					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
 				}
-				if (std::chrono::duration<float>(now - g_state.holdStarted).count() < s.exitHoldSeconds && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+				const float held = std::chrono::duration<float>(now - g_state.holdStarted).count();
+				if (held < s.exitHoldSeconds && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+					return;
+				}
+				// Third-person conversations: the game would now show its eye-level dialogue view
+				// for about half a second before going back to third person. Show the third-person
+				// view the player had before the conversation instead, until the game gets there.
+				if (!g_state.startedFirstPerson && g_thirdPersonView && held < 3.0f &&
+					Camera::ApplyRender(camera->cameraRoot.get(), *g_thirdPersonView, 0.0f)) {
+					if (!g_state.loggedReturnPose) {
+						g_state.loggedReturnPose = true;
+						REX::INFO("Showing the saved third-person view until the game leaves its dialogue camera");
+					}
 					return;
 				}
 			}
@@ -430,8 +445,13 @@ namespace CCC
 				return;
 			}
 
-			// Main thread does the actual reveal (see Watchdog).
+			// Reveal right here so the player is visible on this very frame (doing it only from
+			// the main-thread task left them hidden for the first frame of the shot, a visible
+			// pop in third-person conversations). The main thread keeps it up afterwards.
 			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady;
+			if (g_wantRevealPlayer) {
+				Visibility::RevealPlayer();
+			}
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
@@ -519,6 +539,24 @@ namespace CCC
 			}
 		}
 
+		// The player's own third-person view, refreshed every frame they are in third person
+		// outside a conversation. Used to return to it seamlessly when a conversation ends.
+		std::optional<Camera::Pose> g_thirdPersonView;
+
+		void RememberThirdPersonView()
+		{
+			if (!g_hooksSafe) {
+				return;
+			}
+			std::unique_lock lock{ g_lock, std::try_to_lock };
+			if (!lock.owns_lock() || g_state.active) {
+				return;
+			}
+			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
+				g_thirdPersonView = Camera::PoseOf(camera->cameraRoot.get());
+			}
+		}
+
 		struct FirstPersonUpdateHook
 		{
 			static void Thunk(void* a_state, void* a_arg)
@@ -537,6 +575,7 @@ namespace CCC
 			{
 				Hook(a_state, a_arg);
 				MaskRepairFrame("third-person");
+				RememberThirdPersonView();
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_ThirdPersonUpdate", REL::EHookStep::None, RE::VTABLE::ThirdPersonState[0], kDialogueUpdateVtableIndex, Thunk
@@ -877,7 +916,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

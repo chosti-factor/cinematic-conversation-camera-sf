@@ -18,6 +18,7 @@ namespace CCC::Visibility
 			bool            wasCulled;
 		};
 		std::vector<Changed> g_changed;
+		std::mutex           g_mutex;  // called from the dialogue camera hook and the main thread
 		bool                 g_loggedOnce = false;
 
 		bool IsCulled(RE::NiAVObject* a_obj)
@@ -61,6 +62,7 @@ namespace CCC::Visibility
 
 	void RevealPlayer()
 	{
+		std::scoped_lock lock{ g_mutex };
 		auto* root = PlayerRoot();
 		if (!root) {
 			return;
@@ -79,6 +81,7 @@ namespace CCC::Visibility
 
 	void Restore()
 	{
+		std::scoped_lock lock{ g_mutex };
 		// Only touch objects that still belong to the player's current 3D; if the game
 		// rebuilt the player's model in the meantime, the old pointers are stale.
 		auto* root = PlayerRoot();

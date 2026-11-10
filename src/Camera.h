@@ -32,6 +32,9 @@ namespace CCC::Camera
 	// leaving the game's logical camera where the game put it.
 	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta);
 
+	// Where the game's camera (the camera root) is and what it is looking at right now.
+	std::optional<Pose> PoseOf(RE::NiAVObject* a_root);
+
 	// Puts the rendered view back on the game's camera. Safe to call any time.
 	void RestoreRender();
 }
