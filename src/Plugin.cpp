@@ -387,6 +387,45 @@ namespace CCC
 			REX::INFO("Open menus ({} registered):{}", total, text);
 		}
 
+		// Field of view of the conversation shots. Found in the 0.3.28 dumps: the game keeps
+		// the camera's current horizontal field of view (degrees) inside the player camera
+		// object, and the render camera's real frustum (tangents of the half angles) is at a
+		// different place than the library assumes. Called right after the game's dialogue
+		// camera update, so the game's own value (about 30) is replaced every frame.
+		constexpr std::size_t kPlayerCameraFovOffset = 0x280;
+		constexpr std::size_t kRenderCameraFrustumOffset = 0x1C0;
+		bool                  g_fovLogged = false;
+
+		void ApplyDialogueFov(RE::PlayerCamera* a_camera, float a_degrees)
+		{
+			auto* fovAt = reinterpret_cast<std::uint8_t*>(a_camera) + kPlayerCameraFovOffset;
+			float current = 0.0f;
+			if (SafeCopy(&current, fovAt, sizeof(float)) == 0 || current < 5.0f || current > 170.0f) {
+				if (!g_fovLogged) {
+					g_fovLogged = true;
+					REX::WARN("Conversation field of view: unexpected value {:.3f} where the camera's field of view should be; leaving it alone", current);
+				}
+				return;
+			}
+			float frustum[4]{};
+			auto* render = static_cast<std::uint8_t*>(Camera::RenderCameraObject());
+			bool  frustumOk = render && SafeCopy(frustum, render + kRenderCameraFrustumOffset, sizeof(frustum)) != 0 &&
+			                  frustum[0] < -0.01f && frustum[1] > 0.01f && frustum[2] > 0.01f && frustum[3] < -0.01f &&
+			                  std::abs(frustum[0] + frustum[1]) < 0.01f && std::abs(frustum[2] + frustum[3]) < 0.01f;
+			if (!g_fovLogged) {
+				g_fovLogged = true;
+				REX::INFO("Conversation field of view: game's value {:.2f}, frustum ({:.4f} {:.4f} {:.4f} {:.4f}){}; setting {:.1f}", current, frustum[0], frustum[1], frustum[2], frustum[3],
+					frustumOk ? "" : " (not as expected, left alone)", a_degrees);
+			}
+			SafeCopy(fovAt, &a_degrees, sizeof(float));
+			if (frustumOk) {
+				const float aspect = frustum[2] / frustum[1];
+				const float t = std::tan(a_degrees * 0.00872664626f);
+				const float wanted[4]{ -t, t, t * aspect, -t * aspect };
+				SafeCopy(render + kRenderCameraFrustumOffset, wanted, sizeof(wanted));
+			}
+		}
+
 		void Begin()
 		{
 			g_state = State{};
@@ -401,6 +440,7 @@ namespace CCC
 			Settings::Get().Load();  // pick up INI edits made since the last conversation
 			++g_conversationNumber;
 			g_menusLogged = false;
+			g_fovLogged = false;
 			g_dumpedThisConversation = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 		}
@@ -923,6 +963,9 @@ namespace CCC
 			}
 			g_state.lastPose = *pose;
 			g_state.holdingExit = false;
+			if (s.dialogueFov >= 5.0f && inDialogueState) {
+				ApplyDialogueFov(camera, s.dialogueFov);
+			}
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
@@ -1609,7 +1652,7 @@ namespace CCC
 						}
 					}
 					if (fovSetting && Settings::Get().fovExperiment != 2) {
-						const float wanted = Settings::Get().dialogueFov >= 5.0f ? Settings::Get().dialogueFov : original;
+						const float wanted = original;  // changing this setting had no visible effect (0.3.28 test); keep the game's value
 						if (fovSetting->GetFloat() != wanted) {
 							fovSetting->SetFloat(wanted);
 						}
@@ -1746,7 +1789,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.29 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.30 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
