@@ -206,7 +206,11 @@ namespace CCC
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 
-		RE::TESObjectREFR* Speaker()
+		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
+	// game's camera really is, against where we assumed it would be.
+	void LogRootAgainstPrediction(const char* a_when, RE::NiAVObject* a_root);
+
+	RE::TESObjectREFR* Speaker()
 		{
 			auto* topics = RE::MenuTopicManager::GetSingleton();
 			if (!topics) {
@@ -467,6 +471,7 @@ namespace CCC
 			}
 			g_lastSkipReason.clear();
 			if (g_repair.pendingMode == 17 && inDialogueState) {
+				LogRootAgainstPrediction("first dialogue camera update", camera->cameraRoot.get());
 				g_repair.pendingMode = -1;  // the dialogue camera's own update has run
 			}
 
@@ -877,6 +882,9 @@ namespace CCC
 			}
 			if (g_repair.pendingMode >= 0 && g_repair.pendingRoot && g_repair.pendingShot) {
 				// A mode change is in flight: place the shot against where the root is going.
+				if (g_repair.pendingMode == 17) {
+					LogRootAgainstPrediction(a_camera->QCameraEquals(RE::CameraState::kDialogue) ? "main thread, game in dialogue camera" : "main thread, game not yet in dialogue camera", root);
+				}
 				Camera::ApplyRender(root, *g_repair.pendingShot, 0.0f, g_repair.pendingMode != 17, &*g_repair.pendingRoot);
 				return;
 			}
@@ -886,6 +894,26 @@ namespace CCC
 			if (const auto* held = HeldPose()) {
 				Camera::ApplyRender(root, *held, 0.0f, true);
 			}
+		}
+
+		void LogRootAgainstPrediction(const char* a_when, RE::NiAVObject* a_root)
+		{
+			const auto actual = Camera::PoseOf(a_root);
+			if (!actual || !g_repair.pendingRoot) {
+				return;
+			}
+			auto dir = [](const Camera::Pose& a_p) {
+				RE::NiPoint3 d{ a_p.lookAt.x - a_p.position.x, a_p.lookAt.y - a_p.position.y, a_p.lookAt.z - a_p.position.z };
+				const float  l = (std::max)(std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z), 1e-5f);
+				return RE::NiPoint3{ d.x / l, d.y / l, d.z / l };
+			};
+			const auto& p = *g_repair.pendingRoot;
+			const auto  da = dir(*actual), dp = dir(p);
+			const float dot = std::clamp(da.x * dp.x + da.y * dp.y + da.z * dp.z, -1.0f, 1.0f);
+			const auto  ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_repair.pendingSince).count();
+			REX::INFO("Dialogue return +{} ms ({}): camera root is ({:.2f}, {:.2f}, {:.2f}) m from the predicted spot, aimed {:.1f} degrees off (actual dir {:.2f} {:.2f} {:.2f}, predicted {:.2f} {:.2f} {:.2f})",
+				ms, a_when, actual->position.x - p.position.x, actual->position.y - p.position.y, actual->position.z - p.position.z,
+				std::acos(dot) * 57.2958f, da.x, da.y, da.z, dp.x, dp.y, dp.z);
 		}
 
 		void ExpectMode(int a_mode, std::optional<Camera::Pose> a_root, std::optional<Camera::Pose> a_shot)
@@ -1320,7 +1348,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.21 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.22 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
