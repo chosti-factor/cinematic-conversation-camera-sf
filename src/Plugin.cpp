@@ -100,6 +100,12 @@ namespace CCC
 			std::uint32_t                         attempts{ 0 };
 			bool                                  early{ false };  // started on the conversation's first frames
 			std::optional<Camera::Pose>           earlyHeld{};     // what to show during an early rebuild
+			// After asking for a camera mode: where its camera root will be and what to show,
+			// used until that mode's own hook has run once (or briefly timed out).
+			int                                   pendingMode{ -1 };
+			std::optional<Camera::Pose>           pendingRoot{};
+			std::optional<Camera::Pose>           pendingShot{};
+			std::chrono::steady_clock::time_point pendingSince{};
 			std::chrono::steady_clock::time_point nextAttemptAt{};
 			std::optional<RE::NiPoint3>           lastHead{};
 			std::chrono::steady_clock::time_point lastHeadSample{};
@@ -144,6 +150,16 @@ namespace CCC
 		// outside a conversation. Used to return to it seamlessly when a conversation ends.
 		std::optional<Camera::Pose> g_thirdPersonView;
 		std::optional<Camera::Pose> g_firstPersonView;  // likewise for first person
+
+		// Where the third-person camera sits relative to the first-person view (offset and
+		// aim, in the first-person view's own forward/right/up axes). Learned during a body
+		// rebuild and used to predict the third-person camera on the next one.
+		struct RelativeView
+		{
+			float offset[3]{};
+			float aim[3]{};
+		};
+		std::optional<RelativeView> g_thirdFromFirst;
 
 		bool                                  g_viewCandidateKnown = false;
 		bool                                  g_viewCandidateFirst = false;
@@ -430,6 +446,9 @@ namespace CCC
 				}
 			}
 			g_lastSkipReason.clear();
+			if (g_repair.pendingMode == 17 && inDialogueState) {
+				g_repair.pendingMode = -1;  // the dialogue camera's own update has run
+			}
 
 			if (!g_state.active) {
 				Begin();
@@ -661,6 +680,83 @@ namespace CCC
 			return g_state.lastPose ? &*g_state.lastPose : nullptr;
 		}
 
+		struct ViewBasis
+		{
+			RE::NiPoint3 f, r, u;
+			bool         ok{ false };
+		};
+
+		ViewBasis BasisOf(const Camera::Pose& a_view)
+		{
+			ViewBasis    b;
+			RE::NiPoint3 f{ a_view.lookAt.x - a_view.position.x, a_view.lookAt.y - a_view.position.y, a_view.lookAt.z - a_view.position.z };
+			const float  fl = std::sqrt(f.x * f.x + f.y * f.y + f.z * f.z);
+			if (fl < 1e-4f) {
+				return b;
+			}
+			f = { f.x / fl, f.y / fl, f.z / fl };
+			RE::NiPoint3 r{ f.y, -f.x, 0.0f };  // f x up
+			const float  rl = std::sqrt(r.x * r.x + r.y * r.y);
+			if (rl < 1e-4f) {
+				return b;
+			}
+			r = { r.x / rl, r.y / rl, 0.0f };
+			b.f = f;
+			b.r = r;
+			b.u = { r.y * f.z - r.z * f.y, r.z * f.x - r.x * f.z, r.x * f.y - r.y * f.x };  // r x f
+			b.ok = true;
+			return b;
+		}
+
+		void LearnThirdFromFirst(const Camera::Pose& a_third)
+		{
+			if (!g_firstPersonView) {
+				return;
+			}
+			const auto b = BasisOf(*g_firstPersonView);
+			const auto t = BasisOf(a_third);
+			if (!b.ok || !t.ok) {
+				return;
+			}
+			const RE::NiPoint3 d{ a_third.position.x - g_firstPersonView->position.x, a_third.position.y - g_firstPersonView->position.y,
+				a_third.position.z - g_firstPersonView->position.z };
+			auto dot = [](const RE::NiPoint3& a, const RE::NiPoint3& c) { return a.x * c.x + a.y * c.y + a.z * c.z; };
+			RelativeView rel;
+			rel.offset[0] = dot(d, b.f);
+			rel.offset[1] = dot(d, b.r);
+			rel.offset[2] = dot(d, b.u);
+			rel.aim[0] = dot(t.f, b.f);
+			rel.aim[1] = dot(t.f, b.r);
+			rel.aim[2] = dot(t.f, b.u);
+			if (!g_thirdFromFirst) {
+				REX::INFO("Learned the third-person camera position relative to first person: {:.2f} m forward, {:.2f} m right, {:.2f} m up",
+					rel.offset[0], rel.offset[1], rel.offset[2]);
+			}
+			g_thirdFromFirst = rel;
+		}
+
+		std::optional<Camera::Pose> PredictThirdPersonRoot()
+		{
+			if (!g_thirdFromFirst || !g_firstPersonView) {
+				return std::nullopt;
+			}
+			const auto b = BasisOf(*g_firstPersonView);
+			if (!b.ok) {
+				return std::nullopt;
+			}
+			const auto& rel = *g_thirdFromFirst;
+			auto        mix = [&](const float* c) {
+                return RE::NiPoint3{ b.f.x * c[0] + b.r.x * c[1] + b.u.x * c[2], b.f.y * c[0] + b.r.y * c[1] + b.u.y * c[2],
+	                b.f.z * c[0] + b.r.z * c[1] + b.u.z * c[2] };
+			};
+			const auto   off = mix(rel.offset);
+			const auto   aim = mix(rel.aim);
+			Camera::Pose pose;
+			pose.position = { g_firstPersonView->position.x + off.x, g_firstPersonView->position.y + off.y, g_firstPersonView->position.z + off.z };
+			pose.lookAt = { pose.position.x + aim.x * 5.0f, pose.position.y + aim.y * 5.0f, pose.position.z + aim.z * 5.0f };
+			return pose;
+		}
+
 		void MaskRepairFrame(const char* a_which)
 		{
 			if (!g_hooksSafe) {
@@ -675,7 +771,20 @@ namespace CCC
 				return;
 			}
 			auto* camera = RE::PlayerCamera::GetSingleton();
-			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *held, 0.0f, true)) {
+			if (!camera) {
+				return;
+			}
+			// This mode's own update has now run, so the root is where it will be drawn.
+			const bool third = camera->QCameraEquals(RE::CameraState::kThirdPerson);
+			if (g_repair.pendingMode == (third ? 20 : 0)) {
+				g_repair.pendingMode = -1;
+			}
+			if (third) {
+				if (const auto pose = Camera::PoseOf(camera->cameraRoot.get())) {
+					LearnThirdFromFirst(*pose);
+				}
+			}
+			if (Camera::ApplyRender(camera->cameraRoot.get(), *held, 0.0f, true)) {
 				if (g_repairMaskedFrames++ == 0) {
 					REX::INFO("Body repair: holding the shot from the {} camera hook", a_which);
 				}
@@ -734,9 +843,32 @@ namespace CCC
 		// aimed frame at that point. Re-apply the held shot immediately.
 		void HoldShotNow(RE::PlayerCamera* a_camera)
 		{
-			if (const auto* held = HeldPose(); held && Settings::Get().cameraTarget == 1) {
-				Camera::ApplyRender(a_camera->cameraRoot.get(), *held, 0.0f, !a_camera->QCameraEquals(RE::CameraState::kDialogue));
+			if (Settings::Get().cameraTarget != 1) {
+				return;
 			}
+			auto* root = a_camera->cameraRoot.get();
+			if (g_repair.pendingMode >= 0 && std::chrono::steady_clock::now() - g_repair.pendingSince > 120ms) {
+				g_repair.pendingMode = -1;
+			}
+			if (g_repair.pendingMode >= 0 && g_repair.pendingRoot && g_repair.pendingShot) {
+				// A mode change is in flight: place the shot against where the root is going.
+				Camera::ApplyRender(root, *g_repair.pendingShot, 0.0f, g_repair.pendingMode != 17, &*g_repair.pendingRoot);
+				return;
+			}
+			if (a_camera->QCameraEquals(RE::CameraState::kDialogue)) {
+				return;  // dialogue frames are placed by the dialogue camera hook
+			}
+			if (const auto* held = HeldPose()) {
+				Camera::ApplyRender(root, *held, 0.0f, true);
+			}
+		}
+
+		void ExpectMode(int a_mode, std::optional<Camera::Pose> a_root, std::optional<Camera::Pose> a_shot)
+		{
+			g_repair.pendingMode = a_root && a_shot ? a_mode : -1;
+			g_repair.pendingRoot = a_root;
+			g_repair.pendingShot = a_shot;
+			g_repair.pendingSince = std::chrono::steady_clock::now();
 		}
 
 		// Asking the game for its dialogue camera when no conversation is live crashes it.
@@ -751,6 +883,15 @@ namespace CCC
 				return false;
 			}
 			a_camera->SetCameraState(RE::CameraState::kDialogue);
+			if (g_firstPersonView && g_state.smoothNpcHead && g_repair.stage != RepairStage::kIdle) {
+				// The dialogue camera's root sits at the player's eyes looking at the speaker.
+				Camera::Pose root{ g_firstPersonView->position, *g_state.smoothNpcHead };
+				auto         playerHead = RE::PlayerCharacter::GetSingleton()->GetPosition();
+				playerHead.z += g_standingHeadHeight;
+				const auto shot = g_state.povNpcShot ? Camera::Shot(playerHead, *g_state.smoothNpcHead, -0.30f, 0.0f, 0.0f) :
+				                                       Camera::OverShoulder(playerHead, *g_state.smoothNpcHead);
+				ExpectMode(17, root, shot);
+			}
 			HoldShotNow(a_camera);
 			return true;
 		}
@@ -767,6 +908,7 @@ namespace CCC
 			const auto attempts = g_repair.attempts + 1;
 			g_repair = Repair{};
 			g_repair.attempts = attempts;
+			g_state.bodyReady = false;  // whatever we assumed mid-attempt, the body isn't confirmed
 			g_lastHookTime = a_now;
 			// When the game refuses to leave its dialogue camera (seated NPCs, in every log so
 			// far), it refuses every time; further attempts only make the picture flicker.
@@ -869,6 +1011,9 @@ namespace CCC
 				g_repair.stage = RepairStage::kAcquireThird;
 				g_repair.stageStart = a_now;
 				a_camera->ForceThirdPerson();
+				if (const auto* held = HeldPose()) {
+					ExpectMode(20, PredictThirdPersonRoot(), *held);
+				}
 				HoldShotNow(a_camera);
 				return;
 			case RepairStage::kAcquireThird:
@@ -899,6 +1044,13 @@ namespace CCC
 				const auto held = a_now - g_repair.stageStart;
 				if (held < kRepairHoldThird || (g_repair.stableSamples < 3 && held < kRepairHoldThirdMax)) {
 					return;
+				}
+				// An early rebuild whose body was seen standing and still: the conversation's
+				// first real shot can be the over-the-shoulder one, with the player in it.
+				if (g_repair.early && g_repair.stableSamples >= 3) {
+					g_state.povNpcShot = false;
+					g_state.bodyReady = true;
+					g_state.bodyReadyAt = a_now + 300ms;
 				}
 				g_repair.stage = RepairStage::kRestoreDialogue;
 				g_repair.nextRetry = a_now + 32ms;
@@ -1138,7 +1290,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.19 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.20 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
