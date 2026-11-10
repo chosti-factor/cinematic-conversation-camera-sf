@@ -663,6 +663,17 @@ namespace CCC
 					a_camera->ForceFirstPerson();
 					return;
 				}
+				if (height < kStandingHeadHeight) {
+					// The game would not build the full body here. Showing it would show the
+					// broken first-person form, so keep the camera on the other person for the
+					// rest of this conversation instead.
+					REX::WARN("Body repair: gave up after {} cycles (head still {:.2f} m above feet); the player won't be shown this conversation", cycle, height);
+					g_repair = Repair{};
+					g_state.needsBodyRepair = false;
+					g_state.bodyReady = false;
+					g_state.reRepairs = 99;
+					return;
+				}
 				REX::INFO("Body repair: done after {} cycle(s); head {:.2f} m above feet; shot held for {} frames during the cycle", cycle, height, g_repairMaskedFrames);
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
@@ -811,7 +822,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.8 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.9 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
