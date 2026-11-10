@@ -53,6 +53,8 @@ namespace CCC
 			std::uint32_t                         failuresLogged{ 0 };
 			std::chrono::steady_clock::time_point started{};
 			bool                                  needsBodyRepair{ false };  // started from first person
+			std::uint64_t                         framesAtRepairEnd{ 0 };
+			bool                                  lateRetryDone{ false };
 			bool                                  bodyReady{ true };         // safe to show the player
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
@@ -273,6 +275,9 @@ namespace CCC
 			float        original;
 		};
 		std::vector<FovSaved> g_fovSaved;
+		bool                  g_stateFovWritten = false;
+		float                 g_stateFovOriginal = 0.0f;
+		constexpr std::size_t kDialogueStateAngleOffset = 0x2A8;  // holds 90.0 during conversations (seen in the 0.3.25 dumps)
 
 		RE::Setting* FindSetting(std::string_view a_key)
 		{
@@ -301,6 +306,32 @@ namespace CCC
 					REX::INFO("FOV experiment: settings restored");
 				}
 				g_fovSaved.clear();
+				if (g_stateFovWritten) {
+					g_stateFovWritten = false;
+					if (g_dialogueStateObject) {
+						SafeCopy(static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, &g_stateFovOriginal, sizeof(float));
+					}
+					REX::INFO("FOV experiment 4: dialogue camera value restored");
+				}
+				return;
+			}
+			if (Settings::Get().fovExperiment == 4) {
+				if (g_dialogueStateObject) {
+					float current = 0.0f;
+					SafeCopy(&current, static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, sizeof(float));
+					const float wanted = Settings::Get().fovExperimentValue;
+					if (!g_stateFovWritten) {
+						if (current < 10.0f || current > 170.0f) {
+							return;  // not what we expected to find there; leave it alone
+						}
+						g_stateFovOriginal = current;
+						g_stateFovWritten = true;
+						REX::INFO("FOV experiment 4: dialogue camera value {:.2f} -> {:.2f}", current, wanted);
+					}
+					if (current != wanted) {
+						SafeCopy(static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, &wanted, sizeof(float));
+					}
+				}
 				return;
 			}
 			const auto& s = Settings::Get();
@@ -648,11 +679,9 @@ namespace CCC
 					caughtUp = dx * dx + dy * dy + dz * dz < 0.3f * 0.3f;
 				}
 				const bool expired = std::chrono::steady_clock::now() - g_repair.pendingSince > 400ms;
-				if (g_returnScanFrames < 12) {
+				if (g_returnScanFrames < 60) {
 					++g_returnScanFrames;
 					LogRootAgainstPrediction(caughtUp ? "reported root, caught up" : "reported root, stale", camera->cameraRoot.get());
-					LogPositionCandidates("dialogue camera state", g_dialogueStateObject, 0x8, 0x340, p.position);
-					LogPositionCandidates("player camera", camera, 0x8, 0x200, p.position);
 				}
 				if (caughtUp && actual) {
 					// What is the dialogue camera's real spot made of? Compare with everything known.
@@ -756,10 +785,16 @@ namespace CCC
 						REX::INFO("Start facts: player feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}); npc feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}), npc head {:.2f} m above its feet",
 							feet.x, feet.y, feet.z, playerHead->x, playerHead->y, playerHead->z, nFeet.x, nFeet.y, nFeet.z, npcHead->x, npcHead->y, npcHead->z, npcHead->z - nFeet.z);
 					}
-					if (view) {
-						LogPositionCandidates("dialogue camera state, start frame", g_dialogueStateObject, 0x8, 0x340, view->position);
-						LogPositionCandidates("player camera, start frame", camera, 0x8, 0x188, view->position);
+				}
+				// Every frame until the rebuild is over and for a few frames after: what the
+				// camera nodes held when this frame's update ran, and what we showed last frame.
+				if (frame <= 6 || g_repair.stage != RepairStage::kIdle || frame <= g_state.framesAtRepairEnd + 6) {
+					if (g_repair.stage != RepairStage::kIdle) {
+						g_state.framesAtRepairEnd = frame;
 					}
+					REX::INFO("Frame {} (mode {}, rebuild stage {}): {}; last shot placed at ({:.2f} {:.2f} {:.2f})", frame, stateIndex, static_cast<int>(g_repair.stage),
+						Camera::DescribeRoot(camera->cameraRoot.get()),
+						g_state.lastPose ? g_state.lastPose->position.x : 0.0f, g_state.lastPose ? g_state.lastPose->position.y : 0.0f, g_state.lastPose ? g_state.lastPose->position.z : 0.0f);
 				}
 				if (frame == 1 || (frame >= 90 && !g_dumpedThisConversation && g_repair.stage == RepairStage::kIdle)) {
 					if (frame > 1) {
@@ -767,7 +802,9 @@ namespace CCC
 					}
 					const auto label = std::format("conversation {} frame {}", g_conversationNumber, frame);
 					DumpObject((label + " player camera").c_str(), camera, 0x188);
+					DumpObject((label + " player camera part 2").c_str(), reinterpret_cast<const std::uint8_t*>(camera) + 0x188, 0x400);
 					DumpObject((label + " dialogue state").c_str(), g_dialogueStateObject, 0x340);
+					DumpObject((label + " render camera").c_str(), Camera::RenderCameraObject(), 0x400);
 				}
 			}
 
@@ -1206,6 +1243,16 @@ namespace CCC
 			g_lastHookTime = a_now;
 			// When the game refuses to leave its dialogue camera (seated NPCs, in every log so
 			// far), it refuses every time; further attempts only make the picture flicker.
+			// Test: when refused on the opening frames, ask once more a few seconds in, to
+			// learn whether the game only refuses while it is setting the conversation up.
+			if (a_refused && !g_state.lateRetryDone) {
+				g_state.lateRetryDone = true;
+				g_state.hidePlayer = true;
+				g_repair.attempts = 0;
+				g_repair.nextAttemptAt = a_now + 2500ms;
+				REX::WARN("Body repair: refused ({}); the player stays out of frame for now, one more attempt in 2.5 s", a_why);
+				return;
+			}
 			if (attempts >= kRepairMaxAttempts || a_refused) {
 				REX::WARN("Body repair: attempt {} failed ({}); giving up. The player will be kept out of frame this conversation", attempts, a_why);
 				g_state.needsBodyRepair = false;
@@ -1494,6 +1541,20 @@ namespace CCC
 
 				// Data collection and experiments (main thread).
 				{
+					static bool dumpedFirst = false, dumpedThird = false;
+					if (camera && !g_state.active && Settings::Get().debugLog && Camera::RenderCameraObject()) {
+						const bool fp = camera->QCameraEquals(RE::CameraState::kFirstPerson);
+						const bool tp = camera->QCameraEquals(RE::CameraState::kThirdPerson);
+						if ((fp && !dumpedFirst) || (tp && !dumpedThird)) {
+							(fp ? dumpedFirst : dumpedThird) = true;
+							const std::string label = fp ? "gameplay first person" : "gameplay third person";
+							DumpObject((label + " player camera").c_str(), camera, 0x188);
+							DumpObject((label + " player camera part 2").c_str(), reinterpret_cast<const std::uint8_t*>(camera) + 0x188, 0x400);
+							DumpObject((label + " camera state").c_str(), camera->currentState, 0x340);
+							DumpObject((label + " render camera").c_str(), Camera::RenderCameraObject(), 0x400);
+						}
+					}
+
 					const bool live = g_state.active && camera && camera->QCameraEquals(RE::CameraState::kDialogue) && !repairing &&
 					                  g_state.framesThisConversation > 60;
 					if (live) {
@@ -1604,7 +1665,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.25 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.26 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

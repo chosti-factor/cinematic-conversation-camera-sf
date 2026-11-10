@@ -51,7 +51,7 @@ namespace CCC
 
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
-			a_s.fovExperiment = std::clamp(ReadInt(a_path, L"Debug", L"iFovExperiment", a_s.fovExperiment), 0, 3);
+			a_s.fovExperiment = std::clamp(ReadInt(a_path, L"Debug", L"iFovExperiment", a_s.fovExperiment), 0, 4);
 			a_s.fovExperimentValue = std::clamp(ReadFloat(a_path, L"Debug", L"fFovExperimentValue", a_s.fovExperimentValue), 10.0f, 120.0f);
 		}
 	}
