@@ -230,6 +230,126 @@ namespace CCC
 			}
 		}
 
+		// ---- Data collection for the test builds -------------------------------------------
+		int  g_conversationNumber = 0;
+		bool g_menusLogged = false;
+		bool g_dumpedThisConversation = false;
+
+		std::size_t SafeCopy(void* a_to, const void* a_from, std::size_t a_bytes)
+		{
+			__try {
+				std::memcpy(a_to, a_from, a_bytes);
+				return a_bytes;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return 0;
+			}
+		}
+
+		// Raw contents of a game object, 16 values per line, to compare between situations
+		// (standing or seated speaker, first or third person) and find what differs.
+		void DumpObject(const char* a_what, const void* a_base, std::size_t a_bytes)
+		{
+			if (!a_base) {
+				return;
+			}
+			std::array<std::uint32_t, 0x400 / 4> words{};
+			a_bytes = (std::min)(a_bytes, sizeof(words));
+			if (SafeCopy(words.data(), a_base, a_bytes) == 0) {
+				REX::INFO("Dump {}: unreadable", a_what);
+				return;
+			}
+			for (std::size_t off = 0; off < a_bytes; off += 64) {
+				std::string line;
+				for (std::size_t i = off / 4; i < (std::min)(a_bytes, off + 64) / 4; ++i) {
+					line += std::format(" {:08X}", words[i]);
+				}
+				REX::INFO("Dump {} +{:03X}:{}", a_what, off, line);
+			}
+		}
+
+		struct FovSaved
+		{
+			RE::Setting* setting;
+			float        original;
+		};
+		std::vector<FovSaved> g_fovSaved;
+
+		RE::Setting* FindSetting(std::string_view a_key)
+		{
+			for (auto* collection : { static_cast<RE::INISettingCollection*>(RE::INISettingCollection::GetSingleton()),
+					 static_cast<RE::INISettingCollection*>(RE::INIPrefSettingCollection::GetSingleton()) }) {
+				if (!collection) {
+					continue;
+				}
+				for (const auto& setting : collection->settings) {
+					if (setting && setting->GetKey() == a_key && setting->GetType() == RE::Setting::Type::kFloat) {
+						return setting;
+					}
+				}
+			}
+			return nullptr;
+		}
+
+		// Main thread only.
+		void ApplyFovExperiment(bool a_on)
+		{
+			if (!a_on) {
+				for (const auto& saved : g_fovSaved) {
+					saved.setting->SetFloat(saved.original);
+				}
+				if (!g_fovSaved.empty()) {
+					REX::INFO("FOV experiment: settings restored");
+				}
+				g_fovSaved.clear();
+				return;
+			}
+			const auto& s = Settings::Get();
+			if (s.fovExperiment == 0 || !g_fovSaved.empty()) {
+				return;
+			}
+			std::vector<std::string_view> keys;
+			switch (s.fovExperiment) {
+			case 1:
+				keys = { "fTPWorldFOV:Camera", "fFPWorldFOV:Camera" };
+				break;
+			case 2:
+				keys = { "fDialogueCameraFailsafeFPFOV:Dialogue" };
+				break;
+			default:
+				keys = { "fDefault1stPersonFOV:Camera", "fFPGeometryFOV:Camera" };
+				break;
+			}
+			for (const auto key : keys) {
+				if (auto* setting = FindSetting(key)) {
+					g_fovSaved.push_back({ setting, setting->GetFloat() });
+					setting->SetFloat(s.fovExperimentValue);
+					REX::INFO("FOV experiment {}: {} {:.2f} -> {:.2f}", s.fovExperiment, key, g_fovSaved.back().original, s.fovExperimentValue);
+				} else {
+					REX::INFO("FOV experiment {}: setting {} not found", s.fovExperiment, key);
+				}
+			}
+		}
+
+		// Main thread only. Which of the game's menus are open during a conversation (for
+		// the letterbox bars and subtitle placement to come).
+		void LogOpenMenus()
+		{
+			auto* ui = RE::UI::GetSingleton();
+			if (!ui) {
+				return;
+			}
+			std::string text;
+			std::size_t total = 0;
+			for (const auto& entry : ui->menuMap) {
+				++total;
+				if (ui->IsMenuOpen(entry.key)) {
+					text += ' ';
+					text += entry.key.c_str();
+				}
+			}
+			REX::INFO("Open menus ({} registered):{}", total, text);
+		}
+
 		void Begin()
 		{
 			g_state = State{};
@@ -241,7 +361,11 @@ namespace CCC
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
-			REX::INFO("Conversation started (from {} person)", g_lastGameplayFirstPerson ? "first" : "third");
+			Settings::Get().Load();  // pick up INI edits made since the last conversation
+			++g_conversationNumber;
+			g_menusLogged = false;
+			g_dumpedThisConversation = false;
+			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 		}
 
 		void End()
@@ -611,6 +735,40 @@ namespace CCC
 				}
 				npcHead = follow(g_state.smoothNpcHead, *npcHead);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
+			}
+
+			// Data collection: the first frames of every conversation, and one steady frame.
+			if (s.debugLog && g_conversationNumber <= 12) {
+				const auto frame = g_state.framesThisConversation;
+				if (frame <= 6) {
+					const auto  reported = Camera::PoseOf(camera->cameraRoot.get());
+					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
+					const auto  feet = player->GetPosition();
+					const auto  nFeet = speaker->GetPosition();
+					if (reported && view) {
+						REX::INFO("Start frame {} (mode {}): reported root ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f}); gameplay view was ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f})",
+							frame, stateIndex, reported->position.x, reported->position.y, reported->position.z,
+							(reported->lookAt.x - reported->position.x) / 5.0f, (reported->lookAt.y - reported->position.y) / 5.0f, (reported->lookAt.z - reported->position.z) / 5.0f,
+							view->position.x, view->position.y, view->position.z,
+							(view->lookAt.x - view->position.x) / 5.0f, (view->lookAt.y - view->position.y) / 5.0f, (view->lookAt.z - view->position.z) / 5.0f);
+					}
+					if (frame == 1) {
+						REX::INFO("Start facts: player feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}); npc feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}), npc head {:.2f} m above its feet",
+							feet.x, feet.y, feet.z, playerHead->x, playerHead->y, playerHead->z, nFeet.x, nFeet.y, nFeet.z, npcHead->x, npcHead->y, npcHead->z, npcHead->z - nFeet.z);
+					}
+					if (view) {
+						LogPositionCandidates("dialogue camera state, start frame", g_dialogueStateObject, 0x8, 0x340, view->position);
+						LogPositionCandidates("player camera, start frame", camera, 0x8, 0x188, view->position);
+					}
+				}
+				if (frame == 1 || (frame >= 90 && !g_dumpedThisConversation && g_repair.stage == RepairStage::kIdle)) {
+					if (frame > 1) {
+						g_dumpedThisConversation = true;
+					}
+					const auto label = std::format("conversation {} frame {}", g_conversationNumber, frame);
+					DumpObject((label + " player camera").c_str(), camera, 0x188);
+					DumpObject((label + " dialogue state").c_str(), g_dialogueStateObject, 0x340);
+				}
 			}
 
 			if (g_repair.stage == RepairStage::kSettle) {
@@ -1036,6 +1194,11 @@ namespace CCC
 			if (!a_camera->QCameraEquals(RE::CameraState::kDialogue) && !ReturnToDialogueCamera(a_camera)) {
 				return;  // conversation is over; End() already ran
 			}
+			if (a_refused && Settings::Get().debugLog && g_conversationNumber <= 12) {
+				const auto label = std::format("conversation {} rebuild refused", g_conversationNumber);
+				DumpObject((label + " player camera").c_str(), a_camera, 0x188);
+				DumpObject((label + " dialogue state").c_str(), g_dialogueStateObject, 0x340);
+			}
 			const auto attempts = g_repair.attempts + 1;
 			g_repair = Repair{};
 			g_repair.attempts = attempts;
@@ -1329,6 +1492,21 @@ namespace CCC
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
 
+				// Data collection and experiments (main thread).
+				{
+					const bool live = g_state.active && camera && camera->QCameraEquals(RE::CameraState::kDialogue) && !repairing &&
+					                  g_state.framesThisConversation > 60;
+					if (live) {
+						ApplyFovExperiment(true);
+						if (!g_menusLogged) {
+							g_menusLogged = true;
+							LogOpenMenus();
+						}
+					} else if (!g_state.active || repairing) {
+						ApplyFovExperiment(false);
+					}
+				}
+
 				if (camera && !g_state.active && !g_restoreFirstPersonPending) {
 					// Remember which view the player uses outside conversations.
 					// Starfield can pass through third person for a moment while opening a
@@ -1426,7 +1604,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.24 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.25 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

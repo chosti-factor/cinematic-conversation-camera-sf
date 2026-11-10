@@ -69,6 +69,14 @@ namespace CCC
 		// first-person body rebuild). Read once at game start.
 		bool stateHooks{ true };
 
+		// Test switch, re-read at the start of every conversation (no game restart needed):
+		// while a conversation runs, set some of the game's own field-of-view settings to
+		// fFovExperimentValue to find out which one the dialogue camera listens to.
+		// 0 = off, 1 = fTPWorldFOV + fFPWorldFOV, 2 = fDialogueCameraFailsafeFPFOV,
+		// 3 = fDefault1stPersonFOV + fFPGeometryFOV
+		std::int32_t fovExperiment{ 0 };
+		float        fovExperimentValue{ 50.0f };
+
 		static Settings& Get();
 		void             Load();
 	};
