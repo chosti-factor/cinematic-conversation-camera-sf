@@ -345,12 +345,44 @@ namespace CCC::Camera
 		return true;
 	}
 
+	namespace
+	{
+		// How the engine combines a child's local rotation with its parent's world rotation.
+		// Measured from the live camera each conversation rather than assumed.
+		enum class Compose
+		{
+			kLocalTimesParent,  // world = local * parent (row layout)
+			kParentTimesLocal   // world = parent * local (column layout)
+		};
+		Compose g_compose = Compose::kLocalTimesParent;
+
+		float MatrixError(const RE::NiMatrix3& a, const RE::NiMatrix3& b)
+		{
+			float e = 0.0f;
+			for (int r = 0; r < 3; ++r) {
+				for (int c = 0; c < 3; ++c) {
+					e += std::abs(a.entry[r][c] - b.entry[r][c]);
+				}
+			}
+			return e;
+		}
+
+		std::string MatrixText(const RE::NiMatrix3& m)
+		{
+			return std::format("[{:.2f} {:.2f} {:.2f} | {:.2f} {:.2f} {:.2f} | {:.2f} {:.2f} {:.2f}]",
+				m.entry[0][0], m.entry[0][1], m.entry[0][2],
+				m.entry[1][0], m.entry[1][1], m.entry[1][2],
+				m.entry[2][0], m.entry[2][1], m.entry[2][2]);
+		}
+	}
+
 	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
 	{
+		(void)a_delta;
 		if (!a_root) {
 			return false;
 		}
-		const auto rot = BuildRotation(a_pose);
+		const auto rot = BuildRotation(a_pose);  // the shot, in the camera ROOT's axis layout
 		if (!rot) {
 			return false;
 		}
@@ -360,46 +392,52 @@ namespace CCC::Camera
 			g_loggedCameraSearch = true;
 			REX::INFO("Render camera search: {}", cam ? "found NiCamera under the camera root" : "not found");
 		}
-		if (!cam) {
+		if (!cam || cam->parent != a_root) {
 			return false;
 		}
+		const auto& pw = a_root->world;
 
 		if (g_renderCam != cam) {
 			RestoreRender();
 			g_renderCam = cam;
 			g_savedRenderLocal = cam->local;
-			// If the render camera hangs off the camera root (expected), its offset from the
-			// root is exactly its local transform. Otherwise measure it from world transforms.
 
-			const auto composed = cam->parent ? cam->parent->world * cam->local : cam->local;
-			REX::INFO("Render camera {:p}: parent {:p} ({}), local offset ({:.3f}, {:.3f}, {:.3f}), parent*local vs world error {:.4f}",
-				static_cast<void*>(cam), static_cast<void*>(cam->parent),
-				cam->parent == a_root ? "camera root" : "other",
+			// The render camera has its own axis layout: its local rotation relative to the
+			// camera root is not identity (0.2.2 assumed it was and the view came out rotated
+			// 90 degrees). Work out from the live values how the engine composes the two.
+			const float errLP = MatrixError(cam->local.rotate * pw.rotate, cam->world.rotate);
+			const float errPL = MatrixError(pw.rotate * cam->local.rotate, cam->world.rotate);
+			g_compose = errLP <= errPL ? Compose::kLocalTimesParent : Compose::kParentTimesLocal;
+
+			REX::INFO("Render camera {:p}: local offset ({:.3f}, {:.3f}, {:.3f}), compose error local*parent {:.3f}, parent*local {:.3f} -> using {}",
+				static_cast<void*>(cam),
 				cam->local.translate.x, cam->local.translate.y, cam->local.translate.z,
-				Distance(composed.translate, cam->world.translate));
+				errLP, errPL, g_compose == Compose::kLocalTimesParent ? "local*parent" : "parent*local");
+			REX::INFO("  camera local rotation {}", MatrixText(cam->local.rotate));
+			REX::INFO("  camera world rotation {}", MatrixText(cam->world.rotate));
+			REX::INFO("  root   world rotation {}", MatrixText(pw.rotate));
 		}
 
-		// Starfield stores a node's axes as the ROWS of its rotation (see g_axes), the
-		// transpose of Skyrim's layout, so parent/child transforms compose as
-		//   world.rotate    = local.rotate * parent.rotate
-		//   world.translate = parent.translate + transpose(parent.rotate) * local.translate
-		// CommonLibSF's NiTransform helpers assume Skyrim's layout (0.2.1 used them and the
-		// view ended up aimed away from the scene), so the inverse is written out here.
-		// Transforms only: no scene-graph update call from the hook's worker thread.
-		(void)a_delta;
-		RE::NiTransform desiredCam = cam->world;
-		desiredCam.rotate = *rot;
-		desiredCam.translate = a_pose.position;
+		// Pretend the camera root sat at the shot (rotation *rot, position a_pose.position)
+		// and derive the render camera's local transform that produces the same picture
+		// while the real root stays where the game put it. Transforms only: no scene-graph
+		// update call from the hook's worker thread.
+		const auto&        l0 = g_savedRenderLocal;
+		const float        invScale = pw.scale > 1e-6f ? 1.0f / pw.scale : 1.0f;
 
-		if (const auto* parent = cam->parent) {
-			const auto& pw = parent->world;
-			const float invScale = pw.scale > 1e-6f ? 1.0f / pw.scale : 1.0f;
-			cam->local.rotate = desiredCam.rotate * pw.rotate.Transpose();
-			cam->local.translate = Scale(pw.rotate * Sub(desiredCam.translate, pw.translate), invScale);
+		RE::NiTransform world = cam->world;
+		if (g_compose == Compose::kLocalTimesParent) {
+			world.rotate = l0.rotate * *rot;
+			world.translate = Add(a_pose.position, rot->Transpose() * l0.translate);
+			cam->local.rotate = world.rotate * pw.rotate.Transpose();
+			cam->local.translate = Scale(pw.rotate * Sub(world.translate, pw.translate), invScale);
 		} else {
-			cam->local = desiredCam;
+			world.rotate = *rot * l0.rotate;
+			world.translate = Add(a_pose.position, *rot * l0.translate);
+			cam->local.rotate = pw.rotate.Transpose() * world.rotate;
+			cam->local.translate = Scale(pw.rotate.Transpose() * Sub(world.translate, pw.translate), invScale);
 		}
-		cam->world = desiredCam;
+		cam->world = world;
 		return true;
 	}
 
@@ -408,10 +446,14 @@ namespace CCC::Camera
 		if (g_renderCam) {
 			g_renderCam->local = g_savedRenderLocal;
 			if (const auto* parent = g_renderCam->parent) {
-				// Row layout composition (see ApplyRender).
 				const auto& pw = parent->world;
-				g_renderCam->world.rotate = g_savedRenderLocal.rotate * pw.rotate;
-				g_renderCam->world.translate = Add(pw.translate, Scale(pw.rotate.Transpose() * g_savedRenderLocal.translate, pw.scale));
+				if (g_compose == Compose::kLocalTimesParent) {
+					g_renderCam->world.rotate = g_savedRenderLocal.rotate * pw.rotate;
+					g_renderCam->world.translate = Add(pw.translate, Scale(pw.rotate.Transpose() * g_savedRenderLocal.translate, pw.scale));
+				} else {
+					g_renderCam->world.rotate = pw.rotate * g_savedRenderLocal.rotate;
+					g_renderCam->world.translate = Add(pw.translate, Scale(pw.rotate * g_savedRenderLocal.translate, pw.scale));
+				}
 			}
 			REX::INFO("Render camera restored");
 		}
