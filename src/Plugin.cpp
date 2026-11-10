@@ -102,6 +102,7 @@ namespace CCC
 		std::chrono::steady_clock::time_point g_restoreFirstPersonDeadline{};
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
+		std::uint32_t                         g_repairMaskedFrames = 0;
 		// -------------------------------------------------------------------------------
 
 		// Short pause after an NPC line ends before cutting to the player,
@@ -257,9 +258,9 @@ namespace CCC
 				if (!g_state.holdingExit) {
 					g_state.holdingExit = true;
 					g_state.holdStarted = now;
-					REX::INFO("Speaker gone; holding the last shot until the game leaves its dialogue camera");
+					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
 				}
-				if (now - g_state.holdStarted < 3s && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+				if (std::chrono::duration<float>(now - g_state.holdStarted).count() < s.exitHoldSeconds && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
 					return;
 				}
 			}
@@ -433,6 +434,44 @@ namespace CCC
 		// has stopped running its dialogue camera (load screen, scripted scene, menu that
 		// closes dialogue abruptly...), give everything back instead of leaving the view stuck.
 		// Also applies player visibility changes requested by the hook, on the main thread.
+		// Runs right after the game positions its camera each frame, in every camera mode.
+		// Used only during the body repair, when the game is briefly in real first/third
+		// person: re-apply our last shot so the cycle isn't visible. (0.3.2 did this from a
+		// main-thread task, at the wrong moment in the frame, and the picture alternated.)
+		struct PlayerCameraUpdateHook
+		{
+			static void Thunk(RE::PlayerCamera* a_camera)
+			{
+				Hook(a_camera);
+				if (!g_hooksSafe || !a_camera) {
+					return;
+				}
+				std::unique_lock lock{ g_lock, std::try_to_lock };
+				if (!lock.owns_lock()) {
+					return;
+				}
+				static bool logged = false;
+				if (!logged) {
+					logged = true;
+					REX::INFO("Player camera update hook is running");
+				}
+				if (g_state.active && g_repair.stage != RepairStage::kIdle && g_state.lastPose && Settings::Get().cameraTarget == 1 &&
+					!a_camera->QCameraEquals(RE::CameraState::kDialogue)) {
+					if (Camera::ApplyRender(a_camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+						++g_repairMaskedFrames;
+					}
+				}
+			}
+
+			static inline REL::THookVFT<void(RE::PlayerCamera*)> Hook{
+				"CCC_PlayerCameraUpdate",
+				REL::EHookStep::None,
+				RE::VTABLE::PlayerCamera[0],
+				3,  // TESCamera::Update
+				Thunk
+			};
+		};
+
 		void FailRepair(RE::PlayerCamera* a_camera, const char* a_why)
 		{
 			REX::WARN("First-person body repair failed ({}); the player won't be shown this conversation", a_why);
@@ -454,6 +493,7 @@ namespace CCC
 					return;
 				}
 				REX::INFO("Body repair: started in first person; cycling first -> third -> dialogue");
+				g_repairMaskedFrames = 0;
 				g_repair.stage = RepairStage::kAcquireFirst;
 				g_repair.deadline = a_now + kRepairTimeout;
 				g_repair.nextRetry = a_now + kRepairRetry;
@@ -524,7 +564,7 @@ namespace CCC
 				if (a_now - g_repair.stageStart < kRepairSettle || g_repair.settleFrames < kRepairSettleFrames) {
 					return;
 				}
-				REX::INFO("Body repair: done; the player can be shown");
+				REX::INFO("Body repair: done; the player can be shown (shot held for {} frames during the cycle)", g_repairMaskedFrames);
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = true;
@@ -542,7 +582,7 @@ namespace CCC
 				g_restoreFirstPersonPending = false;  // a new conversation started; it will handle it
 				return;
 			}
-			if (a_camera->QCameraEquals(RE::CameraState::kDialogue) && !Settings::Get().fastExit) {
+			if (a_camera->QCameraEquals(RE::CameraState::kDialogue)) {
 				g_restoreFirstPersonDeadline = a_now + 1500ms;  // dialogue still closing; keep waiting
 				return;
 			}
@@ -576,11 +616,6 @@ namespace CCC
 				static const RE::BSFixedString shipHud{ "SpaceshipHudMenu" };
 				g_pilotingShip.store(ui->IsMenuOpen(shipHud), std::memory_order_release);
 			}
-			bool dialogueMenuOpen = true;
-			if (auto* ui = RE::UI::GetSingleton()) {
-				static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
-				dialogueMenuOpen = ui->IsMenuOpen(dialogueMenu);
-			}
 
 			{
 				std::scoped_lock lock{ g_lock };
@@ -598,23 +633,6 @@ namespace CCC
 				}
 
 				// While repairing, the game is briefly out of its dialogue camera on purpose.
-				// Fast exit: the game idles in its dialogue camera for a second or more after the
-				// conversation is over. Once the speaker is gone and the dialogue menu has closed,
-				// return to the player's normal view ourselves instead of waiting that out.
-				if (g_state.active && g_state.holdingExit && !repairing && camera && Settings::Get().fastExit &&
-					!dialogueMenuOpen && now - g_state.holdStarted > 120ms) {
-					const bool firstPerson = g_lastGameplayFirstPerson;
-					REX::INFO("Fast exit: conversation over; returning to {} person", firstPerson ? "first" : "third");
-					End();
-					if (firstPerson) {
-						g_restoreFirstPersonPending = true;
-						g_restoreFirstPersonDeadline = now + 1500ms;
-						g_restoreFirstPersonNext = now + 32ms;
-						camera->ForceFirstPerson();
-					} else {
-						camera->ForceThirdPerson();
-					}
-				}
 				if (g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue)) {
 					REX::INFO("Game left its dialogue camera; restoring camera");
 					End();
@@ -625,11 +643,6 @@ namespace CCC
 				}
 				if (camera && g_state.active && g_state.needsBodyRepair) {
 					StepRepair(camera, now);
-				}
-				// While the game cycles through first and third person for the body repair,
-				// keep the picture on our last shot so the cycle isn't visible.
-				if (camera && g_state.active && g_repair.stage != RepairStage::kIdle && g_state.lastPose && Settings::Get().cameraTarget == 1) {
-					Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
 				}
 				if (camera && g_restoreFirstPersonPending) {
 					StepFirstPersonRestore(camera, now);
@@ -675,6 +688,10 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		REX::CRITICAL("Could not install the dialogue camera hook. Camera features disabled.");
 		return true;
 	}
+	if (!CCC::PlayerCameraUpdateHook::Hook.Enable()) {
+		REX::WARN("Could not install the player camera hook; the first-person body cycle will be visible");
+	}
+
 	if (const auto* tasks = SFSE::GetTaskInterface()) {
 		tasks->AddPermanentTask([]() { CCC::Watchdog(); });
 	} else {
@@ -682,7 +699,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
