@@ -61,6 +61,10 @@ namespace CCC
 		// 0 = world + local + node update, 1 = world + local only, 2 = world only.
 		std::int32_t poseMode{ 0 };
 
+		// Test switch: hook the first- and third-person camera updates (used to hide the
+		// first-person body rebuild). Read once at game start.
+		bool stateHooks{ true };
+
 		static Settings& Get();
 		void             Load();
 	};
