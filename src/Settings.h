@@ -21,6 +21,10 @@ namespace CCC
 		float heightOffset{ 0.06f };      // raise or lower the camera relative to the head
 		float lookHeightOffset{ -0.03f }; // aim slightly below the eyes of the far character
 
+		// Seconds of smoothing when the camera follows a moving head. Higher = steadier
+		// but slower to follow.
+		float followSmoothing{ 0.35f };
+
 		// Seconds to blend between shots. 0 = hard cut (CCC's default style).
 		float blendSeconds{ 0.0f };
 
