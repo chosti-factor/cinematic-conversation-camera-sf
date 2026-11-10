@@ -297,6 +297,51 @@ namespace CCC
 			REX::INFO("FOV scan, mode {}, {}:{}", a_mode, a_what, text);
 		}
 
+		// Diagnostic: list the game's own INI settings that mention field of view, the
+		// dialogue camera or the camera in general, with their current values. The game's
+		// dialogue zoom is most likely one of these, and they can be changed at run time.
+		void LogCameraSettings(RE::INISettingCollection* a_collection, const char* a_which)
+		{
+			if (!a_collection) {
+				REX::INFO("Settings scan: {} collection unavailable", a_which);
+				return;
+			}
+			std::size_t total = 0;
+			std::size_t shown = 0;
+			for (const auto& setting : a_collection->settings) {
+				if (!setting) {
+					continue;
+				}
+				++total;
+				const std::string_view key = setting->GetKey();
+				std::string            lower{ key };
+				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (lower.find("fov") == std::string::npos && lower.find("dialog") == std::string::npos &&
+					lower.find("camera") == std::string::npos && lower.find("zoom") == std::string::npos) {
+					continue;
+				}
+				++shown;
+				switch (setting->GetType()) {
+				case RE::Setting::Type::kFloat:
+					REX::INFO("Setting [{}] {} = {:.4f}", a_which, key, setting->GetFloat());
+					break;
+				case RE::Setting::Type::kInt:
+					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetInt());
+					break;
+				case RE::Setting::Type::kUInt:
+					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetUInt());
+					break;
+				case RE::Setting::Type::kBool:
+					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetBool());
+					break;
+				default:
+					REX::INFO("Setting [{}] {} (other type)", a_which, key);
+					break;
+				}
+			}
+			REX::INFO("Settings scan: {} collection has {} settings, {} listed", a_which, total, shown);
+		}
+
 		// Which camera state the game is in, as an index into CameraState, or -1 if unknown.
 		int CurrentCameraStateIndex(RE::PlayerCamera* a_camera)
 		{
@@ -946,6 +991,15 @@ namespace CCC
 				}
 			}
 
+			{
+				static bool scanned = false;
+				if (!scanned && Settings::Get().debugLog && g_hookCalls > 0) {
+					scanned = true;
+					LogCameraSettings(RE::INISettingCollection::GetSingleton(), "ini");
+					LogCameraSettings(RE::INIPrefSettingCollection::GetSingleton(), "prefs");
+				}
+			}
+
 			bool reveal = false;
 			bool hide = false;
 			bool restore = false;
@@ -1058,7 +1112,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.17 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.18 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

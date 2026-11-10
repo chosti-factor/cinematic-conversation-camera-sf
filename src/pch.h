@@ -11,6 +11,8 @@
 #include "RE/IDs_VTABLE.h"
 
 #include "RE/A/Actor.h"
+#include "RE/I/INIPrefSettingCollection.h"
+#include "RE/I/INISettingCollection.h"
 #include "RE/M/MenuTopicManager.h"
 #include "RE/N/NiCamera.h"
 #include "RE/N/NiAVObject.h"
@@ -27,6 +29,7 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cctype>
 #include <cmath>
 #include <cstring>
 #include <format>
