@@ -1539,6 +1539,33 @@ namespace CCC
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
 
+				// Conversation field of view: keep the game's setting at the value asked for, so
+				// it is in place whenever the dialogue camera starts.
+				{
+					static RE::Setting* fovSetting = nullptr;
+					static bool         looked = false;
+					static float        original = 0.0f;
+					static float        lastLogged = -1.0f;
+					static std::uint32_t ticks = 0;
+					if (!fovSetting && (ticks++ % 240) == 0) {
+						looked = true;
+						fovSetting = FindSetting("fDialogueCameraFailsafeFPFOV:Dialogue");
+						if (fovSetting) {
+							original = fovSetting->GetFloat();
+						}
+					}
+					if (fovSetting && Settings::Get().fovExperiment != 2) {
+						const float wanted = Settings::Get().dialogueFov >= 5.0f ? Settings::Get().dialogueFov : original;
+						if (fovSetting->GetFloat() != wanted) {
+							fovSetting->SetFloat(wanted);
+						}
+						if (wanted != lastLogged) {
+							lastLogged = wanted;
+							REX::INFO("Conversation field of view: fDialogueCameraFailsafeFPFOV set to {:.1f} (game's own value {:.1f})", wanted, original);
+						}
+					}
+				}
+
 				// Data collection and experiments (main thread).
 				{
 					static bool dumpedFirst = false, dumpedThird = false;
@@ -1665,7 +1692,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.26 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.27 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
