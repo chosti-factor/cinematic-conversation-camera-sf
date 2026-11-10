@@ -79,26 +79,36 @@ namespace CCC::Visibility
 		}
 	}
 
+	void HidePlayer()
+	{
+		std::scoped_lock lock{ g_mutex };
+		auto* root = PlayerRoot();
+		if (!root || IsCulled(root)) {
+			return;
+		}
+		const bool known = std::ranges::any_of(g_changed, [&](const Changed& c) { return c.object == root; });
+		if (!known) {
+			g_changed.push_back({ root, false });
+			REX::INFO("Hiding the player (full body unavailable)");
+		}
+		SetCulled(root, true);
+	}
+
 	void Restore()
 	{
 		std::scoped_lock lock{ g_mutex };
-		// Only touch objects that still belong to the player's current 3D; if the game
-		// rebuilt the player's model in the meantime, the old pointers are stale.
 		auto* root = PlayerRoot();
-
-		// If the game is already back in third person, the player is meant to be visible;
-		// re-hiding them would leave an invisible character. Only re-hide while the game is
-		// still in its dialogue or first-person view.
 		auto*      camera = RE::PlayerCamera::GetSingleton();
 		const bool thirdPerson = camera && camera->IsInThirdPerson();
 
 		for (const auto& c : g_changed) {
-			if (!root || thirdPerson) {
+			if (!root) {
 				break;
 			}
-			const bool isRoot = c.object == root;
-			bool       stillOurs = isRoot;
-			if (!isRoot) {
+			// Only touch objects that still belong to the player's current 3D; if the game
+			// rebuilt the player's model in the meantime, the old pointers are stale.
+			bool stillOurs = c.object == root;
+			if (!stillOurs) {
 				for (const auto* name : kHeadNodes) {
 					if (root->GetObjectByName(RE::BSFixedString{ name }) == c.object) {
 						stillOurs = true;
@@ -106,7 +116,17 @@ namespace CCC::Visibility
 					}
 				}
 			}
-			if (stillOurs && c.wasCulled && !IsCulled(c.object)) {
+			if (!stillOurs) {
+				continue;
+			}
+			if (!c.wasCulled) {
+				// We hid it; always show it again.
+				if (IsCulled(c.object)) {
+					SetCulled(c.object, false);
+				}
+			} else if (!thirdPerson && !IsCulled(c.object)) {
+				// We revealed it. Hide it again unless the game is already back in third
+				// person, where the player is meant to be visible.
 				SetCulled(c.object, true);
 			}
 		}
