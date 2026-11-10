@@ -21,6 +21,10 @@ namespace CCC
 		float heightOffset{ 0.06f };      // raise or lower the camera relative to the head
 		float lookHeightOffset{ -0.03f }; // aim slightly below the eyes of the far character
 
+		// Return to the normal view as soon as the conversation is over instead of waiting
+		// for the game's dialogue camera to wind down (about 1.5 s).
+		bool fastExit{ true };
+
 		// Seconds of smoothing when the camera follows a moving head. Higher = steadier
 		// but slower to follow.
 		float followSmoothing{ 0.35f };

@@ -542,7 +542,7 @@ namespace CCC
 				g_restoreFirstPersonPending = false;  // a new conversation started; it will handle it
 				return;
 			}
-			if (a_camera->QCameraEquals(RE::CameraState::kDialogue)) {
+			if (a_camera->QCameraEquals(RE::CameraState::kDialogue) && !Settings::Get().fastExit) {
 				g_restoreFirstPersonDeadline = a_now + 1500ms;  // dialogue still closing; keep waiting
 				return;
 			}
@@ -576,6 +576,11 @@ namespace CCC
 				static const RE::BSFixedString shipHud{ "SpaceshipHudMenu" };
 				g_pilotingShip.store(ui->IsMenuOpen(shipHud), std::memory_order_release);
 			}
+			bool dialogueMenuOpen = true;
+			if (auto* ui = RE::UI::GetSingleton()) {
+				static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
+				dialogueMenuOpen = ui->IsMenuOpen(dialogueMenu);
+			}
 
 			{
 				std::scoped_lock lock{ g_lock };
@@ -593,6 +598,23 @@ namespace CCC
 				}
 
 				// While repairing, the game is briefly out of its dialogue camera on purpose.
+				// Fast exit: the game idles in its dialogue camera for a second or more after the
+				// conversation is over. Once the speaker is gone and the dialogue menu has closed,
+				// return to the player's normal view ourselves instead of waiting that out.
+				if (g_state.active && g_state.holdingExit && !repairing && camera && Settings::Get().fastExit &&
+					!dialogueMenuOpen && now - g_state.holdStarted > 120ms) {
+					const bool firstPerson = g_lastGameplayFirstPerson;
+					REX::INFO("Fast exit: conversation over; returning to {} person", firstPerson ? "first" : "third");
+					End();
+					if (firstPerson) {
+						g_restoreFirstPersonPending = true;
+						g_restoreFirstPersonDeadline = now + 1500ms;
+						g_restoreFirstPersonNext = now + 32ms;
+						camera->ForceFirstPerson();
+					} else {
+						camera->ForceThirdPerson();
+					}
+				}
 				if (g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue)) {
 					REX::INFO("Game left its dialogue camera; restoring camera");
 					End();
@@ -660,7 +682,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
