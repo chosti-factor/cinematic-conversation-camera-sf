@@ -444,7 +444,19 @@ namespace CCC::Camera
 		return pose;
 	}
 
-	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
+	namespace
+	{
+		// The dialogue camera uses a much narrower field of view than the gameplay cameras.
+		// When we hold a dialogue shot while the game is briefly in first or third person
+		// (the body rebuild), the picture would visibly zoom out and back in (seen in the
+		// user's 0.3.14 recording). Remember the dialogue camera's frustum and put it back on
+		// those frames.
+		std::optional<RE::NiFrustum> g_dialogueFrustum;
+		bool                         g_loggedDialogueFrustum = false;
+		bool                         g_loggedGameplayFrustum = false;
+	}
+
+	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta, bool a_holdDialogueFrustum)
 	{
 		(void)a_delta;
 		if (!a_root) {
@@ -506,6 +518,28 @@ namespace CCC::Camera
 			cam->local.translate = Scale(pw.rotate.Transpose() * Sub(world.translate, pw.translate), invScale);
 		}
 		cam->world = world;
+
+		auto& frustum = static_cast<RE::NiCamera*>(cam)->viewFrustum;
+		if (!a_holdDialogueFrustum) {
+			if (frustum.right > 0.0f && frustum.top > 0.0f && !frustum.ortho) {
+				g_dialogueFrustum = frustum;
+				if (!g_loggedDialogueFrustum) {
+					g_loggedDialogueFrustum = true;
+					REX::INFO("Dialogue camera frustum: left {:.4f} right {:.4f} top {:.4f} bottom {:.4f}",
+						frustum.left, frustum.right, frustum.top, frustum.bottom);
+				}
+			}
+		} else if (g_dialogueFrustum) {
+			if (!g_loggedGameplayFrustum) {
+				g_loggedGameplayFrustum = true;
+				REX::INFO("Gameplay camera frustum (being replaced while holding a dialogue shot): left {:.4f} right {:.4f} top {:.4f} bottom {:.4f}",
+					frustum.left, frustum.right, frustum.top, frustum.bottom);
+			}
+			frustum.left = g_dialogueFrustum->left;
+			frustum.right = g_dialogueFrustum->right;
+			frustum.top = g_dialogueFrustum->top;
+			frustum.bottom = g_dialogueFrustum->bottom;
+		}
 		return true;
 	}
 

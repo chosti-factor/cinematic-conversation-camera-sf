@@ -65,6 +65,7 @@ namespace CCC
 			std::optional<RE::NiPoint3>           smoothPlayerHead{};
 			bool                                  startedFirstPerson{ false };
 			bool                                  hidePlayer{ false };   // rebuild failed: keep the broken body out of frame
+			bool                                  povNpcShot{ false };   // shoot the NPC from the player's eyes until the first cut
 			std::chrono::steady_clock::time_point npcTalkStart{};
 			bool                                  loggedReturnPose{ false };
 			bool                                  holdingExit{ false };
@@ -191,6 +192,7 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
+			g_state.povNpcShot = g_lastGameplayFirstPerson;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -416,6 +418,9 @@ namespace CCC
 			}
 			if (subject != g_state.subject) {
 				REX::INFO("Cut to {} (frame {}; player head {:.2f} m above feet)", SubjectName(subject), g_state.framesThisConversation, rawPlayerHeadHeight);
+				if (subject == Subject::kPlayer) {
+					g_state.povNpcShot = false;  // from the next NPC shot on, over the shoulder
+				}
 				g_state.subject = subject;
 				g_state.lastCut = now;
 			}
@@ -440,9 +445,14 @@ namespace CCC
 			const auto& nearHeadRef = subject == Subject::kNpc ? *playerHead : *npcHead;
 			const auto& farHeadRef = subject == Subject::kNpc ? *npcHead : *playerHead;
 			const bool  nearSeated = farHeadRef.z - nearHeadRef.z > 0.2f;
-			const auto  pose = nearSeated || s.shotStyle == 1 ?
-				Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
-				Camera::OverShoulder(nearHeadRef, farHeadRef);
+			// First-person conversations open on the NPC from just in front of the player's
+			// eyes: while the body is being rebuilt (the game passes through first and third
+			// person), nothing of the player (arms, half-built body) is in front of the camera.
+			const bool  pov = subject == Subject::kNpc && g_state.povNpcShot;
+			const auto  pose = pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
+			                   nearSeated || s.shotStyle == 1 ?
+			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
+			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
 				return;
@@ -564,7 +574,7 @@ namespace CCC
 				return;
 			}
 			auto* camera = RE::PlayerCamera::GetSingleton();
-			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f, true)) {
 				if (g_repairMaskedFrames++ == 0) {
 					REX::INFO("Body repair: holding the shot from the {} camera hook", a_which);
 				}
@@ -617,6 +627,16 @@ namespace CCC
 			return head ? head->z - player->GetPosition().z : 0.0f;
 		}
 
+		// Right after we ask the game to change camera mode, it can render a frame before the
+		// new mode's own update (and our hook on it) has run; the recording showed one wildly
+		// aimed frame at that point. Re-apply the held shot immediately.
+		void HoldShotNow(RE::PlayerCamera* a_camera)
+		{
+			if (g_state.lastPose && Settings::Get().cameraTarget == 1) {
+				Camera::ApplyRender(a_camera->cameraRoot.get(), *g_state.lastPose, 0.0f, !a_camera->QCameraEquals(RE::CameraState::kDialogue));
+			}
+		}
+
 		// Asking the game for its dialogue camera when no conversation is live crashes it.
 		bool ReturnToDialogueCamera(RE::PlayerCamera* a_camera)
 		{
@@ -629,6 +649,7 @@ namespace CCC
 				return false;
 			}
 			a_camera->SetCameraState(RE::CameraState::kDialogue);
+			HoldShotNow(a_camera);
 			return true;
 		}
 
@@ -691,6 +712,7 @@ namespace CCC
 					g_repair.stage = RepairStage::kAcquireFirst;
 					a_camera->ForceFirstPerson();  // once; never repeated within an attempt
 				}
+				HoldShotNow(a_camera);
 				return;
 			}
 			if (!Speaker()) {
@@ -718,6 +740,7 @@ namespace CCC
 				g_repair.stage = RepairStage::kAcquireThird;
 				g_repair.stageStart = a_now;
 				a_camera->ForceThirdPerson();
+				HoldShotNow(a_camera);
 				return;
 			case RepairStage::kAcquireThird:
 				if (third) {
@@ -959,7 +982,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.14 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.15 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
