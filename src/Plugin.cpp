@@ -1251,6 +1251,13 @@ namespace CCC
 				g_repair.attempts = 0;
 				g_repair.nextAttemptAt = a_now + 2500ms;
 				REX::WARN("Body repair: refused ({}); the player stays out of frame for now, one more attempt in 2.5 s", a_why);
+				if (const auto flags = Settings::Get().bodyUpdateFlags; flags != 0) {
+					if (auto* player = RE::PlayerCharacter::GetSingleton()) {
+						REX::INFO("Body experiment: asking the game for a 3D update of the player with flags {} (head now {:.2f} m above feet)", flags, PlayerHeadAboveFeet());
+						player->Set3DUpdateFlag(static_cast<std::uint32_t>(flags));
+						REX::INFO("Body experiment: request made");
+					}
+				}
 				return;
 			}
 			if (attempts >= kRepairMaxAttempts || a_refused) {
@@ -1287,6 +1294,20 @@ namespace CCC
 				if (!early && (a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
 								  (!npcSpeaking && elapsed < kRepairFallbackStart))) {
 					return;
+				}
+				if (g_state.lateRetryDone && Settings::Get().bodyUpdateFlags != 0) {
+					const float height = PlayerHeadAboveFeet();
+					REX::INFO("Body experiment: 2.5 s after the 3D update request the head is {:.2f} m above feet", height);
+					if (height >= kStandingHeadHeight) {
+						REX::INFO("Body experiment: the full body is there without a camera switch");
+						g_state.needsBodyRepair = false;
+						g_state.bodyReady = true;
+						g_state.bodyReadyAt = a_now;
+						g_state.hidePlayer = false;
+						g_state.povNpcShot = false;
+						g_state.restoreFirstPerson = false;
+						return;
+					}
 				}
 				REX::INFO("Body repair: attempt {} (head {:.2f} m above feet, {} ms into the conversation)", g_repair.attempts + 1, PlayerHeadAboveFeet(),
 					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -1692,7 +1713,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.27 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.28 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

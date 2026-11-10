@@ -82,6 +82,11 @@ namespace CCC
 		// game appears to read when its dialogue camera starts.
 		float dialogueFov{ 0.0f };
 
+		// Test switch: when the game refuses the body rebuild (seated speakers), ask the game
+		// to refresh the player's 3D model directly with these update flags instead
+		// (1 model, 2 skin, 4 head, 8 face, 32 skeleton; add them up). 0 = off.
+		std::int32_t bodyUpdateFlags{ 0 };
+
 		static Settings& Get();
 		void             Load();
 	};
