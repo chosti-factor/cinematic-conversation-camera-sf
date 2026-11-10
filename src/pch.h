@@ -25,6 +25,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <format>
 #include <optional>
 #include <cstdint>
 #include <string>

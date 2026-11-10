@@ -121,21 +121,63 @@ namespace CCC
 			return g_state.subject == Subject::kNone ? Subject::kNpc : Subject::kPlayer;
 		}
 
+		// Which camera state the game is in, as an index into CameraState, or -1 if unknown.
+		int CurrentCameraStateIndex(RE::PlayerCamera* a_camera)
+		{
+			for (std::uint32_t i = 0; i < RE::CameraState::kTotal; ++i) {
+				if (a_camera->QCameraEquals(static_cast<RE::CameraState>(i))) {
+					return static_cast<int>(i);
+				}
+			}
+			return -1;
+		}
+
+		// Logs why a frame was skipped, but only when the reason changes, so the log
+		// shows each transition once instead of every frame.
+		std::string g_lastSkipReason;
+		void Skip(std::string a_reason)
+		{
+			if (a_reason != g_lastSkipReason) {
+				REX::INFO("Skipping camera frames: {}", a_reason);
+				g_lastSkipReason = std::move(a_reason);
+			}
+			End();
+		}
+
+		std::uint64_t g_hookCalls = 0;
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
-			auto*       camera = RE::PlayerCamera::GetSingleton();
-			if (!s.enabled || !camera || !camera->QCameraEquals(RE::CameraState::kDialogue)) {
-				End();
-				return;
+			if (++g_hookCalls == 1) {
+				REX::INFO("Dialogue camera update hook is running");
+			}
+
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (!s.enabled) {
+				return Skip("disabled in INI");
+			}
+			if (!camera) {
+				return Skip("no PlayerCamera");
 			}
 
 			auto* speaker = Speaker();
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			const int  stateIndex = CurrentCameraStateIndex(camera);
+			const bool inDialogueState = stateIndex == static_cast<int>(RE::CameraState::kDialogue);
+
 			if (!speaker || !player || speaker == player) {
-				End();
-				return;
+				return Skip(std::format("no dialogue speaker (camera state {}, speaker {:p})", stateIndex, static_cast<void*>(speaker)));
 			}
+			if (!inDialogueState) {
+				// Not fatal: the hook only runs while the dialogue camera updates, so a state
+				// mismatch most likely means our enum is off for this game version. Log it and
+				// keep going so the test build still tells us whether placement works.
+				if (g_state.framesThisConversation == 0) {
+					REX::WARN("Camera state is {} (expected {} for dialogue); continuing anyway", stateIndex, static_cast<int>(RE::CameraState::kDialogue));
+				}
+			}
+			g_lastSkipReason.clear();
 
 			if (!g_state.active) {
 				Begin();
@@ -167,12 +209,30 @@ namespace CCC
 				return;
 			}
 
+			// Safety net while we confirm Starfield's distance units: never put the camera
+			// further from the near character than a few times the gap between the two heads.
+			{
+				const auto& nearHead = subject == Subject::kNpc ? *playerHead : *npcHead;
+				const float hx = npcHead->x - playerHead->x, hy = npcHead->y - playerHead->y, hz = npcHead->z - playerHead->z;
+				const float headGap = std::sqrt(hx * hx + hy * hy + hz * hz);
+				const float cx = pose->position.x - nearHead.x, cy = pose->position.y - nearHead.y, cz = pose->position.z - nearHead.z;
+				const float camGap = std::sqrt(cx * cx + cy * cy + cz * cz);
+				if (camGap > 3.0f * headGap) {
+					LogFailure(std::format("camera would be {:.2f} units from the near head but the heads are only {:.2f} apart; not moving it", camGap, headGap));
+					return;
+				}
+			}
+
 			auto* root = camera->cameraRoot.get();
 			if (!Camera::Apply(root, *pose, delta)) {
 				LogFailure("could not apply pose");
 				return;
 			}
 
+			if (g_state.framesThisConversation == 1) {
+				const float dx = npcHead->x - playerHead->x, dy = npcHead->y - playerHead->y, dz = npcHead->z - playerHead->z;
+				REX::INFO("Distance between heads: {:.3f} game units (camera state {})", std::sqrt(dx * dx + dy * dy + dz * dz), stateIndex);
+			}
 			if (s.debugLog && g_state.framesThisConversation == 1) {
 				REX::INFO("First frame: camera root {:p}, npc head ({:.1f}, {:.1f}, {:.1f}), player head ({:.1f}, {:.1f}, {:.1f}), camera ({:.1f}, {:.1f}, {:.1f})",
 					static_cast<void*>(root),
@@ -232,7 +292,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		return true;
 	}
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.1.0 loaded (enabled={}, shotMode={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.1.1 loaded (enabled={}, shotMode={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.poseMode);
 	return true;
 }
