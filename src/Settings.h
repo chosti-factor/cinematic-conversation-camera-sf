@@ -15,11 +15,11 @@ namespace CCC
 		bool     debugLog{ true };
 		ShotMode shotMode{ ShotMode::kFollowSpeaker };
 
-		// Over-the-shoulder geometry, in game units (roughly 1 unit = 1.4 cm).
-		float distanceBehind{ 45.0f };   // how far behind the near character's head
-		float sideOffset{ 22.0f };       // shift sideways so the near shoulder frames the shot
-		float heightOffset{ 4.0f };      // raise or lower the camera relative to the head
-		float lookHeightOffset{ -2.0f }; // aim slightly below the eyes of the far character
+		// Over-the-shoulder geometry, in meters (Starfield's world unit; Skyrim's was ~1.43 cm).
+		float distanceBehind{ 0.65f };    // how far behind the near character's head
+		float sideOffset{ 0.32f };        // shift sideways so the near shoulder frames the shot
+		float heightOffset{ 0.06f };      // raise or lower the camera relative to the head
+		float lookHeightOffset{ -0.03f }; // aim slightly below the eyes of the far character
 
 		// Seconds to blend between shots. 0 = hard cut (CCC's default style).
 		float blendSeconds{ 0.0f };

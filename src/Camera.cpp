@@ -52,9 +52,9 @@ namespace CCC::Camera
 				}
 			}
 		}
-		// No skeleton match: estimate from the reference position (about eye height for a human).
-		auto pos = a_ref->GetPosition();
-		pos.z += 120.0f;
+		// No skeleton match: estimate from the 3D root (about eye height for a human, in meters).
+		auto pos = root->world.translate;
+		pos.z += 1.6f;
 		return Finite(pos) ? std::optional{ pos } : std::nullopt;
 	}
 
