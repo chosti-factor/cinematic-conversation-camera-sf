@@ -470,9 +470,27 @@ namespace CCC
 				}
 			}
 			g_lastSkipReason.clear();
-			if (g_repair.pendingMode == 17 && inDialogueState) {
-				LogRootAgainstPrediction("first dialogue camera update", camera->cameraRoot.get());
-				g_repair.pendingMode = -1;  // the dialogue camera's own update has run
+			// Back in the dialogue camera after the body rebuild. The camera root still reports
+			// the third-person position for a couple of frames after the switch (measured in
+			// 0.3.22: 1.7 m behind the eyes), while the picture is already drawn from the eyes;
+			// placing the shot against the reported root put it 1.7 m too far forward for two
+			// frames. Keep using the predicted root until the reported one has caught up.
+			const Camera::Pose* predictedRoot = nullptr;
+			if (g_repair.pendingMode == 17 && inDialogueState && g_repair.pendingRoot) {
+				const auto actual = Camera::PoseOf(camera->cameraRoot.get());
+				const auto& p = *g_repair.pendingRoot;
+				bool        caughtUp = false;
+				if (actual) {
+					const float dx = actual->position.x - p.position.x, dy = actual->position.y - p.position.y, dz = actual->position.z - p.position.z;
+					caughtUp = dx * dx + dy * dy + dz * dz < 0.3f * 0.3f;
+				}
+				const bool expired = std::chrono::steady_clock::now() - g_repair.pendingSince > 400ms;
+				if (caughtUp || expired) {
+					LogRootAgainstPrediction(caughtUp ? "camera root caught up" : "camera root never caught up", camera->cameraRoot.get());
+					g_repair.pendingMode = -1;
+				} else {
+					predictedRoot = &p;
+				}
 			}
 
 			if (!g_state.active) {
@@ -630,7 +648,7 @@ namespace CCC
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
-			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta);
+			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot);
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
 			}
@@ -877,14 +895,11 @@ namespace CCC
 				return;
 			}
 			auto* root = a_camera->cameraRoot.get();
-			if (g_repair.pendingMode >= 0 && std::chrono::steady_clock::now() - g_repair.pendingSince > 120ms) {
+			if (g_repair.pendingMode >= 0 && std::chrono::steady_clock::now() - g_repair.pendingSince > (g_repair.pendingMode == 17 ? 400ms : 120ms)) {
 				g_repair.pendingMode = -1;
 			}
 			if (g_repair.pendingMode >= 0 && g_repair.pendingRoot && g_repair.pendingShot) {
 				// A mode change is in flight: place the shot against where the root is going.
-				if (g_repair.pendingMode == 17) {
-					LogRootAgainstPrediction(a_camera->QCameraEquals(RE::CameraState::kDialogue) ? "main thread, game in dialogue camera" : "main thread, game not yet in dialogue camera", root);
-				}
 				Camera::ApplyRender(root, *g_repair.pendingShot, 0.0f, g_repair.pendingMode != 17, &*g_repair.pendingRoot);
 				return;
 			}
@@ -1348,7 +1363,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.22 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.23 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
