@@ -91,7 +91,10 @@ namespace CCC::Camera
 			float sideSign{ 1.0f };  // sign relative to cross(forward, up)
 		};
 
-		std::optional<Axes> g_axes;
+		// Starfield 1.16.244: the camera's rotation stores side / forward / up as rows 0 / 1 / 2.
+		// (Skyrim stores the same axes as columns.) Measured from the vanilla dialogue camera
+		// across eight conversations at different headings; Calibrate() keeps checking it.
+		std::optional<Axes> g_axes = Axes{ .columns = false, .forward = 1, .up = 2, .side = 0 };
 
 		RE::NiPoint3 Vector(const RE::NiMatrix3& a_m, bool a_columns, int a_i)
 		{
@@ -183,13 +186,22 @@ namespace CCC::Camera
 			best.upSign > 0 ? "+" : "-", best.up,
 			best.sideSign > 0 ? "+" : "-", best.side,
 			bestForward, bestUp,
-			confident ? (g_axes ? "(confirmed)" : "(learned)") : "(not confident, ignored)");
+			!confident ? "(not confident)" : "");
 		REX::INFO("Vanilla camera at ({:.2f}, {:.2f}, {:.2f}), speaker head at ({:.2f}, {:.2f}, {:.2f})",
 			a_root->world.translate.x, a_root->world.translate.y, a_root->world.translate.z,
 			a_speakerHead.x, a_speakerHead.y, a_speakerHead.z);
 
-		if (confident) {
-			g_axes = best;
+		// Measurement only. At some headings (e.g. exactly diagonal) the row and column
+		// layouts look the same, so a single reading can't be trusted to override the default.
+		if (confident && g_axes) {
+			const auto& a = *g_axes;
+			const bool  same = a.columns == best.columns && a.forward == best.forward && a.up == best.up &&
+			                  a.forwardSign == best.forwardSign && a.upSign == best.upSign && a.sideSign == best.sideSign;
+			if (same) {
+				REX::INFO("Camera axes match the built-in Starfield layout");
+			} else {
+				REX::WARN("Camera axes differ from the built-in layout this time (can happen at diagonal headings); keeping the built-in layout");
+			}
 		}
 		return IsCalibrated();
 	}
