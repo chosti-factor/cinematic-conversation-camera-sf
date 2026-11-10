@@ -58,10 +58,8 @@ namespace CCC::Camera
 		return Finite(pos) ? std::optional{ pos } : std::nullopt;
 	}
 
-	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead)
+	std::optional<Pose> Shot(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_behind, float a_side, float a_height)
 	{
-		const auto& s = Settings::Get();
-
 		// Work on the ground plane so the shot stays level even if heights differ.
 		const auto flat = Normalized({ a_farHead.x - a_nearHead.x, a_farHead.y - a_nearHead.y, 0.0f });
 		if (!flat) {
@@ -71,9 +69,15 @@ namespace CCC::Camera
 		const auto         right = Cross(*flat, up);
 
 		Pose pose;
-		pose.position = Add(a_nearHead, Add(Scale(*flat, -s.distanceBehind), Add(Scale(right, s.sideOffset), Scale(up, s.heightOffset))));
-		pose.lookAt = Add(a_farHead, Scale(up, s.lookHeightOffset));
+		pose.position = Add(a_nearHead, Add(Scale(*flat, -a_behind), Add(Scale(right, a_side), Scale(up, a_height))));
+		pose.lookAt = Add(a_farHead, Scale(up, Settings::Get().lookHeightOffset));
 		return pose;
+	}
+
+	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead)
+	{
+		const auto& s = Settings::Get();
+		return Shot(a_nearHead, a_farHead, s.distanceBehind, s.sideOffset, s.heightOffset);
 	}
 
 	namespace

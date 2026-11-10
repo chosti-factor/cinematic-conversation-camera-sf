@@ -86,16 +86,23 @@ namespace CCC
 			std::chrono::steady_clock::time_point nextRetry{};
 			std::chrono::steady_clock::time_point deadline{};
 			std::uint32_t                         settleFrames{ 0 };
+			std::uint32_t                         cycle{ 0 };
+			std::optional<RE::NiPoint3>           lastHead{};
+			std::chrono::steady_clock::time_point lastHeadSample{};
+			std::uint32_t                         stableSamples{ 0 };
 		} g_repair;
 
 		using namespace std::chrono_literals;
 		constexpr auto kRepairStartDelay = 400ms;  // let the game's own dialogue opening finish
 		constexpr auto kRepairHoldFirst = 48ms;
-		constexpr auto kRepairHoldThird = 96ms;
-		constexpr auto kRepairSettle = 80ms;
+		constexpr auto kRepairHoldThird = 150ms;     // minimum; then until the pose is stable
+		constexpr auto kRepairHoldThirdMax = 700ms;
+		constexpr auto kRepairSettle = 150ms;
+		constexpr float kStandingHeadHeight = 1.3f;  // head above feet when the full body is posed
 		constexpr auto kRepairRetry = 16ms;
 		constexpr auto kRepairTimeout = 1800ms;
-		constexpr std::uint32_t kRepairSettleFrames = 4;
+		constexpr std::uint32_t kRepairSettleFrames = 6;
+		constexpr std::uint32_t kRepairMaxCycles = 3;
 
 		bool                                  g_lastGameplayFirstPerson = false;
 		bool                                  g_restoreFirstPersonPending = false;
@@ -103,6 +110,9 @@ namespace CCC
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
 		std::uint32_t                         g_repairMaskedFrames = 0;
+		bool                                  g_viewCandidateKnown = false;
+		bool                                  g_viewCandidateFirst = false;
+		std::chrono::steady_clock::time_point g_viewCandidateSince{};
 		// -------------------------------------------------------------------------------
 
 		// Short pause after an NPC line ends before cutting to the player,
@@ -334,9 +344,15 @@ namespace CCC
 				g_state.subject = subject;
 			}
 
-			const auto pose = subject == Subject::kNpc ?
-				Camera::OverShoulder(*playerHead, *npcHead) :
-				Camera::OverShoulder(*npcHead, *playerHead);
+			// Over the near character's shoulder, unless the near character is clearly lower
+			// (sitting): a camera behind a seated head ends up inside the chair back, so step
+			// in front of and beside them instead and shoot a clean single of the other person.
+			const auto& nearHeadRef = subject == Subject::kNpc ? *playerHead : *npcHead;
+			const auto& farHeadRef = subject == Subject::kNpc ? *npcHead : *playerHead;
+			const bool  nearSeated = farHeadRef.z - nearHeadRef.z > 0.2f;
+			const auto  pose = nearSeated ?
+				Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
+				Camera::OverShoulder(nearHeadRef, farHeadRef);
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
 				return;
@@ -369,7 +385,7 @@ namespace CCC
 			}
 
 			// Main thread does the actual reveal (see Watchdog).
-			g_wantRevealPlayer = s.revealPlayer;
+			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady;
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
@@ -434,43 +450,59 @@ namespace CCC
 		// has stopped running its dialogue camera (load screen, scripted scene, menu that
 		// closes dialogue abruptly...), give everything back instead of leaving the view stuck.
 		// Also applies player visibility changes requested by the hook, on the main thread.
-		// Runs right after the game positions its camera each frame, in every camera mode.
-		// Used only during the body repair, when the game is briefly in real first/third
-		// person: re-apply our last shot so the cycle isn't visible. (0.3.2 did this from a
-		// main-thread task, at the wrong moment in the frame, and the picture alternated.)
-		struct PlayerCameraUpdateHook
+		// During the body repair the game is briefly in its real first- and third-person
+		// cameras. These run right after each of those cameras updates (the same kind of hook
+		// as the dialogue camera one) and re-apply our last shot so the cycle isn't visible.
+		void MaskRepairFrame(const char* a_which)
 		{
-			static void Thunk(RE::PlayerCamera* a_camera)
-			{
-				Hook(a_camera);
-				if (!g_hooksSafe || !a_camera) {
-					return;
-				}
-				std::unique_lock lock{ g_lock, std::try_to_lock };
-				if (!lock.owns_lock()) {
-					return;
-				}
-				static bool logged = false;
-				if (!logged) {
-					logged = true;
-					REX::INFO("Player camera update hook is running");
-				}
-				if (g_state.active && g_repair.stage != RepairStage::kIdle && g_state.lastPose && Settings::Get().cameraTarget == 1 &&
-					!a_camera->QCameraEquals(RE::CameraState::kDialogue)) {
-					if (Camera::ApplyRender(a_camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
-						++g_repairMaskedFrames;
-					}
+			if (!g_hooksSafe) {
+				return;
+			}
+			std::unique_lock lock{ g_lock, std::try_to_lock };
+			if (!lock.owns_lock()) {
+				return;
+			}
+			if (!g_state.active || g_repair.stage == RepairStage::kIdle || !g_state.lastPose || Settings::Get().cameraTarget != 1) {
+				return;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+				if (g_repairMaskedFrames++ == 0) {
+					REX::INFO("Body repair: holding the shot from the {} camera hook", a_which);
 				}
 			}
+		}
 
-			static inline REL::THookVFT<void(RE::PlayerCamera*)> Hook{
-				"CCC_PlayerCameraUpdate",
-				REL::EHookStep::None,
-				RE::VTABLE::PlayerCamera[0],
-				3,  // TESCamera::Update
-				Thunk
+		struct FirstPersonUpdateHook
+		{
+			static void Thunk(void* a_state, void* a_arg)
+			{
+				Hook(a_state, a_arg);
+				MaskRepairFrame("first-person");
+			}
+			static inline REL::THookVFT<void(void*, void*)> Hook{
+				"CCC_FirstPersonUpdate", REL::EHookStep::None, RE::VTABLE::FirstPersonState[0], kDialogueUpdateVtableIndex, Thunk
 			};
 		};
+
+		struct ThirdPersonUpdateHook
+		{
+			static void Thunk(void* a_state, void* a_arg)
+			{
+				Hook(a_state, a_arg);
+				MaskRepairFrame("third-person");
+			}
+			static inline REL::THookVFT<void(void*, void*)> Hook{
+				"CCC_ThirdPersonUpdate", REL::EHookStep::None, RE::VTABLE::ThirdPersonState[0], kDialogueUpdateVtableIndex, Thunk
+			};
+		};
+
+		float PlayerHeadAboveFeet()
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			const auto head = player ? Camera::HeadPosition(player) : std::nullopt;
+			return head ? head->z - player->GetPosition().z : 0.0f;
+		}
 
 		void FailRepair(RE::PlayerCamera* a_camera, const char* a_why)
 		{
@@ -492,7 +524,7 @@ namespace CCC
 				if (!dialogue || a_now - g_state.started < kRepairStartDelay) {
 					return;
 				}
-				REX::INFO("Body repair: started in first person; cycling first -> third -> dialogue");
+				REX::INFO("Body repair: started in first person; cycling first -> third -> dialogue (head {:.2f} m above feet)", PlayerHeadAboveFeet());
 				g_repairMaskedFrames = 0;
 				g_repair.stage = RepairStage::kAcquireFirst;
 				g_repair.deadline = a_now + kRepairTimeout;
@@ -538,13 +570,31 @@ namespace CCC
 				}
 				return;
 			case RepairStage::kHoldThird:
-				if (a_now - g_repair.stageStart < kRepairHoldThird) {
+			{
+				// The third-person skeleton exists a few frames before the animation system has
+				// posed it. Stay in third person until the head has stopped moving and is at
+				// standing height, not just for a fixed time.
+				if (a_now - g_repair.lastHeadSample >= 16ms) {
+					g_repair.lastHeadSample = a_now;
+					auto*      player = RE::PlayerCharacter::GetSingleton();
+					const auto head = player ? Camera::HeadPosition(player) : std::nullopt;
+					if (head && g_repair.lastHead) {
+						const float dx = head->x - g_repair.lastHead->x, dy = head->y - g_repair.lastHead->y, dz = head->z - g_repair.lastHead->z;
+						const bool  still = dx * dx + dy * dy + dz * dz < 0.0025f;
+						const bool  standing = head->z - player->GetPosition().z > kStandingHeadHeight;
+						g_repair.stableSamples = still && standing ? g_repair.stableSamples + 1 : 0;
+					}
+					g_repair.lastHead = head;
+				}
+				const auto held = a_now - g_repair.stageStart;
+				if (held < kRepairHoldThird || (g_repair.stableSamples < 3 && held < kRepairHoldThirdMax)) {
 					return;
 				}
 				g_repair.stage = RepairStage::kRestoreDialogue;
 				g_repair.nextRetry = a_now + 32ms;
 				a_camera->SetCameraState(RE::CameraState::kDialogue);
 				return;
+			}
 			case RepairStage::kRestoreDialogue:
 				if (dialogue) {
 					g_repair.stage = RepairStage::kSettle;
@@ -564,11 +614,25 @@ namespace CCC
 				if (a_now - g_repair.stageStart < kRepairSettle || g_repair.settleFrames < kRepairSettleFrames) {
 					return;
 				}
-				REX::INFO("Body repair: done; the player can be shown (shot held for {} frames during the cycle)", g_repairMaskedFrames);
+			{
+				const float height = PlayerHeadAboveFeet();
+				const auto  cycle = g_repair.cycle + 1;
+				if (height < kStandingHeadHeight && cycle < kRepairMaxCycles) {
+					REX::WARN("Body repair: head only {:.2f} m above feet after cycle {}; trying again", height, cycle);
+					g_repair = Repair{};
+					g_repair.cycle = cycle;
+					g_repair.stage = RepairStage::kAcquireFirst;
+					g_repair.deadline = a_now + kRepairTimeout;
+					g_repair.nextRetry = a_now + kRepairRetry;
+					a_camera->ForceFirstPerson();
+					return;
+				}
+				REX::INFO("Body repair: done after {} cycle(s); head {:.2f} m above feet; shot held for {} frames during the cycle", cycle, height, g_repairMaskedFrames);
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = true;
 				return;
+			}
 			default:
 				return;
 			}
@@ -625,10 +689,19 @@ namespace CCC
 
 				if (camera && !g_state.active && !g_restoreFirstPersonPending) {
 					// Remember which view the player uses outside conversations.
-					if (camera->QCameraEquals(RE::CameraState::kFirstPerson) || camera->QCameraEquals(RE::CameraState::kIronSights)) {
-						g_lastGameplayFirstPerson = true;
-					} else if (camera->QCameraEquals(RE::CameraState::kThirdPerson)) {
-						g_lastGameplayFirstPerson = false;
+					// Starfield can pass through third person for a moment while opening a
+					// conversation from first person, so only accept a change once it has
+					// lasted long enough to be real gameplay.
+					const bool first = camera->QCameraEquals(RE::CameraState::kFirstPerson) || camera->QCameraEquals(RE::CameraState::kIronSights);
+					const bool third = camera->QCameraEquals(RE::CameraState::kThirdPerson);
+					if (first || third) {
+						if (!g_viewCandidateKnown || g_viewCandidateFirst != first) {
+							g_viewCandidateKnown = true;
+							g_viewCandidateFirst = first;
+							g_viewCandidateSince = now;
+						} else if (now - g_viewCandidateSince >= 120ms) {
+							g_lastGameplayFirstPerson = first;
+						}
 					}
 				}
 
@@ -688,8 +761,8 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		REX::CRITICAL("Could not install the dialogue camera hook. Camera features disabled.");
 		return true;
 	}
-	if (!CCC::PlayerCameraUpdateHook::Hook.Enable()) {
-		REX::WARN("Could not install the player camera hook; the first-person body cycle will be visible");
+	if (!CCC::FirstPersonUpdateHook::Hook.Enable() || !CCC::ThirdPersonUpdateHook::Hook.Enable()) {
+		REX::WARN("Could not install the first/third-person camera hooks; the body cycle will be visible");
 	}
 
 	if (const auto* tasks = SFSE::GetTaskInterface()) {
@@ -699,7 +772,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
