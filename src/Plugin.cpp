@@ -55,6 +55,12 @@ namespace CCC
 			bool                                  needsBodyRepair{ false };  // started from first person
 			std::uint64_t                         framesAtRepairEnd{ 0 };
 			bool                                  lateRetryDone{ false };
+			bool                                  directRequested{ false };
+			bool                                  directFailed{ false };
+			int                                   directStable{ 0 };
+			std::chrono::steady_clock::time_point directAt{};
+			std::chrono::steady_clock::time_point directLastSample{};
+			std::optional<RE::NiPoint3>           directLastHead{};
 			bool                                  bodyReady{ true };         // safe to show the player
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
@@ -841,6 +847,8 @@ namespace CCC
 					g_state.bodyReady = false;
 					g_state.needsBodyRepair = true;
 					g_state.started = now - kRepairStartDelay;  // no opening delay this time
+					g_state.directRequested = false;
+					g_state.directFailed = false;
 				}
 			}
 
@@ -1251,13 +1259,6 @@ namespace CCC
 				g_repair.attempts = 0;
 				g_repair.nextAttemptAt = a_now + 2500ms;
 				REX::WARN("Body repair: refused ({}); the player stays out of frame for now, one more attempt in 2.5 s", a_why);
-				if (const auto flags = Settings::Get().bodyUpdateFlags; flags != 0) {
-					if (auto* player = RE::PlayerCharacter::GetSingleton()) {
-						REX::INFO("Body experiment: asking the game for a 3D update of the player with flags {} (head now {:.2f} m above feet)", flags, PlayerHeadAboveFeet());
-						player->Set3DUpdateFlag(static_cast<std::uint32_t>(flags));
-						REX::INFO("Body experiment: request made");
-					}
-				}
 				return;
 			}
 			if (attempts >= kRepairMaxAttempts || a_refused) {
@@ -1291,15 +1292,38 @@ namespace CCC
 				if (!dialogue) {
 					return;
 				}
-				if (!early && (a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
-								  (!npcSpeaking && elapsed < kRepairFallbackStart))) {
-					return;
-				}
-				if (g_state.lateRetryDone && Settings::Get().bodyUpdateFlags != 0) {
-					const float height = PlayerHeadAboveFeet();
-					REX::INFO("Body experiment: 2.5 s after the 3D update request the head is {:.2f} m above feet", height);
-					if (height >= kStandingHeadHeight) {
-						REX::INFO("Body experiment: the full body is there without a camera switch");
+				// Direct method: ask the game to refresh the player's 3D model. With the dialogue
+				// camera active it builds the full body, with no camera switching at all.
+				if (Settings::Get().bodyRebuildMethod == 1 && !g_state.directFailed) {
+					auto* player = RE::PlayerCharacter::GetSingleton();
+					if (!player) {
+						return;
+					}
+					if (!g_state.directRequested) {
+						g_state.directRequested = true;
+						g_state.directAt = a_now;
+						g_state.directStable = 0;
+						g_state.directLastHead.reset();
+						g_state.directLastSample = a_now;
+						REX::INFO("Body rebuild (direct): 3D update requested with flags {} (head {:.2f} m above feet, {} ms into the conversation)",
+							Settings::Get().bodyUpdateFlags, PlayerHeadAboveFeet(), std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+						player->Set3DUpdateFlag(static_cast<std::uint32_t>(Settings::Get().bodyUpdateFlags));
+						return;
+					}
+					if (a_now - g_state.directLastSample >= 12ms) {
+						g_state.directLastSample = a_now;
+						const auto head = Camera::HeadPosition(player);
+						if (head && g_state.directLastHead) {
+							const float dx = head->x - g_state.directLastHead->x, dy = head->y - g_state.directLastHead->y, dz = head->z - g_state.directLastHead->z;
+							const bool  still = dx * dx + dy * dy + dz * dz < 0.0025f;
+							const bool  standing = head->z - player->GetPosition().z >= kStandingHeadHeight;
+							g_state.directStable = still && standing ? g_state.directStable + 1 : 0;
+						}
+						g_state.directLastHead = head;
+					}
+					const auto waited = std::chrono::duration_cast<std::chrono::milliseconds>(a_now - g_state.directAt).count();
+					if (g_state.directStable >= 3) {
+						REX::INFO("Body rebuild (direct): full body ready after {} ms (head {:.2f} m above feet)", waited, PlayerHeadAboveFeet());
 						g_state.needsBodyRepair = false;
 						g_state.bodyReady = true;
 						g_state.bodyReadyAt = a_now;
@@ -1308,6 +1332,15 @@ namespace CCC
 						g_state.restoreFirstPerson = false;
 						return;
 					}
+					if (waited < 700) {
+						return;
+					}
+					REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); falling back to the camera cycle", waited, PlayerHeadAboveFeet());
+					g_state.directFailed = true;
+				}
+				if (!early && (a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
+								  (!npcSpeaking && elapsed < kRepairFallbackStart))) {
+					return;
 				}
 				REX::INFO("Body repair: attempt {} (head {:.2f} m above feet, {} ms into the conversation)", g_repair.attempts + 1, PlayerHeadAboveFeet(),
 					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -1713,7 +1746,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.28 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.29 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
