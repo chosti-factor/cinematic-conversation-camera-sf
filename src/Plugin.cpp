@@ -178,6 +178,8 @@ namespace CCC
 		std::timed_mutex                      g_lock;
 	std::atomic<DWORD>                    g_lockHolder{ 0 };  // main thread while it holds g_lock
 	std::atomic<int>                      g_hookLockMisses{ 0 };
+	void*                                 g_dialogueStateObject = nullptr;
+	int                                   g_returnScanFrames = 0;
 
 	// The camera hooks run on engine worker threads (sometimes on the main thread). When the
 	// main thread has our state locked they used to skip their frame, which left one frame
@@ -338,6 +340,43 @@ namespace CCC
 			REX::INFO("FOV scan, mode {}, {}:{}", a_mode, a_what, text);
 		}
 
+		// Diagnostic: look inside a game object for a stored position near a_near (within
+		// a_radius metres), to find where the dialogue camera keeps its own, current position.
+		std::size_t ScanPositions(const void* a_base, std::size_t a_from, std::size_t a_to, const RE::NiPoint3& a_near, float a_radius, std::uint32_t* a_offsets, float* a_values, std::size_t a_max)
+		{
+			std::size_t n = 0;
+			__try {
+				for (std::size_t off = a_from; off + 12 <= a_to && n < a_max; off += 4) {
+					const float* v = reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
+					const float  dx = v[0] - a_near.x, dy = v[1] - a_near.y, dz = v[2] - a_near.z;
+					if (dx * dx + dy * dy + dz * dz < a_radius * a_radius) {
+						a_offsets[n] = static_cast<std::uint32_t>(off);
+						a_values[n * 3] = v[0];
+						a_values[n * 3 + 1] = v[1];
+						a_values[n * 3 + 2] = v[2];
+						++n;
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+			return n;
+		}
+
+		void LogPositionCandidates(const char* a_what, const void* a_base, std::size_t a_from, std::size_t a_to, const RE::NiPoint3& a_near)
+		{
+			if (!a_base) {
+				return;
+			}
+			std::uint32_t offsets[24]{};
+			float         values[72]{};
+			const auto    n = ScanPositions(a_base, a_from, a_to, a_near, 2.5f, offsets, values, 24);
+			std::string   text;
+			for (std::size_t i = 0; i < n; ++i) {
+				text += std::format(" +{:X}=({:.2f} {:.2f} {:.2f})", offsets[i], values[i * 3] - a_near.x, values[i * 3 + 1] - a_near.y, values[i * 3 + 2] - a_near.z);
+			}
+			REX::INFO("Position scan, {} (offsets from the predicted spot):{}", a_what, text.empty() ? " none" : text);
+		}
+
 		// Diagnostic: list the game's own INI settings that mention field of view, the
 		// dialogue camera or the camera in general, with their current values. The game's
 		// dialogue zoom is most likely one of these, and they can be changed at run time.
@@ -485,6 +524,29 @@ namespace CCC
 					caughtUp = dx * dx + dy * dy + dz * dz < 0.3f * 0.3f;
 				}
 				const bool expired = std::chrono::steady_clock::now() - g_repair.pendingSince > 400ms;
+				if (g_returnScanFrames < 12) {
+					++g_returnScanFrames;
+					LogRootAgainstPrediction(caughtUp ? "reported root, caught up" : "reported root, stale", camera->cameraRoot.get());
+					LogPositionCandidates("dialogue camera state", g_dialogueStateObject, 0x8, 0x340, p.position);
+					LogPositionCandidates("player camera", camera, 0x8, 0x200, p.position);
+				}
+				if (caughtUp && actual) {
+					// What is the dialogue camera's real spot made of? Compare with everything known.
+					const auto pHead = Camera::HeadPosition(player);
+					const auto nHead = Camera::HeadPosition(speaker);
+					const auto feet = player->GetPosition();
+					const auto nFeet = speaker->GetPosition();
+					const auto& a = *actual;
+					REX::INFO("Dialogue root facts: root ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f}); player feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}); npc feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f})",
+						a.position.x, a.position.y, a.position.z, (a.lookAt.x - a.position.x) / 5.0f, (a.lookAt.y - a.position.y) / 5.0f, (a.lookAt.z - a.position.z) / 5.0f,
+						feet.x, feet.y, feet.z, pHead ? pHead->x : 0.0f, pHead ? pHead->y : 0.0f, pHead ? pHead->z : 0.0f,
+						nFeet.x, nFeet.y, nFeet.z, nHead ? nHead->x : 0.0f, nHead ? nHead->y : 0.0f, nHead ? nHead->z : 0.0f);
+					if (g_firstPersonView) {
+						const auto& f = *g_firstPersonView;
+						REX::INFO("Dialogue root facts: first-person view was at ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f})",
+							f.position.x, f.position.y, f.position.z, (f.lookAt.x - f.position.x) / 5.0f, (f.lookAt.y - f.position.y) / 5.0f, (f.lookAt.z - f.position.z) / 5.0f);
+					}
+				}
 				if (caughtUp || expired) {
 					LogRootAgainstPrediction(caughtUp ? "camera root caught up" : "camera root never caught up", camera->cameraRoot.get());
 					g_repair.pendingMode = -1;
@@ -680,6 +742,7 @@ namespace CCC
 			static void Thunk(void* a_dialogueState)
 			{
 				Hook(a_dialogueState);
+				g_dialogueStateObject = a_dialogueState;
 				if (g_hooksSafe) {
 					auto lock = HookLock();
 					if (!lock.owns_lock()) {
@@ -1363,7 +1426,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.23 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.24 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
