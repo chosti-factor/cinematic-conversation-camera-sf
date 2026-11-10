@@ -56,6 +56,11 @@ namespace CCC
 			bool                                  bodyReady{ true };         // safe to show the player
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
+			bool                                  npcEverTalked{ false };
+			std::chrono::steady_clock::time_point lastCut{};
+			std::chrono::steady_clock::time_point bodyReadyAt{};   // earliest time the player may be shown
+			std::uint32_t                         lowHeadChecks{ 0 };
+			std::uint32_t                         reRepairs{ 0 };
 			std::optional<RE::NiPoint3>           smoothNpcHead{};
 			std::optional<RE::NiPoint3>           smoothPlayerHead{};
 			bool                                  holdingExit{ false };
@@ -201,6 +206,12 @@ namespace CCC
 			const bool talking = a_speaker->IsTalking();
 			if (talking) {
 				g_state.npcWasTalking = true;
+				g_state.npcEverTalked = true;
+				return Subject::kNpc;
+			}
+			// Opening: the NPC usually speaks first but their line starts a moment after the
+			// conversation does. Stay on them instead of flicking to the player and back.
+			if (!g_state.npcEverTalked && a_now - g_state.started < 1200ms) {
 				return Subject::kNpc;
 			}
 			if (g_state.npcWasTalking) {
@@ -305,6 +316,8 @@ namespace CCC
 				return;
 			}
 
+			float rawPlayerHeadHeight = 0.0f;
+
 			// Follow the heads through a short low-pass filter instead of frame by frame. Raw
 			// bone positions are sampled mid-animation on a worker thread, so tracking them
 			// directly made the picture vibrate when someone walked; this also steadies the
@@ -329,6 +342,7 @@ namespace CCC
 				if (g_state.framesThisConversation == 1) {
 					REX::INFO("Head heights: npc {:.3f}, player {:.3f} (difference {:+.3f} m)", npcHead->z, playerHead->z, playerHead->z - npcHead->z);
 				}
+				rawPlayerHeadHeight = playerHead->z - player->GetPosition().z;
 				npcHead = follow(g_state.smoothNpcHead, *npcHead);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
 			}
@@ -338,12 +352,32 @@ namespace CCC
 			}
 
 			auto subject = ChooseSubject(speaker, now);
-			if (!g_state.bodyReady) {
+			if (!g_state.bodyReady || now < g_state.bodyReadyAt) {
 				subject = Subject::kNpc;  // don't show the player until their body is rebuilt
 			}
+			// Never cut again within a fraction of a second of the last cut.
+			if (subject != g_state.subject && g_state.subject != Subject::kNone && now - g_state.lastCut < 600ms &&
+				!(subject == Subject::kNpc && !g_state.bodyReady)) {
+				subject = g_state.subject;
+			}
 			if (subject != g_state.subject) {
-				REX::INFO("Cut to {} (frame {})", SubjectName(subject), g_state.framesThisConversation);
+				REX::INFO("Cut to {} (frame {}; player head {:.2f} m above feet)", SubjectName(subject), g_state.framesThisConversation, rawPlayerHeadHeight);
 				g_state.subject = subject;
+				g_state.lastCut = now;
+			}
+
+			// The game can put the player back into the first-person body form mid-conversation.
+			// If we're showing them and their head drops to that height, rebuild the body again.
+			if (g_state.restoreFirstPerson && g_state.bodyReady && g_state.framesThisConversation % 10 == 0) {
+				g_state.lowHeadChecks = rawPlayerHeadHeight < kStandingHeadHeight ? g_state.lowHeadChecks + 1 : 0;
+				if (g_state.lowHeadChecks >= 3 && g_state.reRepairs < 2) {
+					++g_state.reRepairs;
+					g_state.lowHeadChecks = 0;
+					REX::WARN("Player body is back in first-person form (head {:.2f} m above feet); rebuilding it again", rawPlayerHeadHeight);
+					g_state.bodyReady = false;
+					g_state.needsBodyRepair = true;
+					g_state.started = now - kRepairStartDelay;  // no opening delay this time
+				}
 			}
 
 			// Over the near character's shoulder, unless the near character is clearly lower
@@ -352,7 +386,7 @@ namespace CCC
 			const auto& nearHeadRef = subject == Subject::kNpc ? *playerHead : *npcHead;
 			const auto& farHeadRef = subject == Subject::kNpc ? *npcHead : *playerHead;
 			const bool  nearSeated = farHeadRef.z - nearHeadRef.z > 0.2f;
-			const auto  pose = nearSeated ?
+			const auto  pose = nearSeated || s.shotStyle == 1 ?
 				Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
 				Camera::OverShoulder(nearHeadRef, farHeadRef);
 			if (!pose) {
@@ -633,6 +667,7 @@ namespace CCC
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = true;
+				g_state.bodyReadyAt = a_now + 300ms;  // a few more frames for the pose to settle
 				return;
 			}
 			default:
@@ -774,7 +809,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.7 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

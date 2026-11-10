@@ -25,6 +25,12 @@ namespace CCC
 		// own camera while it finishes closing the conversation (about 1.5 s in total).
 		float exitHoldSeconds{ 0.5f };
 
+		// 0 = over the near character's shoulder (camera behind them; can end up inside a
+		//     wall or chair they are backed against)
+		// 1 = always from in front of and beside the near character (the seated shot), which
+		//     keeps the camera in the open space between the two people
+		std::int32_t shotStyle{ 0 };
+
 		// Shot used when the near character is sitting: camera this far in front of their
 		// head (toward the other person), to the side, and above it.
 		float seatedForward{ 0.25f };
