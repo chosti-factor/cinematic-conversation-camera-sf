@@ -456,7 +456,7 @@ namespace CCC::Camera
 		bool                         g_loggedGameplayFrustum = false;
 	}
 
-	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta, bool a_holdDialogueFrustum)
+	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta, bool a_holdDialogueFrustum, const Pose* a_predictedRoot)
 	{
 		(void)a_delta;
 		if (!a_root) {
@@ -475,7 +475,16 @@ namespace CCC::Camera
 		if (!cam || cam->parent != a_root) {
 			return false;
 		}
-		const auto pw = RootWorld(a_root);
+		// Normally relative to where the camera root is now. Right after a camera-mode change
+		// the game moves the root before our hook on the new mode gets a turn; the caller can
+		// say where the root is about to be, so that frame still comes out right.
+		auto pw = RootWorld(a_root);
+		if (a_predictedRoot) {
+			if (const auto predictedRot = BuildRotation(*a_predictedRoot)) {
+				pw.rotate = *predictedRot;
+				pw.translate = a_predictedRoot->position;
+			}
+		}
 
 		if (g_renderCam != cam) {
 			RestoreRender();

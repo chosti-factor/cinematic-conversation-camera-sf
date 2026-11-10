@@ -32,7 +32,8 @@ namespace CCC::Camera
 	// leaving the game's logical camera where the game put it.
 	// a_holdDialogueFrustum: the game is not in its dialogue camera right now; keep the
 	// dialogue camera's field of view on this frame as well as its position.
-	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta, bool a_holdDialogueFrustum = false);
+	// a_predictedRoot: compute against this camera-root pose instead of the root's current one.
+	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta, bool a_holdDialogueFrustum = false, const Pose* a_predictedRoot = nullptr);
 
 	// Where the game's camera (the camera root) is and what it is looking at right now.
 	std::optional<Pose> PoseOf(RE::NiAVObject* a_root);
