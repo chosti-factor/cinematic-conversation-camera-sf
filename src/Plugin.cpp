@@ -175,7 +175,27 @@ namespace CCC
 		// The hook runs on engine worker threads and the watchdog on the main thread.
 		// The hook never waits for this lock (it skips the frame instead), so the engine's
 		// worker threads can never be held up by us.
-		std::mutex                            g_lock;
+		std::timed_mutex                      g_lock;
+	std::atomic<DWORD>                    g_lockHolder{ 0 };  // main thread while it holds g_lock
+	std::atomic<int>                      g_hookLockMisses{ 0 };
+
+	// The camera hooks run on engine worker threads (sometimes on the main thread). When the
+	// main thread has our state locked they used to skip their frame, which left one frame
+	// of a stale camera on screen at mode changes. Wait briefly instead; only give up at once
+	// when this very thread holds the lock (the game called the hook from inside our own call).
+	std::unique_lock<std::timed_mutex> HookLock()
+	{
+		if (g_lockHolder.load() == ::GetCurrentThreadId()) {
+			++g_hookLockMisses;
+			return std::unique_lock<std::timed_mutex>{};
+		}
+		std::unique_lock<std::timed_mutex> lock{ g_lock, std::chrono::milliseconds(4) };
+		if (!lock.owns_lock()) {
+			++g_hookLockMisses;
+		}
+		return lock;
+	}
+
 		std::chrono::steady_clock::time_point g_lastHookTime{};
 
 		// Player visibility changes go through the engine's scene graph, which isn't safe to
@@ -638,7 +658,7 @@ namespace CCC
 			{
 				Hook(a_dialogueState);
 				if (g_hooksSafe) {
-					std::unique_lock lock{ g_lock, std::try_to_lock };
+					auto lock = HookLock();
 					if (!lock.owns_lock()) {
 						return;  // main thread is busy with our state; never stall the engine
 					}
@@ -762,7 +782,7 @@ namespace CCC
 			if (!g_hooksSafe) {
 				return;
 			}
-			std::unique_lock lock{ g_lock, std::try_to_lock };
+			auto lock = HookLock();
 			if (!lock.owns_lock()) {
 				return;
 			}
@@ -784,6 +804,11 @@ namespace CCC
 					LearnThirdFromFirst(*pose);
 				}
 			}
+			// Once the dialogue camera has been asked for, a late update of the mode being left
+			// must not put the held view back: it would be drawn against the dialogue camera.
+			if (g_repair.pendingMode == 17 || camera->QCameraEquals(RE::CameraState::kDialogue)) {
+				return;
+			}
 			if (Camera::ApplyRender(camera->cameraRoot.get(), *held, 0.0f, true)) {
 				if (g_repairMaskedFrames++ == 0) {
 					REX::INFO("Body repair: holding the shot from the {} camera hook", a_which);
@@ -796,7 +821,7 @@ namespace CCC
 			if (!g_hooksSafe) {
 				return;
 			}
-			std::unique_lock lock{ g_lock, std::try_to_lock };
+			auto lock = HookLock();
 			if (!lock.owns_lock() || g_state.active) {
 				return;
 			}
@@ -1085,7 +1110,7 @@ namespace CCC
 				if (height < kStandingHeadHeight) {
 					return AbortAttempt(a_camera, a_now, "the full body was not built");
 				}
-				REX::INFO("Body repair: done on attempt {}; head {:.2f} m above feet; shot held for {} frames during the cycle", g_repair.attempts + 1, height, g_repairMaskedFrames);
+				REX::INFO("Body repair: done on attempt {}; head {:.2f} m above feet; shot held for {} frames during the cycle; {} camera updates missed so far this session", g_repair.attempts + 1, height, g_repairMaskedFrames, g_hookLockMisses.load());
 				if (g_repair.early) {
 					// Nothing of the conversation has been shown yet, so the first shot of the NPC
 					// can be the normal over-the-shoulder one.
@@ -1189,6 +1214,11 @@ namespace CCC
 
 			{
 				std::scoped_lock lock{ g_lock };
+			struct Holder
+			{
+				Holder() { g_lockHolder = ::GetCurrentThreadId(); }
+				~Holder() { g_lockHolder = 0; }
+			} holder;
 				const auto       now = std::chrono::steady_clock::now();
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
@@ -1290,7 +1320,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.20 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.21 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
