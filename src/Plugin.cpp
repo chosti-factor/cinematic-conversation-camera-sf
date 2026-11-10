@@ -98,7 +98,9 @@ namespace CCC
 		constexpr auto kRepairHoldThird = 150ms;     // minimum; then until the pose is stable
 		constexpr auto kRepairHoldThirdMax = 700ms;
 		constexpr auto kRepairSettle = 150ms;
-		constexpr float kStandingHeadHeight = 1.3f;  // head above feet when the full body is posed
+		// Head above feet: measured 1.62 m with the full third-person body posed, 1.52 m while
+		// the body is still in its first-person form (0.3.5 log). Anything under this is not ready.
+		constexpr float kStandingHeadHeight = 1.58f;
 		constexpr auto kRepairRetry = 16ms;
 		constexpr auto kRepairTimeout = 1800ms;
 		constexpr std::uint32_t kRepairSettleFrames = 6;
@@ -772,7 +774,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
