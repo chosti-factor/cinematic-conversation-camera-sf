@@ -8,6 +8,7 @@
 #include "SFSE/SFSE.h"
 
 #include "REL/THook.h"
+#include "RE/IDs_VTABLE.h"
 
 #include "RE/A/Actor.h"
 #include "RE/M/MenuTopicManager.h"
