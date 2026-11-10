@@ -428,6 +428,36 @@ namespace CCC::Camera
 		}
 	}
 
+	std::string DescribeRoot(RE::NiAVObject* a_root)
+	{
+		if (!a_root) {
+			return "no root";
+		}
+		const auto  fresh = FreshWorld(a_root);
+		const auto& w = a_root->world.translate;
+		const auto& l = a_root->local.translate;
+		auto        text = std::format("root world ({:.2f} {:.2f} {:.2f}) local ({:.2f} {:.2f} {:.2f}) derived ({:.2f} {:.2f} {:.2f})",
+				   w.x, w.y, w.z, l.x, l.y, l.z, fresh.translate.x, fresh.translate.y, fresh.translate.z);
+		if (const auto* parent = a_root->parent) {
+			const auto& pw = parent->world.translate;
+			const auto& pl = parent->local.translate;
+			text += std::format("; parent {:p} world ({:.2f} {:.2f} {:.2f}) local ({:.2f} {:.2f} {:.2f})", static_cast<const void*>(parent), pw.x, pw.y, pw.z, pl.x, pl.y, pl.z);
+		} else {
+			text += "; no parent";
+		}
+		if (g_renderCam) {
+			const auto& cw = g_renderCam->world.translate;
+			const auto& cl = g_renderCam->local.translate;
+			text += std::format("; render camera world ({:.2f} {:.2f} {:.2f}) local ({:.2f} {:.2f} {:.2f})", cw.x, cw.y, cw.z, cl.x, cl.y, cl.z);
+		}
+		return text;
+	}
+
+	void* RenderCameraObject()
+	{
+		return g_renderCam;
+	}
+
 	std::optional<Pose> PoseOf(RE::NiAVObject* a_root)
 	{
 		if (!a_root || !g_axes) {

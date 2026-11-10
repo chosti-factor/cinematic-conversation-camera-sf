@@ -73,7 +73,7 @@ namespace CCC
 		// while a conversation runs, set some of the game's own field-of-view settings to
 		// fFovExperimentValue to find out which one the dialogue camera listens to.
 		// 0 = off, 1 = fTPWorldFOV + fFPWorldFOV, 2 = fDialogueCameraFailsafeFPFOV,
-		// 3 = fDefault1stPersonFOV + fFPGeometryFOV
+		// 3 = fDefault1stPersonFOV + fFPGeometryFOV, 4 = a value inside the dialogue camera itself
 		std::int32_t fovExperiment{ 0 };
 		float        fovExperimentValue{ 50.0f };
 
