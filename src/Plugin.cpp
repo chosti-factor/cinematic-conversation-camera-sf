@@ -55,6 +55,9 @@ namespace CCC
 			bool                                  needsBodyRepair{ false };  // started from first person
 			bool                                  bodyReady{ true };         // safe to show the player
 			bool                                  restoreFirstPerson{ false };
+			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
+			bool                                  holdingExit{ false };
+			std::chrono::steady_clock::time_point holdStarted{};
 		} g_state;
 
 		// --- First-person body repair -------------------------------------------------
@@ -243,6 +246,21 @@ namespace CCC
 			if (g_pilotingShip.load(std::memory_order_acquire)) {
 				return Skip("piloting a ship; leaving the game's camera alone");
 			}
+			// When the conversation ends, the game keeps its dialogue camera running for most of
+			// a second before returning to gameplay. Hold our last shot through that instead of
+			// flashing the vanilla dialogue view; the main thread ends the conversation the
+			// moment the game leaves its dialogue camera.
+			if (!speaker && g_state.active && g_state.lastPose && inDialogueState && s.cameraTarget == 1) {
+				const auto now = std::chrono::steady_clock::now();
+				if (!g_state.holdingExit) {
+					g_state.holdingExit = true;
+					g_state.holdStarted = now;
+					REX::INFO("Speaker gone; holding the last shot until the game leaves its dialogue camera");
+				}
+				if (now - g_state.holdStarted < 3s && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+					return;
+				}
+			}
 			if (!speaker || !player || speaker == player) {
 				return Skip(std::format("no dialogue speaker (camera state {}, speaker {:p})", stateIndex, static_cast<void*>(speaker)));
 			}
@@ -335,6 +353,8 @@ namespace CCC
 				LogFailure("could not apply pose");
 				return;
 			}
+			g_state.lastPose = *pose;
+			g_state.holdingExit = false;
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
@@ -543,6 +563,10 @@ namespace CCC
 				}
 
 				// While repairing, the game is briefly out of its dialogue camera on purpose.
+				if (g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue)) {
+					REX::INFO("Game left its dialogue camera; restoring camera");
+					End();
+				}
 				if (g_state.active && !repairing && now - g_lastHookTime > 250ms) {
 					REX::INFO("Dialogue camera stopped updating; restoring camera");
 					End();
@@ -601,7 +625,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
