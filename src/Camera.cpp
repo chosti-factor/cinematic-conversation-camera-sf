@@ -206,38 +206,61 @@ namespace CCC::Camera
 		return IsCalibrated();
 	}
 
+	namespace
+	{
+		// Rotation for a camera at a_pose looking at its target, in Starfield's layout.
+		std::optional<RE::NiMatrix3> BuildRotation(const Pose& a_pose)
+		{
+			if (!g_axes) {
+				return std::nullopt;
+			}
+			const auto forward = Normalized(Sub(a_pose.lookAt, a_pose.position));
+			if (!forward) {
+				return std::nullopt;
+			}
+			const RE::NiPoint3 worldUp = std::abs(forward->z) > 0.9999f ? RE::NiPoint3{ 0.0f, 1.0f, 0.0f } : RE::NiPoint3{ 0.0f, 0.0f, 1.0f };
+			const auto         right = Normalized(Cross(*forward, worldUp));
+			if (!right) {
+				return std::nullopt;
+			}
+			const auto up = Cross(*right, *forward);
+
+			const auto&   ax = *g_axes;
+			RE::NiMatrix3 rot{};
+			SetVector(rot, ax.columns, ax.forward, Scale(*forward, ax.forwardSign));
+			SetVector(rot, ax.columns, ax.up, Scale(up, ax.upSign));
+			SetVector(rot, ax.columns, ax.side, Scale(Cross(*forward, up), ax.sideSign));
+			return rot;
+		}
+
+		// Render-camera override state. We only ever change the render camera's local
+		// transform, so restoring that one value puts everything back.
+		RE::NiAVObject* g_renderCam = nullptr;
+		RE::NiTransform g_savedRenderLocal{};
+		RE::NiTransform g_rootToRender{};  // render camera relative to the camera root
+
+		float Distance(const RE::NiPoint3& a, const RE::NiPoint3& b) { return Length(Sub(a, b)); }
+	}
+
 	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
 	{
-		if (!a_root || !g_axes) {
+		if (!a_root) {
 			return false;
 		}
-		const auto forward = Normalized(Sub(a_pose.lookAt, a_pose.position));
-		if (!forward) {
+		const auto rot = BuildRotation(a_pose);
+		if (!rot) {
 			return false;
 		}
-		const RE::NiPoint3 worldUp = std::abs(forward->z) > 0.9999f ? RE::NiPoint3{ 0.0f, 1.0f, 0.0f } : RE::NiPoint3{ 0.0f, 0.0f, 1.0f };
-		const auto         right = Normalized(Cross(*forward, worldUp));
-		if (!right) {
-			return false;
-		}
-		const auto up = Cross(*right, *forward);
-
-		// Build the rotation in the same layout the game's own dialogue camera uses.
-		const auto&   ax = *g_axes;
-		RE::NiMatrix3 rot{};
-		SetVector(rot, ax.columns, ax.forward, Scale(*forward, ax.forwardSign));
-		SetVector(rot, ax.columns, ax.up, Scale(up, ax.upSign));
-		SetVector(rot, ax.columns, ax.side, Scale(Cross(*forward, up), ax.sideSign));
 
 		const auto mode = Settings::Get().poseMode;
 
 		a_root->world.translate = a_pose.position;
-		a_root->world.rotate = rot;
+		a_root->world.rotate = *rot;
 		if (mode == 2) {
 			return true;
 		}
 		a_root->local.translate = a_pose.position;
-		a_root->local.rotate = rot;
+		a_root->local.rotate = *rot;
 		if (mode == 1) {
 			return true;
 		}
@@ -245,5 +268,64 @@ namespace CCC::Camera
 		update.delta = a_delta;
 		a_root->Update(&update);
 		return true;
+	}
+
+	bool ApplyRender(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
+	{
+		if (!a_root) {
+			return false;
+		}
+		const auto rot = BuildRotation(a_pose);
+		if (!rot) {
+			return false;
+		}
+		auto  camPtr = RE::Main::GetWorldRootCamera();
+		auto* cam = static_cast<RE::NiAVObject*>(camPtr.get());
+		if (!cam) {
+			return false;
+		}
+
+		if (g_renderCam != cam) {
+			RestoreRender();
+			g_renderCam = cam;
+			g_savedRenderLocal = cam->local;
+			// If the render camera hangs off the camera root (expected), its offset from the
+			// root is exactly its local transform. Otherwise measure it from world transforms.
+			g_rootToRender = cam->parent == a_root ? cam->local : a_root->world.Inverse() * cam->world;
+
+			const auto composed = cam->parent ? cam->parent->world * cam->local : cam->local;
+			REX::INFO("Render camera {:p}: parent {:p} ({}), local offset ({:.3f}, {:.3f}, {:.3f}), parent*local vs world error {:.4f}",
+				static_cast<void*>(cam), static_cast<void*>(cam->parent),
+				cam->parent == a_root ? "camera root" : "other",
+				cam->local.translate.x, cam->local.translate.y, cam->local.translate.z,
+				Distance(composed.translate, cam->world.translate));
+		}
+
+		RE::NiTransform desiredRoot = a_root->world;
+		desiredRoot.rotate = *rot;
+		desiredRoot.translate = a_pose.position;
+		const auto desiredCam = desiredRoot * g_rootToRender;
+
+		cam->local = cam->parent ? cam->parent->world.Inverse() * desiredCam : desiredCam;
+		cam->world = desiredCam;
+
+		RE::NiUpdateData update{};
+		update.delta = a_delta;
+		cam->Update(&update);
+		return true;
+	}
+
+	void RestoreRender()
+	{
+		if (g_renderCam) {
+			g_renderCam->local = g_savedRenderLocal;
+			if (g_renderCam->parent) {
+				g_renderCam->world = g_renderCam->parent->world * g_savedRenderLocal;
+			}
+			RE::NiUpdateData update{};
+			g_renderCam->Update(&update);
+			REX::INFO("Render camera restored");
+		}
+		g_renderCam = nullptr;
 	}
 }

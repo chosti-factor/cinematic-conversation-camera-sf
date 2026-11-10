@@ -11,6 +11,7 @@
 
 #include "Camera.h"
 #include "Settings.h"
+#include "Visibility.h"
 
 namespace CCC
 {
@@ -58,6 +59,10 @@ namespace CCC
 
 		bool g_hooksSafe = false;
 
+		// The hook runs on engine worker threads and the watchdog on the main thread.
+		std::mutex                            g_lock;
+		std::chrono::steady_clock::time_point g_lastHookTime{};
+
 		RE::TESObjectREFR* Speaker()
 		{
 			auto* topics = RE::MenuTopicManager::GetSingleton();
@@ -88,6 +93,8 @@ namespace CCC
 		{
 			if (g_state.active) {
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
+				Camera::RestoreRender();
+				Visibility::Restore();
 			}
 			g_state = State{};
 		}
@@ -235,7 +242,14 @@ namespace CCC
 				return;
 			}
 
-			if (!Camera::Apply(root, *pose, delta)) {
+			if (s.revealPlayer) {
+				Visibility::RevealPlayer();
+			}
+
+			const bool applied = s.cameraTarget == 1 ?
+				Camera::ApplyRender(root, *pose, delta) :
+				Camera::Apply(root, *pose, delta);
+			if (!applied) {
 				LogFailure("could not apply pose");
 				return;
 			}
@@ -261,10 +275,13 @@ namespace CCC
 			{
 				Hook(a_dialogueState);
 				if (g_hooksSafe) {
+					std::scoped_lock lock{ g_lock };
+					g_lastHookTime = std::chrono::steady_clock::now();
 					DirectFrame();
 				}
 			}
 
+			// (see Watchdog below)
 			// Step None: not installed automatically. We enable it ourselves only after
 			// confirming the game version, because the address is version-specific.
 			static inline REL::THookVFT<void(void*)> Hook{
@@ -275,6 +292,18 @@ namespace CCC
 				Thunk
 			};
 		};
+
+		// Runs once per frame on the main thread. If a conversation is active but the game
+		// has stopped running its dialogue camera (load screen, scripted scene, menu that
+		// closes dialogue abruptly...), give everything back instead of leaving the view stuck.
+		void Watchdog()
+		{
+			std::scoped_lock lock{ g_lock };
+			if (g_state.active && std::chrono::steady_clock::now() - g_lastHookTime > std::chrono::milliseconds(250)) {
+				REX::INFO("Dialogue camera stopped updating; restoring camera");
+				End();
+			}
+		}
 	}
 }
 
@@ -302,8 +331,14 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		REX::CRITICAL("Could not install the dialogue camera hook. Camera features disabled.");
 		return true;
 	}
+	if (const auto* tasks = SFSE::GetTaskInterface()) {
+		tasks->AddPermanentTask([]() { CCC::Watchdog(); });
+	} else {
+		REX::WARN("SFSE task interface unavailable; camera watchdog disabled");
+	}
+
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.1.4 loaded (enabled={}, shotMode={}, poseMode={})",
-		settings.enabled, static_cast<int>(settings.shotMode), settings.poseMode);
+	REX::INFO("Cinematic Conversation Camera SF 0.2.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
