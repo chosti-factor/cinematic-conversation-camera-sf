@@ -24,6 +24,15 @@ namespace CCC
 		// Seconds to blend between shots. 0 = hard cut (CCC's default style).
 		float blendSeconds{ 0.0f };
 
+		// Which camera to move. 0 = the game's logical camera (NPCs react to it and turn
+		// toward it), 1 = only the rendered view (the game keeps thinking the camera is at
+		// the player's eyes, so NPCs keep facing the player).
+		std::int32_t cameraTarget{ 1 };
+
+		// Un-hide the player's body and head during conversations so over-the-shoulder
+		// shots can show them. Their original visibility is restored afterwards.
+		bool revealPlayer{ true };
+
 		// How the camera transform is written. Kept as a test switch for the first builds.
 		// 0 = world + local + node update, 1 = world + local only, 2 = world only.
 		std::int32_t poseMode{ 0 };
