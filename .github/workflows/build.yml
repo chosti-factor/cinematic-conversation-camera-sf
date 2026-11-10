@@ -10,7 +10,7 @@ jobs:
     runs-on: windows-latest
     steps:
       - name: Check out source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           submodules: recursive
 
@@ -41,7 +41,7 @@ jobs:
           Copy-Item README.md package/
 
       - name: Upload mod
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: CinematicConversationCameraSF
           path: package/
