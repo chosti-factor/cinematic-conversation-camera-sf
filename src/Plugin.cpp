@@ -64,6 +64,8 @@ namespace CCC
 			std::optional<RE::NiPoint3>           smoothNpcHead{};
 			std::optional<RE::NiPoint3>           smoothPlayerHead{};
 			bool                                  startedFirstPerson{ false };
+			bool                                  hidePlayer{ false };   // rebuild failed: keep the broken body out of frame
+			std::chrono::steady_clock::time_point npcTalkStart{};
 			bool                                  loggedReturnPose{ false };
 			bool                                  holdingExit{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
@@ -94,13 +96,19 @@ namespace CCC
 			std::chrono::steady_clock::time_point deadline{};
 			std::uint32_t                         settleFrames{ 0 };
 			std::uint32_t                         cycle{ 0 };
+			std::uint32_t                         attempts{ 0 };
+			std::chrono::steady_clock::time_point nextAttemptAt{};
 			std::optional<RE::NiPoint3>           lastHead{};
 			std::chrono::steady_clock::time_point lastHeadSample{};
 			std::uint32_t                         stableSamples{ 0 };
 		} g_repair;
 
 		using namespace std::chrono_literals;
-		constexpr auto kRepairStartDelay = 400ms;  // let the game's own dialogue opening finish
+		constexpr auto kRepairStartDelay = 250ms;  // never sooner than this after the conversation opens
+		constexpr auto kRepairFallbackStart = 1200ms;  // start anyway if the NPC hasn't spoken by then
+		constexpr auto kRepairAcquire = 150ms;         // how long a requested camera mode may take to appear
+		constexpr auto kRepairBackoff = 900ms;         // wait between attempts
+		constexpr std::uint32_t kRepairMaxAttempts = 4;
 		constexpr auto kRepairHoldFirst = 48ms;
 		constexpr auto kRepairHoldThird = 150ms;     // minimum; then until the pose is stable
 		constexpr auto kRepairHoldThirdMax = 700ms;
@@ -154,6 +162,8 @@ namespace CCC
 		// touch from the dialogue camera hook's worker threads (0.2.0 froze doing that). The
 		// hook only records what it wants; the main-thread watchdog applies it.
 		bool g_wantRevealPlayer = false;
+		bool g_wantHidePlayer = false;
+		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 
 		RE::TESObjectREFR* Speaker()
@@ -192,7 +202,7 @@ namespace CCC
 			if (g_state.active) {
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
 				Camera::RestoreRender();
-				if (g_wantRevealPlayer) {
+				if (g_wantRevealPlayer || g_wantHidePlayer) {
 					g_needVisibilityRestore = true;
 				}
 				if (g_state.restoreFirstPerson) {
@@ -203,6 +213,7 @@ namespace CCC
 			}
 			g_repair = Repair{};
 			g_wantRevealPlayer = false;
+			g_wantHidePlayer = false;
 			g_state = State{};
 		}
 
@@ -223,7 +234,10 @@ namespace CCC
 			const bool talking = a_speaker->IsTalking();
 			if (talking) {
 				g_state.npcWasTalking = true;
-				g_state.npcEverTalked = true;
+				if (!g_state.npcEverTalked) {
+					g_state.npcEverTalked = true;
+					g_state.npcTalkStart = a_now;
+				}
 				return Subject::kNpc;
 			}
 			// Opening: the NPC usually speaks first but their line starts a moment after the
@@ -372,6 +386,17 @@ namespace CCC
 					REX::INFO("Head heights: npc {:.3f}, player {:.3f} (difference {:+.3f} m)", npcHead->z, playerHead->z, playerHead->z - npcHead->z);
 				}
 				rawPlayerHeadHeight = playerHead->z - player->GetPosition().z;
+				if (g_state.bodyReady && rawPlayerHeadHeight >= kStandingHeadHeight && rawPlayerHeadHeight < 2.2f) {
+					g_standingHeadHeight = rawPlayerHeadHeight;
+				}
+				// Until the first-person body has been rebuilt, the head bone sits lower and
+				// jumps when the rebuild happens, which made the camera (placed relative to it)
+				// swing. Use where the head will be instead: standing height above the feet.
+				if (g_state.startedFirstPerson && !g_state.bodyReady) {
+					auto feet = player->GetPosition();
+					feet.z += g_standingHeadHeight;
+					playerHead = feet;
+				}
 				npcHead = follow(g_state.smoothNpcHead, *npcHead);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
 			}
@@ -453,8 +478,11 @@ namespace CCC
 			// the main-thread task left them hidden for the first frame of the shot, a visible
 			// pop in third-person conversations). The main thread keeps it up afterwards.
 			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady;
+			g_wantHidePlayer = g_state.hidePlayer;
 			if (g_wantRevealPlayer) {
 				Visibility::RevealPlayer();
+			} else if (g_wantHidePlayer) {
+				Visibility::HidePlayer();
 			}
 
 			if (g_state.framesThisConversation == 1) {
@@ -604,15 +632,29 @@ namespace CCC
 			return true;
 		}
 
-		void FailRepair(RE::PlayerCamera* a_camera, const char* a_why)
+		// An attempt didn't work. Make sure the game is back in its dialogue camera, then try
+		// again later (not immediately: 0.3.12 kept re-requesting first person every 16 ms for
+		// 1.8 s, which left the body stuck in a T-pose). After the last attempt, give up and
+		// keep the player out of frame for this conversation.
+		void AbortAttempt(RE::PlayerCamera* a_camera, std::chrono::steady_clock::time_point a_now, const char* a_why)
 		{
-			REX::WARN("First-person body repair failed ({}); the player won't be shown this conversation", a_why);
-			if (!ReturnToDialogueCamera(a_camera)) {
+			if (!a_camera->QCameraEquals(RE::CameraState::kDialogue) && !ReturnToDialogueCamera(a_camera)) {
+				return;  // conversation is over; End() already ran
+			}
+			const auto attempts = g_repair.attempts + 1;
+			g_repair = Repair{};
+			g_repair.attempts = attempts;
+			g_lastHookTime = a_now;
+			if (attempts >= kRepairMaxAttempts) {
+				REX::WARN("Body repair: attempt {} failed ({}); giving up. The player will be kept out of frame this conversation", attempts, a_why);
+				g_state.needsBodyRepair = false;
+				g_state.bodyReady = false;
+				g_state.hidePlayer = true;
+				g_state.reRepairs = 99;
 				return;
 			}
-			g_repair = Repair{};
-			g_state.needsBodyRepair = false;  // don't retry; bodyReady stays false
-			g_lastHookTime = std::chrono::steady_clock::now();
+			REX::INFO("Body repair: attempt {} failed ({}); will try again shortly", attempts, a_why);
+			g_repair.nextAttemptAt = a_now + kRepairBackoff;
 		}
 
 		// One step of the body repair. Caller holds g_lock; main thread only.
@@ -623,16 +665,23 @@ namespace CCC
 			const bool dialogue = a_camera->QCameraEquals(RE::CameraState::kDialogue);
 
 			if (g_repair.stage == RepairStage::kIdle) {
-				if (!dialogue || a_now - g_state.started < kRepairStartDelay) {
+				// Wait for a quiet moment: after the game's own opening has settled and the NPC's
+				// first line is under way. Asking for first person while the game is still setting
+				// up the conversation gets overridden straight away.
+				const auto elapsed = a_now - g_state.started;
+				const bool npcSpeaking = g_state.npcEverTalked && a_now - g_state.npcTalkStart >= 200ms;
+				if (!dialogue || a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
+					(!npcSpeaking && elapsed < kRepairFallbackStart)) {
 					return;
 				}
-				REX::INFO("Body repair: started in first person; cycling first -> third -> dialogue (head {:.2f} m above feet)", PlayerHeadAboveFeet());
+				REX::INFO("Body repair: attempt {} (head {:.2f} m above feet, {} ms into the conversation)", g_repair.attempts + 1, PlayerHeadAboveFeet(),
+					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 				g_repairMaskedFrames = 0;
 				g_repair.stage = RepairStage::kAcquireFirst;
+				g_repair.stageStart = a_now;
 				g_repair.deadline = a_now + kRepairTimeout;
-				g_repair.nextRetry = a_now + kRepairRetry;
 				g_state.restoreFirstPerson = true;
-				a_camera->ForceFirstPerson();
+				a_camera->ForceFirstPerson();  // once; never repeated within an attempt
 				return;
 			}
 			if (!Speaker()) {
@@ -641,7 +690,7 @@ namespace CCC
 				return;
 			}
 			if (a_now >= g_repair.deadline) {
-				return FailRepair(a_camera, "timed out");
+				return AbortAttempt(a_camera, a_now, "timed out");
 			}
 
 			switch (g_repair.stage) {
@@ -649,9 +698,8 @@ namespace CCC
 				if (first) {
 					g_repair.stage = RepairStage::kHoldFirst;
 					g_repair.stageStart = a_now;
-				} else if (a_now >= g_repair.nextRetry) {
-					a_camera->ForceFirstPerson();
-					g_repair.nextRetry = a_now + kRepairRetry;
+				} else if (a_now - g_repair.stageStart > kRepairAcquire) {
+					return AbortAttempt(a_camera, a_now, "the game did not switch to first person");
 				}
 				return;
 			case RepairStage::kHoldFirst:
@@ -659,16 +707,15 @@ namespace CCC
 					return;
 				}
 				g_repair.stage = RepairStage::kAcquireThird;
-				g_repair.nextRetry = a_now + kRepairRetry;
+				g_repair.stageStart = a_now;
 				a_camera->ForceThirdPerson();
 				return;
 			case RepairStage::kAcquireThird:
 				if (third) {
 					g_repair.stage = RepairStage::kHoldThird;
 					g_repair.stageStart = a_now;
-				} else if (a_now >= g_repair.nextRetry) {
-					a_camera->ForceThirdPerson();
-					g_repair.nextRetry = a_now + kRepairRetry;
+				} else if (a_now - g_repair.stageStart > kRepairAcquire) {
+					return AbortAttempt(a_camera, a_now, "the game did not switch to third person");
 				}
 				return;
 			case RepairStage::kHoldThird:
@@ -721,28 +768,11 @@ namespace CCC
 			{
 				const float height = PlayerHeadAboveFeet();
 				const auto  cycle = g_repair.cycle + 1;
-				if (height < kStandingHeadHeight && cycle < kRepairMaxCycles) {
-					REX::WARN("Body repair: head only {:.2f} m above feet after cycle {}; trying again", height, cycle);
-					g_repair = Repair{};
-					g_repair.cycle = cycle;
-					g_repair.stage = RepairStage::kAcquireFirst;
-					g_repair.deadline = a_now + kRepairTimeout;
-					g_repair.nextRetry = a_now + kRepairRetry;
-					a_camera->ForceFirstPerson();
-					return;
-				}
+				(void)cycle;
 				if (height < kStandingHeadHeight) {
-					// The game would not build the full body here. Showing it would show the
-					// broken first-person form, so keep the camera on the other person for the
-					// rest of this conversation instead.
-					REX::WARN("Body repair: gave up after {} cycles (head still {:.2f} m above feet); the player won't be shown this conversation", cycle, height);
-					g_repair = Repair{};
-					g_state.needsBodyRepair = false;
-					g_state.bodyReady = false;
-					g_state.reRepairs = 99;
-					return;
+					return AbortAttempt(a_camera, a_now, "the full body was not built");
 				}
-				REX::INFO("Body repair: done after {} cycle(s); head {:.2f} m above feet; shot held for {} frames during the cycle", cycle, height, g_repairMaskedFrames);
+				REX::INFO("Body repair: done on attempt {}; head {:.2f} m above feet; shot held for {} frames during the cycle", g_repair.attempts + 1, height, g_repairMaskedFrames);
 				g_repair = Repair{};
 				g_state.needsBodyRepair = false;
 				g_state.bodyReady = true;
@@ -815,6 +845,7 @@ namespace CCC
 			}
 
 			bool reveal = false;
+			bool hide = false;
 			bool restore = false;
 
 			if (auto* ui = RE::UI::GetSingleton()) {
@@ -863,6 +894,7 @@ namespace CCC
 				}
 
 				reveal = g_wantRevealPlayer;
+				hide = g_wantHidePlayer;
 				restore = g_needVisibilityRestore;
 				g_needVisibilityRestore = false;
 			}
@@ -873,6 +905,8 @@ namespace CCC
 				Visibility::Restore();
 			} else if (reveal) {
 				Visibility::RevealPlayer();
+			} else if (hide) {
+				Visibility::HidePlayer();
 			}
 		}
 	}
@@ -916,7 +950,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.13 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
