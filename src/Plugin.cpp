@@ -98,6 +98,7 @@ namespace CCC
 			std::uint32_t                         settleFrames{ 0 };
 			std::uint32_t                         cycle{ 0 };
 			std::uint32_t                         attempts{ 0 };
+			bool                                  early{ false };  // started on the conversation's first frames
 			std::chrono::steady_clock::time_point nextAttemptAt{};
 			std::optional<RE::NiPoint3>           lastHead{};
 			std::chrono::steady_clock::time_point lastHeadSample{};
@@ -141,6 +142,7 @@ namespace CCC
 		// The player's own third-person view, refreshed every frame they are in third person
 		// outside a conversation. Used to return to it seamlessly when a conversation ends.
 		std::optional<Camera::Pose> g_thirdPersonView;
+		std::optional<Camera::Pose> g_firstPersonView;  // likewise for first person
 
 		bool                                  g_viewCandidateKnown = false;
 		bool                                  g_viewCandidateFirst = false;
@@ -599,6 +601,20 @@ namespace CCC
 		// During the body repair the game is briefly in its real first- and third-person
 		// cameras. These run right after each of those cameras updates (the same kind of hook
 		// as the dialogue camera one) and re-apply our last shot so the cycle isn't visible.
+		// What to show while the game is out of its dialogue camera for the body rebuild.
+		// The gameplay cameras use a much wider field of view than the dialogue camera, and we
+		// can't control that yet, so holding a dialogue shot through the rebuild visibly zooms
+		// out and back. An early rebuild (on the conversation's first frames) holds the player's
+		// own first-person view instead: same position, same field of view as the moment before,
+		// so it reads as the first-person view lingering a beat before the cut to the NPC.
+		const Camera::Pose* HeldPose()
+		{
+			if (g_repair.early && g_firstPersonView) {
+				return &*g_firstPersonView;
+			}
+			return g_state.lastPose ? &*g_state.lastPose : nullptr;
+		}
+
 		void MaskRepairFrame(const char* a_which)
 		{
 			if (!g_hooksSafe) {
@@ -608,18 +624,19 @@ namespace CCC
 			if (!lock.owns_lock()) {
 				return;
 			}
-			if (!g_state.active || g_repair.stage == RepairStage::kIdle || !g_state.lastPose || Settings::Get().cameraTarget != 1) {
+			const auto* held = HeldPose();
+			if (!g_state.active || g_repair.stage == RepairStage::kIdle || !held || Settings::Get().cameraTarget != 1) {
 				return;
 			}
 			auto* camera = RE::PlayerCamera::GetSingleton();
-			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f, true)) {
+			if (camera && Camera::ApplyRender(camera->cameraRoot.get(), *held, 0.0f, true)) {
 				if (g_repairMaskedFrames++ == 0) {
 					REX::INFO("Body repair: holding the shot from the {} camera hook", a_which);
 				}
 			}
 		}
 
-		void RememberThirdPersonView()
+		void RememberGameplayView(std::optional<Camera::Pose>& a_view)
 		{
 			if (!g_hooksSafe) {
 				return;
@@ -629,7 +646,7 @@ namespace CCC
 				return;
 			}
 			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
-				g_thirdPersonView = Camera::PoseOf(camera->cameraRoot.get());
+				a_view = Camera::PoseOf(camera->cameraRoot.get());
 			}
 		}
 
@@ -639,6 +656,7 @@ namespace CCC
 			{
 				Hook(a_state, a_arg);
 				MaskRepairFrame("first-person");
+				RememberGameplayView(g_firstPersonView);
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_FirstPersonUpdate", REL::EHookStep::None, RE::VTABLE::FirstPersonState[0], kDialogueUpdateVtableIndex, Thunk
@@ -651,7 +669,7 @@ namespace CCC
 			{
 				Hook(a_state, a_arg);
 				MaskRepairFrame("third-person");
-				RememberThirdPersonView();
+				RememberGameplayView(g_thirdPersonView);
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_ThirdPersonUpdate", REL::EHookStep::None, RE::VTABLE::ThirdPersonState[0], kDialogueUpdateVtableIndex, Thunk
@@ -670,8 +688,8 @@ namespace CCC
 		// aimed frame at that point. Re-apply the held shot immediately.
 		void HoldShotNow(RE::PlayerCamera* a_camera)
 		{
-			if (g_state.lastPose && Settings::Get().cameraTarget == 1) {
-				Camera::ApplyRender(a_camera->cameraRoot.get(), *g_state.lastPose, 0.0f, !a_camera->QCameraEquals(RE::CameraState::kDialogue));
+			if (const auto* held = HeldPose(); held && Settings::Get().cameraTarget == 1) {
+				Camera::ApplyRender(a_camera->cameraRoot.get(), *held, 0.0f, !a_camera->QCameraEquals(RE::CameraState::kDialogue));
 			}
 		}
 
@@ -729,13 +747,20 @@ namespace CCC
 				// up the conversation gets overridden straight away.
 				const auto elapsed = a_now - g_state.started;
 				const bool npcSpeaking = g_state.npcEverTalked && a_now - g_state.npcTalkStart >= 200ms;
-				if (!dialogue || a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
-					(!npcSpeaking && elapsed < kRepairFallbackStart)) {
+				// First attempt: straight away, on the conversation's first frames (see HeldPose).
+				const bool early = Settings::Get().earlyBodyRebuild && g_repair.attempts == 0 && g_state.reRepairs == 0 &&
+				                   g_firstPersonView && elapsed < kRepairStartDelay;
+				if (!dialogue) {
+					return;
+				}
+				if (!early && (a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
+								  (!npcSpeaking && elapsed < kRepairFallbackStart))) {
 					return;
 				}
 				REX::INFO("Body repair: attempt {} (head {:.2f} m above feet, {} ms into the conversation)", g_repair.attempts + 1, PlayerHeadAboveFeet(),
 					std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
 				g_repairMaskedFrames = 0;
+				g_repair.early = early;
 				g_repair.stageStart = a_now;
 				g_repair.deadline = a_now + kRepairTimeout;
 				g_state.restoreFirstPerson = true;
@@ -1033,7 +1058,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.16 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.17 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

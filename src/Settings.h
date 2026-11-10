@@ -57,6 +57,10 @@ namespace CCC
 		// showing them (briefly cycles the view), and return to first person afterwards.
 		bool fixFirstPersonBody{ true };
 
+		// Do that rebuild on the conversation's very first frames, holding the first-person
+		// view, instead of a quarter second in (which visibly zooms the picture out and back).
+		bool earlyBodyRebuild{ true };
+
 		// How the camera transform is written. Kept as a test switch for the first builds.
 		// 0 = world + local + node update, 1 = world + local only, 2 = world only.
 		std::int32_t poseMode{ 0 };
