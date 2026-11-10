@@ -18,6 +18,7 @@
 #include "RE/P/PlayerCamera.h"
 #include "RE/P/PlayerCharacter.h"
 #include "RE/T/TESObjectREFR.h"
+#include "RE/U/UI.h"
 
 #include <Windows.h>
 

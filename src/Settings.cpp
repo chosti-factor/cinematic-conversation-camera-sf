@@ -40,6 +40,7 @@ namespace CCC
 
 			a_s.cameraTarget = std::clamp(ReadInt(a_path, L"Camera", L"iCameraTarget", a_s.cameraTarget), 0, 1);
 			a_s.revealPlayer = ReadInt(a_path, L"Camera", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
+			a_s.fixFirstPersonBody = ReadInt(a_path, L"Camera", L"bFixFirstPersonBody", a_s.fixFirstPersonBody ? 1 : 0) != 0;
 
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
 		}
