@@ -33,6 +33,10 @@ namespace CCC
 		// shots can show them. Their original visibility is restored afterwards.
 		bool revealPlayer{ true };
 
+		// When a conversation starts in first person, rebuild the player's full body before
+		// showing them (briefly cycles the view), and return to first person afterwards.
+		bool fixFirstPersonBody{ true };
+
 		// How the camera transform is written. Kept as a test switch for the first builds.
 		// 0 = world + local + node update, 1 = world + local only, 2 = world only.
 		std::int32_t poseMode{ 0 };
