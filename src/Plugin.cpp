@@ -257,6 +257,44 @@ namespace CCC
 			return g_state.subject == Subject::kNone ? Subject::kNpc : Subject::kPlayer;
 		}
 
+		// Diagnostic: find where the game keeps its field of view. Copies plausible FOV values
+		// (degrees or radians) out of a block of memory; guarded because the size of the
+		// camera state objects isn't known.
+		struct FloatAt
+		{
+			std::uint32_t offset;
+			float         value;
+		};
+
+		std::size_t ScanFloats(const void* a_base, std::size_t a_from, std::size_t a_to, FloatAt* a_out, std::size_t a_max)
+		{
+			std::size_t n = 0;
+			__try {
+				for (std::size_t off = a_from; off + 4 <= a_to && n < a_max; off += 4) {
+					const float v = *reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
+					if ((v >= 15.0f && v <= 150.0f) || (v >= 0.25f && v <= 2.7f && v != 1.0f)) {
+						a_out[n++] = { static_cast<std::uint32_t>(off), v };
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+			return n;
+		}
+
+		void LogFovCandidates(const char* a_what, int a_mode, const void* a_base, std::size_t a_from, std::size_t a_to)
+		{
+			if (!a_base) {
+				return;
+			}
+			std::array<FloatAt, 96> found{};
+			const auto              n = ScanFloats(a_base, a_from, a_to, found.data(), found.size());
+			std::string             text;
+			for (std::size_t i = 0; i < n; ++i) {
+				text += std::format(" +{:X}={:.3f}", found[i].offset, found[i].value);
+			}
+			REX::INFO("FOV scan, mode {}, {}:{}", a_mode, a_what, text);
+		}
+
 		// Which camera state the game is in, as an index into CameraState, or -1 if unknown.
 		int CurrentCameraStateIndex(RE::PlayerCamera* a_camera)
 		{
@@ -872,6 +910,13 @@ namespace CCC
 							std::chrono::duration_cast<std::chrono::milliseconds>(t - lastChange).count());
 						lastState = state;
 						lastChange = t;
+						// A few samples of each of first person (0), dialogue (17) and third person (20).
+						static std::array<int, RE::CameraState::kTotal> dumps{};
+						if (state >= 0 && (state == 0 || state == 17 || state == 20) && dumps[state] < 3) {
+							++dumps[state];
+							LogFovCandidates("PlayerCamera", state, cam, 0x20, 0x188);
+							LogFovCandidates("camera state object", state, cam->currentState, 0x8, 0x340);
+						}
 					}
 				}
 			}
@@ -920,6 +965,12 @@ namespace CCC
 				}
 				if (camera && g_state.active && g_state.needsBodyRepair) {
 					StepRepair(camera, now);
+				}
+				// During the rebuild, also re-apply the held shot on every main-thread tick. The
+				// recordings show a frame slipping through right after each camera-mode change,
+				// before that mode's own update (and our hook on it) has run.
+				if (camera && g_state.active && g_repair.stage != RepairStage::kIdle) {
+					HoldShotNow(camera);
 				}
 				if (camera && g_restoreFirstPersonPending) {
 					StepFirstPersonRestore(camera, now);
@@ -982,7 +1033,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.15 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.16 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
