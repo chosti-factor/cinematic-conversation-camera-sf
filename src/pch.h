@@ -10,7 +10,6 @@
 #include "REL/THook.h"
 
 #include "RE/A/Actor.h"
-#include "RE/M/Main.h"
 #include "RE/M/MenuTopicManager.h"
 #include "RE/N/NiCamera.h"
 #include "RE/N/NiAVObject.h"
@@ -27,6 +26,7 @@
 #include <atomic>
 #include <chrono>
 #include <cmath>
+#include <cstring>
 #include <format>
 #include <mutex>
 #include <optional>

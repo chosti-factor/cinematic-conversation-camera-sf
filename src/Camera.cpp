@@ -240,6 +240,82 @@ namespace CCC::Camera
 		RE::NiTransform g_rootToRender{};  // render camera relative to the camera root
 
 		float Distance(const RE::NiPoint3& a, const RE::NiPoint3& b) { return Length(Sub(a, b)); }
+
+		// Reads an object's C++ class name from the MSVC RTTI that every polymorphic object
+		// carries (vtable[-1] -> complete object locator -> type descriptor). This needs no
+		// game-version-specific addresses. Returns "" if anything looks wrong.
+		const char* ClassNameUnsafe(const void* a_obj)
+		{
+			const auto* vtbl = *reinterpret_cast<const std::uintptr_t* const*>(a_obj);
+			const auto* col = reinterpret_cast<const std::uint32_t*>(vtbl[-1]);
+			// x64 locator: signature(1), offset, cdOffset, typeDescriptor RVA, classDescriptor RVA, self RVA
+			if (col[0] != 1) {
+				return "";
+			}
+			const auto imageBase = reinterpret_cast<std::uintptr_t>(col) - col[5];
+			const auto typeDescriptor = imageBase + col[3];
+			return reinterpret_cast<const char*>(typeDescriptor + 16);  // skip pVFTable, spare
+		}
+
+		const char* ClassName(const void* a_obj)
+		{
+			if (!a_obj) {
+				return "";
+			}
+			__try {
+				return ClassNameUnsafe(a_obj);
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return "";
+			}
+		}
+
+		bool IsClass(const void* a_obj, const char* a_mangled)
+		{
+			const char* name = ClassName(a_obj);
+			__try {
+				return std::strcmp(name, a_mangled) == 0;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
+
+		// The render camera hangs off the camera root, possibly one node down.
+		RE::NiAVObject* FindRenderCamera(RE::NiAVObject* a_root, bool a_log)
+		{
+			if (!a_root || (!IsClass(a_root, ".?AVNiNode@@") && !IsClass(a_root, ".?AVBSFadeNode@@"))) {
+				if (a_log) {
+					REX::WARN("Camera root is a {}, not a node; can't search it", ClassName(a_root));
+				}
+				return nullptr;
+			}
+			auto* node = static_cast<RE::NiNode*>(a_root);
+			for (auto& childPtr : node->children) {
+				auto* child = childPtr.get();
+				if (!child) {
+					continue;
+				}
+				if (a_log) {
+					REX::INFO("  camera root child {:p}: {}", static_cast<void*>(child), ClassName(child));
+				}
+				if (IsClass(child, ".?AVNiCamera@@")) {
+					return child;
+				}
+				if (IsClass(child, ".?AVNiNode@@")) {
+					for (auto& grandPtr : static_cast<RE::NiNode*>(child)->children) {
+						auto* grand = grandPtr.get();
+						if (a_log && grand) {
+							REX::INFO("    grandchild {:p}: {}", static_cast<void*>(grand), ClassName(grand));
+						}
+						if (grand && IsClass(grand, ".?AVNiCamera@@")) {
+							return grand;
+						}
+					}
+				}
+			}
+			return nullptr;
+		}
+
+		bool g_loggedCameraSearch = false;
 	}
 
 	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
@@ -279,8 +355,12 @@ namespace CCC::Camera
 		if (!rot) {
 			return false;
 		}
-		auto  camPtr = RE::Main::GetWorldRootCamera();
-		auto* cam = static_cast<RE::NiAVObject*>(camPtr.get());
+		// No address-library lookup here: Starfield 1.16.244 has no ID for the world root.
+		auto* cam = g_renderCam ? g_renderCam : FindRenderCamera(a_root, !g_loggedCameraSearch);
+		if (!g_renderCam && !g_loggedCameraSearch) {
+			g_loggedCameraSearch = true;
+			REX::INFO("Render camera search: {}", cam ? "found NiCamera under the camera root" : "not found");
+		}
 		if (!cam) {
 			return false;
 		}
@@ -306,12 +386,11 @@ namespace CCC::Camera
 		desiredRoot.translate = a_pose.position;
 		const auto desiredCam = desiredRoot * g_rootToRender;
 
+		// Transforms only: no scene-graph update call from the hook's worker thread. The
+		// engine's own update later this frame derives the camera from these values.
+		(void)a_delta;
 		cam->local = cam->parent ? cam->parent->world.Inverse() * desiredCam : desiredCam;
 		cam->world = desiredCam;
-
-		RE::NiUpdateData update{};
-		update.delta = a_delta;
-		cam->Update(&update);
 		return true;
 	}
 
@@ -322,8 +401,6 @@ namespace CCC::Camera
 			if (g_renderCam->parent) {
 				g_renderCam->world = g_renderCam->parent->world * g_savedRenderLocal;
 			}
-			RE::NiUpdateData update{};
-			g_renderCam->Update(&update);
 			REX::INFO("Render camera restored");
 		}
 		g_renderCam = nullptr;

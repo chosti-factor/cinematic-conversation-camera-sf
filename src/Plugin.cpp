@@ -60,8 +60,16 @@ namespace CCC
 		bool g_hooksSafe = false;
 
 		// The hook runs on engine worker threads and the watchdog on the main thread.
+		// The hook never waits for this lock (it skips the frame instead), so the engine's
+		// worker threads can never be held up by us.
 		std::mutex                            g_lock;
 		std::chrono::steady_clock::time_point g_lastHookTime{};
+
+		// Player visibility changes go through the engine's scene graph, which isn't safe to
+		// touch from the dialogue camera hook's worker threads (0.2.0 froze doing that). The
+		// hook only records what it wants; the main-thread watchdog applies it.
+		bool g_wantRevealPlayer = false;
+		bool g_needVisibilityRestore = false;
 
 		RE::TESObjectREFR* Speaker()
 		{
@@ -94,8 +102,11 @@ namespace CCC
 			if (g_state.active) {
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
 				Camera::RestoreRender();
-				Visibility::Restore();
+				if (g_wantRevealPlayer) {
+					g_needVisibilityRestore = true;
+				}
 			}
+			g_wantRevealPlayer = false;
 			g_state = State{};
 		}
 
@@ -242,19 +253,25 @@ namespace CCC
 				return;
 			}
 
-			if (s.revealPlayer) {
-				Visibility::RevealPlayer();
-			}
+			// Main thread does the actual reveal (see Watchdog).
+			g_wantRevealPlayer = s.revealPlayer;
 
-			const bool applied = s.cameraTarget == 1 ?
-				Camera::ApplyRender(root, *pose, delta) :
-				Camera::Apply(root, *pose, delta);
+			if (g_state.framesThisConversation == 1) {
+				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
+			}
+			// Prefer moving only the rendered view; if the render camera can't be found,
+			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
+			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta);
+			if (!applied) {
+				applied = Camera::Apply(root, *pose, delta);
+			}
 			if (!applied) {
 				LogFailure("could not apply pose");
 				return;
 			}
 
 			if (g_state.framesThisConversation == 1) {
+				REX::INFO("frame 1: pose applied");
 				const float dx = npcHead->x - playerHead->x, dy = npcHead->y - playerHead->y, dz = npcHead->z - playerHead->z;
 				REX::INFO("Distance between heads: {:.3f} game units (camera state {})", std::sqrt(dx * dx + dy * dy + dz * dz), stateIndex);
 			}
@@ -275,7 +292,10 @@ namespace CCC
 			{
 				Hook(a_dialogueState);
 				if (g_hooksSafe) {
-					std::scoped_lock lock{ g_lock };
+					std::unique_lock lock{ g_lock, std::try_to_lock };
+					if (!lock.owns_lock()) {
+						return;  // main thread is busy with our state; never stall the engine
+					}
 					g_lastHookTime = std::chrono::steady_clock::now();
 					DirectFrame();
 				}
@@ -296,12 +316,28 @@ namespace CCC
 		// Runs once per frame on the main thread. If a conversation is active but the game
 		// has stopped running its dialogue camera (load screen, scripted scene, menu that
 		// closes dialogue abruptly...), give everything back instead of leaving the view stuck.
+		// Also applies player visibility changes requested by the hook, on the main thread.
 		void Watchdog()
 		{
-			std::scoped_lock lock{ g_lock };
-			if (g_state.active && std::chrono::steady_clock::now() - g_lastHookTime > std::chrono::milliseconds(250)) {
-				REX::INFO("Dialogue camera stopped updating; restoring camera");
-				End();
+			bool reveal = false;
+			bool restore = false;
+			{
+				std::scoped_lock lock{ g_lock };
+				if (g_state.active && std::chrono::steady_clock::now() - g_lastHookTime > std::chrono::milliseconds(250)) {
+					REX::INFO("Dialogue camera stopped updating; restoring camera");
+					End();
+				}
+				reveal = g_wantRevealPlayer;
+				restore = g_needVisibilityRestore;
+				g_needVisibilityRestore = false;
+			}
+
+			// Scene-graph work happens outside the lock, so the hook is never kept waiting
+			// (it would skip frames instead) while the engine does its own locking.
+			if (restore) {
+				Visibility::Restore();
+			} else if (reveal) {
+				Visibility::RevealPlayer();
 			}
 		}
 	}
@@ -338,7 +374,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.2.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.2.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
