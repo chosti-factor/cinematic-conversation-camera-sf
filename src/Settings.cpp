@@ -86,17 +86,18 @@ namespace CCC
 		struct CuttingStyle
 		{
 			const char* name;
+			const char* oldName;  // the 0.4.2 names still work
 			int         freshAngleChance;
 			int         minLines;
 			int         maxLines;
 			float       shortestHold;
 		};
 		constexpr std::array kCuttingStyles{
-			CuttingStyle{ "Cinematic", 0, 4, 8, 3.0f },    // each person keeps their angle; film editing
-			CuttingStyle{ "Drama", 25, 3, 6, 2.4f },       // CCC's own rhythm
-			CuttingStyle{ "Television", 50, 2, 5, 2.0f },
-			CuttingStyle{ "Thriller", 75, 2, 4, 1.6f },
-			CuttingStyle{ "SoapOpera", 100, 1, 3, 1.2f },  // a new angle on every turn
+			CuttingStyle{ "Cinematic", "Cinematic", 0, 4, 8, 3.0f },        // each person keeps their angle; film editing
+			CuttingStyle{ "Odyssey", "Drama", 25, 3, 6, 2.4f },             // CCC's own rhythm
+			CuttingStyle{ "SpaceWestern", "Television", 50, 2, 5, 2.0f },
+			CuttingStyle{ "Dogfight", "Thriller", 75, 2, 4, 1.6f },
+			CuttingStyle{ "SpaceOpera", "SoapOpera", 100, 1, 3, 1.2f },     // a new angle on every turn
 		};
 
 		void ApplyCuttingStyle(Settings& a_s)
@@ -107,12 +108,15 @@ namespace CCC
 					wanted.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
 				}
 			}
-			for (const auto& style : kCuttingStyles) {
-				std::string name;
-				for (const char* c = style.name; *c; ++c) {
-					name.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(*c))));
+			auto lower = [](const char* a_text) {
+				std::string out;
+				for (const char* c = a_text; *c; ++c) {
+					out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(*c))));
 				}
-				if (name == wanted) {
+				return out;
+			};
+			for (const auto& style : kCuttingStyles) {
+				if (lower(style.name) == wanted || lower(style.oldName) == wanted) {
 					a_s.freshAngleChance = style.freshAngleChance;
 					a_s.minLines = style.minLines;
 					a_s.maxLines = style.maxLines;
