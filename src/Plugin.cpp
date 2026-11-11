@@ -396,69 +396,6 @@ namespace CCC
 		constexpr std::size_t kRenderCameraFrustumOffset = 0x1C0;
 		bool                  g_fovLogged = false;
 
-		std::atomic<float> g_fovBeforeUpdate{ 0.0f };  // diagnostics: value found just before the game's update
-		std::atomic<float> g_fovWrittenBefore{ 0.0f };
-
-		// Before the game's dialogue camera update: put the wanted field of view in place so
-		// the game's own update works from it.
-		void PreDialogueFov()
-		{
-			auto* camera = RE::PlayerCamera::GetSingleton();
-			if (!camera) {
-				return;
-			}
-			auto* fovAt = reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset;
-			float current = 0.0f;
-			if (SafeCopy(&current, fovAt, sizeof(float)) == 0) {
-				return;
-			}
-			g_fovBeforeUpdate = current;
-			const auto& s = Settings::Get();
-			if (s.dialogueFov < 5.0f || s.fovMethod == 2 || current < 5.0f || current > 170.0f) {
-				g_fovWrittenBefore = 0.0f;
-				return;
-			}
-			const float wanted = s.dialogueFov;
-			SafeCopy(fovAt, &wanted, sizeof(float));
-			g_fovWrittenBefore = wanted;
-		}
-
-		void ApplyDialogueFov(RE::PlayerCamera* a_camera, float a_degrees)
-		{
-			const int method = Settings::Get().fovMethod;
-			if (method == 1) {
-				return;  // written before the game's update only
-			}
-			auto* fovAt = reinterpret_cast<std::uint8_t*>(a_camera) + kPlayerCameraFovOffset;
-			float current = 0.0f;
-			if (SafeCopy(&current, fovAt, sizeof(float)) == 0 || current < 5.0f || current > 170.0f) {
-				if (!g_fovLogged) {
-					g_fovLogged = true;
-					REX::WARN("Conversation field of view: unexpected value {:.3f} where the camera's field of view should be; leaving it alone", current);
-				}
-				return;
-			}
-			float frustum[4]{};
-			auto* render = static_cast<std::uint8_t*>(Camera::RenderCameraObject());
-			bool  frustumOk = render && SafeCopy(frustum, render + kRenderCameraFrustumOffset, sizeof(frustum)) != 0 &&
-			                  frustum[0] < -0.01f && frustum[1] > 0.01f && frustum[2] > 0.01f && frustum[3] < -0.01f &&
-			                  std::abs(frustum[0] + frustum[1]) < 0.01f && std::abs(frustum[2] + frustum[3]) < 0.01f;
-			if (!g_fovLogged) {
-				g_fovLogged = true;
-				REX::INFO("Conversation field of view: game's value {:.2f}, frustum ({:.4f} {:.4f} {:.4f} {:.4f}){}; setting {:.1f}", current, frustum[0], frustum[1], frustum[2], frustum[3],
-					frustumOk ? "" : " (not as expected, left alone)", a_degrees);
-			}
-			if (method == 2) {
-				SafeCopy(fovAt, &a_degrees, sizeof(float));
-			}
-			if (frustumOk) {
-				const float aspect = frustum[2] / frustum[1];
-				const float t = std::tan(a_degrees * 0.00872664626f);
-				const float wanted[4]{ -t, t, t * aspect, -t * aspect };
-				SafeCopy(render + kRenderCameraFrustumOffset, wanted, sizeof(wanted));
-			}
-		}
-
 		void Begin()
 		{
 			g_state = State{};
@@ -795,16 +732,18 @@ namespace CCC
 			const float delta = std::chrono::duration<float>(now - g_state.lastFrame).count();
 			g_state.lastFrame = now;
 			++g_state.framesThisConversation;
-			if (s.debugLog && g_conversationNumber <= 40 && g_state.framesThisConversation <= 40) {
-				float after = 0.0f;
-				float frustum[2]{};
-				SafeCopy(&after, reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset, sizeof(float));
-				if (auto* render = static_cast<std::uint8_t*>(Camera::RenderCameraObject())) {
-					SafeCopy(frustum, render + kRenderCameraFrustumOffset, sizeof(frustum));
-				}
-				REX::INFO("FOV frame {} (+{} ms): before the game's update {:.2f} (we wrote {:.2f}), after it {:.2f}; view cone {:.1f} degrees",
-					g_state.framesThisConversation, std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_state.started).count(),
-					g_fovBeforeUpdate.load(), g_fovWrittenBefore.load(), after, frustum[1] > 0.0f ? 2.0f * std::atan(frustum[1]) * 57.2958f : 0.0f);
+			// The game keeps drawing with the gameplay field of view (about 94 degrees) for the
+			// first frame or few of a conversation before switching to its narrow dialogue
+			// one (about 30). Measured in 0.3.31: one frame from third person, three from
+			// first person. A conversation shot drawn that wide flashes on screen, so on those
+			// frames we show the view the player had just before instead.
+			float gameFov = 0.0f;
+			SafeCopy(&gameFov, reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset, sizeof(float));
+			const bool wideFrame = gameFov > 60.0f && gameFov < 170.0f;
+			if (s.debugLog && g_conversationNumber <= 40 && g_state.framesThisConversation <= 12) {
+				REX::INFO("FOV frame {} (+{} ms): game's field of view {:.2f}{}", g_state.framesThisConversation,
+					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_state.started).count(), gameFov,
+					wideFrame ? "; showing the gameplay view" : "");
 			}
 
 			auto npcHead = Camera::HeadPosition(speaker);
@@ -946,20 +885,10 @@ namespace CCC
 			// eyes: while the body is being rebuilt (the game passes through first and third
 			// person), nothing of the player (arms, half-built body) is in front of the camera.
 			const bool  pov = subject == Subject::kNpc && g_state.povNpcShot;
-			// While the direct body refresh is under way (about 0.1 s), keep the player's own
-			// first-person view (a little ahead of the eyes, out of the rebuilding head), so
-			// the conversation opens with one cut, to over the shoulder, instead of two.
+			const auto& gameplayView = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
 			std::optional<Camera::Pose> waitingView;
-			if (pov && g_state.directRequested && !g_state.directFailed && !g_state.bodyReady && g_firstPersonView) {
-				auto        held = *g_firstPersonView;
-				const float dx = held.lookAt.x - held.position.x, dy = held.lookAt.y - held.position.y, dz = held.lookAt.z - held.position.z;
-				const float len = std::sqrt(dx * dx + dy * dy + dz * dz);
-				if (len > 1e-3f) {
-					const float k = 0.25f / len;
-					held.position = { held.position.x + dx * k, held.position.y + dy * k, held.position.z + dz * k };
-					held.lookAt = { held.lookAt.x + dx * k, held.lookAt.y + dy * k, held.lookAt.z + dz * k };
-					waitingView = held;
-				}
+			if (wideFrame && gameplayView) {
+				waitingView = *gameplayView;
 			}
 			const auto  pose = waitingView ? waitingView :
 			                   pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
@@ -1023,9 +952,6 @@ namespace CCC
 			}
 			g_state.lastPose = *pose;
 			g_state.holdingExit = false;
-			if (s.dialogueFov >= 5.0f && inDialogueState) {
-				ApplyDialogueFov(camera, s.dialogueFov);
-			}
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
@@ -1047,9 +973,6 @@ namespace CCC
 		{
 			static void Thunk(void* a_dialogueState)
 			{
-				if (g_hooksSafe) {
-					PreDialogueFov();
-				}
 				Hook(a_dialogueState);
 				g_dialogueStateObject = a_dialogueState;
 				if (g_hooksSafe) {
@@ -1434,7 +1357,9 @@ namespace CCC
 						g_state.bodyReady = true;
 						g_state.bodyReadyAt = a_now;
 						g_state.hidePlayer = false;
-						g_state.povNpcShot = false;
+						// Keep the opening shot (from the player's eyes) until the conversation's
+						// first real cut; cutting to over the shoulder as soon as the body was
+						// ready made a 0.1 s shot that read as a flicker.
 						g_state.restoreFirstPerson = false;
 						return;
 					}
@@ -1852,7 +1777,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.31 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.32 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
