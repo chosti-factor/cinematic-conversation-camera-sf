@@ -88,8 +88,15 @@ namespace CCC
 		std::int32_t bodyRebuildMethod{ 1 };
 
 		// Which parts the direct refresh asks for (1 model, 2 skin, 4 head, 8 face,
-		// 32 skeleton; add them up). 33 worked in testing.
-		std::int32_t bodyUpdateFlags{ 33 };
+		// 16 scale, 32 skeleton; add them up). 63 = all of them, best in testing; 33 left
+		// the head missing.
+		std::int32_t bodyUpdateFlags{ 63 };
+
+		// Test switch: when fDialogueFOV is set, how it is written.
+		// 1 = just before the game's dialogue camera update (the game then works from it)
+		// 2 = just after it, field of view and view cone (0.3.30; made the picture shake)
+		// 3 = before the update, plus the view cone after it
+		std::int32_t fovMethod{ 1 };
 
 		static Settings& Get();
 		void             Load();

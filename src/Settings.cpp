@@ -52,6 +52,7 @@ namespace CCC
 
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
+			a_s.fovMethod = std::clamp(ReadInt(a_path, L"Debug", L"iFovMethod", a_s.fovMethod), 1, 3);
 			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Camera", L"iBodyRebuildMethod", a_s.bodyRebuildMethod), 0, 1);
 			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Camera", L"iBodyUpdateFlags", a_s.bodyUpdateFlags), 1, 0xFFFF);
 			a_s.fovExperiment = std::clamp(ReadInt(a_path, L"Debug", L"iFovExperiment", a_s.fovExperiment), 0, 4);
