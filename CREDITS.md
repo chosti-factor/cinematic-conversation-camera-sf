@@ -37,4 +37,4 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 ## Update log
 
 - 0.4.4: initial record.
-- 0.4.6: hand the camera back to the game when it keeps moving its own camera (idea from Player Camera During Dialogue's scripted-scene bypass; our own detection).
+- 0.4.6/0.4.7: quest scenes keep the game's own camera (idea from Player Camera During Dialogue's scripted-scene bypass; detection by the speaker's current scene is our own).

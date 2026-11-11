@@ -29,8 +29,8 @@ Working:
   is at your eyes.
 - Clean exits in both perspectives (starts can still show a frame or two of the game's
   own camera), seated characters, and small speakers (robots), which keep the game's
-  own camera. When the game moves its own camera during a conversation (quest scenes,
-  someone who walks up and starts talking), the camera is handed back to the game.
+  own camera. Quest scenes (someone walks up and starts talking, several people taking
+  turns) keep the game's own camera.
 
 Differences from CCC, because of Starfield:
 
