@@ -5,6 +5,9 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -40,7 +43,30 @@ jobs:
           Copy-Item LICENSE package/
           Copy-Item README.md package/
 
+
+      # A second download route: each build on main also goes on the Releases page as a
+      # pre-release named after its version (rebuilds of the same version replace the file).
+      - name: Publish pre-release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Select-String -Path xmake.lua -Pattern 'set_version\("([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          if (-not $version) { throw "version not found in xmake.lua" }
+          $tag = "v$version"
+          $zip = "CinematicConversationCameraSF-$version.zip"
+          Compress-Archive -Path package/* -DestinationPath $zip -Force
+          $notes = "Alpha test build $version (commit ${{ github.sha }}). Copy the Data folder into your Starfield folder, or install the zip with a mod manager."
+          gh release view $tag 2>$null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $tag $zip --clobber
+          } else {
+            gh release create $tag $zip --prerelease --target ${{ github.sha }} --title "Cinematic Conversation Camera SF $version (alpha)" --notes $notes
+          }
+
       - name: Upload mod
+        continue-on-error: true
         uses: actions/upload-artifact@v6
         with:
           name: CinematicConversationCameraSF
