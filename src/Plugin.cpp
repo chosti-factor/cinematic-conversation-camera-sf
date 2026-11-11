@@ -57,6 +57,14 @@ namespace CCC
 			std::uint64_t                         framesAtRepairEnd{ 0 };
 			bool                                  startRootCaughtUp{ false };
 			bool                                  smallSpeaker{ false };
+			bool                                  handedBack{ false };       // the game moves its own camera: leave it to the game
+			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
+			std::uint32_t                         driftBits{ 0 };            // last 32 frames: 1 = the game moved its camera after us
+			int                                   driftLogged{ 0 };
+			std::uint32_t                         speakerId{ 0 };
+			std::optional<Camera::Pose>           lastRoot{};
+			std::optional<RE::NiPoint3>           lastNpcFeet{};
+			std::optional<RE::NiPoint3>           lastPlayerFeet{};
 			bool                                  lateRetryDone{ false };
 			bool                                  directRequested{ false };
 			bool                                  directFailed{ false };
@@ -909,9 +917,76 @@ namespace CCC
 					g_state.needsBodyRepair = false;
 				}
 			}
-			if (g_state.smallSpeaker) {
+			// Who is speaking: in scenes the line can pass to someone else mid-conversation.
+			if (speaker->formID != g_state.speakerId) {
+				if (g_state.speakerId != 0) {
+					const auto  feet = speaker->GetPosition();
+					const auto  pf = player->GetPosition();
+					const float dx = feet.x - pf.x, dy = feet.y - pf.y;
+					const char* name = speaker->GetDisplayFullName();
+					REX::INFO("Speaker changed (frame {}): {:08X} -> {:08X} '{}', {:.2f} m from you", g_state.framesThisConversation, g_state.speakerId, speaker->formID,
+						name ? name : "", std::sqrt(dx * dx + dy * dy));
+				}
+				g_state.speakerId = speaker->formID;
+			}
+
+			// Is the game moving its camera after we've placed our shot? Normally the picture is
+			// drawn exactly where we put it. In some conversations (an NPC who walks up and starts
+			// talking, quest scenes) the game keeps moving its camera later in the frame, which
+			// drags our shot around with it: pointing at odd places, tilted.
+			{
+				const auto root = Camera::PoseOf(camera->cameraRoot.get());
+				const auto drift = Camera::RenderDrift();
+				const bool settled = g_state.framesThisConversation > 8 && (g_state.startRootCaughtUp || (g_state.startedFirstPerson ? s.startMode : s.startModeThird) == 0) &&
+				                     !predictedRoot && g_repair.stage == RepairStage::kIdle && g_state.lastAppliedFrame + 1 == g_state.framesThisConversation;
+				bool big = false;
+				if (drift && settled) {
+					big = drift->metres > 0.12f || drift->degrees > 3.0f;
+					if ((drift->metres > 0.03f || drift->degrees > 1.0f) && s.debugLog && g_state.driftLogged < 40) {
+						++g_state.driftLogged;
+						float rootMoved = 0.0f, rootTurned = 0.0f;
+						if (root && g_state.lastRoot) {
+							const auto& a = *root;
+							const auto& b = *g_state.lastRoot;
+							rootMoved = std::sqrt((a.position.x - b.position.x) * (a.position.x - b.position.x) + (a.position.y - b.position.y) * (a.position.y - b.position.y) +
+							                      (a.position.z - b.position.z) * (a.position.z - b.position.z));
+							const RE::NiPoint3 fa{ a.lookAt.x - a.position.x, a.lookAt.y - a.position.y, a.lookAt.z - a.position.z };
+							const RE::NiPoint3 fb{ b.lookAt.x - b.position.x, b.lookAt.y - b.position.y, b.lookAt.z - b.position.z };
+							const float la = std::sqrt(fa.x * fa.x + fa.y * fa.y + fa.z * fa.z), lb = std::sqrt(fb.x * fb.x + fb.y * fb.y + fb.z * fb.z);
+							if (la > 1e-4f && lb > 1e-4f) {
+								rootTurned = std::acos(std::clamp((fa.x * fb.x + fa.y * fb.y + fa.z * fb.z) / (la * lb), -1.0f, 1.0f)) * 57.29578f;
+							}
+						}
+						auto moved = [](const std::optional<RE::NiPoint3>& a_last, const RE::NiPoint3& a_now) {
+							if (!a_last) {
+								return 0.0f;
+							}
+							const float dx = a_now.x - a_last->x, dy = a_now.y - a_last->y, dz = a_now.z - a_last->z;
+							return std::sqrt(dx * dx + dy * dy + dz * dz);
+						};
+						REX::INFO("Camera drift (frame {}): picture drawn {:.2f} m / {:.1f} degrees away from our shot; since last frame the game camera moved {:.2f} m and turned {:.1f} degrees, "
+						          "the speaker moved {:.2f} m, you moved {:.2f} m; game camera at ({:.2f} {:.2f} {:.2f})",
+							g_state.framesThisConversation, drift->metres, drift->degrees, rootMoved, rootTurned, moved(g_state.lastNpcFeet, speaker->GetPosition()),
+							moved(g_state.lastPlayerFeet, player->GetPosition()), root ? root->position.x : 0.0f, root ? root->position.y : 0.0f, root ? root->position.z : 0.0f);
+					}
+				}
+				g_state.driftBits = (g_state.driftBits << 1) | (big ? 1u : 0u);
+				g_state.lastRoot = root;
+				g_state.lastNpcFeet = speaker->GetPosition();
+				g_state.lastPlayerFeet = player->GetPosition();
+				if (!g_state.handedBack && s.handBackWhenGameCameraMoves && std::popcount(g_state.driftBits) >= 3) {
+					g_state.handedBack = true;
+					g_state.lastPose.reset();  // nothing of ours to hold at the end
+					REX::INFO("Frame {}: the game keeps moving its own camera in this conversation (a scene, or someone who started talking while walking); "
+					          "handing the camera back to the game until the conversation ends",
+						g_state.framesThisConversation);
+				}
+			}
+
+			if (g_state.smallSpeaker || g_state.handedBack) {
 				Camera::RestoreRender();
-				if (g_state.startedFirstPerson) {
+				g_wantRevealPlayer = false;
+				if (g_state.startedFirstPerson || g_state.handedBack) {
 					g_wantHidePlayer = true;
 					Visibility::HidePlayer();
 				}
@@ -1184,6 +1259,7 @@ namespace CCC
 				return;
 			}
 			g_state.lastPose = *pose;
+			g_state.lastAppliedFrame = g_state.framesThisConversation;
 			g_state.holdingExit = false;
 
 			if (g_state.framesThisConversation == 1) {
@@ -2245,7 +2321,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

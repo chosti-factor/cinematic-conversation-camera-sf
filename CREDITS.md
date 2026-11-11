@@ -24,7 +24,7 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 | Source | What it gave |
 |---|---|
 | Cinematic Conversation Camera | The whole design: shot vocabulary, director cutting rules (new angle after a few lines, short lines ignored, shortest hold), presets, camera moves, holding a shot's angle once cut, each person keeping their setup across shot/reverse, the 180-degree rule; the roadmap (letterbox, subtitles, reaction shots, NPC-to-NPC filming, stepping away from work) |
-| Player Camera During Dialogue | Taking over the dialogue camera; the first-person -> third-person -> dialogue camera cycle and timings for building the player's body (now the fallback); exception handling such as skipping while piloting a ship |
+| Player Camera During Dialogue | Taking over the dialogue camera; the first-person -> third-person -> dialogue camera cycle and timings for building the player's body (now the fallback); exception handling such as skipping while piloting a ship, and handing the camera back to the game during scripted scenes |
 | Cassiopeia Papyrus Extender | Building the player's full body with a direct 3D update request instead of switching cameras; the update flag meanings; the camera state list; finding a spoken line's dialogue record from its subtitle |
 | Starvegas | Changing field of view through the game's settings (led to finding that the dialogue camera ignores them); snapping a camera onto walkable floor to avoid walls (planned) |
 | Match dialogue camera with character FOV ([Nexus 627](https://nexusmods.com/starfield/mods/627)) | The `fDialogueCameraFailsafeFPFOV` lead; depth-of-field advice |
@@ -37,3 +37,4 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 ## Update log
 
 - 0.4.4: initial record.
+- 0.4.6: hand the camera back to the game when it keeps moving its own camera (idea from Player Camera During Dialogue's scripted-scene bypass; our own detection).
