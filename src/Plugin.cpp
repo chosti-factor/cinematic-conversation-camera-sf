@@ -223,8 +223,10 @@ namespace CCC
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		// Where the game's dialogue camera sits relative to the player's eyes, as measured on
 		// earlier conversations: metres back from the NPC, and up. Lateral varies, so 0.
-		float g_learnedBack = 0.17f;
+		float g_learnedBack = 0.27f;
 		float g_learnedUp = 0.01f;
+		float g_learnedLateral = 0.18f;  // size of the sideways offset
+		int   g_lateralVotes = 2;        // > = 0: offset to the negative side (seen most often)
 
 		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
 	// game's camera really is, against where we assumed it would be.
@@ -531,7 +533,7 @@ namespace CCC
 			// The opening shot from the player's eyes was only needed while the camera cycle
 			// rebuilt the body. The direct refresh takes about 0.1 s (player hidden meanwhile),
 			// so first-person conversations open over the shoulder like third-person ones.
-			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
+			g_state.povNpcShot = g_lastGameplayFirstPerson && (Settings::Get().bodyRebuildMethod != 1 || Settings::Get().startMode == 3);
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -1027,7 +1029,8 @@ namespace CCC
 			// clips: 1-3 frames of the game's own close-up). Detect that and place the shot
 			// against where the dialogue camera is about to be reported instead.
 			std::optional<Camera::Pose> startRoot;
-			if (s.startMode != 0 && !predictedRoot && !g_state.startRootCaughtUp && gameplayView && g_state.framesThisConversation <= 20) {
+			const int startMode = g_state.startedFirstPerson ? s.startMode : s.startModeThird;
+			if ((startMode == 1 || startMode == 2) && !predictedRoot && !g_state.startRootCaughtUp && gameplayView && g_state.framesThisConversation <= 20) {
 				const auto reported = Camera::PoseOf(camera->cameraRoot.get());
 				bool       stale = false;
 				if (reported) {
@@ -1044,7 +1047,10 @@ namespace CCC
 				}
 				if (stale) {
 					Camera::Pose p;
-					p.position = { eye.x - hx * g_learnedBack, eye.y - hy * g_learnedBack, eye.z + g_learnedUp };
+					// Sideways the game picks either side; in testing it was the same side about
+					// four times in five, so predict the side seen most often.
+					const float lateral = g_lateralVotes >= 0 ? -std::abs(g_learnedLateral) : std::abs(g_learnedLateral);
+					p.position = { eye.x - hx * g_learnedBack + hy * lateral, eye.y - hy * g_learnedBack - hx * lateral, eye.z + g_learnedUp };
 					p.lookAt = *npcHead;
 					startRoot = p;
 					if (s.debugLog) {
@@ -1059,9 +1065,13 @@ namespace CCC
 						const float lateral = ox * hy - oy * hx;
 						REX::INFO("Start frame {}: game now reports its dialogue camera: {:.2f} m back from the eyes, {:+.2f} m sideways, {:+.2f} m up (prediction used {:.2f} back, {:+.2f} up)",
 							g_state.framesThisConversation, back, lateral, oz, g_learnedBack, g_learnedUp);
-						if (back > -0.2f && back < 0.6f && std::abs(oz) < 0.3f) {
+						if (back > 0.1f && back < 0.6f && std::abs(oz) < 0.3f && std::abs(lateral) < 0.4f) {
 							g_learnedBack = 0.5f * g_learnedBack + 0.5f * back;
 							g_learnedUp = 0.5f * g_learnedUp + 0.5f * oz;
+							if (std::abs(lateral) > 0.05f) {
+								g_learnedLateral = 0.5f * std::abs(g_learnedLateral) + 0.5f * std::abs(lateral);
+								g_lateralVotes = std::clamp(g_lateralVotes + (lateral < 0.0f ? 1 : -1), -5, 5);
+							}
 						}
 					} else if (g_state.framesThisConversation == 1) {
 						REX::INFO("Start frame 1: game already reports its dialogue camera");
@@ -1069,7 +1079,7 @@ namespace CCC
 				}
 			}
 			std::optional<Camera::Pose> waitingView;
-			if (gameplayView && ((s.startMode == 0 && wideFrame) || (s.startMode == 2 && startRoot))) {
+			if (gameplayView && (((startMode == 0 || startMode == 3) && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
 			const auto  pose = waitingView ? waitingView :
@@ -1332,31 +1342,6 @@ namespace CCC
 			}
 		}
 
-		// Leaving a first-person conversation, the game shows its third-person camera for one
-		// frame on the way back (0.3.31 recording: one frame looking at the ceiling). Draw
-		// that frame from the player's first-person view instead.
-		void ExitMaskFrame()
-		{
-			if (!g_hooksSafe) {
-				return;
-			}
-			auto lock = HookLock();
-			if (!lock.owns_lock() || g_state.active || !g_firstPersonView || std::chrono::steady_clock::now() > g_exitMaskUntil) {
-				return;
-			}
-			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
-				if (Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
-					if (!g_exitMasking) {
-						REX::INFO("Exit: drawing the game's passing third-person frame from the first-person view");
-					}
-					g_exitMasking = true;
-				}
-			}
-		}
-
-		// The game's first first-person frame after a first-person conversation we held to the
-		// end. End the conversation here, on that very frame: hide the full body again and draw
-		// the frame from the player's view (the game's own first frame looked at the ceiling).
 		void LogExitFrame(RE::PlayerCamera* a_camera, int a_frame)
 		{
 			const auto reported = Camera::PoseOf(a_camera->cameraRoot.get());
@@ -1399,6 +1384,21 @@ namespace CCC
 				g_exitCoverFrames = mode == 2 ? 3 : 1;
 			}
 			return true;
+		}
+
+		void ExitMaskRelease()
+		{
+			if (!g_hooksSafe) {
+				return;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || !g_exitMasking) {
+				return;
+			}
+			g_exitMasking = false;
+			g_exitCoverFrames = 0;
+			Camera::RestoreRender();
+			REX::INFO("Exit cover released (left first person)");
 		}
 
 		void ExitMaskEnd()
@@ -1453,10 +1453,12 @@ namespace CCC
 			{
 				Hook(a_state, a_arg);
 				MaskRepairFrame("third-person");
-				ExitMaskFrame();
-				if (!g_exitMasking) {
-					RememberGameplayView(g_thirdPersonView);
+				// A first-person exit cover still in place when the player switches to third
+				// person (0.3.35: the view stayed behind the head until the next conversation).
+				if (g_exitMasking) {
+					ExitMaskRelease();
 				}
+				RememberGameplayView(g_thirdPersonView);
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_ThirdPersonUpdate", REL::EHookStep::None, RE::VTABLE::ThirdPersonState[0], kDialogueUpdateVtableIndex, Thunk
@@ -2093,7 +2095,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.35 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.36 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
