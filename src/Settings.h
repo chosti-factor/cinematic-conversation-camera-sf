@@ -134,6 +134,7 @@ namespace CCC
 		// Leave the game's camera alone for speakers this short (head above feet, metres)
 		// or without a head bone (small robots).
 		float minSpeakerHeight{ 1.0f };
+		bool  handBackWhenGameCameraMoves{ true };
 
 		static Settings& Get();
 		void             Load();

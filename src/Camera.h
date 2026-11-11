@@ -49,4 +49,14 @@ namespace CCC::Camera
 
 	// Puts the rendered view back on the game's camera. Safe to call any time.
 	void RestoreRender();
+
+	// How far the picture the game last drew is from the shot we placed for it: nonzero
+	// when something moved the game's camera after our update (scripted scenes, NPCs who
+	// start the conversation while walking). Empty when we haven't placed a shot.
+	struct Drift
+	{
+		float metres{ 0.0f };
+		float degrees{ 0.0f };
+	};
+	std::optional<Drift> RenderDrift();
 }

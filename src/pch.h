@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <chrono>
 #include <cctype>
 #include <cmath>
