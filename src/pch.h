@@ -35,6 +35,8 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <unordered_set>
+#include <vector>
 #include <chrono>
 #include <cctype>
 #include <cmath>

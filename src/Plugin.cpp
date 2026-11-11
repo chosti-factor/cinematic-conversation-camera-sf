@@ -768,6 +768,34 @@ namespace CCC
 
 		std::uint64_t g_hookCalls = 0;
 
+		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
+
+		RE::BGSScene* CurrentSceneUnsafe(RE::TESObjectREFR* a_ref)
+		{
+			__try {
+				return a_ref->GetCurrentScene();
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return nullptr;
+			}
+		}
+
+		// The quest scene this reference is playing a part in, if any.
+		std::string SceneLabel(RE::TESObjectREFR* a_ref, bool& a_inScene)
+		{
+			a_inScene = false;
+			auto* scene = a_ref ? CurrentSceneUnsafe(a_ref) : nullptr;
+			if (!scene) {
+				return "not in a scene";
+			}
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (!ReadFormInfo(reinterpret_cast<std::uintptr_t>(scene), type, id, editorId) || type != std::to_underlying(RE::FormType::kSCEN)) {
+				return std::format("unrecognised value {:p} (not counted)", static_cast<void*>(scene));
+			}
+			a_inScene = true;
+			return std::format("in scene {:08X} '{}'", id, editorId ? editorId : "");
+		}
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
@@ -916,6 +944,18 @@ namespace CCC
 						Camera::HasHeadBone(speaker) ? "is short" : "has no head bone", Camera::HasHeadBone(speaker) ? "found" : "missing", height);
 					g_state.needsBodyRepair = false;
 				}
+				// Quest scenes (someone walks up and starts talking, several people taking turns):
+				// the game directs its own camera there, so leave it to the game from the start.
+				bool        speakerInScene = false, playerInScene = false;
+				const auto  speakerScene = SceneLabel(speaker, speakerInScene);
+				const auto  playerScene = SceneLabel(player, playerInScene);
+				const char* name = speaker->GetDisplayFullName();
+				REX::INFO("Scene check: speaker '{}' {:08X}: {}; you: {}", name ? name : "", speaker->formID, speakerScene, playerScene);
+				if (!g_state.smallSpeaker && s.gameCameraInScenes && (speakerInScene || playerInScene)) {
+					g_state.handedBack = true;
+					g_state.needsBodyRepair = false;
+					REX::INFO("Quest scene: leaving the game's camera on this conversation");
+				}
 			}
 			// Who is speaking: in scenes the line can pass to someone else mid-conversation.
 			if (speaker->formID != g_state.speakerId) {
@@ -930,63 +970,12 @@ namespace CCC
 				g_state.speakerId = speaker->formID;
 			}
 
-			// Is the game moving its camera after we've placed our shot? Normally the picture is
-			// drawn exactly where we put it. In some conversations (an NPC who walks up and starts
-			// talking, quest scenes) the game keeps moving its camera later in the frame, which
-			// drags our shot around with it: pointing at odd places, tilted.
-			{
-				const auto root = Camera::PoseOf(camera->cameraRoot.get());
-				const auto drift = Camera::RenderDrift();
-				const bool settled = g_state.framesThisConversation > 8 && (g_state.startRootCaughtUp || (g_state.startedFirstPerson ? s.startMode : s.startModeThird) == 0) &&
-				                     !predictedRoot && g_repair.stage == RepairStage::kIdle && g_state.lastAppliedFrame + 1 == g_state.framesThisConversation;
-				bool big = false;
-				if (drift && settled) {
-					big = drift->metres > 0.12f || drift->degrees > 3.0f;
-					if ((drift->metres > 0.03f || drift->degrees > 1.0f) && s.debugLog && g_state.driftLogged < 40) {
-						++g_state.driftLogged;
-						float rootMoved = 0.0f, rootTurned = 0.0f;
-						if (root && g_state.lastRoot) {
-							const auto& a = *root;
-							const auto& b = *g_state.lastRoot;
-							rootMoved = std::sqrt((a.position.x - b.position.x) * (a.position.x - b.position.x) + (a.position.y - b.position.y) * (a.position.y - b.position.y) +
-							                      (a.position.z - b.position.z) * (a.position.z - b.position.z));
-							const RE::NiPoint3 fa{ a.lookAt.x - a.position.x, a.lookAt.y - a.position.y, a.lookAt.z - a.position.z };
-							const RE::NiPoint3 fb{ b.lookAt.x - b.position.x, b.lookAt.y - b.position.y, b.lookAt.z - b.position.z };
-							const float la = std::sqrt(fa.x * fa.x + fa.y * fa.y + fa.z * fa.z), lb = std::sqrt(fb.x * fb.x + fb.y * fb.y + fb.z * fb.z);
-							if (la > 1e-4f && lb > 1e-4f) {
-								rootTurned = std::acos(std::clamp((fa.x * fb.x + fa.y * fb.y + fa.z * fb.z) / (la * lb), -1.0f, 1.0f)) * 57.29578f;
-							}
-						}
-						auto moved = [](const std::optional<RE::NiPoint3>& a_last, const RE::NiPoint3& a_now) {
-							if (!a_last) {
-								return 0.0f;
-							}
-							const float dx = a_now.x - a_last->x, dy = a_now.y - a_last->y, dz = a_now.z - a_last->z;
-							return std::sqrt(dx * dx + dy * dy + dz * dz);
-						};
-						REX::INFO("Camera drift (frame {}): picture drawn {:.2f} m / {:.1f} degrees away from our shot; since last frame the game camera moved {:.2f} m and turned {:.1f} degrees, "
-						          "the speaker moved {:.2f} m, you moved {:.2f} m; game camera at ({:.2f} {:.2f} {:.2f})",
-							g_state.framesThisConversation, drift->metres, drift->degrees, rootMoved, rootTurned, moved(g_state.lastNpcFeet, speaker->GetPosition()),
-							moved(g_state.lastPlayerFeet, player->GetPosition()), root ? root->position.x : 0.0f, root ? root->position.y : 0.0f, root ? root->position.z : 0.0f);
-					}
-				}
-				g_state.driftBits = (g_state.driftBits << 1) | (big ? 1u : 0u);
-				g_state.lastRoot = root;
-				g_state.lastNpcFeet = speaker->GetPosition();
-				g_state.lastPlayerFeet = player->GetPosition();
-				if (!g_state.handedBack && s.handBackWhenGameCameraMoves && std::popcount(g_state.driftBits) >= 3) {
-					g_state.handedBack = true;
-					g_state.lastPose.reset();  // nothing of ours to hold at the end
-					REX::INFO("Frame {}: the game keeps moving its own camera in this conversation (a scene, or someone who started talking while walking); "
-					          "handing the camera back to the game until the conversation ends",
-						g_state.framesThisConversation);
-				}
-			}
-
 			if (g_state.smallSpeaker || g_state.handedBack) {
+				// The game's own camera throughout. From first person, keep the player hidden (the
+				// game's camera is at their eyes); from third person, leave visibility to the game,
+				// so nothing pops in when it ends.
 				Camera::RestoreRender();
-				g_wantRevealPlayer = false;
-				if (g_state.startedFirstPerson || g_state.handedBack) {
+				if (g_state.startedFirstPerson) {
 					g_wantHidePlayer = true;
 					Visibility::HidePlayer();
 				}
@@ -1998,73 +1987,147 @@ namespace CCC
 			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
-		// 0.4.4 showed the game doesn't list its dialogue records by type, so look for the
-		// record of the line being spoken where the dialogue system keeps it: scan the
-		// dialogue topic manager for pointers to dialogue records (INFO) and topics (DIAL).
-		bool ReadQword(std::uintptr_t a_at, std::uint64_t& a_out)
+		// ---- Depth of field (0.4.7 diagnostic) ------------------------------------------------
+		// Outdoors the conversation's depth of field focuses on the listener. The game most
+		// likely focuses at the distance from its own camera to whoever it is aimed at, while
+		// the picture is drawn from our camera further back. Look for the game's depth-of-field
+		// effect object (found by its type) near the camera, and log its values over time.
+		std::uintptr_t DofVtable()
 		{
-			__try {
-				a_out = *reinterpret_cast<const std::uint64_t*>(a_at);
-				return true;
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				return false;
-			}
+			static const std::uintptr_t vtable = [] {
+				try {
+					return RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address();
+				} catch (...) {
+					return std::uintptr_t{ 0 };
+				}
+			}();
+			return vtable;
 		}
 
-		void LogResponse(const char* a_where, RE::TESTopicInfo* a_info, const std::string& a_subtitle)
+		struct DofHit
 		{
-			int index = 0;
-			for (auto* response = a_info->responses; response && index < 16; response = response->next, ++index) {
-				std::uint64_t words[4]{};
-				SafeCopy(words, reinterpret_cast<const std::uint8_t*>(response) + 0x10, sizeof(words));
-				const std::string_view text{ response->responseText };
-				const bool             matches = !a_subtitle.empty() && text.find(a_subtitle.substr(0, 30)) != std::string_view::npos;
-				REX::INFO("Line emotion:   {} INFO {:08X} response {}{}: '{}' raw +10 {:016X} +18 {:016X} +20 {:016X}", a_where, a_info->formID, index,
-					matches ? " (the line being spoken)" : "", std::string{ text.substr(0, 40) }, words[0], words[1], words[2]);
-				for (int k = 0; k < 3; ++k) {
-					if (words[k] > 0x10000 && words[k] < 0x7FFFFFFFFFFF) {
-						REX::INFO("Line emotion:     +{:X} -> {}", 0x10 + k * 8, FormLabel(static_cast<std::uintptr_t>(words[k])));
+			std::uintptr_t address;
+			std::string    path;
+		};
+		std::vector<DofHit> g_dofHits;
+		int                 g_dofConversation = -1;
+		int                 g_dofSamples = 0;
+		std::chrono::steady_clock::time_point g_dofNext{};
+
+		void FindDofObjects()
+		{
+			g_dofHits.clear();
+			const auto vtable = DofVtable();
+			if (!vtable) {
+				REX::INFO("Depth of field: the effect's type isn't in the address library");
+				return;
+			}
+			struct Node
+			{
+				std::uintptr_t address;
+				std::string    path;
+				int            depth;
+			};
+			std::vector<Node>                  queue;
+			std::unordered_set<std::uintptr_t> seen;
+			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(camera), "PlayerCamera", 0 });
+			}
+			if (g_dialogueStateObject) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(g_dialogueStateObject), "dialogue camera", 0 });
+			}
+			if (auto* render = Camera::RenderCameraObject()) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(render), "render camera", 0 });
+			}
+			if (auto* player = RE::PlayerCharacter::GetSingleton()) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(player), "player", 1 });
+			}
+			std::size_t visited = 0;
+			for (std::size_t i = 0; i < queue.size() && visited < 15000 && g_dofHits.size() < 12; ++i) {
+				const Node node = queue[i];
+				if (!seen.insert(node.address).second) {
+					continue;
+				}
+				++visited;
+				std::array<std::uint64_t, 64> words{};
+				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(node.address), sizeof(words))) {
+					continue;
+				}
+				for (std::size_t k = 0; k < words.size(); ++k) {
+					const auto w = words[k];
+					if (w == vtable) {
+						g_dofHits.push_back({ node.address + k * 8, std::format("{}+{:X}", node.path, k * 8) });
+					} else if (node.depth < 3 && w > 0x10000 && w < 0x7FFFFFFFFFFF && (w & 7) == 0 && queue.size() < 60000) {
+						queue.push_back({ static_cast<std::uintptr_t>(w), std::format("{}+{:X}", node.path, k * 8), node.depth + 1 });
 					}
 				}
 			}
+			REX::INFO("Depth of field: searched {} objects near the camera; {} depth-of-field effect objects found", visited, g_dofHits.size());
+			for (const auto& hit : g_dofHits) {
+				REX::INFO("Depth of field:   {:#x} at {}", hit.address, hit.path);
+			}
 		}
 
-		void LogLineEmotion(RE::Actor* a_speaker)
+		void LogDofSample()
 		{
-			static int logged = 0;
-			if (logged >= 30 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			auto* speaker = Speaker();
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!camera || !speaker || !player) {
 				return;
 			}
-			const char*       raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
-			const std::string subtitle{ raw ? raw : "" };
-			++logged;
-			REX::INFO("Line emotion: '{}'", subtitle.substr(0, 60));
-			auto* topics = RE::MenuTopicManager::GetSingleton();
-			if (!topics) {
+			const auto root = Camera::PoseOf(camera->cameraRoot.get());
+			const auto npc = Camera::HeadPosition(speaker);
+			const auto you = Camera::HeadPosition(player);
+			auto*      render = static_cast<RE::NiAVObject*>(Camera::RenderCameraObject());
+			auto dist = [](const RE::NiPoint3& a, const std::optional<RE::NiPoint3>& b) {
+				if (!b) {
+					return -1.0f;
+				}
+				const float dx = a.x - b->x, dy = a.y - b->y, dz = a.z - b->z;
+				return std::sqrt(dx * dx + dy * dy + dz * dz);
+			};
+			REX::INFO("Depth of field sample {}: {} talking; game camera to speaker {:.2f} m, to you {:.2f} m; picture to speaker {:.2f} m, to you {:.2f} m",
+				g_dofSamples, speaker->IsTalking() ? "they're" : "you're (or nobody)",
+				root ? dist(root->position, npc) : -1.0f, root ? dist(root->position, you) : -1.0f,
+				render ? dist(render->world.translate, npc) : -1.0f, render ? dist(render->world.translate, you) : -1.0f);
+			int n = 0;
+			for (const auto& hit : g_dofHits) {
+				if (++n > 4) {
+					break;
+				}
+				std::array<float, 40> values{};
+				if (!SafeCopy(values.data(), reinterpret_cast<const void*>(hit.address), sizeof(values))) {
+					REX::INFO("Depth of field:   {} gone", hit.path);
+					continue;
+				}
+				std::string text;
+				for (std::size_t k = 2; k < values.size(); ++k) {  // skip the type pointer
+					const float v = values[k];
+					text += std::isfinite(v) && std::abs(v) > 1e-4f && std::abs(v) < 1e6f ? std::format(" +{:X}={:.3f}", k * 4, v) : "";
+				}
+				REX::INFO("Depth of field:   {}:{}", hit.path, text);
+			}
+		}
+
+		void DofDiagnostics(std::chrono::steady_clock::time_point a_now)
+		{
+			if (!g_state.active) {
 				return;
 			}
-			const auto base = reinterpret_cast<std::uintptr_t>(topics);
-			int        found = 0;
-			for (std::size_t off = 0; off < 0x400 && found < 8; off += 8) {
-				std::uint64_t value = 0;
-				if (!ReadQword(base + off, value) || value < 0x10000 || value > 0x7FFFFFFFFFFF) {
-					continue;
+			if (g_dofConversation != g_conversationNumber) {
+				if (g_state.framesThisConversation < 30) {
+					return;  // let the conversation settle first
 				}
-				std::uint32_t type = 0, id = 0;
-				const char*   editorId = nullptr;
-				if (!ReadFormInfo(static_cast<std::uintptr_t>(value), type, id, editorId)) {
-					continue;
-				}
-				if (type == std::to_underlying(RE::FormType::kINFO)) {
-					++found;
-					LogResponse(std::format("topic manager +{:X}", off).c_str(), reinterpret_cast<RE::TESTopicInfo*>(value), subtitle);
-				} else if (type == std::to_underlying(RE::FormType::kDIAL)) {
-					++found;
-					REX::INFO("Line emotion:   topic manager +{:X}: topic {:08X} '{}'", off, id, editorId ? editorId : "");
-				}
+				g_dofConversation = g_conversationNumber;
+				g_dofSamples = 0;
+				FindDofObjects();
+				g_dofNext = a_now;
 			}
-			if (found == 0) {
-				REX::INFO("Line emotion:   no dialogue records referenced by the topic manager");
+			if (a_now >= g_dofNext && g_dofSamples < 12) {
+				g_dofNext = a_now + 1500ms;
+				++g_dofSamples;
+				LogDofSample();
 			}
 		}
 
@@ -2174,15 +2237,9 @@ namespace CCC
 					}
 				}
 
-				// Diagnostic: the emotion data of each line the speaker starts.
-				{
-					static bool wasTalking = false;
-					auto*       speaker = g_state.active && Settings::Get().debugLog ? Speaker() : nullptr;
-					const bool  talking = speaker && speaker->IsTalking();
-					if (talking && !wasTalking) {
-						LogLineEmotion(static_cast<RE::Actor*>(speaker));
-					}
-					wasTalking = talking;
+				// Diagnostic: where the game keeps the conversation's depth of field.
+				if (Settings::Get().debugLog) {
+					DofDiagnostics(now);
 				}
 
 				// Data collection and experiments (main thread).
@@ -2321,7 +2378,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.7 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
