@@ -313,8 +313,8 @@ namespace CCC::Director
 		g.npcLine = {};
 		g.playerLine = {};
 		g.loggedEmpty = false;
-		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject, new angle every {}-{} lines",
-			preset, interior ? "interior" : "exterior", g.maxDistance, s.minLines, s.maxLines);
+		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
+			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
@@ -328,7 +328,8 @@ namespace CCC::Director
 
 		if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 			// The reverse: back to this person's own setup, unless they're due a new one.
-			if (side.shot && !side.changeDue && Usable(*side.shot, a_frame)) {
+			const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
+			if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
 				Cut(*side.shot, a_frame, a_now, "turn", false);
 			} else {
 				g.current = side.shot;  // so Pick avoids repeating it
