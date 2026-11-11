@@ -3,7 +3,7 @@ set_xmakever("3.0.0")
 includes("lib/commonlibsf")
 
 set_project("CinematicConversationCameraSF")
-set_version("0.3.33")
+set_version("0.3.34")
 set_license("GPL-3.0-or-later")
 set_arch("x64")
 set_languages("c++23")

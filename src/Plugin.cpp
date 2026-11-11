@@ -406,7 +406,10 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
-			g_state.povNpcShot = g_lastGameplayFirstPerson;
+			// The opening shot from the player's eyes was only needed while the camera cycle
+			// rebuilt the body. The direct refresh takes about 0.1 s (player hidden meanwhile),
+			// so first-person conversations open over the shoulder like third-person ones.
+			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -660,7 +663,11 @@ namespace CCC
 					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
 				}
 				const float held = std::chrono::duration<float>(now - g_state.holdStarted).count();
-				if (held < s.exitHoldSeconds && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+				// First-person conversations: keep the last shot until the game leaves its dialogue
+				// camera (the first-person camera hook then cuts straight to the player's view),
+				// instead of showing the game's own close-up for the last half second.
+				const bool holdToEnd = g_state.startedFirstPerson && g_firstPersonView && held < 3.0f;
+				if ((held < s.exitHoldSeconds || holdToEnd) && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
 					return;
 				}
 				// Third-person conversations: the game would now show its eye-level dialogue view
@@ -1179,6 +1186,33 @@ namespace CCC
 			}
 		}
 
+		// The game's first first-person frame after a first-person conversation we held to the
+		// end. End the conversation here, on that very frame: hide the full body again and draw
+		// the frame from the player's view (the game's own first frame looked at the ceiling).
+		bool ExitToFirstPerson()
+		{
+			if (!g_hooksSafe) {
+				return false;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || !g_state.active || !g_state.startedFirstPerson || !g_state.holdingExit || !g_firstPersonView) {
+				return false;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (!camera) {
+				return false;
+			}
+			REX::INFO("Exit: cutting from the last shot straight to first person");
+			const auto view = *g_firstPersonView;
+			End();
+			g_needVisibilityRestore = false;
+			Visibility::Restore(false);
+			if (Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+				g_exitMasking = true;
+			}
+			return true;
+		}
+
 		void ExitMaskEnd()
 		{
 			if (!g_hooksSafe) {
@@ -1198,6 +1232,9 @@ namespace CCC
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				Hook(a_state, a_arg);
+				if (ExitToFirstPerson()) {
+					return;  // this frame is drawn from the saved view; don't learn from it
+				}
 				ExitMaskEnd();
 				MaskRepairFrame("first-person");
 				RememberGameplayView(g_firstPersonView);
@@ -1417,6 +1454,7 @@ namespace CCC
 					}
 					REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); falling back to the camera cycle", waited, PlayerHeadAboveFeet());
 					g_state.directFailed = true;
+					g_state.povNpcShot = true;  // the camera cycle needs its opening shot
 				}
 				if (!early && (a_now < g_repair.nextAttemptAt || elapsed < kRepairStartDelay ||
 								  (!npcSpeaking && elapsed < kRepairFallbackStart))) {
@@ -1748,7 +1786,17 @@ namespace CCC
 				}
 
 				// While repairing, the game is briefly out of its dialogue camera on purpose.
-				if (g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue)) {
+				static std::chrono::steady_clock::time_point leftDialogueAt{};
+				const bool leftDialogue = g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue);
+				if (!leftDialogue) {
+					leftDialogueAt = {};
+				} else if (leftDialogueAt == std::chrono::steady_clock::time_point{}) {
+					leftDialogueAt = now;
+				}
+				// A first-person exit is finished by the first-person camera hook on the game's
+				// first first-person frame; only step in if that hasn't happened shortly.
+				const bool hookFinishes = g_state.startedFirstPerson && g_state.holdingExit && now - leftDialogueAt < 150ms;
+				if (leftDialogue && !hookFinishes) {
 					REX::INFO("Game left its dialogue camera; restoring camera");
 					End();
 				}
@@ -1826,7 +1874,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.33 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.34 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
