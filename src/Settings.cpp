@@ -53,7 +53,8 @@ namespace CCC
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
 			a_s.fovMethod = std::clamp(ReadInt(a_path, L"Debug", L"iFovMethod", a_s.fovMethod), 1, 3);
-			a_s.startMode = std::clamp(ReadInt(a_path, L"Debug", L"iStartMode", a_s.startMode), 0, 2);
+			a_s.startMode = std::clamp(ReadInt(a_path, L"Debug", L"iStartMode", a_s.startMode), 0, 3);
+			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Debug", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);
 			a_s.exitMode = std::clamp(ReadInt(a_path, L"Debug", L"iExitMode", a_s.exitMode), 0, 2);
 			{
 				std::vector<wchar_t> buffer(16384);

@@ -98,15 +98,17 @@ namespace CCC
 		// 3 = before the update, plus the view cone after it
 		std::int32_t fovMethod{ 1 };
 
-		// Test switches for the conversation's first and last frames.
-		// iStartMode: on the first frames, while the game hasn't yet reported its dialogue
-		// camera position, 0 = show the gameplay view (0.3.34), 1 = show the first shot placed
-		// against where the dialogue camera is predicted to be, 2 = show the gameplay view
-		// placed against that prediction.
+		// The conversation's first frames, while the game is still switching to its dialogue
+		// camera. iStartMode (from first person) / iStartModeThirdPerson:
+		// 0 = show the gameplay view, 1 = show the first shot placed against where the dialogue
+		// camera is predicted to be, 2 = show the gameplay view placed that way,
+		// 3 (first person only) = the 0.3.33 opening: a shot from the player's eyes until the
+		// conversation's first cut.
 		std::int32_t startMode{ 1 };
-		// iExitMode (first person): 0 = cover the game's first first-person frame (0.3.34),
-		// 1 = no cover, 2 = cover the first three first-person frames.
-		std::int32_t exitMode{ 0 };
+		std::int32_t startModeThird{ 2 };
+		// iExitMode (first person): 0 = cover the game's first first-person frame, 1 = no
+		// cover (best in testing), 2 = cover the first three first-person frames.
+		std::int32_t exitMode{ 1 };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;
