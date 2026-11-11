@@ -707,7 +707,10 @@ namespace CCC
 				std::string            lower{ key };
 				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				if (lower.find("fov") == std::string::npos && lower.find("dialog") == std::string::npos &&
-					lower.find("camera") == std::string::npos && lower.find("zoom") == std::string::npos) {
+					lower.find("camera") == std::string::npos && lower.find("zoom") == std::string::npos &&
+					lower.find("dof") == std::string::npos && lower.find("focus") == std::string::npos &&
+					lower.find("depth") == std::string::npos && lower.find("bokeh") == std::string::npos &&
+					lower.find("blur") == std::string::npos) {
 					continue;
 				}
 				++shown;
@@ -1889,6 +1892,72 @@ namespace CCC
 			}
 		}
 
+		// Diagnostic for using the lines' emotions: the subtitle of the line the speaker has
+		// just started, the dialogue record it comes from, and what the record's response
+		// holds around where Cassiopeia reads its facial "archetype" keyword.
+		std::string FormLabel(std::uintptr_t a_ptr)
+		{
+			std::string out;
+			__try {
+				const auto* form = reinterpret_cast<const RE::TESForm*>(a_ptr);
+				const auto  type = static_cast<std::uint32_t>(*reinterpret_cast<const std::uint8_t*>(a_ptr + 0x2E));
+				const auto  id = *reinterpret_cast<const std::uint32_t*>(a_ptr + 0x28);
+				const char* editorId = type < 0xB0 ? form->GetFormEditorID() : nullptr;
+				char        buffer[160]{};
+				std::snprintf(buffer, sizeof(buffer), "form type %u id %08X '%s'", type, id, editorId && editorId[0] ? editorId : "");
+				out = buffer;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				out = "not a form";
+			}
+			return out;
+		}
+
+		void LogLineEmotion(RE::Actor* a_speaker)
+		{
+			static int logged = 0;
+			if (logged >= 40 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+				return;
+			}
+			const std::string subtitle{ a_speaker->currentProcess->high->strVoiceSubtitle.c_str() ? a_speaker->currentProcess->high->strVoiceSubtitle.c_str() : "" };
+			if (subtitle.empty()) {
+				return;
+			}
+			++logged;
+			auto* data = RE::TESDataHandler::GetSingleton();
+			if (!data) {
+				return;
+			}
+			auto&      infos = data->formArrays[std::to_underlying(RE::FormType::kINFO)];
+			const auto start = std::chrono::steady_clock::now();
+			std::size_t checked = 0;
+			for (auto& form : infos.formArray) {
+				auto* info = static_cast<RE::TESTopicInfo*>(form.get());
+				if (!info) {
+					continue;
+				}
+				++checked;
+				int index = 0;
+				for (auto* response = info->responses; response && index < 32; response = response->next, ++index) {
+					const std::string_view text{ response->responseText };
+					if (text.empty() || text.find(subtitle) == std::string_view::npos) {
+						continue;
+					}
+					std::uint64_t words[4]{};
+					SafeCopy(words, reinterpret_cast<const std::uint8_t*>(response) + 0x10, sizeof(words));
+					REX::INFO("Line emotion: '{}' is INFO {:08X} response {} (searched {} of {} records in {} ms); raw +10 {:016X} +18 {:016X} +20 {:016X}",
+						subtitle.substr(0, 60), info->formID, index, checked, infos.formArray.size(),
+						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count(), words[0], words[1], words[2]);
+					for (int i = 0; i < 3; ++i) {
+						if (words[i] > 0x10000 && words[i] < 0x7FFFFFFFFFFF) {
+							REX::INFO("Line emotion:   +{:X} -> {}", 0x10 + i * 8, FormLabel(static_cast<std::uintptr_t>(words[i])));
+						}
+					}
+					return;
+				}
+			}
+			REX::INFO("Line emotion: '{}' not found in {} records ({} INFO forms listed)", subtitle.substr(0, 60), checked, infos.formArray.size());
+		}
+
 		void Watchdog()
 		{
 			if (::GetCurrentThreadId() != g_mainThreadId) {
@@ -1993,6 +2062,17 @@ namespace CCC
 						ApplyGameSettings();
 						appliedOnce = true;
 					}
+				}
+
+				// Diagnostic: the emotion data of each line the speaker starts.
+				{
+					static bool wasTalking = false;
+					auto*       speaker = g_state.active && Settings::Get().debugLog ? Speaker() : nullptr;
+					const bool  talking = speaker && speaker->IsTalking();
+					if (talking && !wasTalking) {
+						LogLineEmotion(static_cast<RE::Actor*>(speaker));
+					}
+					wasTalking = talking;
 				}
 
 				// Data collection and experiments (main thread).
@@ -2131,7 +2211,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
