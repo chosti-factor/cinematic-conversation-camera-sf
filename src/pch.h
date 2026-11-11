@@ -22,6 +22,10 @@
 #include "RE/P/PlayerCamera.h"
 #include "RE/P/PlayerCharacter.h"
 #include "RE/T/TESObjectREFR.h"
+#include "RE/T/TESDataHandler.h"
+#include "RE/T/TESTopicInfo.h"
+#include "RE/T/TESResponse.h"
+#include "RE/A/AIProcess.h"
 #include "RE/T/TESObjectCELL.h"
 #include "RE/U/UI.h"
 
