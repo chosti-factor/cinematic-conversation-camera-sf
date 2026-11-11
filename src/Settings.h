@@ -113,6 +113,22 @@ namespace CCC
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;
 
+		// [Director] CCC's shot library and cutting rules.
+		bool        director{ true };
+		std::string preset{ "Standard" };
+		int         minLines{ 3 };             // new angle after this many lines...
+		int         maxLines{ 6 };             // ...up to this many (random in between)
+		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
+		float       shortestHold{ 2.4f };      // never change angle sooner than this
+		float       maxCameraDistance{ 3.0f }; // metres from the person framed
+		bool        true180{ false };
+		bool        cameraMoves{ true };
+		std::vector<std::pair<std::string, std::string>> shotOverrides;  // [Shots]
+
+		// Leave the game's camera alone for speakers this short (head above feet, metres)
+		// or without a head bone (small robots).
+		float minSpeakerHeight{ 1.0f };
+
 		static Settings& Get();
 		void             Load();
 	};

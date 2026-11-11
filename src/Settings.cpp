@@ -24,76 +24,113 @@ namespace CCC
 			return static_cast<std::int32_t>(::GetPrivateProfileIntW(a_section, a_key, a_default, a_path));
 		}
 
+		std::vector<std::pair<std::string, std::string>> ReadSection(const wchar_t* a_path, const wchar_t* a_section)
+		{
+			std::vector<std::pair<std::string, std::string>> out;
+			std::vector<wchar_t>                             buffer(16384);
+			const auto n = ::GetPrivateProfileSectionW(a_section, buffer.data(), static_cast<DWORD>(buffer.size()), a_path);
+			for (std::size_t i = 0; i < n;) {
+				std::wstring_view line{ buffer.data() + i };
+				i += line.size() + 1;
+				if (line.empty() || line.front() == L';' || line.front() == L'#') {
+					continue;
+				}
+				const auto eq = line.find(L'=');
+				if (eq == std::wstring_view::npos) {
+					continue;
+				}
+				auto narrow = [](std::wstring_view a_w, bool a_keepSpaces) {
+					std::string text;
+					for (const auto c : a_w) {
+						if (a_keepSpaces || (c != L' ' && c != L'\t')) {
+							text.push_back(static_cast<char>(c));
+						}
+					}
+					while (!text.empty() && (text.back() == ' ' || text.back() == '\t')) {
+						text.pop_back();
+					}
+					while (!text.empty() && (text.front() == ' ' || text.front() == '\t')) {
+						text.erase(text.begin());
+					}
+					return text;
+				};
+				auto key = narrow(line.substr(0, eq), false);
+				auto value = narrow(line.substr(eq + 1), true);
+				if (const auto semi = value.find(';'); semi != std::string::npos) {
+					value.resize(semi);
+					while (!value.empty() && value.back() == ' ') {
+						value.pop_back();
+					}
+				}
+				if (!key.empty() && !value.empty()) {
+					out.emplace_back(std::move(key), std::move(value));
+				}
+			}
+			return out;
+		}
+
+		std::string ReadString(const wchar_t* a_path, const wchar_t* a_section, const wchar_t* a_key, const std::string& a_default)
+		{
+			wchar_t buffer[128]{};
+			::GetPrivateProfileStringW(a_section, a_key, L"", buffer, static_cast<DWORD>(std::size(buffer)), a_path);
+			std::string out;
+			for (const wchar_t* c = buffer; *c; ++c) {
+				if (*c != L' ') {
+					out.push_back(static_cast<char>(*c));
+				}
+			}
+			return out.empty() ? a_default : out;
+		}
+
 		void LoadFrom(Settings& a_s, const wchar_t* a_path)
 		{
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
 
+			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
+			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
+			a_s.minLines = std::clamp(ReadInt(a_path, L"Director", L"iMinLines", a_s.minLines), 1, 20);
+			a_s.maxLines = std::clamp(ReadInt(a_path, L"Director", L"iMaxLines", a_s.maxLines), 1, 20);
+			a_s.shortLineSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fShortLineSeconds", a_s.shortLineSeconds), 0.0f, 10.0f);
+			a_s.shortestHold = std::clamp(ReadFloat(a_path, L"Director", L"fShortestHold", a_s.shortestHold), 0.3f, 9.0f);
+			a_s.maxCameraDistance = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistance", a_s.maxCameraDistance), 1.0f, 15.0f);
+			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
+			a_s.cameraMoves = ReadInt(a_path, L"Director", L"bCameraMoves", a_s.cameraMoves ? 1 : 0) != 0;
+			for (auto& [key, value] : ReadSection(a_path, L"Shots")) {
+				std::erase_if(a_s.shotOverrides, [&](const auto& a_p) { return a_p.first == key; });
+				a_s.shotOverrides.emplace_back(std::move(key), std::move(value));
+			}
+
 			const auto mode = ReadInt(a_path, L"Camera", L"iShotMode", static_cast<std::int32_t>(a_s.shotMode));
 			a_s.shotMode = static_cast<ShotMode>(std::clamp(mode, 0, 2));
-
-			a_s.distanceBehind = ReadFloat(a_path, L"Camera", L"fDistanceBehind", a_s.distanceBehind);
-			a_s.sideOffset = ReadFloat(a_path, L"Camera", L"fSideOffset", a_s.sideOffset);
-			a_s.heightOffset = ReadFloat(a_path, L"Camera", L"fHeightOffset", a_s.heightOffset);
-			a_s.lookHeightOffset = ReadFloat(a_path, L"Camera", L"fLookHeightOffset", a_s.lookHeightOffset);
-			a_s.blendSeconds = (std::max)(0.0f, ReadFloat(a_path, L"Camera", L"fBlendSeconds", a_s.blendSeconds));
-
-			a_s.shotStyle = std::clamp(ReadInt(a_path, L"Camera", L"iShotStyle", a_s.shotStyle), 0, 1);
-			a_s.seatedForward = ReadFloat(a_path, L"Camera", L"fSeatedForward", a_s.seatedForward);
-			a_s.seatedSide = ReadFloat(a_path, L"Camera", L"fSeatedSide", a_s.seatedSide);
-			a_s.seatedHeight = ReadFloat(a_path, L"Camera", L"fSeatedHeight", a_s.seatedHeight);
-			a_s.exitHoldSeconds = std::clamp(ReadFloat(a_path, L"Camera", L"fExitHoldSeconds", a_s.exitHoldSeconds), 0.0f, 5.0f);
-			a_s.dialogueFov = std::clamp(ReadFloat(a_path, L"Camera", L"fDialogueFOV", a_s.dialogueFov), 0.0f, 120.0f);
 			a_s.followSmoothing = std::clamp(ReadFloat(a_path, L"Camera", L"fFollowSmoothing", a_s.followSmoothing), 0.0f, 3.0f);
-			a_s.cameraTarget = std::clamp(ReadInt(a_path, L"Camera", L"iCameraTarget", a_s.cameraTarget), 0, 1);
-			a_s.revealPlayer = ReadInt(a_path, L"Camera", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
-			a_s.fixFirstPersonBody = ReadInt(a_path, L"Camera", L"bFixFirstPersonBody", a_s.fixFirstPersonBody ? 1 : 0) != 0;
-			a_s.earlyBodyRebuild = ReadInt(a_path, L"Camera", L"bEarlyBodyRebuild", a_s.earlyBodyRebuild ? 1 : 0) != 0;
+			a_s.exitHoldSeconds = std::clamp(ReadFloat(a_path, L"Camera", L"fExitHoldSeconds", a_s.exitHoldSeconds), 0.0f, 5.0f);
+			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeight", a_s.minSpeakerHeight), 0.0f, 3.0f);
+
+			a_s.distanceBehind = ReadFloat(a_path, L"PlainCamera", L"fDistanceBehind", a_s.distanceBehind);
+			a_s.sideOffset = ReadFloat(a_path, L"PlainCamera", L"fSideOffset", a_s.sideOffset);
+			a_s.heightOffset = ReadFloat(a_path, L"PlainCamera", L"fHeightOffset", a_s.heightOffset);
+			a_s.lookHeightOffset = ReadFloat(a_path, L"PlainCamera", L"fLookHeightOffset", a_s.lookHeightOffset);
+			a_s.seatedForward = ReadFloat(a_path, L"PlainCamera", L"fSeatedForward", a_s.seatedForward);
+			a_s.seatedSide = ReadFloat(a_path, L"PlainCamera", L"fSeatedSide", a_s.seatedSide);
+			a_s.seatedHeight = ReadFloat(a_path, L"PlainCamera", L"fSeatedHeight", a_s.seatedHeight);
+
+			a_s.revealPlayer = ReadInt(a_path, L"Body", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
+			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBody", a_s.fixFirstPersonBody ? 1 : 0) != 0;
+			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Body", L"iBodyRebuildMethod", a_s.bodyRebuildMethod), 0, 1);
+			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Body", L"iBodyUpdateFlags", a_s.bodyUpdateFlags), 1, 0xFFFF);
+
+			a_s.startMode = std::clamp(ReadInt(a_path, L"Transitions", L"iStartMode", a_s.startMode), 0, 2);
+			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);
+			a_s.exitMode = std::clamp(ReadInt(a_path, L"Transitions", L"iExitMode", a_s.exitMode), 0, 2);
 
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
-			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
-			a_s.fovMethod = std::clamp(ReadInt(a_path, L"Debug", L"iFovMethod", a_s.fovMethod), 1, 3);
-			a_s.startMode = std::clamp(ReadInt(a_path, L"Debug", L"iStartMode", a_s.startMode), 0, 3);
-			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Debug", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);
-			a_s.exitMode = std::clamp(ReadInt(a_path, L"Debug", L"iExitMode", a_s.exitMode), 0, 2);
-			{
-				std::vector<wchar_t> buffer(16384);
-				const auto           n = ::GetPrivateProfileSectionW(L"GameSettings", buffer.data(), static_cast<DWORD>(buffer.size()), a_path);
-				for (std::size_t i = 0; i < n;) {
-					std::wstring_view line{ buffer.data() + i };
-					i += line.size() + 1;
-					if (line.empty() || line.front() == L';' || line.front() == L'#') {
-						continue;
-					}
-					const auto eq = line.find(L'=');
-					if (eq == std::wstring_view::npos) {
-						continue;
-					}
-					auto narrow = [](std::wstring_view a_w) {
-						std::string out;
-						for (const auto c : a_w) {
-							if (c != L' ' && c != L'\t') {
-								out.push_back(static_cast<char>(c));
-							}
-						}
-						return out;
-					};
-					auto key = narrow(line.substr(0, eq));
-					auto value = narrow(line.substr(eq + 1));
-					if (const auto semi = value.find(';'); semi != std::string::npos) {
-						value.resize(semi);
-					}
-					if (key.empty() || value.empty()) {
-						continue;
-					}
-					std::erase_if(a_s.gameSettings, [&](const auto& a_p) { return a_p.first == key; });
-					a_s.gameSettings.emplace_back(std::move(key), std::move(value));
-				}
+			a_s.cameraTarget = std::clamp(ReadInt(a_path, L"Debug", L"iCameraTarget", a_s.cameraTarget), 0, 1);
+
+			for (auto& [key, value] : ReadSection(a_path, L"GameSettings")) {
+				std::erase_if(a_s.gameSettings, [&](const auto& a_p) { return a_p.first == key; });
+				a_s.gameSettings.emplace_back(std::move(key), std::move(value));
 			}
-			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Camera", L"iBodyRebuildMethod", a_s.bodyRebuildMethod), 0, 1);
-			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Camera", L"iBodyUpdateFlags", a_s.bodyUpdateFlags), 1, 0xFFFF);
-			a_s.fovExperiment = std::clamp(ReadInt(a_path, L"Debug", L"iFovExperiment", a_s.fovExperiment), 0, 4);
-			a_s.fovExperimentValue = std::clamp(ReadFloat(a_path, L"Debug", L"fFovExperimentValue", a_s.fovExperimentValue), 10.0f, 120.0f);
 		}
 	}
 

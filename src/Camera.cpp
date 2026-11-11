@@ -39,6 +39,20 @@ namespace CCC::Camera
 		}
 	}
 
+	bool HasHeadBone(RE::TESObjectREFR* a_ref)
+	{
+		auto* root = Root3D(a_ref);
+		if (!root) {
+			return false;
+		}
+		for (const auto* name : kHeadNodes) {
+			if (root->GetObjectByName(RE::BSFixedString{ name })) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	std::optional<RE::NiPoint3> HeadPosition(RE::TESObjectREFR* a_ref)
 	{
 		auto* root = Root3D(a_ref);
