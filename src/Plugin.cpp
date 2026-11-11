@@ -215,6 +215,9 @@ namespace CCC
 		bool g_wantHidePlayer = false;
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
+		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
+		std::chrono::steady_clock::time_point g_exitMaskUntil{};  // first-person exit: the game passes through third person
+		bool g_exitMasking = false;
 
 		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
 	// game's camera really is, against where we assumed it would be.
@@ -422,6 +425,10 @@ namespace CCC
 				Camera::RestoreRender();
 				if (g_wantRevealPlayer || g_wantHidePlayer) {
 					g_needVisibilityRestore = true;
+				}
+				g_restoreVisible = !g_state.startedFirstPerson;
+				if (g_state.startedFirstPerson) {
+					g_exitMaskUntil = std::chrono::steady_clock::now() + 1000ms;
 				}
 				if (g_state.restoreFirstPerson) {
 					g_restoreFirstPersonPending = true;
@@ -930,7 +937,9 @@ namespace CCC
 			// the main-thread task left them hidden for the first frame of the shot, a visible
 			// pop in third-person conversations). The main thread keeps it up afterwards.
 			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady;
-			g_wantHidePlayer = g_state.hidePlayer;
+			// While the first-person body is being rebuilt, keep the player hidden: the new
+			// head appears around the camera (0.3.31 showed one frame of the eyes from inside).
+			g_wantHidePlayer = g_state.hidePlayer || (g_state.startedFirstPerson && !g_state.bodyReady);
 			if (g_wantRevealPlayer) {
 				Visibility::RevealPlayer();
 			} else if (g_wantHidePlayer) {
@@ -1148,11 +1157,48 @@ namespace CCC
 			}
 		}
 
+		// Leaving a first-person conversation, the game shows its third-person camera for one
+		// frame on the way back (0.3.31 recording: one frame looking at the ceiling). Draw
+		// that frame from the player's first-person view instead.
+		void ExitMaskFrame()
+		{
+			if (!g_hooksSafe) {
+				return;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || g_state.active || !g_firstPersonView || std::chrono::steady_clock::now() > g_exitMaskUntil) {
+				return;
+			}
+			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
+				if (Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
+					if (!g_exitMasking) {
+						REX::INFO("Exit: drawing the game's passing third-person frame from the first-person view");
+					}
+					g_exitMasking = true;
+				}
+			}
+		}
+
+		void ExitMaskEnd()
+		{
+			if (!g_hooksSafe) {
+				return;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || !g_exitMasking) {
+				return;
+			}
+			g_exitMasking = false;
+			g_exitMaskUntil = {};
+			Camera::RestoreRender();
+		}
+
 		struct FirstPersonUpdateHook
 		{
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				Hook(a_state, a_arg);
+				ExitMaskEnd();
 				MaskRepairFrame("first-person");
 				RememberGameplayView(g_firstPersonView);
 			}
@@ -1167,7 +1213,10 @@ namespace CCC
 			{
 				Hook(a_state, a_arg);
 				MaskRepairFrame("third-person");
-				RememberGameplayView(g_thirdPersonView);
+				ExitMaskFrame();
+				if (!g_exitMasking) {
+					RememberGameplayView(g_thirdPersonView);
+				}
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_ThirdPersonUpdate", REL::EHookStep::None, RE::VTABLE::ThirdPersonState[0], kDialogueUpdateVtableIndex, Thunk
@@ -1729,7 +1778,7 @@ namespace CCC
 			// Scene-graph work happens outside the lock, so the hook is never kept waiting
 			// (it would skip frames instead) while the engine does its own locking.
 			if (restore) {
-				Visibility::Restore();
+				Visibility::Restore(g_restoreVisible);
 			} else if (reveal) {
 				Visibility::RevealPlayer();
 			} else if (hide) {
@@ -1777,7 +1826,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.32 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.33 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

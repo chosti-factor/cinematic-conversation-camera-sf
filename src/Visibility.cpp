@@ -94,12 +94,10 @@ namespace CCC::Visibility
 		SetCulled(root, true);
 	}
 
-	void Restore()
+	void Restore(bool a_visible)
 	{
 		std::scoped_lock lock{ g_mutex };
 		auto* root = PlayerRoot();
-		auto*      camera = RE::PlayerCamera::GetSingleton();
-		const bool thirdPerson = camera && camera->IsInThirdPerson();
 
 		for (const auto& c : g_changed) {
 			if (!root) {
@@ -119,19 +117,15 @@ namespace CCC::Visibility
 			if (!stillOurs) {
 				continue;
 			}
-			if (!c.wasCulled) {
-				// We hid it; always show it again.
-				if (IsCulled(c.object)) {
-					SetCulled(c.object, false);
-				}
-			} else if (!thirdPerson && !IsCulled(c.object)) {
-				// We revealed it. Hide it again unless the game is already back in third
-				// person, where the player is meant to be visible.
-				SetCulled(c.object, true);
+			// Decided by where the player is going back to, not by what the game is showing
+			// right now: the game is still in its dialogue camera at this point, and hiding a
+			// third-person player here left one frame without them after the conversation.
+			if (IsCulled(c.object) == a_visible) {
+				SetCulled(c.object, !a_visible);
 			}
 		}
 		if (!g_changed.empty()) {
-			REX::INFO("Player visibility restored ({} objects)", g_changed.size());
+			REX::INFO("Player visibility restored ({} objects, {})", g_changed.size(), a_visible ? "shown" : "hidden");
 		}
 		g_changed.clear();
 	}

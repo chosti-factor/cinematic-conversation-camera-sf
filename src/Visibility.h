@@ -11,5 +11,7 @@ namespace CCC::Visibility
 	void HidePlayer();
 
 	// Puts back whatever hidden/visible state we changed. Safe to call any time.
-	void Restore();
+	// Puts back what we changed. a_visible: leave the player shown (the conversation started
+	// in third person, where the game shows them) or hidden (first person).
+	void Restore(bool a_visible);
 }
