@@ -156,7 +156,7 @@ namespace CCC::Shots
 		// Aim point offset so the subject sits off centre: headroom above, look room on the
 		// side they face (CCC's Compose).
 		RE::NiPoint3 Compose(const RE::NiPoint3& a_position, const RE::NiPoint3& a_target, const RE::NiPoint3& a_facing,
-			float a_lensDeg, float a_aspect, float a_headroom, float a_lookRoom)
+			float a_lensDeg, float a_aspect, float a_headroom, float a_lookRoom, float& a_lookSign)
 		{
 			RE::NiPoint3 forward{ a_target.x - a_position.x, a_target.y - a_position.y, a_target.z - a_position.z };
 			const float  distance = Length(forward);
@@ -175,8 +175,11 @@ namespace CCC::Shots
 			const float vertical = 2.0f * std::atan(std::tan(horizontal * 0.5f) / std::clamp(a_aspect, 1.0f, 3.0f));
 			const float halfWidth = distance * std::tan(horizontal * 0.5f);
 			const float halfHeight = distance * std::tan(vertical * 0.5f);
-			const float facing = right.x * a_facing.x + right.y * a_facing.y + right.z * a_facing.z;
-			const float offsetX = a_lookRoom * (facing > 0.0f ? -1.0f : 1.0f) * halfWidth;
+			if (a_lookSign == 0.0f) {
+				const float facing = right.x * a_facing.x + right.y * a_facing.y + right.z * a_facing.z;
+				a_lookSign = facing > 0.0f ? -1.0f : 1.0f;
+			}
+			const float offsetX = a_lookRoom * a_lookSign * halfWidth;
 			const float offsetY = a_headroom * halfHeight;
 			return { a_target.x - right.x * offsetX - up.x * offsetY,
 				a_target.y - right.y * offsetX - up.y * offsetY,
@@ -285,11 +288,13 @@ namespace CCC::Shots
 		// Over-the-shoulder setups: CCC's angles assume a 40-60 degree lens. Through
 		// Starfield's 30 the near person would fall outside the frame, so swing the camera
 		// in toward the eyeline until their shoulder sits in the edge of the picture.
-		if (spec.overShoulder) {
+		if (!std::isnan(a_in.heldAngle)) {
+			angle = a_in.heldAngle;
+		} else if (spec.overShoulder) {
 			float standoff = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
 			standoff = (std::max)(standoff, separation + 60.0f * kUnit);
 			const float half = std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f;
-			for (; angle > 2.0f; angle -= 1.0f) {
+			for (; angle > 2.0f; angle -= 0.25f) {
 				// Camera on the far side of the other person, `angle` off the line; both in 2D.
 				const float rad = angle * kDeg;
 				const float cx = std::cos(rad) * standoff, cy = std::sin(rad) * standoff;  // subject at origin, other at (separation, 0)
@@ -307,6 +312,7 @@ namespace CCC::Shots
 		float       aimLift = 0.0f;
 		float       truck = 0.0f;
 
+		result.angle = angle;
 		const float p = Ease(a_in.progress);
 		const float travel = FullScale(a_in.move) * std::clamp(a_in.moveAmount, 0, 100) / 100.0f;
 		const float units = travel * kUnit;
@@ -364,7 +370,17 @@ namespace CCC::Shots
 		Camera::Pose pose;
 		pose.position = { anchorPoint.x + direction.x * distance, anchorPoint.y + direction.y * distance,
 			anchorPoint.z + direction.z * distance + rise };
-		pose.lookAt = Compose(pose.position, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom);
+		// Which side of the frame the subject sits on is decided from the setup's own angle
+		// (CCC's are 15 degrees or more), not from a camera swung in close to the eyeline,
+		// where a small sway flipped it and the picture jumped sideways.
+		float lookSign = a_in.heldLookSign;
+		if (lookSign == 0.0f) {
+			const auto   refDir = RotateAboutZ(toOther, spec.angleDeg * kDeg * lineSide);
+			const RE::NiPoint3 refPos{ anchorPoint.x + refDir.x * distance, anchorPoint.y + refDir.y * distance, anchorPoint.z + refDir.z * distance + rise };
+			(void)Compose(refPos, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
+		}
+		result.lookSign = lookSign;
+		pose.lookAt = Compose(pose.position, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
 		if (truck != 0.0f) {
 			RE::NiPoint3 fwd{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, 0.0f };
 			const float  fl = Length(fwd);

@@ -22,6 +22,7 @@
 #include "RE/P/PlayerCamera.h"
 #include "RE/P/PlayerCharacter.h"
 #include "RE/T/TESObjectREFR.h"
+#include "RE/T/TESObjectCELL.h"
 #include "RE/U/UI.h"
 
 #include <Windows.h>
@@ -35,6 +36,7 @@
 #include <cstring>
 #include <format>
 #include <mutex>
+#include <limits>
 #include <optional>
 #include <vector>
 #include <cstdint>

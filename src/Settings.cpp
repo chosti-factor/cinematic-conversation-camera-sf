@@ -94,6 +94,7 @@ namespace CCC
 			a_s.shortLineSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fShortLineSeconds", a_s.shortLineSeconds), 0.0f, 10.0f);
 			a_s.shortestHold = std::clamp(ReadFloat(a_path, L"Director", L"fShortestHold", a_s.shortestHold), 0.3f, 9.0f);
 			a_s.maxCameraDistance = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistance", a_s.maxCameraDistance), 1.0f, 15.0f);
+			a_s.maxCameraDistanceExterior = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistanceExterior", a_s.maxCameraDistanceExterior), 1.0f, 15.0f);
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
 			a_s.cameraMoves = ReadInt(a_path, L"Director", L"bCameraMoves", a_s.cameraMoves ? 1 : 0) != 0;
 			for (auto& [key, value] : ReadSection(a_path, L"Shots")) {
