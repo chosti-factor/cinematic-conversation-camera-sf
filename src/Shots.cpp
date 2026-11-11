@@ -281,6 +281,29 @@ namespace CCC::Shots
 		const float lineSide = (a_in.true180 && !spec.onNpc) ? -(a_in.side < 0.0f ? -1.0f : 1.0f) : (a_in.side < 0.0f ? -1.0f : 1.0f);
 		float       rise = spec.rise * kUnit;
 		float       angle = spec.angleDeg;
+
+		// Over-the-shoulder setups: CCC's angles assume a 40-60 degree lens. Through
+		// Starfield's 30 the near person would fall outside the frame, so swing the camera
+		// in toward the eyeline until their shoulder sits in the edge of the picture.
+		if (spec.overShoulder) {
+			float standoff = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
+			standoff = (std::max)(standoff, separation + 60.0f * kUnit);
+			const float half = std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f;
+			for (; angle > 2.0f; angle -= 1.0f) {
+				// Camera on the far side of the other person, `angle` off the line; both in 2D.
+				const float rad = angle * kDeg;
+				const float cx = std::cos(rad) * standoff, cy = std::sin(rad) * standoff;  // subject at origin, other at (separation, 0)
+				const float toSubject = std::atan2(-cy, -cx);
+				const float toOther = std::atan2(-cy, separation - cx);
+				float       off = std::abs(toOther - toSubject) / kDeg;
+				if (off > 180.0f) {
+					off = 360.0f - off;
+				}
+				if (off <= half * 0.8f) {
+					break;
+				}
+			}
+		}
 		float       aimLift = 0.0f;
 		float       truck = 0.0f;
 
