@@ -54,6 +54,7 @@ namespace CCC
 			std::chrono::steady_clock::time_point started{};
 			bool                                  needsBodyRepair{ false };  // started from first person
 			std::uint64_t                         framesAtRepairEnd{ 0 };
+			bool                                  startRootCaughtUp{ false };
 			bool                                  lateRetryDone{ false };
 			bool                                  directRequested{ false };
 			bool                                  directFailed{ false };
@@ -218,6 +219,12 @@ namespace CCC
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
 		std::chrono::steady_clock::time_point g_exitMaskUntil{};  // first-person exit: the game passes through third person
 		bool g_exitMasking = false;
+		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
+		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
+		// Where the game's dialogue camera sits relative to the player's eyes, as measured on
+		// earlier conversations: metres back from the NPC, and up. Lateral varies, so 0.
+		float g_learnedBack = 0.17f;
+		float g_learnedUp = 0.01f;
 
 		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
 	// game's camera really is, against where we assumed it would be.
@@ -366,6 +373,121 @@ namespace CCC
 					REX::INFO("FOV experiment {}: {} {:.2f} -> {:.2f}", s.fovExperiment, key, g_fovSaved.back().original, s.fovExperimentValue);
 				} else {
 					REX::INFO("FOV experiment {}: setting {} not found", s.fovExperiment, key);
+				}
+			}
+		}
+
+		// Main thread only. Game settings listed in the INI's [GameSettings] section, applied
+		// (and put back when removed from the INI) so their effect on the camera can be tried
+		// without restarting the game.
+		struct SavedGameSetting
+		{
+			RE::Setting* setting;
+			double       original;
+		};
+		std::vector<std::pair<std::string, SavedGameSetting>> g_savedGameSettings;
+
+		RE::Setting* FindAnySetting(const std::string& a_key)
+		{
+			for (auto* collection : { static_cast<RE::INISettingCollection*>(RE::INISettingCollection::GetSingleton()),
+					 static_cast<RE::INISettingCollection*>(RE::INIPrefSettingCollection::GetSingleton()) }) {
+				if (!collection) {
+					continue;
+				}
+				for (const auto& setting : collection->settings) {
+					if (setting && setting->GetKey() == a_key) {
+						return setting;
+					}
+				}
+			}
+			if (a_key.find(':') == std::string::npos) {
+				if (auto* games = RE::GameSettingCollection::GetSingleton()) {
+					return games->GetSetting(a_key.c_str());
+				}
+			}
+			return nullptr;
+		}
+
+		std::optional<double> ReadSettingValue(RE::Setting* a_setting)
+		{
+			switch (a_setting->GetType()) {
+			case RE::Setting::Type::kFloat:
+				return a_setting->GetFloat();
+			case RE::Setting::Type::kInt:
+				return a_setting->GetInt();
+			case RE::Setting::Type::kUInt:
+				return a_setting->GetUInt();
+			case RE::Setting::Type::kBool:
+				return a_setting->GetBool() ? 1.0 : 0.0;
+			default:
+				return std::nullopt;
+			}
+		}
+
+		void WriteSettingValue(RE::Setting* a_setting, double a_value)
+		{
+			switch (a_setting->GetType()) {
+			case RE::Setting::Type::kFloat:
+				a_setting->SetFloat(static_cast<float>(a_value));
+				break;
+			case RE::Setting::Type::kInt:
+				a_setting->SetInt(static_cast<std::int32_t>(a_value));
+				break;
+			case RE::Setting::Type::kUInt:
+				a_setting->SetUInt(static_cast<std::uint32_t>(a_value));
+				break;
+			case RE::Setting::Type::kBool:
+				a_setting->SetBool(a_value != 0.0);
+				break;
+			default:
+				break;
+			}
+		}
+
+		void ApplyGameSettings()
+		{
+			const auto& wanted = Settings::Get().gameSettings;
+			// Put back settings no longer listed.
+			std::erase_if(g_savedGameSettings, [&](auto& a_saved) {
+				const bool listed = std::ranges::any_of(wanted, [&](const auto& a_w) { return a_w.first == a_saved.first; });
+				if (!listed) {
+					WriteSettingValue(a_saved.second.setting, a_saved.second.original);
+					REX::INFO("Game setting {} put back to {}", a_saved.first, a_saved.second.original);
+				}
+				return !listed;
+			});
+			for (const auto& [key, text] : wanted) {
+				double value = 0.0;
+				try {
+					value = std::stod(text);
+				} catch (...) {
+					static std::vector<std::string> warned;
+					if (std::ranges::find(warned, key) == warned.end()) {
+						warned.push_back(key);
+						REX::WARN("Game setting {}: value '{}' is not a number", key, text);
+					}
+					continue;
+				}
+				auto it = std::ranges::find_if(g_savedGameSettings, [&](const auto& a_s) { return a_s.first == key; });
+				RE::Setting* setting = it != g_savedGameSettings.end() ? it->second.setting : FindAnySetting(key);
+				if (!setting) {
+					static std::vector<std::string> warned;
+					if (std::ranges::find(warned, key) == warned.end()) {
+						warned.push_back(key);
+						REX::WARN("Game setting {} not found (check the name and the :Section part)", key);
+					}
+					continue;
+				}
+				const auto current = ReadSettingValue(setting);
+				if (!current) {
+					continue;
+				}
+				if (it == g_savedGameSettings.end()) {
+					g_savedGameSettings.emplace_back(key, SavedGameSetting{ setting, *current });
+				}
+				if (*current != value) {
+					WriteSettingValue(setting, value);
+					REX::INFO("Game setting {}: {} -> {}", key, *current, value);
 				}
 			}
 		}
@@ -900,8 +1022,54 @@ namespace CCC
 			// person), nothing of the player (arms, half-built body) is in front of the camera.
 			const bool  pov = subject == Subject::kNpc && g_state.povNpcShot;
 			const auto& gameplayView = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
+			// Conversation start: for a frame or few the game draws from its dialogue camera
+			// while still reporting the gameplay camera's position to us (0.3.33/0.3.34 logs and
+			// clips: 1-3 frames of the game's own close-up). Detect that and place the shot
+			// against where the dialogue camera is about to be reported instead.
+			std::optional<Camera::Pose> startRoot;
+			if (s.startMode != 0 && !predictedRoot && !g_state.startRootCaughtUp && gameplayView && g_state.framesThisConversation <= 20) {
+				const auto reported = Camera::PoseOf(camera->cameraRoot.get());
+				bool       stale = false;
+				if (reported) {
+					const auto& g = *gameplayView;
+					const float dx = reported->position.x - g.position.x, dy = reported->position.y - g.position.y, dz = reported->position.z - g.position.z;
+					stale = dx * dx + dy * dy + dz * dz < 0.03f * 0.03f;
+				}
+				RE::NiPoint3 eye = g_state.startedFirstPerson ? gameplayView->position : RE::NiPoint3{ playerHead->x, playerHead->y, playerHead->z + 0.06f };
+				float        hx = npcHead->x - eye.x, hy = npcHead->y - eye.y;
+				const float  hl = std::sqrt(hx * hx + hy * hy);
+				if (hl > 1e-3f) {
+					hx /= hl;
+					hy /= hl;
+				}
+				if (stale) {
+					Camera::Pose p;
+					p.position = { eye.x - hx * g_learnedBack, eye.y - hy * g_learnedBack, eye.z + g_learnedUp };
+					p.lookAt = *npcHead;
+					startRoot = p;
+					if (s.debugLog) {
+						REX::INFO("Start frame {}: game still reports the gameplay camera; placing against the predicted dialogue camera ({:.2f} {:.2f} {:.2f})",
+							g_state.framesThisConversation, p.position.x, p.position.y, p.position.z);
+					}
+				} else {
+					g_state.startRootCaughtUp = true;
+					if (reported && g_state.framesThisConversation > 1) {
+						const float ox = reported->position.x - eye.x, oy = reported->position.y - eye.y, oz = reported->position.z - eye.z;
+						const float back = -(ox * hx + oy * hy);
+						const float lateral = ox * hy - oy * hx;
+						REX::INFO("Start frame {}: game now reports its dialogue camera: {:.2f} m back from the eyes, {:+.2f} m sideways, {:+.2f} m up (prediction used {:.2f} back, {:+.2f} up)",
+							g_state.framesThisConversation, back, lateral, oz, g_learnedBack, g_learnedUp);
+						if (back > -0.2f && back < 0.6f && std::abs(oz) < 0.3f) {
+							g_learnedBack = 0.5f * g_learnedBack + 0.5f * back;
+							g_learnedUp = 0.5f * g_learnedUp + 0.5f * oz;
+						}
+					} else if (g_state.framesThisConversation == 1) {
+						REX::INFO("Start frame 1: game already reports its dialogue camera");
+					}
+				}
+			}
 			std::optional<Camera::Pose> waitingView;
-			if (wideFrame && gameplayView) {
+			if (gameplayView && ((s.startMode == 0 && wideFrame) || (s.startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
 			const auto  pose = waitingView ? waitingView :
@@ -958,7 +1126,7 @@ namespace CCC
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
-			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot);
+			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
 			}
@@ -1189,6 +1357,22 @@ namespace CCC
 		// The game's first first-person frame after a first-person conversation we held to the
 		// end. End the conversation here, on that very frame: hide the full body again and draw
 		// the frame from the player's view (the game's own first frame looked at the ceiling).
+		void LogExitFrame(RE::PlayerCamera* a_camera, int a_frame)
+		{
+			const auto reported = Camera::PoseOf(a_camera->cameraRoot.get());
+			if (!reported || !g_firstPersonView) {
+				return;
+			}
+			const auto& v = *g_firstPersonView;
+			const auto  aim = [](const Camera::Pose& a_p) {
+                return RE::NiPoint3{ (a_p.lookAt.x - a_p.position.x) / 5.0f, (a_p.lookAt.y - a_p.position.y) / 5.0f, (a_p.lookAt.z - a_p.position.z) / 5.0f };
+			};
+			const auto ra = aim(*reported), va = aim(v);
+			REX::INFO("Exit first-person frame {}: reported camera ({:.2f} {:.2f} {:.2f}) aim ({:.2f} {:.2f} {:.2f}); first-person view before the conversation ({:.2f} {:.2f} {:.2f}) aim ({:.2f} {:.2f} {:.2f}); field of view {:.1f}",
+				a_frame, reported->position.x, reported->position.y, reported->position.z, ra.x, ra.y, ra.z, v.position.x, v.position.y, v.position.z, va.x, va.y, va.z,
+				[&] { float f = 0.0f; SafeCopy(&f, reinterpret_cast<std::uint8_t*>(a_camera) + kPlayerCameraFovOffset, sizeof(float)); return f; }());
+		}
+
 		bool ExitToFirstPerson()
 		{
 			if (!g_hooksSafe) {
@@ -1202,13 +1386,17 @@ namespace CCC
 			if (!camera) {
 				return false;
 			}
-			REX::INFO("Exit: cutting from the last shot straight to first person");
+			const int mode = Settings::Get().exitMode;
+			REX::INFO("Exit: cutting from the last shot straight to first person (exit mode {})", mode);
 			const auto view = *g_firstPersonView;
 			End();
 			g_needVisibilityRestore = false;
 			Visibility::Restore(false);
-			if (Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+			LogExitFrame(camera, 0);
+			g_exitLogFrames = 6;
+			if (mode != 1 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
+				g_exitCoverFrames = mode == 2 ? 3 : 1;
 			}
 			return true;
 		}
@@ -1219,8 +1407,20 @@ namespace CCC
 				return;
 			}
 			auto lock = HookLock();
-			if (!lock.owns_lock() || !g_exitMasking) {
+			if (!lock.owns_lock()) {
 				return;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (g_exitLogFrames > 0 && camera) {
+				LogExitFrame(camera, 7 - g_exitLogFrames);
+				--g_exitLogFrames;
+			}
+			if (!g_exitMasking) {
+				return;
+			}
+			if (--g_exitCoverFrames > 0 && camera && g_firstPersonView &&
+				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
+				return;  // keep covering
 			}
 			g_exitMasking = false;
 			g_exitMaskUntil = {};
@@ -1236,6 +1436,9 @@ namespace CCC
 					return;  // this frame is drawn from the saved view; don't learn from it
 				}
 				ExitMaskEnd();
+				if (g_exitMasking) {
+					return;
+				}
 				MaskRepairFrame("first-person");
 				RememberGameplayView(g_firstPersonView);
 			}
@@ -1738,6 +1941,22 @@ namespace CCC
 					}
 				}
 
+				// Re-read the INI every couple of seconds outside conversations, so edits (game
+				// settings in particular) are in place before the next conversation starts.
+				{
+					static std::chrono::steady_clock::time_point nextReload{};
+					static bool appliedOnce = false;
+					if (!g_state.active && now >= nextReload) {
+						nextReload = now + 2s;
+						Settings::Get().Load();
+						ApplyGameSettings();
+						appliedOnce = true;
+					} else if (!appliedOnce) {
+						ApplyGameSettings();
+						appliedOnce = true;
+					}
+				}
+
 				// Data collection and experiments (main thread).
 				{
 					static bool dumpedFirst = false, dumpedThird = false;
@@ -1874,7 +2093,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.34 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.3.35 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

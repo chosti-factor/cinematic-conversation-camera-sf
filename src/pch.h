@@ -13,6 +13,7 @@
 #include "RE/A/Actor.h"
 #include "RE/I/INIPrefSettingCollection.h"
 #include "RE/I/INISettingCollection.h"
+#include "RE/G/GameSettingCollection.h"
 #include "RE/M/MenuTopicManager.h"
 #include "RE/N/NiCamera.h"
 #include "RE/N/NiAVObject.h"
