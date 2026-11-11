@@ -29,8 +29,8 @@ Working:
   is at your eyes.
 - Clean exits in both perspectives (starts can still show a frame or two of the game's
   own camera), seated characters, and small speakers (robots), which keep the game's
-  own camera. Quest scenes (someone walks up and starts talking, several people taking
-  turns) keep the game's own camera.
+  own camera. Quest scenes you take part in (someone walks up and starts talking,
+  several people taking turns) keep the game's own camera.
 
 Differences from CCC, because of Starfield:
 
@@ -45,8 +45,7 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Depth of field focused on the speaker (outdoors the game's focus lands on the listener;
-  turning off depth of field in the game's settings avoids it meanwhile).
+- Depth of field on the person in shot (being tested in 0.4.8).
 - Close-ups driven by each line's emotion.
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.

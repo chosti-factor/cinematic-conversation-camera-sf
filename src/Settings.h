@@ -135,6 +135,7 @@ namespace CCC
 		// or without a head bone (small robots).
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
+		bool  focusOnSubject{ true };
 
 		static Settings& Get();
 		void             Load();

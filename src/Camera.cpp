@@ -618,6 +618,31 @@ namespace CCC::Camera
 		g_lastWritten.reset();
 	}
 
+	std::optional<RE::NiPoint3> SetRootDistance(RE::NiAVObject* a_root, const RE::NiPoint3& a_target, float a_distance)
+	{
+		if (!a_root || a_root->parent) {
+			return std::nullopt;
+		}
+		const auto  now = a_root->local.translate;
+		const auto  d = Sub(now, a_target);
+		const float len = Length(d);
+		if (len < 0.1f || !std::isfinite(a_distance)) {
+			return std::nullopt;
+		}
+		const auto moved = Add(a_target, Scale(d, a_distance / len));
+		a_root->local.translate = moved;
+		a_root->world.translate = moved;
+		return now;
+	}
+
+	void SetRootPosition(RE::NiAVObject* a_root, const RE::NiPoint3& a_position)
+	{
+		if (a_root && !a_root->parent) {
+			a_root->local.translate = a_position;
+			a_root->world.translate = a_position;
+		}
+	}
+
 	std::optional<Drift> RenderDrift()
 	{
 		if (!g_renderCam || !g_lastWritten) {
