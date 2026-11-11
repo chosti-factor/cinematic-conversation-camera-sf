@@ -116,10 +116,10 @@ namespace CCC
 		// [Director] CCC's shot library and cutting rules.
 		bool        director{ true };
 		std::string preset{ "Standard" };
-		// How lively the cutting is: Cinematic, Drama, Television, Thriller or Soap Opera.
+		// How lively the cutting is: Cinematic, Odyssey, SpaceWestern, Dogfight or SpaceOpera.
 		// Sets the three values below plus the chance of a fresh angle when the turn passes;
 		// any of the three given in the INI overrides the style's.
-		std::string cuttingStyle{ "Television" };
+		std::string cuttingStyle{ "SpaceWestern" };
 		int         freshAngleChance{ 50 };    // % chance of a new angle each time the turn passes
 		int         minLines{ 2 };             // new angle after this many lines...
 		int         maxLines{ 5 };             // ...up to this many (random in between)
