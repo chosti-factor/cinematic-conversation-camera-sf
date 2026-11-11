@@ -1922,50 +1922,74 @@ namespace CCC
 			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
+		// 0.4.4 showed the game doesn't list its dialogue records by type, so look for the
+		// record of the line being spoken where the dialogue system keeps it: scan the
+		// dialogue topic manager for pointers to dialogue records (INFO) and topics (DIAL).
+		bool ReadQword(std::uintptr_t a_at, std::uint64_t& a_out)
+		{
+			__try {
+				a_out = *reinterpret_cast<const std::uint64_t*>(a_at);
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
+
+		void LogResponse(const char* a_where, RE::TESTopicInfo* a_info, const std::string& a_subtitle)
+		{
+			int index = 0;
+			for (auto* response = a_info->responses; response && index < 16; response = response->next, ++index) {
+				std::uint64_t words[4]{};
+				SafeCopy(words, reinterpret_cast<const std::uint8_t*>(response) + 0x10, sizeof(words));
+				const std::string_view text{ response->responseText };
+				const bool             matches = !a_subtitle.empty() && text.find(a_subtitle.substr(0, 30)) != std::string_view::npos;
+				REX::INFO("Line emotion:   {} INFO {:08X} response {}{}: '{}' raw +10 {:016X} +18 {:016X} +20 {:016X}", a_where, a_info->formID, index,
+					matches ? " (the line being spoken)" : "", std::string{ text.substr(0, 40) }, words[0], words[1], words[2]);
+				for (int k = 0; k < 3; ++k) {
+					if (words[k] > 0x10000 && words[k] < 0x7FFFFFFFFFFF) {
+						REX::INFO("Line emotion:     +{:X} -> {}", 0x10 + k * 8, FormLabel(static_cast<std::uintptr_t>(words[k])));
+					}
+				}
+			}
+		}
+
 		void LogLineEmotion(RE::Actor* a_speaker)
 		{
 			static int logged = 0;
-			if (logged >= 40 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+			if (logged >= 30 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
 				return;
 			}
-			const std::string subtitle{ a_speaker->currentProcess->high->strVoiceSubtitle.c_str() ? a_speaker->currentProcess->high->strVoiceSubtitle.c_str() : "" };
-			if (subtitle.empty()) {
-				return;
-			}
+			const char*       raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
+			const std::string subtitle{ raw ? raw : "" };
 			++logged;
-			auto* data = RE::TESDataHandler::GetSingleton();
-			if (!data) {
+			REX::INFO("Line emotion: '{}'", subtitle.substr(0, 60));
+			auto* topics = RE::MenuTopicManager::GetSingleton();
+			if (!topics) {
 				return;
 			}
-			auto&      infos = data->formArrays[std::to_underlying(RE::FormType::kINFO)];
-			const auto start = std::chrono::steady_clock::now();
-			std::size_t checked = 0;
-			for (auto& form : infos.formArray) {
-				auto* info = static_cast<RE::TESTopicInfo*>(form.get());
-				if (!info) {
+			const auto base = reinterpret_cast<std::uintptr_t>(topics);
+			int        found = 0;
+			for (std::size_t off = 0; off < 0x400 && found < 8; off += 8) {
+				std::uint64_t value = 0;
+				if (!ReadQword(base + off, value) || value < 0x10000 || value > 0x7FFFFFFFFFFF) {
 					continue;
 				}
-				++checked;
-				int index = 0;
-				for (auto* response = info->responses; response && index < 32; response = response->next, ++index) {
-					const std::string_view text{ response->responseText };
-					if (text.empty() || text.find(subtitle) == std::string_view::npos) {
-						continue;
-					}
-					std::uint64_t words[4]{};
-					SafeCopy(words, reinterpret_cast<const std::uint8_t*>(response) + 0x10, sizeof(words));
-					REX::INFO("Line emotion: '{}' is INFO {:08X} response {} (searched {} of {} records in {} ms); raw +10 {:016X} +18 {:016X} +20 {:016X}",
-						subtitle.substr(0, 60), info->formID, index, checked, infos.formArray.size(),
-						std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start).count(), words[0], words[1], words[2]);
-					for (int i = 0; i < 3; ++i) {
-						if (words[i] > 0x10000 && words[i] < 0x7FFFFFFFFFFF) {
-							REX::INFO("Line emotion:   +{:X} -> {}", 0x10 + i * 8, FormLabel(static_cast<std::uintptr_t>(words[i])));
-						}
-					}
-					return;
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (!ReadFormInfo(static_cast<std::uintptr_t>(value), type, id, editorId)) {
+					continue;
+				}
+				if (type == std::to_underlying(RE::FormType::kINFO)) {
+					++found;
+					LogResponse(std::format("topic manager +{:X}", off).c_str(), reinterpret_cast<RE::TESTopicInfo*>(value), subtitle);
+				} else if (type == std::to_underlying(RE::FormType::kDIAL)) {
+					++found;
+					REX::INFO("Line emotion:   topic manager +{:X}: topic {:08X} '{}'", off, id, editorId ? editorId : "");
 				}
 			}
-			REX::INFO("Line emotion: '{}' not found in {} records ({} INFO forms listed)", subtitle.substr(0, 60), checked, infos.formArray.size());
+			if (found == 0) {
+				REX::INFO("Line emotion:   no dialogue records referenced by the topic manager");
+			}
 		}
 
 		void Watchdog()
@@ -2221,7 +2245,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
