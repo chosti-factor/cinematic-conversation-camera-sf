@@ -1895,21 +1895,31 @@ namespace CCC
 		// Diagnostic for using the lines' emotions: the subtitle of the line the speaker has
 		// just started, the dialogue record it comes from, and what the record's response
 		// holds around where Cassiopeia reads its facial "archetype" keyword.
+		// SEH can't live in a function with C++ objects to unwind, so the raw reads are here.
+		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId)
+		{
+			__try {
+				a_type = *reinterpret_cast<const std::uint8_t*>(a_ptr + 0x2E);
+				a_id = *reinterpret_cast<const std::uint32_t*>(a_ptr + 0x28);
+				a_editorId = a_type < 0xB0 ? reinterpret_cast<const RE::TESForm*>(a_ptr)->GetFormEditorID() : nullptr;
+				if (a_editorId) {
+					volatile char probe = a_editorId[0];
+					(void)probe;
+				}
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
+
 		std::string FormLabel(std::uintptr_t a_ptr)
 		{
-			std::string out;
-			__try {
-				const auto* form = reinterpret_cast<const RE::TESForm*>(a_ptr);
-				const auto  type = static_cast<std::uint32_t>(*reinterpret_cast<const std::uint8_t*>(a_ptr + 0x2E));
-				const auto  id = *reinterpret_cast<const std::uint32_t*>(a_ptr + 0x28);
-				const char* editorId = type < 0xB0 ? form->GetFormEditorID() : nullptr;
-				char        buffer[160]{};
-				std::snprintf(buffer, sizeof(buffer), "form type %u id %08X '%s'", type, id, editorId && editorId[0] ? editorId : "");
-				out = buffer;
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				out = "not a form";
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (!ReadFormInfo(a_ptr, type, id, editorId)) {
+				return "not a form";
 			}
-			return out;
+			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
 		void LogLineEmotion(RE::Actor* a_speaker)
