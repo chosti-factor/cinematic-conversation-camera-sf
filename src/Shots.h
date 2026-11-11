@@ -106,11 +106,19 @@ namespace CCC::Shots
 		float        progress{ 0.0f };      // 0..1 through the shot's move
 		Move         move{ Move::kLocked };
 		int          moveAmount{ 0 };       // 0-100 of the move's full travel
+
+		// Decided when the shot cuts and then held, so the camera doesn't step when
+		// someone sways: the angle off the eyeline (before any move) and which side of the
+		// frame the subject sits on. NaN / 0 = decide now.
+		float heldAngle{ std::numeric_limits<float>::quiet_NaN() };
+		float heldLookSign{ 0.0f };
 	};
 
 	struct Result
 	{
 		Camera::Pose pose{};
+		float        angle{ 0.0f };           // as decided (before the move), to hold
+		float        lookSign{ 0.0f };        // as decided, to hold
 		float        wantedDistance{ 0.0f };  // before the cap
 		float        distance{ 0.0f };        // used
 		bool         ok{ false };

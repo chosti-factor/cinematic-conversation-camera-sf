@@ -33,15 +33,27 @@ namespace CCC::Director
 			clock::time_point start{};
 		};
 
+		// Each person keeps their setup across the back-and-forth (shot, reverse, shot...)
+		// and gets a new one after a few of their own lines, as in CCC.
+		struct Side
+		{
+			std::optional<ShotType> shot;
+			int                     lines{ 0 };
+			int                     linesTarget{ 3 };
+			bool                    changeDue{ false };
+		};
+
 		struct State
 		{
 			std::array<Setup, kCount> setups{};
 			std::optional<ShotType>   current;
 			bool                      currentNpcSide{ true };
 			clock::time_point         cutAt{};
-			int                       lines{ 0 };
-			int                       linesTarget{ 3 };
-			bool                      changeDue{ false };
+			Side                      npc;
+			Side                      player;
+			float                     heldAngle{ std::numeric_limits<float>::quiet_NaN() };
+			float                     heldLookSign{ 0.0f };
+			float                     maxDistance{ 3.0f };
 			Line                      npcLine;
 			Line                      playerLine;
 			std::mt19937              rng{ std::random_device{}() };
@@ -167,7 +179,7 @@ namespace CCC::Director
 			in.npcHead = a_frame.npcHead;
 			in.playerHead = a_frame.playerHead;
 			in.lensDegrees = kLens;
-			in.maxDistance = s.maxCameraDistance;
+			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
 			in.progress = a_progress;
 			in.move = s.cameraMoves ? a_setup.move : Move::kLocked;
@@ -190,7 +202,7 @@ namespace CCC::Director
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
 			// A framing that wants the camera far beyond the cap would become a different
 			// shot entirely (a full figure turned into a close-up); leave it out.
-			return solved.ok && solved.wantedDistance <= Settings::Get().maxCameraDistance * 2.5f;
+			return solved.ok && solved.wantedDistance <= g.maxDistance * 2.5f;
 		}
 
 		std::optional<ShotType> Pick(const Frame& a_frame)
@@ -229,38 +241,45 @@ namespace CCC::Director
 			return pool.back().first;
 		}
 
-		// Counts a line when it ends, unless it was short. Returns true on the frame a
-		// line starts.
-		bool TrackLine(Line& a_line, bool a_talking, bool a_countsForCurrentSide, clock::time_point a_now)
+		// Counts a line for its speaker when it ends, unless it was short. Returns true on
+		// the frame a line starts.
+		bool TrackLine(Line& a_line, Side& a_side, bool a_talking, clock::time_point a_now)
 		{
 			bool started = false;
 			if (a_talking && !a_line.talking) {
 				a_line.start = a_now;
 				started = true;
-			} else if (!a_talking && a_line.talking && a_countsForCurrentSide) {
+			} else if (!a_talking && a_line.talking) {
 				const float seconds = std::chrono::duration<float>(a_now - a_line.start).count();
-				if (seconds >= Settings::Get().shortLineSeconds) {
-					if (++g.lines >= g.linesTarget) {
-						g.changeDue = true;
-					}
+				if (seconds >= Settings::Get().shortLineSeconds && ++a_side.lines >= a_side.linesTarget) {
+					a_side.changeDue = true;
 				}
 			}
 			a_line.talking = a_talking;
 			return started;
 		}
 
-		void Cut(ShotType a_type, bool a_npcSide, clock::time_point a_now, const char* a_why)
+		void Cut(ShotType a_type, const Frame& a_frame, clock::time_point a_now, const char* a_why, bool a_newAngle)
 		{
+			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.current = a_type;
-			g.currentNpcSide = a_npcSide;
+			g.currentNpcSide = a_frame.npcTurn;
 			g.cutAt = a_now;
-			g.lines = 0;
-			g.linesTarget = NewLineTarget();
-			g.changeDue = false;
+			if (a_newAngle) {
+				side.shot = a_type;
+				side.lines = 0;
+				side.linesTarget = NewLineTarget();
+				side.changeDue = false;
+			}
+			// Settle the angle and framing side now and hold them for the shot.
 			const auto& setup = g.setups[static_cast<std::size_t>(a_type)];
-			REX::INFO("Director: {} -> {} ({}; move {} {}, new angle after {} lines)", a_why, Shots::Key(a_type),
-				a_npcSide ? "their turn" : "your turn", Shots::MoveName(Settings::Get().cameraMoves ? setup.move : Move::kLocked),
-				setup.amount, g.linesTarget);
+			Shots::Input in = InputFor(a_frame, setup, 0.0f);
+			const auto   solved = Shots::Solve(a_type, in);
+			g.heldAngle = solved.angle;
+			g.heldLookSign = solved.lookSign;
+			REX::INFO("Director: {} -> {} ({}; {:.1f} m away at {:.1f} degrees; move {} {}; new angle after {} more lines)", a_why, Shots::Key(a_type),
+				a_frame.npcTurn ? "their turn" : "your turn", solved.distance, solved.angle,
+				Shots::MoveName(Settings::Get().cameraMoves ? setup.move : Move::kLocked), setup.amount, side.linesTarget - side.lines);
 		}
 	}
 
@@ -282,41 +301,54 @@ namespace CCC::Director
 		}
 		ApplyOverrides();
 		g.current.reset();
-		g.lines = 0;
-		g.linesTarget = NewLineTarget();
-		g.changeDue = false;
+		g.npc = Side{};
+		g.player = Side{};
+		g.npc.linesTarget = NewLineTarget();
+		g.player.linesTarget = NewLineTarget();
+		g.heldAngle = std::numeric_limits<float>::quiet_NaN();
+		g.heldLookSign = 0.0f;
+		auto*      player = RE::PlayerCharacter::GetSingleton();
+		const bool interior = player && player->parentCell && player->parentCell->IsInterior();
+		g.maxDistance = interior ? s.maxCameraDistance : s.maxCameraDistanceExterior;
 		g.npcLine = {};
 		g.playerLine = {};
 		g.loggedEmpty = false;
-		REX::INFO("Director: preset {}, camera at most {:.1f} m from the subject, new angle every {}-{} lines",
-			preset, s.maxCameraDistance, s.minLines, s.maxLines);
+		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject, new angle every {}-{} lines",
+			preset, interior ? "interior" : "exterior", g.maxDistance, s.minLines, s.maxLines);
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
 	{
 		const auto& s = Settings::Get();
-		const bool  npcStarted = TrackLine(g.npcLine, a_frame.npcTalking, g.currentNpcSide, a_now);
-		const bool  playerStarted = TrackLine(g.playerLine, a_frame.playerTalking, !g.currentNpcSide, a_now);
+		const bool  npcStarted = TrackLine(g.npcLine, g.npc, a_frame.npcTalking, a_now);
+		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now);
 		const bool  lineStarted = a_frame.npcTurn ? npcStarted : playerStarted;
 		const float held = std::chrono::duration<float>(a_now - g.cutAt).count();
+		auto&       side = a_frame.npcTurn ? g.npc : g.player;
 
 		if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
-			// The reverse: the other person's turn gets one of their setups.
-			g.current.reset();
-			if (const auto pick = Pick(a_frame)) {
-				Cut(*pick, a_frame.npcTurn, a_now, "turn");
+			// The reverse: back to this person's own setup, unless they're due a new one.
+			if (side.shot && !side.changeDue && Usable(*side.shot, a_frame)) {
+				Cut(*side.shot, a_frame, a_now, "turn", false);
 			} else {
-				return std::nullopt;
+				g.current = side.shot;  // so Pick avoids repeating it
+				if (const auto pick = Pick(a_frame)) {
+					Cut(*pick, a_frame, a_now, side.shot ? "turn, new angle" : "turn", true);
+				} else {
+					g.current.reset();
+					return std::nullopt;
+				}
 			}
-		} else if (g.changeDue && lineStarted && held >= s.shortestHold) {
+		} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
 			if (const auto pick = Pick(a_frame); pick && pick != g.current) {
-				Cut(*pick, a_frame.npcTurn, a_now, "new angle");
+				Cut(*pick, a_frame, a_now, "new angle", true);
 			} else {
-				g.changeDue = false;
+				side.changeDue = false;
+				side.lines = 0;
 			}
 		} else if (!Usable(*g.current, a_frame)) {
 			if (const auto pick = Pick(a_frame)) {
-				Cut(*pick, a_frame.npcTurn, a_now, "shot no longer fits");
+				Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 			} else {
 				return std::nullopt;
 			}
@@ -324,7 +356,10 @@ namespace CCC::Director
 
 		const auto& setup = g.setups[static_cast<std::size_t>(*g.current)];
 		const float progress = setup.seconds > 0.0f ? std::chrono::duration<float>(a_now - g.cutAt).count() / setup.seconds : 1.0f;
-		const auto  solved = Shots::Solve(*g.current, InputFor(a_frame, setup, progress));
+		auto        in = InputFor(a_frame, setup, progress);
+		in.heldAngle = g.heldAngle;
+		in.heldLookSign = g.heldLookSign;
+		const auto solved = Shots::Solve(*g.current, in);
 		if (!solved.ok) {
 			return std::nullopt;
 		}

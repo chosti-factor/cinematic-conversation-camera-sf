@@ -120,7 +120,8 @@ namespace CCC
 		int         maxLines{ 6 };             // ...up to this many (random in between)
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
 		float       shortestHold{ 2.4f };      // never change angle sooner than this
-		float       maxCameraDistance{ 3.0f }; // metres from the person framed
+		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
+		float       maxCameraDistanceExterior{ 5.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
 		std::vector<std::pair<std::string, std::string>> shotOverrides;  // [Shots]
