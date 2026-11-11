@@ -53,6 +53,42 @@ namespace CCC
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
 			a_s.poseMode = std::clamp(ReadInt(a_path, L"Debug", L"iPoseMode", a_s.poseMode), 0, 2);
 			a_s.fovMethod = std::clamp(ReadInt(a_path, L"Debug", L"iFovMethod", a_s.fovMethod), 1, 3);
+			a_s.startMode = std::clamp(ReadInt(a_path, L"Debug", L"iStartMode", a_s.startMode), 0, 2);
+			a_s.exitMode = std::clamp(ReadInt(a_path, L"Debug", L"iExitMode", a_s.exitMode), 0, 2);
+			{
+				std::vector<wchar_t> buffer(16384);
+				const auto           n = ::GetPrivateProfileSectionW(L"GameSettings", buffer.data(), static_cast<DWORD>(buffer.size()), a_path);
+				for (std::size_t i = 0; i < n;) {
+					std::wstring_view line{ buffer.data() + i };
+					i += line.size() + 1;
+					if (line.empty() || line.front() == L';' || line.front() == L'#') {
+						continue;
+					}
+					const auto eq = line.find(L'=');
+					if (eq == std::wstring_view::npos) {
+						continue;
+					}
+					auto narrow = [](std::wstring_view a_w) {
+						std::string out;
+						for (const auto c : a_w) {
+							if (c != L' ' && c != L'\t') {
+								out.push_back(static_cast<char>(c));
+							}
+						}
+						return out;
+					};
+					auto key = narrow(line.substr(0, eq));
+					auto value = narrow(line.substr(eq + 1));
+					if (const auto semi = value.find(';'); semi != std::string::npos) {
+						value.resize(semi);
+					}
+					if (key.empty() || value.empty()) {
+						continue;
+					}
+					std::erase_if(a_s.gameSettings, [&](const auto& a_p) { return a_p.first == key; });
+					a_s.gameSettings.emplace_back(std::move(key), std::move(value));
+				}
+			}
 			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Camera", L"iBodyRebuildMethod", a_s.bodyRebuildMethod), 0, 1);
 			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Camera", L"iBodyUpdateFlags", a_s.bodyUpdateFlags), 1, 0xFFFF);
 			a_s.fovExperiment = std::clamp(ReadInt(a_path, L"Debug", L"iFovExperiment", a_s.fovExperiment), 0, 4);
