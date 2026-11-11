@@ -63,9 +63,10 @@ Planned, roughly in order:
 
 ## Install
 
-1. Download the newest `CinematicConversationCameraSF-<version>.zip` from **Releases**
-   (alpha builds are listed as pre-releases), or the `CinematicConversationCameraSF`
-   artifact from the latest successful run under **Actions** → **Build**.
+1. Download `CinematicConversationCameraSF-test-build.zip` from the **Test build**
+   pre-release under **Releases** (always the newest alpha build), or the
+   `CinematicConversationCameraSF` artifact from the latest successful run under
+   **Actions** → **Build**.
 2. Copy its `Data` folder into your Starfield folder (or install the zip with your
    mod manager).
 

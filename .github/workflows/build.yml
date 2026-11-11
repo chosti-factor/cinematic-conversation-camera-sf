@@ -44,9 +44,9 @@ jobs:
           Copy-Item README.md package/
 
 
-      # A second download route: each build on main also goes on the Releases page as a
-      # pre-release named after its version (rebuilds of the same version replace the file).
-      - name: Publish pre-release
+      # A second download route: one rolling pre-release, "Test build", whose file each build on
+      # main replaces. Alpha only; per-version releases start at beta.
+      - name: Update the test build pre-release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         shell: pwsh
         env:
@@ -54,15 +54,21 @@ jobs:
         run: |
           $version = (Select-String -Path xmake.lua -Pattern 'set_version\("([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
           if (-not $version) { throw "version not found in xmake.lua" }
-          $tag = "v$version"
-          $zip = "CinematicConversationCameraSF-$version.zip"
+          $tag = "test-build"
+          $zip = "CinematicConversationCameraSF-test-build.zip"
           Compress-Archive -Path package/* -DestinationPath $zip -Force
-          $notes = "Alpha test build $version (commit ${{ github.sha }}). Copy the Data folder into your Starfield folder, or install the zip with a mod manager."
+          $notes = "ALPHA - for testing only. Not ready for general use; settings and behaviour change from build to build, and it writes detailed logs.`n`nCurrent build: $version (commit ${{ github.sha }}). Copy the Data folder into your Starfield folder, or install the zip with a mod manager."
+          # Move the tag to this build, then replace the file and the notes.
+          gh api -X PATCH "repos/${{ github.repository }}/git/refs/tags/$tag" -f sha=${{ github.sha }} -F force=true 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            gh api -X POST "repos/${{ github.repository }}/git/refs" -f ref="refs/tags/$tag" -f sha=${{ github.sha }} 2>$null
+          }
           gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag $zip --clobber
+            gh release edit $tag --prerelease --title "Test build $version (alpha)" --notes $notes
           } else {
-            gh release create $tag $zip --prerelease --target ${{ github.sha }} --title "Cinematic Conversation Camera SF $version (alpha)" --notes $notes
+            gh release create $tag $zip --prerelease --verify-tag --title "Test build $version (alpha)" --notes $notes
           }
 
       - name: Upload mod
