@@ -11,6 +11,10 @@ namespace CCC::Camera
 	// Where a character's head is in the world, or nullopt if their 3D isn't loaded.
 	std::optional<RE::NiPoint3> HeadPosition(RE::TESObjectREFR* a_ref);
 
+	// Whether the character has a head bone (HeadPosition otherwise guesses 1.6 m above
+	// the model's root, which misses small robots entirely).
+	bool HasHeadBone(RE::TESObjectREFR* a_ref);
+
 	// Camera a_behind metres behind the near head (negative = in front of it), a_side to
 	// the side and a_height above it, looking at the far character's face.
 	std::optional<Pose> Shot(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_behind, float a_side, float a_height);

@@ -10,6 +10,7 @@
 // shot/reverse-shot, and give the camera back cleanly.
 
 #include "Camera.h"
+#include "Director.h"
 #include "Settings.h"
 #include "Visibility.h"
 
@@ -55,6 +56,7 @@ namespace CCC
 			bool                                  needsBodyRepair{ false };  // started from first person
 			std::uint64_t                         framesAtRepairEnd{ 0 };
 			bool                                  startRootCaughtUp{ false };
+			bool                                  smallSpeaker{ false };
 			bool                                  lateRetryDone{ false };
 			bool                                  directRequested{ false };
 			bool                                  directFailed{ false };
@@ -533,7 +535,7 @@ namespace CCC
 			// The opening shot from the player's eyes was only needed while the camera cycle
 			// rebuilt the body. The direct refresh takes about 0.1 s (player hidden meanwhile),
 			// so first-person conversations open over the shoulder like third-person ones.
-			g_state.povNpcShot = g_lastGameplayFirstPerson && (Settings::Get().bodyRebuildMethod != 1 || Settings::Get().startMode == 3);
+			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -543,6 +545,9 @@ namespace CCC
 			g_fovLogged = false;
 			g_dumpedThisConversation = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
+			if (Settings::Get().director) {
+				Director::Reset();
+			}
 		}
 
 		void End()
@@ -890,6 +895,25 @@ namespace CCC
 				LogFailure("head position unavailable; leaving vanilla camera");
 				return;
 			}
+			// Small speakers (robots and the like): the shots are built around a head at
+			// human height and would miss them, so leave the game's own camera on them.
+			if (g_state.framesThisConversation == 1) {
+				const float height = npcHead->z - speaker->GetPosition().z;
+				g_state.smallSpeaker = !Camera::HasHeadBone(speaker) || height < s.minSpeakerHeight;
+				if (g_state.smallSpeaker) {
+					REX::INFO("Speaker {} (head bone {}, {:.2f} m tall); leaving the game's camera on this conversation",
+						Camera::HasHeadBone(speaker) ? "is short" : "has no head bone", Camera::HasHeadBone(speaker) ? "found" : "missing", height);
+					g_state.needsBodyRepair = false;
+				}
+			}
+			if (g_state.smallSpeaker) {
+				Camera::RestoreRender();
+				if (g_state.startedFirstPerson) {
+					g_wantHidePlayer = true;
+					Visibility::HidePlayer();
+				}
+				return;
+			}
 
 			float rawPlayerHeadHeight = 0.0f;
 
@@ -1079,11 +1103,23 @@ namespace CCC
 				}
 			}
 			std::optional<Camera::Pose> waitingView;
-			if (gameplayView && (((startMode == 0 || startMode == 3) && wideFrame) || (startMode == 2 && startRoot))) {
+			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
+			}
+			std::optional<Camera::Pose> directed;
+			if (s.director && !waitingView && !pov) {
+				Director::Frame frame;
+				frame.npcTurn = subject == Subject::kNpc;
+				frame.npcTalking = speaker->IsTalking();
+				frame.playerTalking = player->IsTalking();
+				frame.nearSeated = nearSeated;
+				frame.npcHead = *npcHead;
+				frame.playerHead = *playerHead;
+				directed = Director::Update(frame, now);
 			}
 			const auto  pose = waitingView ? waitingView :
 			                   pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
+			                   directed ? directed :
 			                   nearSeated || s.shotStyle == 1 ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
@@ -1100,7 +1136,7 @@ namespace CCC
 				const float headGap = std::sqrt(hx * hx + hy * hy + hz * hz);
 				const float cx = pose->position.x - nearHead.x, cy = pose->position.y - nearHead.y, cz = pose->position.z - nearHead.z;
 				const float camGap = std::sqrt(cx * cx + cy * cy + cz * cz);
-				if (camGap > 3.0f * headGap) {
+				if (!directed && camGap > 3.0f * headGap) {
 					LogFailure(std::format("camera would be {:.2f} units from the near head but the heads are only {:.2f} apart; not moving it", camGap, headGap));
 					return;
 				}
@@ -2095,7 +2131,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.3.36 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
