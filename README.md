@@ -27,8 +27,9 @@ Working:
   back in first person when it ends.
 - **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera
   is at your eyes.
-- Clean starts and exits in both perspectives, seated characters, and small speakers
-  (robots), which keep the game's own camera.
+- Clean exits in both perspectives (starts can still show a frame or two of the game's
+  own camera), seated characters, and small speakers (robots), which keep the game's
+  own camera.
 
 Differences from CCC, because of Starfield:
 
