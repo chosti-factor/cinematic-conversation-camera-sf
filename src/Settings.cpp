@@ -82,6 +82,46 @@ namespace CCC
 			return out.empty() ? a_default : out;
 		}
 
+		// The cutting styles, calmest first.
+		struct CuttingStyle
+		{
+			const char* name;
+			int         freshAngleChance;
+			int         minLines;
+			int         maxLines;
+			float       shortestHold;
+		};
+		constexpr std::array kCuttingStyles{
+			CuttingStyle{ "Cinematic", 0, 4, 8, 3.0f },    // each person keeps their angle; film editing
+			CuttingStyle{ "Drama", 25, 3, 6, 2.4f },       // CCC's own rhythm
+			CuttingStyle{ "Television", 50, 2, 5, 2.0f },
+			CuttingStyle{ "Thriller", 75, 2, 4, 1.6f },
+			CuttingStyle{ "SoapOpera", 100, 1, 3, 1.2f },  // a new angle on every turn
+		};
+
+		void ApplyCuttingStyle(Settings& a_s)
+		{
+			std::string wanted;
+			for (const char c : a_s.cuttingStyle) {
+				if (c != ' ' && c != '-' && c != '_') {
+					wanted.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+				}
+			}
+			for (const auto& style : kCuttingStyles) {
+				std::string name;
+				for (const char* c = style.name; *c; ++c) {
+					name.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(*c))));
+				}
+				if (name == wanted) {
+					a_s.freshAngleChance = style.freshAngleChance;
+					a_s.minLines = style.minLines;
+					a_s.maxLines = style.maxLines;
+					a_s.shortestHold = style.shortestHold;
+					return;
+				}
+			}
+		}
+
 		void LoadFrom(Settings& a_s, const wchar_t* a_path)
 		{
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
@@ -89,6 +129,12 @@ namespace CCC
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
+			// Only a file that names a style applies it, so a style in the main INI doesn't undo
+			// fine-tuning there when the _user.ini is read after it.
+			if (const auto style = ReadString(a_path, L"Director", L"sCuttingStyle", ""); !style.empty()) {
+				a_s.cuttingStyle = style;
+				ApplyCuttingStyle(a_s);
+			}
 			a_s.minLines = std::clamp(ReadInt(a_path, L"Director", L"iMinLines", a_s.minLines), 1, 20);
 			a_s.maxLines = std::clamp(ReadInt(a_path, L"Director", L"iMaxLines", a_s.maxLines), 1, 20);
 			a_s.shortLineSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fShortLineSeconds", a_s.shortLineSeconds), 0.0f, 10.0f);

@@ -116,10 +116,15 @@ namespace CCC
 		// [Director] CCC's shot library and cutting rules.
 		bool        director{ true };
 		std::string preset{ "Standard" };
-		int         minLines{ 3 };             // new angle after this many lines...
-		int         maxLines{ 6 };             // ...up to this many (random in between)
+		// How lively the cutting is: Cinematic, Drama, Television, Thriller or Soap Opera.
+		// Sets the three values below plus the chance of a fresh angle when the turn passes;
+		// any of the three given in the INI overrides the style's.
+		std::string cuttingStyle{ "Television" };
+		int         freshAngleChance{ 50 };    // % chance of a new angle each time the turn passes
+		int         minLines{ 2 };             // new angle after this many lines...
+		int         maxLines{ 5 };             // ...up to this many (random in between)
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
-		float       shortestHold{ 2.4f };      // never change angle sooner than this
+		float       shortestHold{ 2.0f };      // never change angle sooner than this
 		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
 		float       maxCameraDistanceExterior{ 5.0f };
 		bool        true180{ false };
