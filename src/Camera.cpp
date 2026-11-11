@@ -541,12 +541,17 @@ namespace CCC::Camera
 			// 90 degrees). Work out from the live values how the engine composes the two.
 			const float errLP = MatrixError(cam->local.rotate * pw.rotate, cam->world.rotate);
 			const float errPL = MatrixError(pw.rotate * cam->local.rotate, cam->world.rotate);
-			g_compose = errLP <= errPL ? Compose::kLocalTimesParent : Compose::kParentTimesLocal;
+			// Always local*parent (Starfield's row layout). This used to be decided from these live
+			// values, but on a conversation's first frame the camera root still holds the gameplay
+			// camera, and when you face a particular way the two errors come out nearly equal:
+			// about one conversation in five picked the wrong one, and every shot came out
+			// rotated and swinging (the "flipped" merchant and Ularu conversations).
+			g_compose = Compose::kLocalTimesParent;
 
 			REX::INFO("Render camera {:p}: local offset ({:.3f}, {:.3f}, {:.3f}), compose error local*parent {:.3f}, parent*local {:.3f} -> using {}",
 				static_cast<void*>(cam),
 				cam->local.translate.x, cam->local.translate.y, cam->local.translate.z,
-				errLP, errPL, g_compose == Compose::kLocalTimesParent ? "local*parent" : "parent*local");
+				errLP, errPL, "local*parent (fixed)");
 			REX::INFO("  camera local rotation {}", MatrixText(cam->local.rotate));
 			REX::INFO("  camera world rotation {}", MatrixText(cam->world.rotate));
 			REX::INFO("  root   world rotation {}", MatrixText(pw.rotate));
