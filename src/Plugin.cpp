@@ -57,7 +57,9 @@ namespace CCC
 			std::uint64_t                         framesAtRepairEnd{ 0 };
 			bool                                  startRootCaughtUp{ false };
 			bool                                  smallSpeaker{ false };
-			bool                                  handedBack{ false };       // the game moves its own camera: leave it to the game
+			bool                                  handedBack{ false };       // quest scene: leave it to the game
+			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
+			bool                                  focusLogged{ false };
 			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
 			std::uint32_t                         driftBits{ 0 };            // last 32 frames: 1 = the game moved its camera after us
 			int                                   driftLogged{ 0 };
@@ -562,6 +564,11 @@ namespace CCC
 		{
 			if (g_state.active) {
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
+				if (g_state.rootBeforeFocus) {
+					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && camera->QCameraEquals(RE::CameraState::kDialogue)) {
+						Camera::SetRootPosition(camera->cameraRoot.get(), *g_state.rootBeforeFocus);
+					}
+				}
 				Camera::RestoreRender();
 				if (g_wantRevealPlayer || g_wantHidePlayer) {
 					g_needVisibilityRestore = true;
@@ -951,7 +958,11 @@ namespace CCC
 				const auto  playerScene = SceneLabel(player, playerInScene);
 				const char* name = speaker->GetDisplayFullName();
 				REX::INFO("Scene check: speaker '{}' {:08X}: {}; you: {}", name ? name : "", speaker->formID, speakerScene, playerScene);
-				if (!g_state.smallSpeaker && s.gameCameraInScenes && (speakerInScene || playerInScene)) {
+				// Only quest scenes the player takes part in. Everyday background scenes (people
+				// chatting, a receptionist's greeting) are named "Dialogue..." in the game's data and
+				// keep this mod's camera, as do scenes the speaker is in without you.
+				const bool ambient = playerScene.find("'Dialogue") != std::string::npos;
+				if (!g_state.smallSpeaker && s.gameCameraInScenes && playerInScene && !ambient) {
 					g_state.handedBack = true;
 					g_state.needsBodyRepair = false;
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
@@ -1237,6 +1248,29 @@ namespace CCC
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
 			}
+			// Depth of field: the game focuses at the distance from its own camera (at your eyes)
+			// to the NPC, about 2 m, while the picture is drawn from further back, so the person
+			// in shot was out of focus and whoever happened to be 2 m from the lens was sharp.
+			// Move the game's camera straight back along the line from the NPC (so the NPC still
+			// faces the same way) until its distance matches the distance to the person in shot.
+			if (s.focusOnSubject && s.cameraTarget == 1 && !waitingView && !pov && !predictedRoot && !startRoot && g_repair.stage == RepairStage::kIdle) {
+				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
+				const float fx = pose->position.x - subjectHead.x, fy = pose->position.y - subjectHead.y, fz = pose->position.z - subjectHead.z;
+				const float focus = std::clamp(std::sqrt(fx * fx + fy * fy + fz * fz), 0.5f, 10.0f);
+				const auto& now3 = root->local.translate;
+				const float gx = now3.x - npcHead->x, gy = now3.y - npcHead->y, gz = now3.z - npcHead->z;
+				const float gameFocus = std::sqrt(gx * gx + gy * gy + gz * gz);
+				if (std::abs(focus - gameFocus) > 0.05f) {
+					if (const auto before = Camera::SetRootDistance(root, *npcHead, focus)) {
+						g_state.rootBeforeFocus = before;
+						if (!g_state.focusLogged && s.debugLog) {
+							g_state.focusLogged = true;
+							REX::INFO("Focus: game camera moved from {:.2f} m to {:.2f} m from the NPC to match the shot", gameFocus, focus);
+						}
+					}
+				}
+			}
+
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
 			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
@@ -1987,6 +2021,92 @@ namespace CCC
 			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
+		// ---- Line emotion (0.4.8 diagnostic) ------------------------------------------------
+		// The speaker's voice data holds the subtitle of the line being spoken; look around it
+		// for the dialogue record (INFO) that line came from, whose responses carry the emotion.
+		void LogInfo(const std::string& a_where, std::uintptr_t a_info)
+		{
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			ReadFormInfo(a_info, type, id, editorId);
+			REX::INFO("Line emotion:   {}: INFO {:08X} '{}'", a_where, id, editorId ? editorId : "");
+			std::uintptr_t response = 0;
+			SafeCopy(&response, reinterpret_cast<const void*>(a_info + 0x68), sizeof(response));
+			for (int i = 0; response && i < 4; ++i) {
+				std::array<std::uint64_t, 8> words{};
+				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(response), sizeof(words))) {
+					break;
+				}
+				std::string forms;
+				for (int k = 0; k < 8; ++k) {
+					std::uint32_t t = 0, fid = 0;
+					const char*   ed = nullptr;
+					if (words[k] > 0x10000 && words[k] < 0x7FFFFFFFFFFF && ReadFormInfo(static_cast<std::uintptr_t>(words[k]), t, fid, ed) && t < 0xB0 && fid != 0) {
+						forms += std::format(" +{:X}=type {} {:08X} '{}'", k * 8, t, fid, ed ? ed : "");
+					}
+				}
+				REX::INFO("Line emotion:     response {}: words {:016X} {:016X} {:016X} {:016X} {:016X} {:016X};{}", i, words[0], words[1], words[2], words[3], words[4], words[5], forms);
+				response = static_cast<std::uintptr_t>(words[0]);  // next response, if the list starts with it
+				if (response < 0x10000 || response > 0x7FFFFFFFFFFF) {
+					break;
+				}
+			}
+		}
+
+		void LogLineRecord(RE::Actor* a_speaker)
+		{
+			static int logged = 0;
+			if (logged >= 25 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+				return;
+			}
+			++logged;
+			const auto  base = reinterpret_cast<std::uintptr_t>(a_speaker->currentProcess->high);
+			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
+			REX::INFO("Line emotion: '{}'", std::string{ raw ? raw : "" }.substr(0, 60));
+			std::array<std::uint64_t, 0x100> words{};  // 0x800 bytes of the speaker's voice/process data
+			const auto got = SafeCopy(words.data(), reinterpret_cast<const void*>(base), sizeof(words)) ? words.size() : 0;
+			int found = 0;
+			for (std::size_t k = 0; k < got && found < 6; ++k) {
+				const auto w = words[k];
+				if (w < 0x10000 || w > 0x7FFFFFFFFFFF || (w & 7) != 0) {
+					continue;
+				}
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (ReadFormInfo(static_cast<std::uintptr_t>(w), type, id, editorId) && id != 0) {
+					if (type == std::to_underlying(RE::FormType::kINFO)) {
+						++found;
+						LogInfo(std::format("voice data +{:X}", k * 8), static_cast<std::uintptr_t>(w));
+						continue;
+					}
+					if (type == std::to_underlying(RE::FormType::kDIAL) || type == std::to_underlying(RE::FormType::kSCEN)) {
+						++found;
+						REX::INFO("Line emotion:   voice data +{:X}: form type {} {:08X} '{}'", k * 8, type, id, editorId ? editorId : "");
+						continue;
+					}
+				}
+				// One level further: small objects the voice data points to.
+				std::array<std::uint64_t, 16> inner{};
+				if (!SafeCopy(inner.data(), reinterpret_cast<const void*>(w), sizeof(inner))) {
+					continue;
+				}
+				for (std::size_t j = 0; j < inner.size(); ++j) {
+					const auto v = inner[j];
+					if (v < 0x10000 || v > 0x7FFFFFFFFFFF || (v & 7) != 0) {
+						continue;
+					}
+					if (ReadFormInfo(static_cast<std::uintptr_t>(v), type, id, editorId) && id != 0 && type == std::to_underlying(RE::FormType::kINFO)) {
+						++found;
+						LogInfo(std::format("voice data +{:X} -> +{:X}", k * 8, j * 8), static_cast<std::uintptr_t>(v));
+						break;
+					}
+				}
+			}
+			if (found == 0) {
+				REX::INFO("Line emotion:   no dialogue record found near the speaker's voice data");
+			}
+		}
+
 		// ---- Depth of field (0.4.7 diagnostic) ------------------------------------------------
 		// Outdoors the conversation's depth of field focuses on the listener. The game most
 		// likely focuses at the distance from its own camera to whoever it is aimed at, while
@@ -2237,6 +2357,17 @@ namespace CCC
 					}
 				}
 
+				// Diagnostic: the dialogue record of each line the speaker starts.
+				{
+					static bool wasTalking = false;
+					auto*       speaker = g_state.active && Settings::Get().debugLog ? Speaker() : nullptr;
+					const bool  talking = speaker && speaker->IsTalking();
+					if (talking && !wasTalking) {
+						LogLineRecord(static_cast<RE::Actor*>(speaker));
+					}
+					wasTalking = talking;
+				}
+
 				// Diagnostic: where the game keeps the conversation's depth of field.
 				if (Settings::Get().debugLog) {
 					DofDiagnostics(now);
@@ -2378,7 +2509,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.7 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.8 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
