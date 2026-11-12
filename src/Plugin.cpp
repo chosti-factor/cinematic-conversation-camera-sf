@@ -2011,9 +2011,12 @@ namespace CCC
 					return AbortAttempt(a_camera, a_now, "the full body was not built");
 				}
 				REX::INFO("Body repair: done on attempt {}; head {:.2f} m above feet; shot held for {} frames during the cycle; {} camera updates missed so far this session", g_repair.attempts + 1, height, g_repairMaskedFrames, g_hookLockMisses.load());
-				if (g_repair.early) {
+				if (g_repair.early || g_state.directFailed) {
 					// Nothing of the conversation has been shown yet, so the first shot of the NPC
-					// can be the normal over-the-shoulder one.
+					// can be the normal over-the-shoulder one. After a late fallback (the direct
+					// rebuild failed), the conversation was already on the director's shot: go
+					// back to it rather than staying at your eyes until the next cut (0.4.9 log,
+					// 5 s of the NPC from your eyes).
 					g_state.povNpcShot = false;
 				}
 				g_repair = Repair{};
