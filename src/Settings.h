@@ -36,6 +36,11 @@ namespace CCC
 		float seatedForward{ 0.25f };
 		float seatedSide{ 0.9f };
 		float seatedHeight{ 0.3f };
+		// Merchants on your lines: the camera stands in front of and beside them, facing you,
+		// like the seated shot (behind them it was close enough that the game faded them out,
+		// and shops put shelves and counters there).
+		float vendorSide{ 0.9f };
+		float vendorHeight{ 0.05f };
 
 		// Seconds of smoothing when the camera follows a moving head. Higher = steadier
 		// but slower to follow.
