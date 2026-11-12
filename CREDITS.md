@@ -37,6 +37,7 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 ## Update log
 
 - 0.4.4: initial record.
+- 0.4.10: fixed a likely crash in the test-only dialogue-line diagnostic (it could call into memory that wasn't a game record); it now reads one confirmed spot.
 - 0.4.9: fixed the camera layout being guessed wrong on some conversations (rotated, swinging shots).
 - 0.4.8: depth of field kept on the person in shot by moving the game's camera along the NPC's line of sight; everyday background scenes keep this mod's camera.
 - 0.4.6/0.4.7: quest scenes keep the game's own camera (idea from Player Camera During Dialogue's scripted-scene bypass; detection by the speaker's current scene is our own).
