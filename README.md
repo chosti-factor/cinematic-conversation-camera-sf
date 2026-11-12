@@ -39,7 +39,7 @@ Differences from CCC, because of Starfield:
 
 - Starfield's conversation lens is fixed and narrower (about 30 degrees) than the ones
   CCC uses, so its framings want the camera further back. Until wall detection exists the
-  camera stays within 3 m of the person it frames, indoors and outdoors; shots that
+  camera stays within 3 m of the person it frames indoors and 5 m outdoors; shots that
   would need more room come out tighter, and the two-person and room shots are mostly
   unavailable.
 - Extreme close-ups are rarer: CCC reserves them for intense lines, which this mod can't
@@ -48,7 +48,10 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Depth of field on the person in shot (being tested in 0.4.8).
+- Depth of field on the person in shot. Outdoors the game focuses about 2 m from the
+  camera, so on longer shots the near person can be sharp and the speaker soft. The
+  0.4.8 attempt (moving the game's camera) shifted angled shots and is off; 0.4.11
+  looks for the game's focus distance so it can be set directly.
 - Close-ups driven by each line's emotion.
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
