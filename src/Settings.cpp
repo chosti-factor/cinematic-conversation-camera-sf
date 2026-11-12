@@ -146,6 +146,8 @@ namespace CCC
 			a_s.maxCameraDistance = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistance", a_s.maxCameraDistance), 1.0f, 15.0f);
 			a_s.maxCameraDistanceExterior = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistanceExterior", a_s.maxCameraDistanceExterior), 1.0f, 15.0f);
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
+			a_s.plainShotsSeated = ReadInt(a_path, L"Director", L"bPlainShotsSeated", a_s.plainShotsSeated ? 1 : 0) != 0;
+			a_s.plainShotsMerchants = ReadInt(a_path, L"Director", L"bPlainShotsMerchants", a_s.plainShotsMerchants ? 1 : 0) != 0;
 			a_s.cameraMoves = ReadInt(a_path, L"Director", L"bCameraMoves", a_s.cameraMoves ? 1 : 0) != 0;
 			for (auto& [key, value] : ReadSection(a_path, L"Shots")) {
 				std::erase_if(a_s.shotOverrides, [&](const auto& a_p) { return a_p.first == key; });

@@ -129,6 +129,11 @@ namespace CCC
 		float       maxCameraDistanceExterior{ 5.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
+		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
+		// angles often put the chair or the counter between the camera and them.
+		bool        plainShotsSeated{ true };
+		bool        plainShotsMerchants{ true };
+		float       seatedHeadHeight{ 1.35f };  // head this close above the feet = sitting
 		std::vector<std::pair<std::string, std::string>> shotOverrides;  // [Shots]
 
 		// Leave the game's camera alone for speakers this short (head above feet, metres)
