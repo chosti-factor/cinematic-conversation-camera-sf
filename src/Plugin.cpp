@@ -168,6 +168,7 @@ namespace CCC
 		std::chrono::steady_clock::time_point g_restoreFirstPersonDeadline{};
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
+		std::atomic<float>                    g_shotDistance{ 0.0f };  // camera to the person in shot, this frame
 		std::uint32_t                         g_repairMaskedFrames = 0;
 		// The player's own third-person view, refreshed every frame they are in third person
 		// outside a conversation. Used to return to it seamlessly when a conversation ends.
@@ -268,6 +269,16 @@ namespace CCC
 		int  g_conversationNumber = 0;
 		bool g_menusLogged = false;
 		bool g_dumpedThisConversation = false;
+
+		bool SafeWrite(void* a_to, const void* a_from, std::size_t a_bytes)
+		{
+			__try {
+				std::memcpy(a_to, a_from, a_bytes);
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
 
 		std::size_t SafeCopy(void* a_to, const void* a_from, std::size_t a_bytes)
 		{
@@ -639,7 +650,7 @@ namespace CCC
 		};
 
 		// Floats within a_tolerance of either value (0.4.11 focus search).
-		std::size_t ScanNear(const void* a_base, std::size_t a_bytes, float a_a, float a_b, float a_tolerance, FloatAt* a_out, std::size_t a_max)
+		[[maybe_unused]] std::size_t ScanNear(const void* a_base, std::size_t a_bytes, float a_a, float a_b, float a_tolerance, FloatAt* a_out, std::size_t a_max)
 		{
 			std::size_t n = 0;
 			__try {
@@ -654,7 +665,7 @@ namespace CCC
 			return n;
 		}
 
-		void LogNearValues(const char* a_what, const void* a_base, std::size_t a_bytes, float a_speaker, float a_you)
+		[[maybe_unused]] void LogNearValues(const char* a_what, const void* a_base, std::size_t a_bytes, float a_speaker, float a_you)
 		{
 			if (!a_base) {
 				return;
@@ -861,22 +872,18 @@ namespace CCC
 					continue;
 				}
 				const char* name = static_cast<const RE::TESFullName*>(entry.faction)->GetFullName();
-				// Diagnostic: raw faction data, to find the vendor flag (shop factions such as
-				// "Jemison Mercantile" against ordinary ones such as "United Colonies").
-				static std::unordered_set<std::uint32_t> dumpedFactions;
-				if (a_log && dumpedFactions.size() < 40 && dumpedFactions.insert(id).second) {
-					DumpObject(std::format("faction {:08X} '{}'", id, name ? name : "").c_str(), entry.faction, 0x180);
-				}
-				std::string label = std::format("{:08X} '{}' '{}' rank {}", id, editorId ? editorId : "", name ? name : "", entry.rank);
+				// The faction's flags (1.16.244: +0x68) carry the vendor bit 0x4000, as in
+				// Fallout 4. Found in 0.4.11 by comparing shop factions (Jemison Mercantile,
+				// Viewport, Ryujin Industries) with ordinary ones.
+				std::uint32_t flags = 0;
+				SafeCopy(&flags, reinterpret_cast<const std::uint8_t*>(entry.faction) + 0x68, sizeof(flags));
+				const bool  vendor = (flags & 0x4000) != 0;
+				std::string label = std::format("{:08X} '{}' rank {}{}", id, name ? name : "", entry.rank, vendor ? " (vendor)" : "");
 				if (a_log && all.size() < 1500) {
 					all += (all.empty() ? "" : "; ") + label;
 				}
-				if (found.empty() && entry.rank > -1) {
-					std::string lower = std::string{ editorId ? editorId : "" } + " " + (name ? name : "");
-					std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-					if (lower.find("vendor") != std::string::npos || lower.find("merchant") != std::string::npos) {
-						found = label;
-					}
+				if (found.empty() && entry.rank > -1 && vendor) {
+					found = label;
 				}
 			}
 			if (a_log) {
@@ -1354,6 +1361,11 @@ namespace CCC
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
+			}
+			{
+				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
+				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
+				g_shotDistance.store(waitingView || pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz), std::memory_order_relaxed);
 			}
 			// Depth of field: the game focuses at the distance from its own camera (at your eyes)
 			// to the NPC, about 2 m, while the picture is drawn from further back, so the person
@@ -2175,7 +2187,7 @@ namespace CCC
 		// ---- Line emotion (0.4.8 diagnostic) ------------------------------------------------
 		// The speaker's voice data holds the subtitle of the line being spoken; look around it
 		// for the dialogue record (INFO) that line came from, whose responses carry the emotion.
-		void LogInfo(const std::string& a_where, std::uintptr_t a_info)
+		[[maybe_unused]] void LogInfo(const std::string& a_where, std::uintptr_t a_info)
 		{
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
@@ -2215,33 +2227,144 @@ namespace CCC
 		// the speaker's voice data +0x440 points to an object that holds it at +0x10. Read only
 		// that path now (the wide scan of 0.4.8/0.4.9 is gone), and dump the record's raw
 		// contents: its responses list was empty in memory, so look at what else it carries.
-		void LogLineRecord(RE::Actor* a_speaker)
+		// ---- Depth of field through the game's image spaces (0.4.12) --------------------------
+		// Every image space record (TESImageSpace) carries depth-of-field settings at
+		// +0x150 (settings) +0x220 (DOF): mode, strength, far/near start and plane, and a
+		// "focus on the target" switch. List the ones with blur, and for the experiment set
+		// their strength to zero while a conversation runs (restored afterwards).
+		struct DofBlock
 		{
-			static int logged = 0;
-			if (logged >= 25 || !a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+			std::uint32_t mode;
+			float         strength, farStart, farPlane, nearStart, nearPlane;
+			bool          useTarget;
+		};
+
+		constexpr std::size_t kImageSpaceDof = 0x150 + 0x220;
+
+		bool ReadDof(std::uintptr_t a_form, DofBlock& a_out)
+		{
+			std::array<std::uint8_t, 0x60> raw{};
+			if (!SafeCopy(raw.data(), reinterpret_cast<const void*>(a_form + kImageSpaceDof), raw.size())) {
+				return false;
+			}
+			auto f = [&](std::size_t a_off) { float v; std::memcpy(&v, raw.data() + a_off, 4); return v; };
+			std::memcpy(&a_out.mode, raw.data(), 4);
+			a_out.strength = f(0x0C);
+			a_out.farStart = f(0x18);
+			a_out.farPlane = f(0x24);
+			a_out.nearStart = f(0x3C);
+			a_out.nearPlane = f(0x48);
+			a_out.useTarget = raw[0x5C] != 0;
+			auto sane = [](float v) { return std::isfinite(v) && v > -1.0e6f && v < 1.0e7f; };
+			return a_out.mode < 16 && sane(a_out.strength) && sane(a_out.farStart) && sane(a_out.farPlane) && sane(a_out.nearStart) && sane(a_out.nearPlane);
+		}
+
+		struct BlurBackup
+		{
+			std::uintptr_t form;
+			float          strength;
+		};
+		std::vector<BlurBackup> g_blurSpaces;
+		bool                    g_blurListed = false;
+		bool                    g_blurOff = false;
+
+		void ListBlurImageSpaces()
+		{
+			g_blurListed = true;
+			auto* data = RE::TESDataHandler::GetSingleton();
+			if (!data) {
 				return;
 			}
-			++logged;
-			const auto  base = reinterpret_cast<std::uintptr_t>(a_speaker->currentProcess->high);
-			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
-			REX::INFO("Line emotion: '{}'", std::string{ raw ? raw : "" }.substr(0, 60));
-			std::uintptr_t holder = 0, info = 0;
-			if (!SafeCopy(&holder, reinterpret_cast<const void*>(base + 0x440), sizeof(holder)) || holder < 0x10000 || holder > 0x7FFFFFFFFFFF ||
-				!SafeCopy(&info, reinterpret_cast<const void*>(holder + 0x10), sizeof(info))) {
-				REX::INFO("Line emotion:   no voice record holder");
+			auto&       spaces = data->formArrays[std::to_underlying(RE::FormType::kIMGS)].formArray;
+			const auto* first = spaces.data();
+			const auto  count = (std::min)(static_cast<std::size_t>(spaces.size()), std::size_t{ 5000 });
+			std::size_t withBlur = 0;
+			for (std::size_t i = 0; first && i < count; ++i) {
+				std::uintptr_t form = 0;
+				if (!SafeCopy(&form, first + i, sizeof(form))) {
+					break;
+				}
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				DofBlock      dof{};
+				if (!ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMGS) || !ReadDof(form, dof)) {
+					continue;
+				}
+				if (dof.strength <= 0.0f) {
+					continue;
+				}
+				++withBlur;
+				g_blurSpaces.push_back({ form, dof.strength });
+				if (withBlur <= 80) {
+					REX::INFO("Image space {:08X} '{}': blur mode {} strength {:.2f}, far {:.2f}-{:.2f}, near {:.2f}-{:.2f}, focus on target {}", id, editorId ? editorId : "",
+						dof.mode, dof.strength, dof.farStart, dof.farPlane, dof.nearStart, dof.nearPlane, dof.useTarget ? "yes" : "no");
+				}
+			}
+			REX::INFO("Image spaces: {} in the game, {} with depth-of-field blur", count, withBlur);
+		}
+
+		void SetConversationBlur(bool a_off, const char* a_why)
+		{
+			if (a_off == g_blurOff) {
 				return;
+			}
+			g_blurOff = a_off;
+			for (const auto& space : g_blurSpaces) {
+				const float value = a_off ? 0.0f : space.strength;
+				std::uint8_t* where = reinterpret_cast<std::uint8_t*>(space.form + kImageSpaceDof + 0x0C);
+				SafeWrite(where, &value, sizeof(value));
+			}
+			static int logged = 0;
+			if (logged++ < 60) {
+				REX::INFO("Blur experiment: depth of field {} ({}; {} image spaces)", a_off ? "off" : "back on", a_why, g_blurSpaces.size());
+			}
+		}
+
+		// The line's facial expression ("emotion"), as the game's animators tagged it:
+		// speaker's voice data +0x440 -> +0x10 = the dialogue record (INFO); its responses
+		// list at +0x70; the first response holds the expression keyword at +0x18, e.g.
+		// AnimFaceArchetypeFriendly. Found in 0.4.8-0.4.11. Every read is guarded and every
+		// pointer confirmed as a real game record before it's used.
+		std::string LineEmotion(RE::Actor* a_speaker)
+		{
+			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+				return {};
+			}
+			const auto     base = reinterpret_cast<std::uintptr_t>(a_speaker->currentProcess->high);
+			std::uintptr_t holder = 0, info = 0, response = 0, keyword = 0;
+			auto           ok = [](std::uintptr_t a_p) { return a_p > 0x10000 && a_p < 0x7FFFFFFFFFFF; };
+			if (!SafeCopy(&holder, reinterpret_cast<const void*>(base + 0x440), sizeof(holder)) || !ok(holder) ||
+				!SafeCopy(&info, reinterpret_cast<const void*>(holder + 0x10), sizeof(info))) {
+				return {};
 			}
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
 			if (!ReadFormInfo(info, type, id, editorId) || type != std::to_underlying(RE::FormType::kINFO)) {
-				REX::INFO("Line emotion:   voice data +440 -> +10 is not a dialogue record");
+				return {};
+			}
+			if (!SafeCopy(&response, reinterpret_cast<const void*>(info + 0x70), sizeof(response)) || !ok(response) ||
+				!SafeCopy(&keyword, reinterpret_cast<const void*>(response + 0x18), sizeof(keyword)) || !ok(keyword)) {
+				return "none";
+			}
+			if (!ReadFormInfo(keyword, type, id, editorId) || type != std::to_underlying(RE::FormType::kKYWD) || !editorId) {
+				return "none";
+			}
+			std::string_view name{ editorId };
+			constexpr std::string_view prefix{ "AnimFaceArchetype" };
+			if (name.starts_with(prefix)) {
+				name.remove_prefix(prefix.size());
+			}
+			return std::string{ name };
+		}
+
+		void LogLineRecord(RE::Actor* a_speaker)
+		{
+			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
 				return;
 			}
-			LogInfo("voice data +440 -> +10", info);
-			if (logged <= 6) {
-				DumpObject(std::format("INFO {:08X}", id).c_str(), reinterpret_cast<const void*>(info), 0x78);
-				DumpObject(std::format("INFO {:08X} holder", id).c_str(), reinterpret_cast<const void*>(holder), 0x40);
-			}
+			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
+			const auto  emotion = LineEmotion(a_speaker);
+			REX::INFO("Line emotion: {} for '{}'", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60));
 		}
 
 		// ---- Depth of field (0.4.7 diagnostic) ------------------------------------------------
@@ -2325,7 +2448,7 @@ namespace CCC
 			}
 		}
 
-		void LogDofSample()
+		[[maybe_unused]] void LogDofSample()
 		{
 			auto* camera = RE::PlayerCamera::GetSingleton();
 			auto* speaker = Speaker();
@@ -2376,7 +2499,7 @@ namespace CCC
 			}
 		}
 
-		void DofDiagnostics(std::chrono::steady_clock::time_point a_now)
+		[[maybe_unused]] void DofDiagnostics(std::chrono::steady_clock::time_point a_now)
 		{
 			if (!g_state.active) {
 				return;
@@ -2515,8 +2638,27 @@ namespace CCC
 				}
 
 				// Diagnostic: where the game keeps the conversation's depth of field.
-				if (Settings::Get().debugLog) {
-					DofDiagnostics(now);
+				// Depth-of-field experiment through the game's image spaces (0.4.12).
+				{
+					const auto& st = Settings::Get();
+					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
+					if (live && !g_blurListed && (st.blurExperiment != 0 || st.debugLog)) {
+						ListBlurImageSpaces();
+					}
+					if (live && st.blurExperiment != 0) {
+						const float d = g_shotDistance.load(std::memory_order_relaxed);
+						bool        off = g_blurOff;
+						if (st.blurExperiment == 1) {
+							off = true;
+						} else if (d > st.noBlurBeyond + 0.15f) {
+							off = true;
+						} else if (d < st.noBlurBeyond - 0.15f) {
+							off = false;
+						}
+						SetConversationBlur(off, st.blurExperiment == 1 ? "whole conversation" : std::format("shot {:.1f} m from the person in shot", d).c_str());
+					} else if (g_blurOff) {
+						SetConversationBlur(false, "conversation over");
+					}
 				}
 
 				// Data collection and experiments (main thread).
@@ -2655,7 +2797,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
