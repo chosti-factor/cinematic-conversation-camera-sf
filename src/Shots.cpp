@@ -308,6 +308,13 @@ namespace CCC::Shots
 					break;
 				}
 			}
+			// ...but never so close to the eyeline that the near person's head and shoulders
+			// cover the subject (0.4.9 logs: 4-5 degrees at a shop counter, the merchant
+			// hidden behind your shoulder). Keep the line to the subject this far beside the
+			// near person's centre; their shoulder may then leave the frame, a clean single.
+			const float clearance = 0.38f;
+			const float minAngle = std::asin((std::min)(1.0f, clearance / separation)) / kDeg;
+			angle = (std::max)(angle, (std::min)(minAngle, 40.0f));
 		}
 		float       aimLift = 0.0f;
 		float       truck = 0.0f;

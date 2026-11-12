@@ -126,7 +126,7 @@ namespace CCC
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
 		float       shortestHold{ 2.0f };      // never change angle sooner than this
 		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
-		float       maxCameraDistanceExterior{ 5.0f };
+		float       maxCameraDistanceExterior{ 3.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
