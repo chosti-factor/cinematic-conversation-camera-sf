@@ -2272,6 +2272,87 @@ namespace CCC
 		bool                    g_blurListed = false;
 		bool                    g_blurOff = false;
 
+		// The documented position of the record lists (formArrays at +0x70) gave empty lists
+		// in 1.16.244 (0.4.12 log, and the dialogue records in 0.4.8), so find the list whose
+		// entries really are of the wanted type: scan the data handler for array headers
+		// (data pointer, then 32-bit size and capacity) and check the first entry's type.
+		std::pair<const RE::NiPointer<RE::TESForm>*, std::size_t> FindRecordList(RE::TESDataHandler* a_data, RE::FormType a_type)
+		{
+			const auto  base = reinterpret_cast<std::uintptr_t>(a_data);
+			static bool listedAll = false;
+			int         listed = 0;
+			for (std::size_t off = 0x28; off < 0x3000; off += 8) {
+				struct Header
+				{
+					std::uintptr_t data;
+					std::uint32_t  a, b;
+				} h{};
+				if (!SafeCopy(&h, reinterpret_cast<const void*>(base + off), sizeof(h)) || h.data < 0x10000 || h.data > 0x7FFFFFFFFFFF) {
+					continue;
+				}
+				for (const auto [size, capacity] : { std::pair{ h.a, h.b }, std::pair{ h.b, h.a } }) {
+					if (size == 0 || size > 200000 || size > capacity || capacity > 400000) {
+						continue;
+					}
+					std::uintptr_t entry = 0;
+					std::uint32_t  type = 0, id = 0;
+					const char*    editorId = nullptr;
+					if (!SafeCopy(&entry, reinterpret_cast<const void*>(h.data), sizeof(entry)) || !ReadFormInfo(entry, type, id, editorId)) {
+						continue;
+					}
+					if (!listedAll && listed++ < 8) {
+						REX::INFO("Record list at data handler +{:X}: {} entries of form type {:#x}", off, size, type);
+					}
+					if (type == std::to_underlying(a_type)) {
+						REX::INFO("Record list for form type {:#x} found at data handler +{:X}: {} entries", type, off, size);
+						listedAll = true;
+						return { reinterpret_cast<const RE::NiPointer<RE::TESForm>*>(h.data), static_cast<std::size_t>(size) };
+					}
+					break;
+				}
+			}
+			listedAll = true;
+			REX::INFO("Record list for form type {:#x}: not found", std::to_underlying(a_type));
+			return { nullptr, 0 };
+		}
+
+		// Diagnostic (0.4.13): the game's image-space modifiers (what the console's imod and
+		// Papyrus ImageSpaceModifier.Apply use; Starvegas applies its own depth-of-field ones).
+		// Names, and the raw data of those that look like depth of field or conversation ones.
+		void ListModifiers(RE::TESDataHandler* a_data)
+		{
+			auto [first, count] = FindRecordList(a_data, RE::FormType::kIMAD);
+			std::string names;
+			int         dumped = 0;
+			for (std::size_t i = 0; first && i < (std::min)(count, std::size_t{ 5000 }); ++i) {
+				std::uintptr_t form = 0;
+				if (!SafeCopy(&form, first + i, sizeof(form))) {
+					break;
+				}
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (!ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD)) {
+					continue;
+				}
+				const std::string name{ editorId ? editorId : "" };
+				names += std::format(" {:08X}:{}", id, name);
+				if (names.size() > 1500) {
+					REX::INFO("Image space modifiers:{}", names);
+					names.clear();
+				}
+				std::string lower = name;
+				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (dumped < 12 && (lower.find("dof") != std::string::npos || lower.find("dialog") != std::string::npos || lower.find("depth") != std::string::npos)) {
+					++dumped;
+					DumpObject(std::format("modifier {:08X} '{}'", id, name).c_str(), reinterpret_cast<const void*>(form), 0x300);
+				}
+			}
+			if (!names.empty()) {
+				REX::INFO("Image space modifiers:{}", names);
+			}
+			REX::INFO("Image space modifiers: {} listed, {} dumped", count, dumped);
+		}
+
 		void ListBlurImageSpaces()
 		{
 			g_blurListed = true;
@@ -2279,45 +2360,7 @@ namespace CCC
 			if (!data) {
 				return;
 			}
-			// The documented position of the record lists (formArrays at +0x70) gave empty lists
-			// in 1.16.244 (0.4.12 log, and the dialogue records in 0.4.8), so find the list
-			// whose entries really are image spaces: scan the data handler for array headers
-			// (data pointer, then 32-bit size and capacity) and check the first entry's type.
-			const RE::NiPointer<RE::TESForm>* first = nullptr;
-			std::size_t                       count = 0;
-			{
-				const auto base = reinterpret_cast<std::uintptr_t>(data);
-				int        listed = 0;
-				for (std::size_t off = 0x28; off < 0x3000 && !first; off += 8) {
-					struct Header
-					{
-						std::uintptr_t data;
-						std::uint32_t  a, b;
-					} h{};
-					if (!SafeCopy(&h, reinterpret_cast<const void*>(base + off), sizeof(h)) || h.data < 0x10000 || h.data > 0x7FFFFFFFFFFF) {
-						continue;
-					}
-					for (const auto [size, capacity] : { std::pair{ h.a, h.b }, std::pair{ h.b, h.a } }) {
-						if (size == 0 || size > 200000 || size > capacity || capacity > 400000) {
-							continue;
-						}
-						std::uintptr_t entry = 0;
-						std::uint32_t  type = 0, id = 0;
-						const char*    editorId = nullptr;
-						if (!SafeCopy(&entry, reinterpret_cast<const void*>(h.data), sizeof(entry)) || !ReadFormInfo(entry, type, id, editorId)) {
-							continue;
-						}
-						if (listed++ < 6 || type == std::to_underlying(RE::FormType::kIMGS)) {
-							REX::INFO("Record list at data handler +{:X}: {} entries of form type {:#x}", off, size, type);
-						}
-						if (type == std::to_underlying(RE::FormType::kIMGS)) {
-							first = reinterpret_cast<const RE::NiPointer<RE::TESForm>*>(h.data);
-							count = size;
-						}
-						break;
-					}
-				}
-			}
+			auto [first, count] = FindRecordList(data, RE::FormType::kIMGS);
 			std::size_t withBlur = 0;
 			for (std::size_t i = 0; first && i < count; ++i) {
 				std::uintptr_t form = 0;
@@ -2341,6 +2384,7 @@ namespace CCC
 				}
 			}
 			REX::INFO("Image spaces: {} in the game, {} with depth-of-field blur", count, withBlur);
+			ListModifiers(data);
 		}
 
 		void SetConversationBlur(bool a_off, const char* a_why)
