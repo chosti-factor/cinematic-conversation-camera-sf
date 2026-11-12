@@ -52,10 +52,16 @@ Planned, roughly in order:
   camera, so on longer shots the near person can be sharp and the speaker soft. The
   0.4.8 attempt (moving the game's camera) shifted angled shots and is off; 0.4.11
   looks for the game's focus distance so it can be set directly.
+- Vendors (shop counters, bars) recognised and given the plain over-the-shoulder shot:
+  the shot library's longer angles look wrong in tight shops such as the Viewport and
+  Jemison Mercantile, which the game counts as outdoors.
 - Close-ups driven by each line's emotion.
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.
+- Polish for unusual setups: talking to a seated person from the side (about 90 degrees)
+  leaves you out of the picture and the shots look poor; from in front, up to about 45
+  degrees, they work.
 - Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
   conversations, NPCs stepping away from work to talk.
 
