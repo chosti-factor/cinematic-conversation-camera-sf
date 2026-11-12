@@ -37,6 +37,7 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 ## Update log
 
 - 0.4.4: initial record.
+- 0.4.13: merchants on your lines filmed from in front of and beside them (behind them they faded out); the blur test now finds the game's image-space list (it read an empty list in 0.4.12).
 - 0.4.12: merchants recognised by their faction's vendor flag and given the plain shot; each line's facial-expression tag read and logged; test switch to turn the depth-of-field blur off on longer shots.
 - 0.4.11: focus fix off by default (it shifted angled shots sideways); outdoor shots back to 5 m; seated shot on your lines kept about 1 m from the seated person (they faded out closer); no mid-conversation camera switching when the speaker is in a background scene.
 - 0.4.10: seated speakers and merchants get the plain over-the-shoulder shot; over-the-shoulder shots keep the subject clear of the near person; outdoor shots capped at 3 m like indoors; no more NPC shot from your eyes lingering after a late body rebuild; fixed a likely crash in the test-only dialogue-line diagnostic (it could call into memory that wasn't a game record); it now reads one confirmed spot.

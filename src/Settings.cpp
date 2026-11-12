@@ -171,6 +171,8 @@ namespace CCC
 			a_s.seatedForward = ReadFloat(a_path, L"PlainCamera", L"fSeatedForward", a_s.seatedForward);
 			a_s.seatedSide = ReadFloat(a_path, L"PlainCamera", L"fSeatedSide", a_s.seatedSide);
 			a_s.seatedHeight = ReadFloat(a_path, L"PlainCamera", L"fSeatedHeight", a_s.seatedHeight);
+			a_s.vendorSide = ReadFloat(a_path, L"PlainCamera", L"fVendorSide", a_s.vendorSide);
+			a_s.vendorHeight = ReadFloat(a_path, L"PlainCamera", L"fVendorHeight", a_s.vendorHeight);
 
 			a_s.revealPlayer = ReadInt(a_path, L"Body", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
 			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBody", a_s.fixFirstPersonBody ? 1 : 0) != 0;

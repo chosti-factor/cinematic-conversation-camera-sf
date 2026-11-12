@@ -59,6 +59,7 @@ namespace CCC
 			bool                                  smallSpeaker{ false };
 			bool                                  handedBack{ false };       // quest scene: leave it to the game
 			bool                                  plainShots{ false };       // seated speaker or merchant: plain over-the-shoulder shot
+			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
 			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
 			bool                                  focusLogged{ false };
@@ -901,6 +902,7 @@ namespace CCC
 				reason = std::format("they're sitting (head {:.2f} m above their feet)", a_headHeight);
 			}
 			const auto merchant = MerchantFaction(a_speaker, a_log && s.debugLog);
+			g_state.merchant = !merchant.empty();
 			if (reason.empty() && s.plainShotsMerchants && !merchant.empty()) {
 				reason = "merchant (faction " + merchant + ")";
 			}
@@ -1314,6 +1316,8 @@ namespace CCC
 			                   directed ? directed :
 			                   nearSeated || s.shotStyle == 1 ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
+			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
+			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide, s.vendorHeight) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
@@ -2275,9 +2279,45 @@ namespace CCC
 			if (!data) {
 				return;
 			}
-			auto&       spaces = data->formArrays[std::to_underlying(RE::FormType::kIMGS)].formArray;
-			const auto* first = spaces.data();
-			const auto  count = (std::min)(static_cast<std::size_t>(spaces.size()), std::size_t{ 5000 });
+			// The documented position of the record lists (formArrays at +0x70) gave empty lists
+			// in 1.16.244 (0.4.12 log, and the dialogue records in 0.4.8), so find the list
+			// whose entries really are image spaces: scan the data handler for array headers
+			// (data pointer, then 32-bit size and capacity) and check the first entry's type.
+			const RE::NiPointer<RE::TESForm>* first = nullptr;
+			std::size_t                       count = 0;
+			{
+				const auto base = reinterpret_cast<std::uintptr_t>(data);
+				int        listed = 0;
+				for (std::size_t off = 0x28; off < 0x3000 && !first; off += 8) {
+					struct Header
+					{
+						std::uintptr_t data;
+						std::uint32_t  a, b;
+					} h{};
+					if (!SafeCopy(&h, reinterpret_cast<const void*>(base + off), sizeof(h)) || h.data < 0x10000 || h.data > 0x7FFFFFFFFFFF) {
+						continue;
+					}
+					for (const auto [size, capacity] : { std::pair{ h.a, h.b }, std::pair{ h.b, h.a } }) {
+						if (size == 0 || size > 200000 || size > capacity || capacity > 400000) {
+							continue;
+						}
+						std::uintptr_t entry = 0;
+						std::uint32_t  type = 0, id = 0;
+						const char*    editorId = nullptr;
+						if (!SafeCopy(&entry, reinterpret_cast<const void*>(h.data), sizeof(entry)) || !ReadFormInfo(entry, type, id, editorId)) {
+							continue;
+						}
+						if (listed++ < 6 || type == std::to_underlying(RE::FormType::kIMGS)) {
+							REX::INFO("Record list at data handler +{:X}: {} entries of form type {:#x}", off, size, type);
+						}
+						if (type == std::to_underlying(RE::FormType::kIMGS)) {
+							first = reinterpret_cast<const RE::NiPointer<RE::TESForm>*>(h.data);
+							count = size;
+						}
+						break;
+					}
+				}
+			}
 			std::size_t withBlur = 0;
 			for (std::size_t i = 0; first && i < count; ++i) {
 				std::uintptr_t form = 0;
@@ -2797,7 +2837,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.13 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
