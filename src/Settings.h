@@ -34,8 +34,8 @@ namespace CCC
 		// Shot used when the near character is sitting: camera this far in front of their
 		// head (toward the other person), to the side, and above it.
 		float seatedForward{ 0.25f };
-		float seatedSide{ 0.45f };
-		float seatedHeight{ 0.12f };
+		float seatedSide{ 0.9f };
+		float seatedHeight{ 0.3f };
 
 		// Seconds of smoothing when the camera follows a moving head. Higher = steadier
 		// but slower to follow.
@@ -126,7 +126,7 @@ namespace CCC
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
 		float       shortestHold{ 2.0f };      // never change angle sooner than this
 		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
-		float       maxCameraDistanceExterior{ 3.0f };
+		float       maxCameraDistanceExterior{ 5.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
@@ -140,7 +140,7 @@ namespace CCC
 		// or without a head bone (small robots).
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
-		bool  focusOnSubject{ true };
+		bool  focusOnSubject{ false };
 
 		static Settings& Get();
 		void             Load();

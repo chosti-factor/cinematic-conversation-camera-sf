@@ -37,6 +37,7 @@ Dependencies (not counted above): [CommonLibSF](https://github.com/Starfield-Rev
 ## Update log
 
 - 0.4.4: initial record.
+- 0.4.11: focus fix off by default (it shifted angled shots sideways); outdoor shots back to 5 m; seated shot on your lines kept about 1 m from the seated person (they faded out closer); no mid-conversation camera switching when the speaker is in a background scene.
 - 0.4.10: seated speakers and merchants get the plain over-the-shoulder shot; over-the-shoulder shots keep the subject clear of the near person; outdoor shots capped at 3 m like indoors; no more NPC shot from your eyes lingering after a late body rebuild; fixed a likely crash in the test-only dialogue-line diagnostic (it could call into memory that wasn't a game record); it now reads one confirmed spot.
 - 0.4.9: fixed the camera layout being guessed wrong on some conversations (rotated, swinging shots).
 - 0.4.8: depth of field kept on the person in shot by moving the game's camera along the NPC's line of sight; everyday background scenes keep this mod's camera.

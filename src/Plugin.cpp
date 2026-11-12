@@ -59,6 +59,7 @@ namespace CCC
 			bool                                  smallSpeaker{ false };
 			bool                                  handedBack{ false };       // quest scene: leave it to the game
 			bool                                  plainShots{ false };       // seated speaker or merchant: plain over-the-shoulder shot
+			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
 			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
 			bool                                  focusLogged{ false };
 			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
@@ -637,6 +638,36 @@ namespace CCC
 			float         value;
 		};
 
+		// Floats within a_tolerance of either value (0.4.11 focus search).
+		std::size_t ScanNear(const void* a_base, std::size_t a_bytes, float a_a, float a_b, float a_tolerance, FloatAt* a_out, std::size_t a_max)
+		{
+			std::size_t n = 0;
+			__try {
+				for (std::size_t off = 0; off + 4 <= a_bytes && n < a_max; off += 4) {
+					const float v = *reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
+					if ((a_a > 0.0f && std::abs(v - a_a) < a_tolerance) || (a_b > 0.0f && std::abs(v - a_b) < a_tolerance)) {
+						a_out[n++] = { static_cast<std::uint32_t>(off), v };
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+			return n;
+		}
+
+		void LogNearValues(const char* a_what, const void* a_base, std::size_t a_bytes, float a_speaker, float a_you)
+		{
+			if (!a_base) {
+				return;
+			}
+			std::array<FloatAt, 48> found{};
+			const auto              n = ScanNear(a_base, a_bytes, a_speaker, a_you, 0.05f, found.data(), found.size());
+			std::string             text;
+			for (std::size_t i = 0; i < n; ++i) {
+				text += std::format(" +{:X}={:.3f}", found[i].offset, found[i].value);
+			}
+			REX::INFO("Focus search, {} (speaker {:.3f} m, you {:.3f} m):{}", a_what, a_speaker, a_you, text.empty() ? " none" : text);
+		}
+
 		std::size_t ScanFloats(const void* a_base, std::size_t a_from, std::size_t a_to, FloatAt* a_out, std::size_t a_max)
 		{
 			std::size_t n = 0;
@@ -830,6 +861,12 @@ namespace CCC
 					continue;
 				}
 				const char* name = static_cast<const RE::TESFullName*>(entry.faction)->GetFullName();
+				// Diagnostic: raw faction data, to find the vendor flag (shop factions such as
+				// "Jemison Mercantile" against ordinary ones such as "United Colonies").
+				static std::unordered_set<std::uint32_t> dumpedFactions;
+				if (a_log && dumpedFactions.size() < 40 && dumpedFactions.insert(id).second) {
+					DumpObject(std::format("faction {:08X} '{}'", id, name ? name : "").c_str(), entry.faction, 0x180);
+				}
 				std::string label = std::format("{:08X} '{}' '{}' rank {}", id, editorId ? editorId : "", name ? name : "", entry.rank);
 				if (a_log && all.size() < 1500) {
 					all += (all.empty() ? "" : "; ") + label;
@@ -1030,6 +1067,7 @@ namespace CCC
 					g_state.needsBodyRepair = false;
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
 				}
+				g_state.backgroundScene = speakerInScene && !g_state.handedBack;
 				if (!g_state.smallSpeaker && !g_state.handedBack) {
 					DecidePlainShots(static_cast<RE::Actor*>(speaker), height, true);
 				}
@@ -1864,6 +1902,17 @@ namespace CCC
 					if (waited < 700) {
 						return;
 					}
+					if (g_state.backgroundScene) {
+						// The fallback switches the game's camera to first person and back while
+						// the conversation runs. With the speaker in a background scene (0.4.10:
+						// Jupiter, whose lines then played on top of each other) don't risk it.
+						REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); the speaker is in a background scene, so no camera switching: you stay out of frame this conversation", waited, PlayerHeadAboveFeet());
+						g_state.needsBodyRepair = false;
+						g_state.bodyReady = false;
+						g_state.hidePlayer = true;
+						g_state.reRepairs = 99;
+						return;
+					}
 					REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); falling back to the camera cycle", waited, PlayerHeadAboveFeet());
 					g_state.directFailed = true;
 					g_state.povNpcShot = true;  // the camera cycle needs its opening shot
@@ -2133,7 +2182,14 @@ namespace CCC
 			ReadFormInfo(a_info, type, id, editorId);
 			REX::INFO("Line emotion:   {}: INFO {:08X} '{}'", a_where, id, editorId ? editorId : "");
 			std::uintptr_t response = 0;
-			SafeCopy(&response, reinterpret_cast<const void*>(a_info + 0x68), sizeof(response));
+			// 0.4.10 dumps: in 1.16.244 the responses list is at +0x70 (CommonLibSF says +0x68;
+			// +0x68 holds two 32-bit values instead).
+			SafeCopy(&response, reinterpret_cast<const void*>(a_info + 0x70), sizeof(response));
+			static int dumped = 0;
+			if (response > 0x10000 && response < 0x7FFFFFFFFFFF && dumped < 8) {
+				++dumped;
+				DumpObject(std::format("INFO {:08X} response", id).c_str(), reinterpret_cast<const void*>(response), 0xC0);
+			}
 			for (int i = 0; response && i < 4; ++i) {
 				std::array<std::uint64_t, 8> words{};
 				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(response), sizeof(words))) {
@@ -2215,7 +2271,7 @@ namespace CCC
 		int                 g_dofSamples = 0;
 		std::chrono::steady_clock::time_point g_dofNext{};
 
-		void FindDofObjects()
+		[[maybe_unused]] void FindDofObjects()
 		{
 			g_dofHits.clear();
 			const auto vtable = DofVtable();
@@ -2292,6 +2348,15 @@ namespace CCC
 				g_dofSamples, speaker->IsTalking() ? "they're" : "you're (or nobody)",
 				root ? dist(root->position, npc) : -1.0f, root ? dist(root->position, you) : -1.0f,
 				render ? dist(render->world.translate, npc) : -1.0f, render ? dist(render->world.translate, you) : -1.0f);
+			// Where the game keeps its focus distance: a value equal to the distance from its
+			// camera to the speaker (or to you, on your lines) that follows it between samples.
+			if (root) {
+				const float toSpeaker = dist(root->position, npc);
+				const float toYou = speaker->IsTalking() ? -1.0f : dist(root->position, you);
+				LogNearValues("dialogue camera", g_dialogueStateObject, 0x600, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
+				LogNearValues("PlayerCamera", camera, 0x800, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
+				LogNearValues("render camera", render, 0x500, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
+			}
 			int n = 0;
 			for (const auto& hit : g_dofHits) {
 				if (++n > 4) {
@@ -2322,7 +2387,7 @@ namespace CCC
 				}
 				g_dofConversation = g_conversationNumber;
 				g_dofSamples = 0;
-				FindDofObjects();
+				g_dofHits.clear();  // the effect-object search (0.4.7-0.4.10) never found one; retired
 				g_dofNext = a_now;
 			}
 			if (a_now >= g_dofNext && g_dofSamples < 12) {
@@ -2590,7 +2655,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.10 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
