@@ -32,8 +32,9 @@ Working:
   own camera. Quest scenes you take part in (someone walks up and starts talking,
   several people taking turns) keep the game's own camera.
 - **Seated people and merchants** get the plain over-the-shoulder shot instead of the
-  shot library, whose angles often put the chair or the shop counter in front of them
-  (`bPlainShotsSeated`, `bPlainShotsMerchants`).
+  shot library, whose angles often put the chair, the shop counter or the clutter around
+  it in front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are
+  recognised by the game's vendor flag on their faction, wherever the shop is.
 
 Differences from CCC, because of Starfield:
 
@@ -50,12 +51,10 @@ Planned, roughly in order:
 
 - Depth of field on the person in shot. Outdoors the game focuses about 2 m from the
   camera, so on longer shots the near person can be sharp and the speaker soft. The
-  0.4.8 attempt (moving the game's camera) shifted angled shots and is off; 0.4.11
-  looks for the game's focus distance so it can be set directly.
-- Vendors (shop counters, bars) recognised and given the plain over-the-shoulder shot:
-  the shot library's longer angles look wrong in tight shops such as the Viewport and
-  Jemison Mercantile, which the game counts as outdoors.
-- Close-ups driven by each line's emotion.
+  0.4.8 attempt (moving the game's camera) shifted angled shots and is off. 0.4.12
+  tests switching the blur off on the longer shots only (`iBlurExperiment`).
+- Close-ups driven by each line's emotion (the game's facial-expression tag on each
+  line, such as Friendly, Irritated or Surprised, is now read; 0.4.12 logs it).
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.

@@ -141,6 +141,11 @@ namespace CCC
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
 		bool  focusOnSubject{ false };
+		// Depth-of-field experiment (0.4.12): the game's image spaces carry the blur settings.
+		// 0 = leave them, 1 = no blur during conversations, 2 = no blur only on shots where
+		// the camera is further than fNoBlurBeyond metres from the person in shot.
+		std::int32_t blurExperiment{ 2 };
+		float        noBlurBeyond{ 3.5f };
 
 		static Settings& Get();
 		void             Load();
