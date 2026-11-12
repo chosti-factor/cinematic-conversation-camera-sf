@@ -1031,7 +1031,7 @@ namespace CCC
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
 				}
 				if (!g_state.smallSpeaker && !g_state.handedBack) {
-					DecidePlainShots(speaker, height, true);
+					DecidePlainShots(static_cast<RE::Actor*>(speaker), height, true);
 				}
 			}
 			// Who is speaking: in scenes the line can pass to someone else mid-conversation.
@@ -1045,7 +1045,7 @@ namespace CCC
 						name ? name : "", std::sqrt(dx * dx + dy * dy));
 				}
 				if (g_state.speakerId != 0 && !g_state.smallSpeaker && !g_state.handedBack) {
-					DecidePlainShots(speaker, npcHead->z - speaker->GetPosition().z, false);
+					DecidePlainShots(static_cast<RE::Actor*>(speaker), npcHead->z - speaker->GetPosition().z, false);
 				}
 				g_state.speakerId = speaker->formID;
 			}
