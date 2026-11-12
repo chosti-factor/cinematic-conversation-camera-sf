@@ -58,6 +58,7 @@ namespace CCC
 			bool                                  startRootCaughtUp{ false };
 			bool                                  smallSpeaker{ false };
 			bool                                  handedBack{ false };       // quest scene: leave it to the game
+			bool                                  plainShots{ false };       // seated speaker or merchant: plain over-the-shoulder shot
 			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
 			bool                                  focusLogged{ false };
 			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
@@ -803,6 +804,68 @@ namespace CCC
 			return std::format("in scene {:08X} '{}'", id, editorId ? editorId : "");
 		}
 
+		// A merchant, judged by the speaker's factions (the game's vendor factions are named
+		// for it). Every faction pointer is checked as a real form before it is read.
+		std::string MerchantFaction(RE::Actor* a_actor, bool a_log)
+		{
+			auto* npc = a_actor ? a_actor->GetNPC() : nullptr;
+			if (!npc) {
+				return {};
+			}
+			std::string found;
+			std::string all;
+			// Copied out under a guard: if this game version's layout differed, a bad list
+			// must not crash the game.
+			const auto* first = npc->factions.data();
+			const auto  count = (std::min)(static_cast<std::size_t>(npc->factions.size()), std::size_t{ 200 });
+			for (std::size_t i = 0; first && i < count; ++i) {
+				RE::FACTION_RANK entry{};
+				if (!SafeCopy(&entry, first + i, sizeof(entry))) {
+					break;
+				}
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (!entry.faction || !ReadFormInfo(reinterpret_cast<std::uintptr_t>(entry.faction), type, id, editorId) ||
+					type != std::to_underlying(RE::FormType::kFACT)) {
+					continue;
+				}
+				const char* name = static_cast<const RE::TESFullName*>(entry.faction)->GetFullName();
+				std::string label = std::format("{:08X} '{}' '{}' rank {}", id, editorId ? editorId : "", name ? name : "", entry.rank);
+				if (a_log && all.size() < 1500) {
+					all += (all.empty() ? "" : "; ") + label;
+				}
+				if (found.empty() && entry.rank > -1) {
+					std::string lower = std::string{ editorId ? editorId : "" } + " " + (name ? name : "");
+					std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (lower.find("vendor") != std::string::npos || lower.find("merchant") != std::string::npos) {
+						found = label;
+					}
+				}
+			}
+			if (a_log) {
+				REX::INFO("Speaker factions: {}", all.empty() ? "none listed" : all);
+			}
+			return found;
+		}
+
+		// Seated speakers and merchants get the plain over-the-shoulder shot (0.4.10).
+		void DecidePlainShots(RE::Actor* a_speaker, float a_headHeight, bool a_log)
+		{
+			const auto& s = Settings::Get();
+			std::string reason;
+			if (s.plainShotsSeated && a_headHeight < s.seatedHeadHeight) {
+				reason = std::format("they're sitting (head {:.2f} m above their feet)", a_headHeight);
+			}
+			const auto merchant = MerchantFaction(a_speaker, a_log && s.debugLog);
+			if (reason.empty() && s.plainShotsMerchants && !merchant.empty()) {
+				reason = "merchant (faction " + merchant + ")";
+			}
+			if (!reason.empty() != g_state.plainShots || a_log) {
+				REX::INFO("Shots: {}", reason.empty() ? "shot library" : "plain over-the-shoulder shot; " + reason);
+			}
+			g_state.plainShots = !reason.empty();
+		}
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
@@ -967,6 +1030,9 @@ namespace CCC
 					g_state.needsBodyRepair = false;
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
 				}
+				if (!g_state.smallSpeaker && !g_state.handedBack) {
+					DecidePlainShots(speaker, height, true);
+				}
 			}
 			// Who is speaking: in scenes the line can pass to someone else mid-conversation.
 			if (speaker->formID != g_state.speakerId) {
@@ -977,6 +1043,9 @@ namespace CCC
 					const char* name = speaker->GetDisplayFullName();
 					REX::INFO("Speaker changed (frame {}): {:08X} -> {:08X} '{}', {:.2f} m from you", g_state.framesThisConversation, g_state.speakerId, speaker->formID,
 						name ? name : "", std::sqrt(dx * dx + dy * dy));
+				}
+				if (g_state.speakerId != 0 && !g_state.smallSpeaker && !g_state.handedBack) {
+					DecidePlainShots(speaker, npcHead->z - speaker->GetPosition().z, false);
 				}
 				g_state.speakerId = speaker->formID;
 			}
@@ -1185,7 +1254,7 @@ namespace CCC
 				waitingView = *gameplayView;
 			}
 			std::optional<Camera::Pose> directed;
-			if (s.director && !waitingView && !pov) {
+			if (s.director && !waitingView && !pov && !g_state.plainShots) {
 				Director::Frame frame;
 				frame.npcTurn = subject == Subject::kNpc;
 				frame.npcTalking = speaker->IsTalking();

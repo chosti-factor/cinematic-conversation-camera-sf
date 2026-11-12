@@ -31,6 +31,9 @@ Working:
   own camera), seated characters, and small speakers (robots), which keep the game's
   own camera. Quest scenes you take part in (someone walks up and starts talking,
   several people taking turns) keep the game's own camera.
+- **Seated people and merchants** get the plain over-the-shoulder shot instead of the
+  shot library, whose angles often put the chair or the shop counter in front of them
+  (`bPlainShotsSeated`, `bPlainShotsMerchants`).
 
 Differences from CCC, because of Starfield:
 
