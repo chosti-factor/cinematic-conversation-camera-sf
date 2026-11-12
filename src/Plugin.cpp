@@ -1995,20 +1995,50 @@ namespace CCC
 		// just started, the dialogue record it comes from, and what the record's response
 		// holds around where Cassiopeia reads its facial "archetype" keyword.
 		// SEH can't live in a function with C++ objects to unwind, so the raw reads are here.
-		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId)
+		// Only the type and ID are read straight from memory (guarded). The editor ID needs a
+		// virtual call, which on something that isn't really a form would run an unrelated
+		// function of that object (0.4.9 crash). So the pointer must first be confirmed as a
+		// real form: the game's form table has to return this exact object for its ID.
+		bool ReadFormFields(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id)
 		{
 			__try {
 				a_type = *reinterpret_cast<const std::uint8_t*>(a_ptr + 0x2E);
 				a_id = *reinterpret_cast<const std::uint32_t*>(a_ptr + 0x28);
-				a_editorId = a_type < 0xB0 ? reinterpret_cast<const RE::TESForm*>(a_ptr)->GetFormEditorID() : nullptr;
-				if (a_editorId) {
-					volatile char probe = a_editorId[0];
-					(void)probe;
-				}
 				return true;
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
 				return false;
 			}
+		}
+
+		const char* EditorIdUnsafe(const RE::TESForm* a_form)
+		{
+			__try {
+				const char* editorId = a_form->GetFormEditorID();
+				if (editorId) {
+					volatile char probe = editorId[0];
+					(void)probe;
+				}
+				return editorId;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return nullptr;
+			}
+		}
+
+		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId)
+		{
+			a_editorId = nullptr;
+			if (a_ptr < 0x10000 || a_ptr > 0x7FFFFFFFFFFF || (a_ptr & 7) != 0 || !ReadFormFields(a_ptr, a_type, a_id)) {
+				return false;
+			}
+			if (a_id == 0 || a_type >= 0xB0) {
+				return false;
+			}
+			auto* form = RE::TESForm::LookupByID(a_id);
+			if (reinterpret_cast<std::uintptr_t>(form) != a_ptr) {
+				return false;  // not a registered form: never call into it
+			}
+			a_editorId = EditorIdUnsafe(form);
+			return true;
 		}
 
 		std::string FormLabel(std::uintptr_t a_ptr)
@@ -2053,6 +2083,10 @@ namespace CCC
 			}
 		}
 
+		// 0.4.9 found the line's dialogue record (INFO) at the same place for every line:
+		// the speaker's voice data +0x440 points to an object that holds it at +0x10. Read only
+		// that path now (the wide scan of 0.4.8/0.4.9 is gone), and dump the record's raw
+		// contents: its responses list was empty in memory, so look at what else it carries.
 		void LogLineRecord(RE::Actor* a_speaker)
 		{
 			static int logged = 0;
@@ -2063,47 +2097,22 @@ namespace CCC
 			const auto  base = reinterpret_cast<std::uintptr_t>(a_speaker->currentProcess->high);
 			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
 			REX::INFO("Line emotion: '{}'", std::string{ raw ? raw : "" }.substr(0, 60));
-			std::array<std::uint64_t, 0x100> words{};  // 0x800 bytes of the speaker's voice/process data
-			const auto got = SafeCopy(words.data(), reinterpret_cast<const void*>(base), sizeof(words)) ? words.size() : 0;
-			int found = 0;
-			for (std::size_t k = 0; k < got && found < 6; ++k) {
-				const auto w = words[k];
-				if (w < 0x10000 || w > 0x7FFFFFFFFFFF || (w & 7) != 0) {
-					continue;
-				}
-				std::uint32_t type = 0, id = 0;
-				const char*   editorId = nullptr;
-				if (ReadFormInfo(static_cast<std::uintptr_t>(w), type, id, editorId) && id != 0) {
-					if (type == std::to_underlying(RE::FormType::kINFO)) {
-						++found;
-						LogInfo(std::format("voice data +{:X}", k * 8), static_cast<std::uintptr_t>(w));
-						continue;
-					}
-					if (type == std::to_underlying(RE::FormType::kDIAL) || type == std::to_underlying(RE::FormType::kSCEN)) {
-						++found;
-						REX::INFO("Line emotion:   voice data +{:X}: form type {} {:08X} '{}'", k * 8, type, id, editorId ? editorId : "");
-						continue;
-					}
-				}
-				// One level further: small objects the voice data points to.
-				std::array<std::uint64_t, 16> inner{};
-				if (!SafeCopy(inner.data(), reinterpret_cast<const void*>(w), sizeof(inner))) {
-					continue;
-				}
-				for (std::size_t j = 0; j < inner.size(); ++j) {
-					const auto v = inner[j];
-					if (v < 0x10000 || v > 0x7FFFFFFFFFFF || (v & 7) != 0) {
-						continue;
-					}
-					if (ReadFormInfo(static_cast<std::uintptr_t>(v), type, id, editorId) && id != 0 && type == std::to_underlying(RE::FormType::kINFO)) {
-						++found;
-						LogInfo(std::format("voice data +{:X} -> +{:X}", k * 8, j * 8), static_cast<std::uintptr_t>(v));
-						break;
-					}
-				}
+			std::uintptr_t holder = 0, info = 0;
+			if (!SafeCopy(&holder, reinterpret_cast<const void*>(base + 0x440), sizeof(holder)) || holder < 0x10000 || holder > 0x7FFFFFFFFFFF ||
+				!SafeCopy(&info, reinterpret_cast<const void*>(holder + 0x10), sizeof(info))) {
+				REX::INFO("Line emotion:   no voice record holder");
+				return;
 			}
-			if (found == 0) {
-				REX::INFO("Line emotion:   no dialogue record found near the speaker's voice data");
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (!ReadFormInfo(info, type, id, editorId) || type != std::to_underlying(RE::FormType::kINFO)) {
+				REX::INFO("Line emotion:   voice data +440 -> +10 is not a dialogue record");
+				return;
+			}
+			LogInfo("voice data +440 -> +10", info);
+			if (logged <= 6) {
+				DumpObject(std::format("INFO {:08X}", id).c_str(), reinterpret_cast<const void*>(info), 0x78);
+				DumpObject(std::format("INFO {:08X} holder", id).c_str(), reinterpret_cast<const void*>(holder), 0x40);
 			}
 		}
 
@@ -2509,7 +2518,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.9 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.10 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
