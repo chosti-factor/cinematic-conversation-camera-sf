@@ -4,7 +4,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## Unreleased
+## 0.5.1 - 2026-11-13
 
 ### Changed
 - Focus styles (`sFocusStyle`): Cinematic (more background blur) and Wide (deeper sharp zone,
@@ -15,6 +15,11 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ### Added
 - `docs/EMOTIONS.md`: running tally of the expression tags seen in testing.
+
+### Diagnostic
+- Obstacle detection, step 1: finds the game's own camera-collision code (through the settings
+  it reads) and writes it to the log for study. Read-only, once per game session, in the
+  background.
 
 ## 0.5.0 - 2026-11-13
 
