@@ -4,6 +4,12 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## Unreleased
+
+### Fixed
+- Crash when `sTestModifier` was set (0.4.16): the direct call to the game's apply function
+  is disabled until a safe route is in place.
+
 ## 0.4.16 - 2026-11-12
 
 ### Fixed
