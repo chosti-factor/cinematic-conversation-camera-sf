@@ -53,11 +53,6 @@ namespace CCC::Camera
 	// How far the picture the game last drew is from the shot we placed for it: nonzero
 	// when something moved the game's camera after our update (scripted scenes, NPCs who
 	// start the conversation while walking). Empty when we haven't placed a shot.
-	// Moves the game's camera (not the picture) along the line from a_target through where it
-	// is now, to a_distance from a_target. Its direction from a_target doesn't change, so the
-	// people facing it keep facing the same way. Returns where it was, or nothing if unchanged.
-	std::optional<RE::NiPoint3> SetRootDistance(RE::NiAVObject* a_root, const RE::NiPoint3& a_target, float a_distance, bool a_local = true, bool a_world = true);
-	void                        SetRootPosition(RE::NiAVObject* a_root, const RE::NiPoint3& a_position);
 
 	struct Drift
 	{

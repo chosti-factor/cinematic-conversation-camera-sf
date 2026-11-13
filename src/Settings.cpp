@@ -169,26 +169,8 @@ namespace CCC
 			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeight", a_s.minSpeakerHeight), 0.0f, 3.0f);
 			a_s.gameCameraInScenes = ReadInt(a_path, L"Camera", L"bGameCameraInScenes", a_s.gameCameraInScenes ? 1 : 0) != 0;
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
-			if (a_s.focusOnSubject && a_s.focusMethod == 0) {
-				a_s.focusMethod = 1;  // bFocusOnSubject=1 from older INIs = the 0.4.8 method
-			}
-			a_s.focusMethod = std::clamp(ReadInt(a_path, L"Camera", L"iFocusMethod", a_s.focusMethod), 0, 6);
-			a_s.dialogueBlurTest = std::clamp(ReadInt(a_path, L"Camera", L"iDialogueBlurTest", a_s.dialogueBlurTest), 0, 3);
-			a_s.blurExperiment = std::clamp(ReadInt(a_path, L"Camera", L"iBlurExperiment", a_s.blurExperiment), 0, 2);
-			a_s.noBlurBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fNoBlurBeyond", a_s.noBlurBeyond), 0.0f, 20.0f);
-			{
-				// A key missing from this file keeps the value read so far (0.4.14-0.4.15 reset it,
-				// so the _user.ini pass always switched the test off). "0" or "off" = off.
-				const auto text = ReadString(a_path, L"Camera", L"sTestModifier", "");
-				if (!text.empty()) {
-					try {
-						a_s.testModifier = (text == "off" || text == "OFF") ? 0u : static_cast<std::uint32_t>(std::stoul(text, nullptr, 16));
-					} catch (...) {
-						a_s.testModifier = 0;
-					}
-				}
-			}
-			a_s.testModifierMode = std::clamp(ReadInt(a_path, L"Camera", L"iTestModifierMode", a_s.testModifierMode), 1, 2);
+			a_s.deepFocusLongShots = ReadInt(a_path, L"Camera", L"bDeepFocusLongShots", a_s.deepFocusLongShots ? 1 : 0) != 0;
+			a_s.deepFocusBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fDeepFocusBeyond", a_s.deepFocusBeyond), 0.0f, 20.0f);
 
 			a_s.distanceBehind = ReadFloat(a_path, L"PlainCamera", L"fDistanceBehind", a_s.distanceBehind);
 			a_s.sideOffset = ReadFloat(a_path, L"PlainCamera", L"fSideOffset", a_s.sideOffset);
