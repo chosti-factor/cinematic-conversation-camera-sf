@@ -462,10 +462,18 @@ namespace CCC::Director
 		const auto& s = Settings::Get();
 		std::string preset{ s.preset };
 		std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+		// Each preset's own camera distance caps (indoors, outdoors): as far as its widest
+		// shot wants at Starfield's lens, now that obstacle detection keeps the camera out of
+		// walls (Close: the over-the-shoulder, 4.8 m; Standard: the profile, 6.8 m, and
+		// outdoors the two-shot, 10.2 m; Room: the long shots, 12.7 m).
+		float presetIndoor = 7.0f, presetOutdoor = 10.5f;
 		if (preset == "close") {
 			LoadPreset(kClose);
+			presetIndoor = presetOutdoor = 5.0f;
 		} else if (preset == "room") {
 			LoadPreset(kRoom);
+			presetIndoor = 7.0f;
+			presetOutdoor = 13.0f;
 		} else {
 			if (preset != "standard") {
 				REX::WARN("Director: unknown preset '{}', using Standard", s.preset);
@@ -483,7 +491,9 @@ namespace CCC::Director
 		g.heldLookSign = 0.0f;
 		auto*      player = RE::PlayerCharacter::GetSingleton();
 		const bool interior = player && player->parentCell && player->parentCell->IsInterior();
-		g.maxDistance = interior ? s.maxCameraDistance : s.maxCameraDistanceExterior;
+		const float playerCap = interior ? s.maxCameraDistance : s.maxCameraDistanceExterior;
+		g.maxDistance = playerCap > 0.0f ? playerCap : interior ? presetIndoor : presetOutdoor;
+		const char* capFrom = playerCap > 0.0f ? (interior ? "your fMaxCameraDistance" : "your fMaxCameraDistanceExterior") : "the preset's own";
 		g.npcLine = {};
 		g.playerLine = {};
 		g.loggedEmpty = false;
@@ -494,8 +504,8 @@ namespace CCC::Director
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
-		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
-			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
+		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
+			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
 			s.closeUpEmotions);

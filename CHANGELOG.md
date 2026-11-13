@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## Unreleased (0.6.0)
+
+### Changed
+- Each preset has its own camera distance caps, as far as its widest shot needs now that
+  obstacle detection keeps the camera out of walls: Close 5 m / 5 m, Standard 7 m indoors
+  and 10.5 m outdoors (turns on the two-shot outdoors), Room 7 m / 13 m.
+  `fMaxCameraDistance` and `fMaxCameraDistanceExterior` now default to 0 (the preset's own);
+  any other value is the player's own limit for every preset.
+
 ## 0.5.4 - 2026-11-13
 
 ### Changed
