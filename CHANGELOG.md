@@ -6,6 +6,12 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## Unreleased (0.6.0)
 
+### Added
+- Stardust preset (`sPreset=Stardust`), CCC SF's own: Standard's shoulders and close-ups
+  (locked off, close-ups pushing in) with Room's wider shots mixed in, weighted about 60/40.
+  The wider shots move: cranes on the full-figure, overhead and master shots, pull-outs on
+  the wide and distant ones, drifts on the two-shot and profile. Caps as Room (7 m / 13 m).
+
 ### Changed
 - Each preset has its own camera distance caps, as far as its widest shot needs now that
   obstacle detection keeps the camera out of walls: Close 5 m / 5 m, Standard 7 m indoors

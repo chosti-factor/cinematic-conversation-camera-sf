@@ -146,6 +146,30 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 18, 4.2f },
 		};
 
+		// Stardust (CCC SF's own): Standard's faces and shoulders, locked off as in Standard,
+		// with Room's wider shots and their cranes, pull-outs and drifts mixed in. Standard's
+		// shots carry 60% of the weight, the wider ones 40% (Master, Wide and Distant wait
+		// for room measurement, so for now the wider shots come up about 29% of the time).
+		constexpr std::array kStardust{
+			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kCloseUp, 80, Move::kPushIn, 14, 5.0f },
+			PresetEntry{ ShotType::kClosePlayer, 80, Move::kPushIn, 14, 5.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 60, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 60, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kMediumNpc, 45, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kMediumPlayer, 45, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 12, 8.0f },
+			PresetEntry{ ShotType::kProfile, 25, Move::kDrift, 10, 6.0f },
+			PresetEntry{ ShotType::kLongNpc, 50, Move::kCraneUp, 25, 7.0f },
+			PresetEntry{ ShotType::kLongPlayer, 50, Move::kCraneUp, 25, 7.0f },
+			PresetEntry{ ShotType::kOverhead, 30, Move::kCraneDown, 22, 4.2f },
+			PresetEntry{ ShotType::kPlayerOverhead, 30, Move::kCraneDown, 22, 4.2f },
+			PresetEntry{ ShotType::kMaster, 60, Move::kCraneUp, 40, 9.0f },
+			PresetEntry{ ShotType::kWide, 55, Move::kPullOut, 16, 8.0f },
+			PresetEntry{ ShotType::kDistant, 35, Move::kPullOut, 30, 8.0f },
+		};
+
 		template <std::size_t N>
 		void LoadPreset(const std::array<PresetEntry, N>& a_entries)
 		{
@@ -472,6 +496,10 @@ namespace CCC::Director
 			presetIndoor = presetOutdoor = 5.0f;
 		} else if (preset == "room") {
 			LoadPreset(kRoom);
+			presetIndoor = 7.0f;
+			presetOutdoor = 13.0f;
+		} else if (preset == "stardust") {
+			LoadPreset(kStardust);
 			presetIndoor = 7.0f;
 			presetOutdoor = 13.0f;
 		} else {
