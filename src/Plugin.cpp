@@ -2481,6 +2481,111 @@ namespace CCC
 			}
 		}
 
+		// ---- Obstacle detection, step 1 (0.5.1 diagnostic) ---------------------------------
+		// The game already checks for obstacles around its cameras (dialogue camera collision,
+		// third-person camera collision). Find that code: the settings it reads live at fixed
+		// places in the game, so search the game's code for instructions that read them and
+		// write the code around each to the log, to be disassembled. Read-only, on a background
+		// thread, once per game session.
+		struct RipHit
+		{
+			std::uintptr_t at;      // address of the 32-bit displacement
+			int            target;  // which setting
+			int            extra;   // immediate bytes after the displacement
+		};
+
+		std::size_t ScanRipRefs(std::uintptr_t a_begin, std::uintptr_t a_end, const std::uintptr_t* a_lo, const std::uintptr_t* a_hi, int a_count, RipHit* a_out,
+			std::size_t a_max)
+		{
+			std::size_t n = 0;
+			__try {
+				for (auto p = a_begin; p + 4 <= a_end && n < a_max; ++p) {
+					const auto disp = *reinterpret_cast<const std::int32_t*>(p);
+					for (const int extra : { 0, 1, 4 }) {
+						const auto target = static_cast<std::uintptr_t>(static_cast<std::intptr_t>(p + 4 + extra) + disp);
+						for (int t = 0; t < a_count; ++t) {
+							if (target >= a_lo[t] && target < a_hi[t]) {
+								a_out[n++] = { p, t, extra };
+								break;
+							}
+						}
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+			return n;
+		}
+
+		void SearchCameraCollisionCode()
+		{
+			const auto  base = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
+			const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
+			const auto* section = IMAGE_FIRST_SECTION(nt);
+			std::uintptr_t textBegin = 0, textEnd = 0;
+			const std::uintptr_t imageEnd = base + nt->OptionalHeader.SizeOfImage;
+			for (WORD i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+				if ((section[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) && section[i].Misc.VirtualSize > textEnd - textBegin) {
+					textBegin = base + section[i].VirtualAddress;
+					textEnd = textBegin + section[i].Misc.VirtualSize;
+				}
+			}
+			static const std::array<const char*, 8> keys{ "fDialogueCameraCollisionRadius:Dialogue", "fDialogueCameraCollisionCheckDist:Interface",
+				"fDialogueCameraCollisionMinPercentage:Dialogue", "fCameraCollisionRigSphereRadius:Camera", "fCameraCollisionRigCastLength:Camera",
+				"b3rdUseSimplifiedCameraCollision:Camera", "fWorkshopIsoCamSphereCastRadius:Camera", "fOverShoulderOffsetCollisionScalar:Camera" };
+			std::array<std::uintptr_t, 8> lo{}, hi{};
+			int                           count = 0;
+			std::array<const char*, 8>    names{};
+			for (const char* key : keys) {
+				auto*      setting = FindAnySetting(key);
+				const auto at = reinterpret_cast<std::uintptr_t>(setting);
+				if (!setting) {
+					REX::INFO("Obstacle search: setting {} not found", key);
+					continue;
+				}
+				if (at < base || at >= imageEnd) {
+					REX::INFO("Obstacle search: setting {} is outside the game's image ({:#x}); code can't refer to it directly", key, at);
+					continue;
+				}
+				REX::INFO("Obstacle search: setting {} at Starfield.exe+{:X}", key, at - base);
+				lo[count] = at;
+				hi[count] = at + 0x20;
+				names[count] = key;
+				++count;
+			}
+			if (count == 0 || !textBegin) {
+				return;
+			}
+			std::thread([=]() {
+				std::vector<RipHit> hits(400);
+				const auto          n = ScanRipRefs(textBegin, textEnd, lo.data(), hi.data(), count, hits.data(), hits.size());
+				REX::INFO("Obstacle search: {} code references found in Starfield.exe+{:X}..+{:X}", n, textBegin - base, textEnd - base);
+				std::array<int, 8> perSetting{};
+				for (std::size_t i = 0; i < n; ++i) {
+					const auto& h = hits[i];
+					REX::INFO("Obstacle search: {} read at Starfield.exe+{:X} (displacement, {} immediate bytes after)", names[h.target], h.at - base, h.extra);
+					if (perSetting[h.target]++ >= 4) {
+						continue;
+					}
+					// The code around it: 0x180 bytes before, 0x180 after, 32 bytes a line.
+					const auto from = (std::max)(textBegin, h.at - 0x180);
+					const auto to = (std::min)(textEnd, h.at + 0x180);
+					for (auto p = from; p < to; p += 32) {
+						std::array<std::uint8_t, 32> bytes{};
+						if (!SafeCopy(bytes.data(), reinterpret_cast<const void*>(p), bytes.size())) {
+							break;
+						}
+						std::string hex;
+						for (const auto b : bytes) {
+							hex += std::format("{:02X}", b);
+						}
+						REX::INFO("Code Starfield.exe+{:X}: {}", p - base, hex);
+					}
+				}
+				REX::INFO("Obstacle search: done");
+			}).detach();
+		}
+
 		void Watchdog()
 		{
 			if (::GetCurrentThreadId() != g_mainThreadId) {
@@ -2568,6 +2673,15 @@ namespace CCC
 							lastLogged = wanted;
 							REX::INFO("Conversation field of view: fDialogueCameraFailsafeFPFOV set to {:.1f} (game's own value {:.1f})", wanted, original);
 						}
+					}
+				}
+
+				// Obstacle detection research (0.5.1): find the game's own camera-collision code.
+				{
+					static bool searched = false;
+					if (!searched && !g_state.active && Settings::Get().debugLog && RE::INISettingCollection::GetSingleton()) {
+						searched = true;
+						SearchCameraCollisionCode();
 					}
 				}
 
@@ -2761,7 +2875,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.5.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.5.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
