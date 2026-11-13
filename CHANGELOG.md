@@ -10,6 +10,11 @@ test build; "diagnostic" items only add information to the log for testing.
 - Focus styles (`sFocusStyle`): Cinematic (more background blur) and Wide (deeper sharp zone,
   softer background blur), replacing `bDeepFocusLongShots` (still read: 1 = Wide).
   `fDeepFocusBeyond` is now `fWideFocusBeyond` (old name still read).
+- Outdoor shots may stand up to 7 m from the person in shot (was 5 m), closer to CCC's
+  framings now that focus works at any distance.
+
+### Added
+- `docs/EMOTIONS.md`: running tally of the expression tags seen in testing.
 
 ## 0.5.0 - 2026-11-13
 

@@ -136,7 +136,7 @@ namespace CCC
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
 		float       shortestHold{ 2.0f };      // never change angle sooner than this
 		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
-		float       maxCameraDistanceExterior{ 5.0f };
+		float       maxCameraDistanceExterior{ 7.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is
