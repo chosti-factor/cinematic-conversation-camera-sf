@@ -19,7 +19,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 Working:
 
 - **CCC's shot library and director:** all 39 camera setups with CCC's framing, three
-  presets (Standard, Close, Room), camera moves (push, pull, crane, tilt, drift, orbit,
+  presets (Standard, Close, Room) plus Stardust, CCC SF's own mix of Standard with
+  Room's moving wider shots, camera moves (push, pull, crane, tilt, drift, orbit,
   slide), and CCC's cutting rules: each person keeps their angle across the
   back-and-forth and gets a new one after a few of their lines; short lines don't count.
 - **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
