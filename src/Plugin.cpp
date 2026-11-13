@@ -2814,6 +2814,75 @@ namespace CCC
 			REX::INFO("Live blur walk ({}): {} objects visited, {} findings", a_when, visited, hits);
 		}
 
+		// ---- Conversation blur records (0.4.22 test) ---------------------------------------
+		// The game's Dialogue_Close/Medium/Long_DOF records (0.4.21 dumps): +0x38C blur strength
+		// (2 / 2 / 0.7), +0x398 focus distance (1.5 / 3 / 8 m), +0x3A4 sharp-zone depth (6 / 12 /
+		// 20). Change them while a conversation runs and see whether the live blur follows.
+		struct BlurRecord
+		{
+			std::uintptr_t form{ 0 };
+			float          strength{ 0.0f }, distance{ 0.0f }, range{ 0.0f };
+		};
+		std::array<BlurRecord, 3> g_blurRecords{};
+		bool                      g_blurRecordsRead = false;
+		bool                      g_blurRecordsChanged = false;
+		constexpr std::size_t     kBlurStrength = 0x38C, kBlurDistance = 0x398, kBlurRange = 0x3A4;
+
+		bool ReadBlurRecords()
+		{
+			if (g_blurRecordsRead) {
+				return g_blurRecords[0].form != 0;
+			}
+			g_blurRecordsRead = true;
+			const std::array<std::uint32_t, 3> ids{ 0x10A27, 0x10A4C, 0x10E34 };
+			for (std::size_t i = 0; i < ids.size(); ++i) {
+				const auto     form = reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(ids[i]));
+				std::uint32_t  type = 0, id = 0;
+				const char*    editorId = nullptr;
+				BlurRecord     r{};
+				if (!form || !ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD) ||
+					!SafeCopy(&r.strength, reinterpret_cast<const void*>(form + kBlurStrength), 4) ||
+					!SafeCopy(&r.distance, reinterpret_cast<const void*>(form + kBlurDistance), 4) ||
+					!SafeCopy(&r.range, reinterpret_cast<const void*>(form + kBlurRange), 4)) {
+					REX::WARN("Conversation blur test: record {:08X} not readable; test off", ids[i]);
+					g_blurRecords = {};
+					return false;
+				}
+				// Only if the values look like the 0.4.21 dumps (a different game version would
+				// put them elsewhere).
+				if (!(r.strength >= 0.0f && r.strength < 20.0f && r.distance > 0.1f && r.distance < 100.0f && r.range > 0.1f && r.range < 1000.0f)) {
+					REX::WARN("Conversation blur test: {} values ({}, {}, {}) don't look like blur settings; test off", editorId ? editorId : "", r.strength, r.distance, r.range);
+					g_blurRecords = {};
+					return false;
+				}
+				r.form = form;
+				g_blurRecords[i] = r;
+				REX::INFO("Conversation blur record {:08X} '{}': strength {:.2f}, focus {:.2f} m, sharp zone {:.2f}", id, editorId ? editorId : "", r.strength, r.distance, r.range);
+			}
+			return true;
+		}
+
+		void WriteBlurRecords(int a_mode, float a_shotDistance, float a_beyond)
+		{
+			for (const auto& r : g_blurRecords) {
+				if (!r.form) {
+					continue;
+				}
+				float strength = r.strength, distance = r.distance, range = r.range;
+				if (a_mode == 1) {
+					strength = 0.0f;
+				} else if (a_mode == 2 && a_shotDistance > 0.3f) {
+					distance = a_shotDistance;
+				} else if (a_mode == 3 && a_shotDistance > a_beyond) {
+					range = (std::max)(r.range * 4.0f, 50.0f);
+				}
+				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
+				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
+				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
+			}
+			g_blurRecordsChanged = a_mode != 0;
+		}
+
 		// ---- Image-space modifier test (0.4.14) -----------------------------------------
 		// The game's own apply/remove for image-space modifiers: the Papyrus natives behind
 		// ImageSpaceModifier.Apply() and .Remove() (Address Library IDs 171562 and 105038, from
@@ -3342,6 +3411,34 @@ namespace CCC
 						SetConversationBlur(false, "conversation over");
 					}
 				}
+				// Conversation blur test (0.4.22).
+				{
+					const auto& st = Settings::Get();
+					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
+					static float lastDistance = -1.0f;
+					static int   lastMode = 0;
+					if (live && st.dialogueBlurTest != 0 && ReadBlurRecords()) {
+						const float d = g_shotDistance.load(std::memory_order_relaxed);
+						WriteBlurRecords(st.dialogueBlurTest, d, st.noBlurBeyond);
+						if (st.dialogueBlurTest != lastMode || std::abs(d - lastDistance) > 0.25f) {
+							lastMode = st.dialogueBlurTest;
+							lastDistance = d;
+							static int logged = 0;
+							if (logged++ < 80) {
+								REX::INFO("Conversation blur test {}: shot {:.2f} m from the person in shot; records {}", st.dialogueBlurTest, d,
+									st.dialogueBlurTest == 1 ? "set to no blur" :
+									st.dialogueBlurTest == 2 ? "focused at the shot's distance" :
+									d > st.noBlurBeyond     ? "given a deep sharp zone" :
+									                          "as the game has them");
+							}
+						}
+					} else if (g_blurRecordsChanged) {
+						WriteBlurRecords(0, 0.0f, 0.0f);
+						lastMode = 0;
+						lastDistance = -1.0f;
+						REX::INFO("Conversation blur test: records put back");
+					}
+				}
 				// Image-space modifier test (0.4.14).
 				{
 					const auto& st = Settings::Get();
@@ -3498,7 +3595,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.21 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.22 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

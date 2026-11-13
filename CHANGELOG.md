@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.4.22 - 2026-11-13
+
+### Added
+- Conversation blur test (`iDialogueBlurTest`): changes the game's own Dialogue_Close, Medium
+  and Long_DOF records while a conversation runs (put back afterwards): 1 = no blur, 2 = focus
+  at the shot's distance, 3 = a deeper sharp zone on long shots. Their blur strength, focus
+  distance and sharp-zone depth were found in the 0.4.21 dumps.
+
 ## 0.4.21 - 2026-11-13
 
 ### Changed
