@@ -161,7 +161,7 @@ namespace CCC
 		// Depth-of-field experiment (0.4.12): the game's image spaces carry the blur settings.
 		// 0 = leave them, 1 = no blur during conversations, 2 = no blur only on shots where
 		// the camera is further than fNoBlurBeyond metres from the person in shot.
-		std::int32_t blurExperiment{ 2 };
+		std::int32_t blurExperiment{ 0 };
 		float        noBlurBeyond{ 3.5f };
 		// Image-space modifier test (0.4.14): a modifier's form ID (from the log's list) to
 		// apply with the game's own function, as the console's imod and Starvegas do.
