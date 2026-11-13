@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.5.4 - 2026-11-13
+
+### Changed
+- Obstacle detection: when no shot in the preset is fully clear, the camera takes the blocked
+  shot with the most room left, pulled in (at least 1.5 m and 40% of its distance), before
+  falling back to the plain shot. Next to Barrett's ladder this gives the side-on two-shot
+  instead of a view from his eyes through the ladder.
+
+### Fixed
+- When nothing fitted a turn, 0.5.3 kept re-checking every frame (and filling the log); the
+  plain shot now holds until the turn changes.
+
 ## 0.5.3 - 2026-11-13
 
 ### Added

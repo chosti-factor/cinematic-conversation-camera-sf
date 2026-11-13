@@ -66,6 +66,7 @@ namespace CCC::Director
 			std::array<std::optional<Clearance>, kCount> clearance{};
 			clock::time_point                            clearanceAt{};
 			std::string                                  skipped;  // shots left out for obstacles, for the next Director line
+			std::optional<bool>                          plainTurn;  // nothing fitted this turn (true = theirs): plain shot until the turn changes
 		} g;
 
 		ObstacleTest g_obstacleTest = nullptr;
@@ -274,6 +275,7 @@ namespace CCC::Director
 						result.length = c.length;
 					}
 					result.pastNear = result.pastNear || c.pastNear;
+					result.fallbackOk = result.fallbackOk && c.fallbackOk;
 				}
 				if (InputFor(a_frame, a_setup, 0.0f).move == Move::kLocked) {
 					break;  // no move: start and end are the same
@@ -366,7 +368,25 @@ namespace CCC::Director
 				return g.current;
 			}
 			if (pool.empty()) {
+				// Nothing fully clear: the blocked shot with the most room, pulled in.
+				std::optional<ShotType> best;
+				float                   bestLimit = 0.0f;
+				for (std::size_t i = 0; i < kCount; ++i) {
+					const auto type = static_cast<ShotType>(i);
+					if (!Usable(type, a_frame, false)) {
+						continue;
+					}
+					const auto c = ClearanceFor(type, a_frame, g.setups[i]);
+					if (c.fallbackOk && c.limit > bestLimit) {
+						best = type;
+						bestLimit = c.limit;
+					}
+				}
 				LogSkipped();
+				if (best) {
+					REX::INFO("Obstacles: nothing fully clear; {} pulled in to {:.1f} m fits best", Shots::Key(*best), bestLimit);
+					return best;
+				}
 				if (!g.loggedEmpty) {
 					g.loggedEmpty = true;
 					REX::WARN("Director: no shot in the preset fits this conversation ({} turn); using the plain over-the-shoulder shot",
@@ -423,7 +443,7 @@ namespace CCC::Director
 			g.heldLookSign = solved.lookSign;
 			const bool close = a_type == ShotType::kCloseUp || a_type == ShotType::kExtremeClose;
 			const auto clear = ClearanceFor(a_type, a_frame, close && a_why && std::string_view{ a_why }.find("intense") != std::string_view::npos ? IntenseSetup(a_type) : setup);
-			g.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
+			g.limit = clear.usable || clear.fallbackOk ? clear.limit : std::numeric_limits<float>::infinity();
 			LogSkipped();
 			REX::INFO("Director: {} -> {} ({}; {:.1f} m away at {:.1f} degrees; move {} {}; new angle after {} more lines){}", a_why, Shots::Key(a_type),
 				a_frame.npcTurn ? "their turn" : "your turn", solved.distance, solved.angle,
@@ -470,6 +490,7 @@ namespace CCC::Director
 		g.intensePending = false;
 		g.intenseSetup.reset();
 		g.limit = std::numeric_limits<float>::infinity();
+		g.plainTurn.reset();
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
@@ -498,6 +519,15 @@ namespace CCC::Director
 		if (!a_frame.npcTalking) {
 			g.intensePending = false;
 		}
+		// Nothing fitted when this turn began: stay on the plain shot until the turn changes
+		// (0.5.3 tried again every frame, filling the log).
+		if (g.plainTurn && *g.plainTurn != a_frame.npcTurn) {
+			g.plainTurn.reset();
+		}
+		if (g.plainTurn) {
+			g.intensePending = false;
+			return std::nullopt;
+		}
 		const bool alreadyClose = g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
 
 		if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
@@ -521,6 +551,7 @@ namespace CCC::Director
 					Cut(*pick, a_frame, a_now, side.shot ? "turn, new angle" : "turn", true);
 				} else {
 					g.current.reset();
+					g.plainTurn = a_frame.npcTurn;
 					return std::nullopt;
 				}
 			}
@@ -547,6 +578,8 @@ namespace CCC::Director
 			if (const auto pick = Pick(a_frame)) {
 				Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 			} else {
+				g.current.reset();
+				g.plainTurn = a_frame.npcTurn;
 				return std::nullopt;
 			}
 		}

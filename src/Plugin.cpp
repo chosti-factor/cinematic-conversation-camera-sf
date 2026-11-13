@@ -1087,11 +1087,12 @@ namespace CCC
 			if (a_overShoulder) {
 				keep = (std::max)(keep, Distance(a_subjectHead, a_nearHead) + 0.6f);
 			}
-			if (safe >= keep) {
-				result.limit = safe;
-			} else {
-				result.usable = false;
-			}
+			result.limit = safe;
+			result.usable = safe >= keep;
+			// When nothing in the preset passes, the Director takes the blocked shot that still
+			// has the most room, pulled in (0.5.3 test: Barrett beside the ladder got a shot
+			// from his eyes through the ladder while the side-on Profile had 3.8 m clear).
+			result.fallbackOk = safe >= (std::max)(1.5f, 0.4f * length) && (!a_overShoulder || safe >= Distance(a_subjectHead, a_nearHead) + 0.6f);
 			return result;
 		}
 
@@ -1606,12 +1607,12 @@ namespace CCC
 				if (key != g_state.plainCheckSubject) {
 					g_state.plainCheckSubject = key;
 					const auto c = TestShot(subjectHead, pose->position, nearHeadRef, plainOverShoulder);
-					g_state.plainLimit = c.usable ? c.limit : std::numeric_limits<float>::infinity();
-					g_state.plainEyeLine = !c.usable;
+					g_state.plainLimit = c.usable || c.fallbackOk ? c.limit : std::numeric_limits<float>::infinity();
+					g_state.plainEyeLine = !c.usable && !c.fallbackOk;
 					if (c.blockedAt >= 0.0f) {
 						REX::INFO("Obstacles: plain shot of {} blocked {:.1f} m from them{}; {}", subject == Subject::kNpc ? "them" : "you", c.blockedAt,
 							c.pastNear ? " (beyond the near person)" : "",
-							c.usable ? std::format("camera pulled in to {:.1f} m", c.limit) : std::string{ "shooting from the other person's eyes instead" });
+							c.usable || c.fallbackOk ? std::format("camera pulled in to {:.1f} m", c.limit) : std::string{ "shooting from the other person's eyes instead" });
 					}
 				}
 				if (g_state.plainEyeLine) {
@@ -2949,7 +2950,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.5.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.5.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
