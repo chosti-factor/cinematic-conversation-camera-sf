@@ -18,6 +18,20 @@ namespace CCC::Director
 		RE::NiPoint3 playerHead{};
 	};
 
+	// Obstacle detection (0.5.3): what the game's collision says about a camera spot.
+	struct Clearance
+	{
+		bool  usable{ true };                                    // false = skip this shot
+		float limit{ std::numeric_limits<float>::infinity() };  // pull the camera in to at most this far from the subject
+		float length{ 0.0f };                                    // subject to camera, as asked
+		float blockedAt{ -1.0f };                                // where the line was blocked, m from the subject (-1 = clear)
+		bool  pastNear{ false };                                 // the line touched the near person, and was checked beyond them
+	};
+	using ObstacleTest = Clearance (*)(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
+
+	// The plugin's sphere cast; nullptr = no obstacle checks.
+	void SetObstacleTest(ObstacleTest a_test);
+
 	// Call when a conversation starts (reads the INI's preset and per-shot settings).
 	void Reset();
 

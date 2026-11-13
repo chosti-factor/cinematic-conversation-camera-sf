@@ -22,6 +22,10 @@ namespace CCC::Camera
 	// Over-the-shoulder shot: camera behind `a_near`'s head, looking at `a_far`'s face.
 	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead);
 
+	// Slides the camera straight towards the subject until it is at most a_limit from them,
+	// keeping the direction it looks in (the subject stays where it is in the frame, larger).
+	void PullIn(Pose& a_pose, const RE::NiPoint3& a_subject, float a_limit);
+
 	// Learns Starfield's camera axis convention from the game's own dialogue camera,
 	// which is aimed at the speaker. Call before Apply overwrites the camera on a frame.
 	// Returns true once a convention is known (now or from an earlier conversation).

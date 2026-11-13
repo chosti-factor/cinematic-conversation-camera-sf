@@ -60,7 +60,15 @@ namespace CCC::Director
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
+			float                     limit{ std::numeric_limits<float>::infinity() };  // obstacle: camera at most this far from the subject
+
+			// Obstacle checks: one cast per candidate per decision, kept for this Update call.
+			std::array<std::optional<Clearance>, kCount> clearance{};
+			clock::time_point                            clearanceAt{};
+			std::string                                  skipped;  // shots left out for obstacles, for the next Director line
 		} g;
+
+		ObstacleTest g_obstacleTest = nullptr;
 
 		// Emotion close-ups with the plain shots (seated people, merchants): held for the line.
 		struct PlainIntense
@@ -70,6 +78,7 @@ namespace CCC::Director
 			float                   heldAngle{ std::numeric_limits<float>::quiet_NaN() };
 			float                   heldLookSign{ 0.0f };
 			bool                    wasTalking{ false };
+			float                   limit{ std::numeric_limits<float>::infinity() };
 		} gp;
 
 		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
@@ -215,7 +224,70 @@ namespace CCC::Director
 			return in;
 		}
 
-		bool Usable(ShotType a_type, const Frame& a_frame)
+		// The person a setup frames (for the neutral ones, whoever's turn it is), and the other.
+		const RE::NiPoint3& SubjectHead(ShotType a_type, const Frame& a_frame)
+		{
+			const bool onNpc = Shots::Neutral(a_type) ? a_frame.npcTurn : Shots::OnNpc(a_type);
+			return onNpc ? a_frame.npcHead : a_frame.playerHead;
+		}
+
+		const RE::NiPoint3& NearHead(ShotType a_type, const Frame& a_frame)
+		{
+			const bool onNpc = Shots::Neutral(a_type) ? a_frame.npcTurn : Shots::OnNpc(a_type);
+			return onNpc ? a_frame.playerHead : a_frame.npcHead;
+		}
+
+		// Obstacle check for a setup: where the camera starts and where its move ends.
+		Clearance ClearanceFor(ShotType a_type, const Frame& a_frame, const Setup& a_setup)
+		{
+			if (!g_obstacleTest) {
+				return {};
+			}
+			const auto now = clock::now();
+			if (now - g.clearanceAt > std::chrono::milliseconds(50)) {
+				g.clearance = {};
+				g.clearanceAt = now;
+			}
+			auto& cached = g.clearance[static_cast<std::size_t>(a_type)];
+			if (cached) {
+				return *cached;
+			}
+			const auto& subject = SubjectHead(a_type, a_frame);
+			const auto& nearHead = NearHead(a_type, a_frame);
+			const bool  overShoulder = Shots::OverShoulder(a_type);
+			Clearance   result;
+			bool        first = true;
+			for (const float progress : { 0.0f, 1.0f }) {
+				const auto solved = Shots::Solve(a_type, InputFor(a_frame, a_setup, progress));
+				if (!solved.ok) {
+					continue;
+				}
+				const auto c = g_obstacleTest(subject, solved.pose.position, nearHead, overShoulder);
+				if (first) {
+					result = c;
+					first = false;
+				} else {
+					result.usable = result.usable && c.usable;
+					result.limit = (std::min)(result.limit, c.limit);
+					if (c.blockedAt >= 0.0f && (result.blockedAt < 0.0f || c.blockedAt < result.blockedAt)) {
+						result.blockedAt = c.blockedAt;
+						result.length = c.length;
+					}
+					result.pastNear = result.pastNear || c.pastNear;
+				}
+				if (InputFor(a_frame, a_setup, 0.0f).move == Move::kLocked) {
+					break;  // no move: start and end are the same
+				}
+			}
+			if (!result.usable) {
+				g.skipped += std::format("{}{} (blocked {:.1f} m from them{})", g.skipped.empty() ? "" : ", ", Shots::Key(a_type), result.blockedAt,
+					result.pastNear ? ", beyond the near person" : "");
+			}
+			cached = result;
+			return result;
+		}
+
+		bool Usable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)
 		{
 			const auto& setup = g.setups[static_cast<std::size_t>(a_type)];
 			if (setup.weight <= 0) {
@@ -230,18 +302,33 @@ namespace CCC::Director
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
 			// A framing that wants the camera far beyond the cap would become a different
 			// shot entirely (a full figure turned into a close-up); leave it out.
-			return solved.ok && solved.wantedDistance <= g.maxDistance * 2.5f;
+			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f) {
+				return false;
+			}
+			return !a_checkObstacles || ClearanceFor(a_type, a_frame, setup).usable;
 		}
 
 		// Like Usable, but regardless of the preset's weight: the emotion close-ups use the
 		// close-up and extreme close-up even in presets that leave them out (CCC does the same).
-		bool Placeable(ShotType a_type, const Frame& a_frame)
+		bool Placeable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)
 		{
 			if (!Shots::Neutral(a_type) && Shots::OnNpc(a_type) != a_frame.npcTurn) {
 				return false;
 			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, g.setups[static_cast<std::size_t>(a_type)], 0.0f));
-			return solved.ok && solved.wantedDistance <= g.maxDistance * 2.5f;
+			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f) {
+				return false;
+			}
+			return !a_checkObstacles || ClearanceFor(a_type, a_frame, IntenseSetup(a_type)).usable;
+		}
+
+		// Logs the shots just left out for obstacles (one line per decision).
+		void LogSkipped()
+		{
+			if (!g.skipped.empty()) {
+				REX::INFO("Obstacles: skipped {}", g.skipped);
+				g.skipped.clear();
+			}
 		}
 
 		// The close-up for an intense line: a third of the time the extreme close-up.
@@ -279,6 +366,7 @@ namespace CCC::Director
 				return g.current;
 			}
 			if (pool.empty()) {
+				LogSkipped();
 				if (!g.loggedEmpty) {
 					g.loggedEmpty = true;
 					REX::WARN("Director: no shot in the preset fits this conversation ({} turn); using the plain over-the-shoulder shot",
@@ -333,10 +421,20 @@ namespace CCC::Director
 			const auto   solved = Shots::Solve(a_type, in);
 			g.heldAngle = solved.angle;
 			g.heldLookSign = solved.lookSign;
-			REX::INFO("Director: {} -> {} ({}; {:.1f} m away at {:.1f} degrees; move {} {}; new angle after {} more lines)", a_why, Shots::Key(a_type),
+			const bool close = a_type == ShotType::kCloseUp || a_type == ShotType::kExtremeClose;
+			const auto clear = ClearanceFor(a_type, a_frame, close && a_why && std::string_view{ a_why }.find("intense") != std::string_view::npos ? IntenseSetup(a_type) : setup);
+			g.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
+			LogSkipped();
+			REX::INFO("Director: {} -> {} ({}; {:.1f} m away at {:.1f} degrees; move {} {}; new angle after {} more lines){}", a_why, Shots::Key(a_type),
 				a_frame.npcTurn ? "their turn" : "your turn", solved.distance, solved.angle,
-				Shots::MoveName(Settings::Get().cameraMoves ? setup.move : Move::kLocked), setup.amount, side.linesTarget - side.lines);
+				Shots::MoveName(Settings::Get().cameraMoves ? setup.move : Move::kLocked), setup.amount, side.linesTarget - side.lines,
+				std::isfinite(g.limit) ? std::format("; obstacle {:.1f} m from them, camera pulled in to {:.1f} m", clear.blockedAt, g.limit) : std::string{});
 		}
+	}
+
+	void SetObstacleTest(ObstacleTest a_test)
+	{
+		g_obstacleTest = a_test;
 	}
 
 	void Reset()
@@ -371,12 +469,17 @@ namespace CCC::Director
 		g.loggedEmpty = false;
 		g.intensePending = false;
 		g.intenseSetup.reset();
+		g.limit = std::numeric_limits<float>::infinity();
+		g.clearance = {};
+		g.skipped.clear();
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
 			s.closeUpEmotions);
+		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
+			s.obstacleCheck && !g_obstacleTest ? ", but the game's collision check isn't available" : "");
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
@@ -439,8 +542,8 @@ namespace CCC::Director
 				side.changeDue = false;
 				side.lines = 0;
 			}
-		} else if (!Usable(*g.current, a_frame) &&
-				   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame))) {
+		} else if (!Usable(*g.current, a_frame, false) &&
+				   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame, false))) {
 			if (const auto pick = Pick(a_frame)) {
 				Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 			} else {
@@ -457,7 +560,9 @@ namespace CCC::Director
 		if (!solved.ok) {
 			return std::nullopt;
 		}
-		return solved.pose;
+		auto pose = solved.pose;
+		Camera::PullIn(pose, SubjectHead(*g.current, a_frame), g.limit);
+		return pose;
 	}
 
 	std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, clock::time_point a_now)
@@ -479,14 +584,18 @@ namespace CCC::Director
 					const auto setup = IntenseSetup(*shot);
 					const auto solved = Shots::Solve(*shot, InputFor(a_frame, setup, 0.0f));
 					if (solved.ok) {
+						const auto clear = ClearanceFor(*shot, a_frame, setup);
 						gp.shot = shot;
 						gp.cutAt = a_now;
 						gp.heldAngle = solved.angle;
 						gp.heldLookSign = solved.lookSign;
+						gp.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
 						NoteEmotionCut(*shot);
-						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees)", Shots::Key(*shot), solved.distance, solved.angle);
+						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees){}", Shots::Key(*shot), solved.distance, solved.angle,
+							std::isfinite(gp.limit) ? std::format("; obstacle {:.1f} m from them, camera pulled in to {:.1f} m", clear.blockedAt, gp.limit) : std::string{});
 					}
 				}
+				LogSkipped();
 			}
 		}
 		if (!gp.shot) {
@@ -498,7 +607,12 @@ namespace CCC::Director
 		in.heldAngle = gp.heldAngle;
 		in.heldLookSign = gp.heldLookSign;
 		const auto solved = Shots::Solve(*gp.shot, in);
-		return solved.ok ? std::optional<Camera::Pose>{ solved.pose } : std::nullopt;
+		if (!solved.ok) {
+			return std::nullopt;
+		}
+		auto pose = solved.pose;
+		Camera::PullIn(pose, SubjectHead(*gp.shot, a_frame), gp.limit);
+		return pose;
 	}
 
 	int LastEmotionCut(clock::time_point& a_when)

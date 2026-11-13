@@ -67,6 +67,9 @@ namespace CCC
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			const char*                           castShot{ nullptr };       // obstacle check: last shot checked
 			int                                   castSubject{ -1 };
+			int                                   plainCheckSubject{ -1 };   // obstacle check of the plain shot: whose turn it was done for
+			float                                 plainLimit{ std::numeric_limits<float>::infinity() };
+			bool                                  plainEyeLine{ false };     // plain shot blocked: shoot from the other person's eyes
 			int                                   busySwitches{ 0 };
 			float                                 busySeconds{ 0.0f };
 			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
@@ -251,6 +254,8 @@ namespace CCC
 		// hook only records what it wants; the main-thread watchdog applies it.
 		bool g_wantRevealPlayer = false;
 		bool g_wantHidePlayer = false;
+
+		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
@@ -591,6 +596,7 @@ namespace CCC
 			g_dumpedThisConversation = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 			if (Settings::Get().director) {
+				Director::SetObstacleTest(&TestShot);
 				Director::Reset();
 			}
 		}
@@ -965,12 +971,15 @@ namespace CCC
 			g_state.plainShots = !reason.empty();
 		}
 
-		// ---- Obstacle detection, step 2 (0.5.2: logging only) -------------------------------
+		// ---- Obstacle detection ---------------------------------------------------------------
 		// The game's dialogue camera checks for obstacles with a sphere cast (found in 0.5.1):
 		//   Starfield.exe+1E8DC20(query, &from, &to, radius, &outHit, nullptr, 0.0f) -> bool hit
 		// where query = [dialogue camera state + 0x48], and the hit's fraction along the line
-		// is then at [query + 0x2B4]. The game casts from the speaker to its camera; this casts
-		// from the person in shot to our camera, once per shot, and only logs the result.
+		// is then at [query + 0x2B4]. The cast also moves `to` back to the last safe spot
+		// (0.5.2 logs: the lengths measured after the call were the blocked lengths), so it is
+		// always given copies. The game casts from the speaker to its camera; we cast from the
+		// person in shot to each candidate camera spot (0.5.3: the Director skips or pulls in
+		// blocked shots), and once more per shot for the log.
 		constexpr std::uintptr_t kSphereCastRva = 0x1E8DC20;
 		bool                     g_castBroken = false;
 
@@ -989,10 +998,10 @@ namespace CCC
 			}
 		}
 
-		void CheckShotForObstacles(const char* a_shot, const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const char* a_who)
+		void* CollisionQuery()
 		{
 			if (g_castBroken || !g_dialogueStateObject) {
-				return;
+				return nullptr;
 			}
 			std::uintptr_t query = 0;
 			if (!SafeCopy(&query, static_cast<const std::uint8_t*>(g_dialogueStateObject) + 0x48, sizeof(query)) || query < 0x10000 || query > 0x7FFFFFFFFFFF) {
@@ -1001,31 +1010,103 @@ namespace CCC
 					warned = true;
 					REX::WARN("Obstacle check: the dialogue camera's collision query isn't there ({:#x}); not checking", query);
 				}
-				return;
+				return nullptr;
 			}
-			bool  hit = false;
-			float fraction = 0.0f;
-			void* what = nullptr;
-			if (!SphereCastUnsafe(reinterpret_cast<void*>(query), &a_subjectHead, &a_camera, 0.1f, hit, fraction, what)) {
+			return reinterpret_cast<void*>(query);
+		}
+
+		// One cast from a_from towards a_to. Returns false when it couldn't be done; a_fraction
+		// is how far along the line the first hit is (1 = clear).
+		bool Cast(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float& a_fraction)
+		{
+			void* query = CollisionQuery();
+			if (!query) {
+				return false;
+			}
+			RE::NiPoint3 from = a_from, to = a_to;  // the cast writes into them
+			bool         hit = false;
+			void*        what = nullptr;
+			a_fraction = 1.0f;
+			if (!SphereCastUnsafe(query, &from, &to, Settings::Get().obstacleRadius, hit, a_fraction, what)) {
 				g_castBroken = true;
 				REX::WARN("Obstacle check: the game's sphere cast failed; obstacle checks are off for this session");
+				return false;
+			}
+			if (!hit || !std::isfinite(a_fraction)) {
+				a_fraction = 1.0f;
+			}
+			a_fraction = std::clamp(a_fraction, 0.0f, 1.0f);
+			return true;
+		}
+
+		float Distance(const RE::NiPoint3& a, const RE::NiPoint3& b)
+		{
+			const float dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+			return std::sqrt(dx * dx + dy * dy + dz * dz);
+		}
+
+		// The Director's question: can the camera stand at a_camera to shoot a_subjectHead?
+		//  - clear: yes;
+		//  - the line touches the near person (an over-the-shoulder shot shows their shoulder
+		//    on purpose): check again from their head to the camera, past them;
+		//  - blocked near the camera (a wall behind it): pull the camera in to just before the
+		//    obstacle, if that keeps at least 70% of the distance (and, over a shoulder, keeps
+		//    the camera behind that shoulder);
+		//  - blocked closer to the subject (a ladder in front of their face): skip the shot.
+		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder)
+		{
+			constexpr float kMargin = 0.25f;  // stop this far short of the obstacle
+			Director::Clearance result;
+			result.length = Distance(a_subjectHead, a_camera);
+			if (!Settings::Get().obstacleCheck || result.length < 0.05f) {
+				return result;
+			}
+			float fraction = 1.0f;
+			if (!Cast(a_subjectHead, a_camera, fraction) || fraction >= 0.999f) {
+				return result;
+			}
+			const float        length = result.length;
+			const RE::NiPoint3 dir{ (a_camera.x - a_subjectHead.x) / length, (a_camera.y - a_subjectHead.y) / length, (a_camera.z - a_subjectHead.z) / length };
+			float              blockedAt = fraction * length;
+			const RE::NiPoint3 hitPoint{ a_subjectHead.x + dir.x * blockedAt, a_subjectHead.y + dir.y * blockedAt, a_subjectHead.z + dir.z * blockedAt };
+			const float        fromNear = std::sqrt((hitPoint.x - a_nearHead.x) * (hitPoint.x - a_nearHead.x) + (hitPoint.y - a_nearHead.y) * (hitPoint.y - a_nearHead.y));
+			if (fromNear < 0.45f && hitPoint.z < a_nearHead.z + 0.3f && hitPoint.z > a_nearHead.z - 1.8f) {
+				// The near person's body. What matters is whether the rest of the way is clear.
+				result.pastNear = true;
+				float rest = 1.0f;
+				if (!Cast(a_nearHead, a_camera, rest) || rest >= 0.999f) {
+					return result;
+				}
+				const RE::NiPoint3 p{ a_nearHead.x + (a_camera.x - a_nearHead.x) * rest, a_nearHead.y + (a_camera.y - a_nearHead.y) * rest,
+					a_nearHead.z + (a_camera.z - a_nearHead.z) * rest };
+				blockedAt = (p.x - a_subjectHead.x) * dir.x + (p.y - a_subjectHead.y) * dir.y + (p.z - a_subjectHead.z) * dir.z;
+			}
+			result.blockedAt = blockedAt;
+			const float safe = blockedAt - kMargin;
+			float       keep = (std::max)(1.0f, 0.7f * length);
+			if (a_overShoulder) {
+				keep = (std::max)(keep, Distance(a_subjectHead, a_nearHead) + 0.6f);
+			}
+			if (safe >= keep) {
+				result.limit = safe;
+			} else {
+				result.usable = false;
+			}
+			return result;
+		}
+
+		// The shot on screen, once per shot, for the log: what the check says about it now.
+		void LogShotObstacles(const char* a_shot, const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder, const char* a_who)
+		{
+			if (!Settings::Get().obstacleCheck || !CollisionQuery()) {
 				return;
 			}
-			const float dx = a_camera.x - a_subjectHead.x, dy = a_camera.y - a_subjectHead.y, dz = a_camera.z - a_subjectHead.z;
-			const float length = std::sqrt(dx * dx + dy * dy + dz * dz);
-			std::string thing;
-			std::uint32_t type = 0, id = 0;
-			const char*   editorId = nullptr;
-			if (what && ReadFormInfo(reinterpret_cast<std::uintptr_t>(what), type, id, editorId)) {
-				thing = std::format("; hit {:08X} (form type {:#x}) '{}'", id, type, editorId ? editorId : "");
-			} else if (what) {
-				thing = std::format("; hit object {:p}", what);
-			}
-			if (hit) {
-				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): blocked {:.0f}% of the way from them, {:.1f} m from the camera{}", a_shot, a_who, length,
-					fraction * 100.0f, (1.0f - fraction) * length, thing);
+			const auto c = TestShot(a_subjectHead, a_camera, a_nearHead, a_overShoulder);
+			if (c.blockedAt < 0.0f) {
+				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): clear{}", a_shot, a_who, c.length, c.pastNear ? " (past the near person)" : "");
 			} else {
-				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): clear (fraction {:.2f}){}", a_shot, a_who, length, fraction, thing);
+				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): blocked {:.1f} m from them{}, {}", a_shot, a_who, c.length, c.blockedAt,
+					c.pastNear ? " (beyond the near person)" : "", c.usable ? std::format("could pull in to {:.1f} m", c.limit) : std::string{ "blocked" });
 			}
 		}
 
@@ -1505,7 +1586,7 @@ namespace CCC
 				frame.playerHead = *playerHead;
 				directed = Director::Update(frame, now);
 			}
-			const auto  pose = waitingView ? waitingView :
+			auto        pose = waitingView ? waitingView :
 			                   pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
 			                   directed ? directed :
 			                   nearSeated || s.shotStyle == 1 ?
@@ -1513,6 +1594,34 @@ namespace CCC
 			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide, s.vendorHeight) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
+			// Obstacles on the plain shot (seated people, merchants, or nothing in the preset
+			// fits): checked when the camera turns to the other person. A wall behind the
+			// camera pulls it in; anything closer to the person in shot (a ladder in front of
+			// their face) swaps to the eye-line shot from just in front of the other one's eyes.
+			const bool plainPath = pose && !waitingView && !pov && !directed;
+			if (plainPath && s.obstacleCheck) {
+				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
+				const bool  plainOverShoulder = !(nearSeated || s.shotStyle == 1 || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer));
+				const int   key = static_cast<int>(subject);
+				if (key != g_state.plainCheckSubject) {
+					g_state.plainCheckSubject = key;
+					const auto c = TestShot(subjectHead, pose->position, nearHeadRef, plainOverShoulder);
+					g_state.plainLimit = c.usable ? c.limit : std::numeric_limits<float>::infinity();
+					g_state.plainEyeLine = !c.usable;
+					if (c.blockedAt >= 0.0f) {
+						REX::INFO("Obstacles: plain shot of {} blocked {:.1f} m from them{}; {}", subject == Subject::kNpc ? "them" : "you", c.blockedAt,
+							c.pastNear ? " (beyond the near person)" : "",
+							c.usable ? std::format("camera pulled in to {:.1f} m", c.limit) : std::string{ "shooting from the other person's eyes instead" });
+					}
+				}
+				if (g_state.plainEyeLine) {
+					pose = Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f);
+				} else {
+					Camera::PullIn(*pose, subjectHead, g_state.plainLimit);
+				}
+			} else if (!plainPath) {
+				g_state.plainCheckSubject = -1;
+			}
 			if (s.debugLog) {
 				// Head-motion measurement: one line per shot (the shot name changes, or the
 				// camera turns to the other person).
@@ -1587,15 +1696,17 @@ namespace CCC
 				LogFailure("could not apply pose");
 				return;
 			}
-			// Obstacle check, logging only (0.5.2): once per shot.
+			// Obstacle check of the shot on screen, for the log: once per shot.
 			if (s.debugLog && !waitingView && !pov) {
-				const char* shotName = directed ? Director::Current() : "plain shot";
+				const char* shotName = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain shot";
 				const int   who = static_cast<int>(subject);
 				if (shotName != g_state.castShot || who != g_state.castSubject) {
 					g_state.castShot = shotName;
 					g_state.castSubject = who;
 					const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
-					CheckShotForObstacles(shotName, subjectHead, pose->position, subject == Subject::kNpc ? "them" : "you");
+					const auto  type = directed ? Shots::FromKey(shotName) : std::optional<Shots::ShotType>{};
+					const bool  overShoulder = type ? Shots::OverShoulder(*type) : !g_state.plainEyeLine && !nearSeated && s.shotStyle != 1;
+					LogShotObstacles(shotName, subjectHead, pose->position, nearHeadRef, overShoulder, subject == Subject::kNpc ? "them" : "you");
 				}
 			}
 			g_state.lastPose = *pose;
@@ -2558,111 +2669,6 @@ namespace CCC
 			}
 		}
 
-		// ---- Obstacle detection, step 1 (0.5.1 diagnostic) ---------------------------------
-		// The game already checks for obstacles around its cameras (dialogue camera collision,
-		// third-person camera collision). Find that code: the settings it reads live at fixed
-		// places in the game, so search the game's code for instructions that read them and
-		// write the code around each to the log, to be disassembled. Read-only, on a background
-		// thread, once per game session.
-		struct RipHit
-		{
-			std::uintptr_t at;      // address of the 32-bit displacement
-			int            target;  // which setting
-			int            extra;   // immediate bytes after the displacement
-		};
-
-		std::size_t ScanRipRefs(std::uintptr_t a_begin, std::uintptr_t a_end, const std::uintptr_t* a_lo, const std::uintptr_t* a_hi, int a_count, RipHit* a_out,
-			std::size_t a_max)
-		{
-			std::size_t n = 0;
-			__try {
-				for (auto p = a_begin; p + 4 <= a_end && n < a_max; ++p) {
-					const auto disp = *reinterpret_cast<const std::int32_t*>(p);
-					for (const int extra : { 0, 1, 4 }) {
-						const auto target = static_cast<std::uintptr_t>(static_cast<std::intptr_t>(p + 4 + extra) + disp);
-						for (int t = 0; t < a_count; ++t) {
-							if (target >= a_lo[t] && target < a_hi[t]) {
-								a_out[n++] = { p, t, extra };
-								break;
-							}
-						}
-					}
-				}
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-			return n;
-		}
-
-		void SearchCameraCollisionCode()
-		{
-			const auto  base = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
-			const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
-			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
-			const auto* section = IMAGE_FIRST_SECTION(nt);
-			std::uintptr_t textBegin = 0, textEnd = 0;
-			const std::uintptr_t imageEnd = base + nt->OptionalHeader.SizeOfImage;
-			for (WORD i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-				if ((section[i].Characteristics & IMAGE_SCN_MEM_EXECUTE) && section[i].Misc.VirtualSize > textEnd - textBegin) {
-					textBegin = base + section[i].VirtualAddress;
-					textEnd = textBegin + section[i].Misc.VirtualSize;
-				}
-			}
-			static const std::array<const char*, 8> keys{ "fDialogueCameraCollisionRadius:Dialogue", "fDialogueCameraCollisionCheckDist:Interface",
-				"fDialogueCameraCollisionMinPercentage:Dialogue", "fCameraCollisionRigSphereRadius:Camera", "fCameraCollisionRigCastLength:Camera",
-				"b3rdUseSimplifiedCameraCollision:Camera", "fWorkshopIsoCamSphereCastRadius:Camera", "fOverShoulderOffsetCollisionScalar:Camera" };
-			std::array<std::uintptr_t, 8> lo{}, hi{};
-			int                           count = 0;
-			std::array<const char*, 8>    names{};
-			for (const char* key : keys) {
-				auto*      setting = FindAnySetting(key);
-				const auto at = reinterpret_cast<std::uintptr_t>(setting);
-				if (!setting) {
-					REX::INFO("Obstacle search: setting {} not found", key);
-					continue;
-				}
-				if (at < base || at >= imageEnd) {
-					REX::INFO("Obstacle search: setting {} is outside the game's image ({:#x}); code can't refer to it directly", key, at);
-					continue;
-				}
-				REX::INFO("Obstacle search: setting {} at Starfield.exe+{:X}", key, at - base);
-				lo[count] = at;
-				hi[count] = at + 0x20;
-				names[count] = key;
-				++count;
-			}
-			if (count == 0 || !textBegin) {
-				return;
-			}
-			std::thread([=]() {
-				std::vector<RipHit> hits(400);
-				const auto          n = ScanRipRefs(textBegin, textEnd, lo.data(), hi.data(), count, hits.data(), hits.size());
-				REX::INFO("Obstacle search: {} code references found in Starfield.exe+{:X}..+{:X}", n, textBegin - base, textEnd - base);
-				std::array<int, 8> perSetting{};
-				for (std::size_t i = 0; i < n; ++i) {
-					const auto& h = hits[i];
-					REX::INFO("Obstacle search: {} read at Starfield.exe+{:X} (displacement, {} immediate bytes after)", names[h.target], h.at - base, h.extra);
-					if (perSetting[h.target]++ >= 4) {
-						continue;
-					}
-					// The code around it: 0x180 bytes before, 0x180 after, 32 bytes a line.
-					const auto from = (std::max)(textBegin, h.at - 0x180);
-					const auto to = (std::min)(textEnd, h.at + 0x180);
-					for (auto p = from; p < to; p += 32) {
-						std::array<std::uint8_t, 32> bytes{};
-						if (!SafeCopy(bytes.data(), reinterpret_cast<const void*>(p), bytes.size())) {
-							break;
-						}
-						std::string hex;
-						for (const auto b : bytes) {
-							hex += std::format("{:02X}", b);
-						}
-						REX::INFO("Code Starfield.exe+{:X}: {}", p - base, hex);
-					}
-				}
-				REX::INFO("Obstacle search: done");
-			}).detach();
-		}
-
 		void Watchdog()
 		{
 			if (::GetCurrentThreadId() != g_mainThreadId) {
@@ -2750,15 +2756,6 @@ namespace CCC
 							lastLogged = wanted;
 							REX::INFO("Conversation field of view: fDialogueCameraFailsafeFPFOV set to {:.1f} (game's own value {:.1f})", wanted, original);
 						}
-					}
-				}
-
-				// Obstacle detection research (0.5.1): find the game's own camera-collision code.
-				{
-					static bool searched = false;
-					if (!searched && !g_state.active && Settings::Get().debugLog && RE::INISettingCollection::GetSingleton()) {
-						searched = true;
-						SearchCameraCollisionCode();
 					}
 				}
 
@@ -2952,7 +2949,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.5.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.5.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
