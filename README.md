@@ -14,6 +14,8 @@ this mod draws on.
 
 ## Status: alpha (0.4.x)
 
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+
 Working:
 
 - **CCC's shot library and director:** all 39 camera setups with CCC's framing, three
