@@ -4,10 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## Unreleased
+## 0.5.2 - 2026-11-13
 
 ### Changed
 - Focus style Wide (deeper sharp zone, softer background blur) is the default.
+
+### Diagnostic
+- Obstacle detection, step 2: once per shot, the game's own dialogue-camera sphere cast (found
+  in 0.5.1) checks the line from the person in shot to the camera, and the log says whether
+  it's clear or blocked, how far along and by what. Logging only; the camera isn't changed.
 
 ## 0.5.1 - 2026-11-13
 

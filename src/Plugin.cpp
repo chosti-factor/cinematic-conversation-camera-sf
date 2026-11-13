@@ -65,6 +65,8 @@ namespace CCC
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
 			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
+			const char*                           castShot{ nullptr };       // obstacle check: last shot checked
+			int                                   castSubject{ -1 };
 			int                                   busySwitches{ 0 };
 			float                                 busySeconds{ 0.0f };
 			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
@@ -963,6 +965,70 @@ namespace CCC
 			g_state.plainShots = !reason.empty();
 		}
 
+		// ---- Obstacle detection, step 2 (0.5.2: logging only) -------------------------------
+		// The game's dialogue camera checks for obstacles with a sphere cast (found in 0.5.1):
+		//   Starfield.exe+1E8DC20(query, &from, &to, radius, &outHit, nullptr, 0.0f) -> bool hit
+		// where query = [dialogue camera state + 0x48], and the hit's fraction along the line
+		// is then at [query + 0x2B4]. The game casts from the speaker to its camera; this casts
+		// from the person in shot to our camera, once per shot, and only logs the result.
+		constexpr std::uintptr_t kSphereCastRva = 0x1E8DC20;
+		bool                     g_castBroken = false;
+
+		bool SphereCastUnsafe(void* a_query, const RE::NiPoint3* a_from, const RE::NiPoint3* a_to, float a_radius, bool& a_hit, float& a_fraction, void*& a_what)
+		{
+			__try {
+				using func_t = bool (*)(void*, const RE::NiPoint3*, const RE::NiPoint3*, float, void**, void*, float);
+				const auto fn = reinterpret_cast<func_t>(reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr)) + kSphereCastRva);
+				void*      out = nullptr;
+				a_hit = fn(a_query, a_from, a_to, a_radius, &out, nullptr, 0.0f);
+				a_fraction = *reinterpret_cast<const float*>(reinterpret_cast<std::uintptr_t>(a_query) + 0x2B4);
+				a_what = out;
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
+
+		void CheckShotForObstacles(const char* a_shot, const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const char* a_who)
+		{
+			if (g_castBroken || !g_dialogueStateObject) {
+				return;
+			}
+			std::uintptr_t query = 0;
+			if (!SafeCopy(&query, static_cast<const std::uint8_t*>(g_dialogueStateObject) + 0x48, sizeof(query)) || query < 0x10000 || query > 0x7FFFFFFFFFFF) {
+				static bool warned = false;
+				if (!warned) {
+					warned = true;
+					REX::WARN("Obstacle check: the dialogue camera's collision query isn't there ({:#x}); not checking", query);
+				}
+				return;
+			}
+			bool  hit = false;
+			float fraction = 0.0f;
+			void* what = nullptr;
+			if (!SphereCastUnsafe(reinterpret_cast<void*>(query), &a_subjectHead, &a_camera, 0.1f, hit, fraction, what)) {
+				g_castBroken = true;
+				REX::WARN("Obstacle check: the game's sphere cast failed; obstacle checks are off for this session");
+				return;
+			}
+			const float dx = a_camera.x - a_subjectHead.x, dy = a_camera.y - a_subjectHead.y, dz = a_camera.z - a_subjectHead.z;
+			const float length = std::sqrt(dx * dx + dy * dy + dz * dz);
+			std::string thing;
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (what && ReadFormInfo(reinterpret_cast<std::uintptr_t>(what), type, id, editorId)) {
+				thing = std::format("; hit {:08X} (form type {:#x}) '{}'", id, type, editorId ? editorId : "");
+			} else if (what) {
+				thing = std::format("; hit object {:p}", what);
+			}
+			if (hit) {
+				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): blocked {:.0f}% of the way from them, {:.1f} m from the camera{}", a_shot, a_who, length,
+					fraction * 100.0f, (1.0f - fraction) * length, thing);
+			} else {
+				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): clear (fraction {:.2f}){}", a_shot, a_who, length, fraction, thing);
+			}
+		}
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
@@ -1520,6 +1586,17 @@ namespace CCC
 			if (!applied) {
 				LogFailure("could not apply pose");
 				return;
+			}
+			// Obstacle check, logging only (0.5.2): once per shot.
+			if (s.debugLog && !waitingView && !pov) {
+				const char* shotName = directed ? Director::Current() : "plain shot";
+				const int   who = static_cast<int>(subject);
+				if (shotName != g_state.castShot || who != g_state.castSubject) {
+					g_state.castShot = shotName;
+					g_state.castSubject = who;
+					const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
+					CheckShotForObstacles(shotName, subjectHead, pose->position, subject == Subject::kNpc ? "them" : "you");
+				}
 			}
 			g_state.lastPose = *pose;
 			g_state.lastAppliedFrame = g_state.framesThisConversation;
@@ -2875,7 +2952,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.5.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.5.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
