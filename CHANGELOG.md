@@ -4,6 +4,12 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## Unreleased
+
+### Changed
+- The on-screen emotion messages (`bShowEmotions`) moved to the INI's `[Debug]` section
+  (`[General]` is still read for older INIs).
+
 ## 0.4.15 - 2026-11-12
 
 ### Changed

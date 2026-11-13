@@ -130,7 +130,9 @@ namespace CCC
 		{
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
+			// [Debug] since 0.4.16; [General] still read for INIs from 0.4.14-0.4.15.
 			a_s.showEmotions = ReadInt(a_path, L"General", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
+			a_s.showEmotions = ReadInt(a_path, L"Debug", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
