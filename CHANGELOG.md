@@ -4,11 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## Unreleased
+## 0.4.16 - 2026-11-12
+
+### Fixed
+- `sTestModifier` never took effect: reading the `_user.ini` afterwards switched it off.
+- Long text settings were cut at 128 characters, so the end of `sCloseUpEmotions`
+  (Serious, Confused) was ignored.
 
 ### Changed
 - The on-screen emotion messages (`bShowEmotions`) moved to the INI's `[Debug]` section
   (`[General]` is still read for older INIs).
+
+### Diagnostic
+- Each conversation start logs the test settings in effect.
 
 ## 0.4.15 - 2026-11-12
 

@@ -374,6 +374,8 @@ namespace CCC::Director
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
+		REX::INFO("Test settings in effect: iBlurExperiment={}, sTestModifier={:08X} (mode {}), fNoBlurBeyond={:.1f}, bEmotionCloseUps={}, iExtremeCloseUpChance={}, sCloseUpEmotions={}",
+			s.blurExperiment, s.testModifier, s.testModifierMode, s.noBlurBeyond, s.emotionCloseUps ? 1 : 0, s.extremeCloseUpChance, s.closeUpEmotions);
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
