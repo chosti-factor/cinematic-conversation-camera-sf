@@ -2567,6 +2567,39 @@ namespace CCC
 			return std::string{ name };
 		}
 
+		std::string                           g_emotionMessage;
+		int                                   g_emotionCount = 0;
+		bool                                  g_emotionWaiting = false;
+		std::chrono::steady_clock::time_point g_emotionLineAt{};
+		std::chrono::steady_clock::time_point g_emotionDeadline{};
+
+		void ShowHudMessage(const std::string& a_text)
+		{
+			if (auto* source = RE::ShowHUDMessageEvent::GetEventSource()) {
+				RE::ShowHUDMessageEvent event{ RE::BSFixedString{ a_text.c_str() }, RE::BSFixedString{ "" }, false, false };
+				source->Notify(event);
+			}
+		}
+
+		// Called every main-thread tick: posts a close-up emotion's message once the camera
+		// has cut (or not) for it.
+		void PostEmotionMessage(std::chrono::steady_clock::time_point a_now)
+		{
+			if (!g_emotionWaiting) {
+				return;
+			}
+			std::chrono::steady_clock::time_point cutAt{};
+			const int                             kind = Director::LastEmotionCut(cutAt);
+			// The camera may decide a frame before or after this line was noticed here.
+			if (kind != 0 && cutAt >= g_emotionLineAt - 300ms) {
+				g_emotionWaiting = false;
+				ShowHudMessage(std::format("{} - {} (#{})", g_emotionMessage, kind == 2 ? "extreme close-up" : "close-up", g_emotionCount));
+			} else if (a_now >= g_emotionDeadline) {
+				g_emotionWaiting = false;
+				ShowHudMessage(std::format("{} - no cut (#{})", g_emotionMessage, g_emotionCount));
+			}
+		}
+
 		void LogLineRecord(RE::Actor* a_speaker)
 		{
 			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
@@ -2576,16 +2609,20 @@ namespace CCC
 			const auto  emotion = LineEmotion(a_speaker);
 			const bool  closeUp = Settings::Get().emotionCloseUps && IsCloseUpEmotion(emotion);
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
-			// On-screen message (testing aid), through the game's own HUD message event.
+			// On-screen message (testing aid), through the game's own HUD message event. For a
+			// close-up emotion, wait for the camera's decision (posted by PostEmotionMessage).
 			if (Settings::Get().showEmotions) {
 				static std::unordered_map<std::string, int> seen;
 				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;
 				const int   count = ++seen[key];
 				const char* name = a_speaker->GetDisplayFullName();
-				const auto  text = std::format("{}: {}{} (#{})", name ? name : "Speaker", key, closeUp ? " - close-up" : "", count);
-				if (auto* source = RE::ShowHUDMessageEvent::GetEventSource()) {
-					RE::ShowHUDMessageEvent event{ RE::BSFixedString{ text.c_str() }, RE::BSFixedString{ "" }, false, false };
-					source->Notify(event);
+				g_emotionMessage = std::format("{}: {}", name ? name : "Speaker", key);
+				g_emotionCount = count;
+				g_emotionWaiting = closeUp;
+				g_emotionLineAt = std::chrono::steady_clock::now();
+				g_emotionDeadline = g_emotionLineAt + 350ms;
+				if (!closeUp) {
+					ShowHudMessage(std::format("{} (#{})", g_emotionMessage, g_emotionCount));
 				}
 			}
 		}
@@ -2857,6 +2894,7 @@ namespace CCC
 					if (talking && !wasTalking) {
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
 					}
+					PostEmotionMessage(now);
 					wasTalking = talking;
 				}
 

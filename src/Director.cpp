@@ -72,6 +72,15 @@ namespace CCC::Director
 			bool                    wasTalking{ false };
 		} gp;
 
+		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
+		std::atomic<int>          g_emotionCutKind{ 0 };
+
+		void NoteEmotionCut(ShotType a_type)
+		{
+			g_emotionCutKind.store(a_type == ShotType::kExtremeClose ? 2 : 1, std::memory_order_relaxed);
+			g_emotionCutAt.store(clock::now().time_since_epoch().count(), std::memory_order_release);
+		}
+
 		// CCC's Close preset: a slower, stronger push-in, so the emotion close-up reads as a
 		// deliberate move rather than the regular close-up of the rotation.
 		Setup IntenseSetup(ShotType a_type)
@@ -390,6 +399,7 @@ namespace CCC::Director
 			if (const auto shot = IntenseShot(a_frame)) {
 				Cut(*shot, a_frame, a_now, "turn, intense line", true);
 				g.intenseSetup = IntenseSetup(*shot);
+				NoteEmotionCut(*shot);
 				g.intensePending = false;
 			}
 		}
@@ -414,6 +424,7 @@ namespace CCC::Director
 			if (const auto shot = IntenseShot(a_frame)) {
 				Cut(*shot, a_frame, a_now, "intense line", true);
 				g.intenseSetup = IntenseSetup(*shot);
+				NoteEmotionCut(*shot);
 			}
 			g.intensePending = false;
 		} else if (g.intensePending && alreadyClose) {
@@ -469,6 +480,7 @@ namespace CCC::Director
 						gp.cutAt = a_now;
 						gp.heldAngle = solved.angle;
 						gp.heldLookSign = solved.lookSign;
+						NoteEmotionCut(*shot);
 						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees)", Shots::Key(*shot), solved.distance, solved.angle);
 					}
 				}
@@ -484,6 +496,12 @@ namespace CCC::Director
 		in.heldLookSign = gp.heldLookSign;
 		const auto solved = Shots::Solve(*gp.shot, in);
 		return solved.ok ? std::optional<Camera::Pose>{ solved.pose } : std::nullopt;
+	}
+
+	int LastEmotionCut(clock::time_point& a_when)
+	{
+		a_when = clock::time_point{ clock::duration{ g_emotionCutAt.load(std::memory_order_acquire) } };
+		return g_emotionCutKind.load(std::memory_order_relaxed);
 	}
 
 	const char* Current()
