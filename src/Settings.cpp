@@ -163,6 +163,15 @@ namespace CCC
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
 			a_s.blurExperiment = std::clamp(ReadInt(a_path, L"Camera", L"iBlurExperiment", a_s.blurExperiment), 0, 2);
 			a_s.noBlurBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fNoBlurBeyond", a_s.noBlurBeyond), 0.0f, 20.0f);
+			{
+				const auto text = ReadString(a_path, L"Camera", L"sTestModifier", "");
+				try {
+					a_s.testModifier = text.empty() ? 0u : static_cast<std::uint32_t>(std::stoul(text, nullptr, 16));
+				} catch (...) {
+					a_s.testModifier = 0;
+				}
+			}
+			a_s.testModifierMode = std::clamp(ReadInt(a_path, L"Camera", L"iTestModifierMode", a_s.testModifierMode), 1, 2);
 
 			a_s.distanceBehind = ReadFloat(a_path, L"PlainCamera", L"fDistanceBehind", a_s.distanceBehind);
 			a_s.sideOffset = ReadFloat(a_path, L"PlainCamera", L"fSideOffset", a_s.sideOffset);
