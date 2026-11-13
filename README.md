@@ -60,16 +60,19 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Emotion close-ups, tuned from testing (which expressions push in, and how often).
-- Wall and obstacle detection, which also unlocks the longer and room shots (now that
-  focus works at any distance).
+- Wall and obstacle detection: shots that would have a wall, pillar or object in the way are
+  skipped, which also allows longer outdoor shots and CCC's room shots (Wide, Master,
+  Distant). In progress: 0.5.2 checks every shot with the game's own camera collision test
+  and logs the result.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.
-- Polish for unusual setups: talking to a seated person from the side (about 90 degrees)
-  leaves you out of the picture and the shots look poor; from in front, up to about 45
-  degrees, they work.
 - Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
   conversations, NPCs stepping away from work to talk.
+- Polish: emotion close-ups tuned from testing (which expressions push in, and how often;
+  see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
+  (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
+  scenes recognised by their quest rather than the scene's name.
+- Public beta.
 
 ## Requirements
 
