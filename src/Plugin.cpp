@@ -844,7 +844,23 @@ namespace CCC
 				return std::format("unrecognised value {:p} (not counted)", static_cast<void*>(scene));
 			}
 			a_inScene = true;
-			return std::format("in scene {:08X} '{}'", id, editorId ? editorId : "");
+			// Diagnostic (0.4.14): the quest this scene belongs to, and its type, to recognise
+			// story scenes by their quest rather than by the scene's name.
+			std::string quest;
+			std::array<std::uintptr_t, 0x40> words{};
+			if (SafeCopy(words.data(), scene, sizeof(words))) {
+				for (std::size_t k = 0; k < words.size() && quest.empty(); ++k) {
+					std::uint32_t qType = 0, qId = 0;
+					const char*   qEditorId = nullptr;
+					if (ReadFormInfo(words[k], qType, qId, qEditorId) && qType == std::to_underlying(RE::FormType::kQUST)) {
+						std::array<std::uint8_t, 8> data{};
+						SafeCopy(data.data(), reinterpret_cast<const void*>(words[k] + 0x108), data.size());
+						quest = std::format("; quest {:08X} '{}' at scene +{:X}, quest data {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}", qId, qEditorId ? qEditorId : "", k * 8,
+							data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7]);
+					}
+				}
+			}
+			return std::format("in scene {:08X} '{}'{}", id, editorId ? editorId : "", quest.empty() ? "; quest not found" : quest);
 		}
 
 		// A merchant, judged by the speaker's factions (the game's vendor factions are named
@@ -1070,7 +1086,9 @@ namespace CCC
 				// Only quest scenes the player takes part in. Everyday background scenes (people
 				// chatting, a receptionist's greeting) are named "Dialogue..." in the game's data and
 				// keep this mod's camera, as do scenes the speaker is in without you.
-				const bool ambient = playerScene.find("'Dialogue") != std::string::npos;
+				// Crew recruits (CREW_Generic_Recruit and the like) are everyday chats too.
+				const auto sceneName = playerScene.substr(0, playerScene.find("; quest"));  // the scene's own name, not its quest's
+				const bool ambient = sceneName.find("'Dialogue") != std::string::npos || sceneName.find("'CREW_") != std::string::npos;
 				if (!g_state.smallSpeaker && s.gameCameraInScenes && playerInScene && !ambient) {
 					g_state.handedBack = true;
 					g_state.needsBodyRepair = false;
@@ -2282,10 +2300,12 @@ namespace CCC
 			static bool listedAll = false;
 			int         listed = 0;
 			for (std::size_t off = 0x28; off < 0x3000; off += 8) {
+				// BSTArray: 32-bit size, 32-bit capacity, then the data pointer (0.4.13 read the
+				// pointer first and found no lists at all).
 				struct Header
 				{
-					std::uintptr_t data;
 					std::uint32_t  a, b;
+					std::uintptr_t data;
 				} h{};
 				if (!SafeCopy(&h, reinterpret_cast<const void*>(base + off), sizeof(h)) || h.data < 0x10000 || h.data > 0x7FFFFFFFFFFF) {
 					continue;
@@ -2385,6 +2405,55 @@ namespace CCC
 			}
 			REX::INFO("Image spaces: {} in the game, {} with depth-of-field blur", count, withBlur);
 			ListModifiers(data);
+		}
+
+		// ---- Image-space modifier test (0.4.14) -----------------------------------------
+		// The game's own apply/remove for image-space modifiers: the Papyrus natives behind
+		// ImageSpaceModifier.Apply() and .Remove() (Address Library IDs 171562 and 105038, from
+		// Cassiopeia Papyrus Extender by LarannKiar, which calls them the same way). Resolved
+		// only when the test is switched on, so a missing ID can't affect anyone else.
+		RE::TESForm* g_testModifierForm = nullptr;
+		bool         g_testModifierOn = false;
+
+		void ApplyModifier(RE::TESForm* a_modifier, float a_strength)
+		{
+			static REL::Relocation<std::uintptr_t> apply{ REL::ID(171562) };
+			reinterpret_cast<void (*)(std::uintptr_t, std::uintptr_t, RE::TESForm*, float)>(apply.address())(0, 0, a_modifier, a_strength);
+		}
+
+		void RemoveModifier(RE::TESForm* a_modifier)
+		{
+			static REL::Relocation<std::uintptr_t> remove{ REL::ID(105038) };
+			reinterpret_cast<void (*)(RE::TESForm*)>(remove.address())(a_modifier);
+		}
+
+		void SetTestModifier(bool a_on, const char* a_why)
+		{
+			if (a_on == g_testModifierOn) {
+				return;
+			}
+			const auto wanted = Settings::Get().testModifier;
+			if (a_on) {
+				auto* form = wanted ? RE::TESForm::LookupByID(wanted) : nullptr;
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (!form || !ReadFormInfo(reinterpret_cast<std::uintptr_t>(form), type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD)) {
+					static std::uint32_t warned = 0;
+					if (warned != wanted) {
+						warned = wanted;
+						REX::WARN("Modifier test: {:08X} is not an image-space modifier; nothing applied", wanted);
+					}
+					return;
+				}
+				ApplyModifier(form, 1.0f);
+				g_testModifierForm = form;
+				REX::INFO("Modifier test: applied {:08X} '{}' ({})", id, editorId ? editorId : "", a_why);
+			} else if (g_testModifierForm) {
+				RemoveModifier(g_testModifierForm);
+				REX::INFO("Modifier test: removed {:08X} ({})", g_testModifierForm->formID, a_why);
+				g_testModifierForm = nullptr;
+			}
+			g_testModifierOn = a_on;
 		}
 
 		void SetConversationBlur(bool a_off, const char* a_why)
@@ -2744,6 +2813,25 @@ namespace CCC
 						SetConversationBlur(false, "conversation over");
 					}
 				}
+				// Image-space modifier test (0.4.14).
+				{
+					const auto& st = Settings::Get();
+					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
+					if (live && st.testModifier != 0) {
+						const float d = g_shotDistance.load(std::memory_order_relaxed);
+						bool        on = g_testModifierOn;
+						if (st.testModifierMode == 1) {
+							on = true;
+						} else if (d > st.noBlurBeyond + 0.15f) {
+							on = true;
+						} else if (d < st.noBlurBeyond - 0.15f) {
+							on = false;
+						}
+						SetTestModifier(on, st.testModifierMode == 1 ? "whole conversation" : std::format("shot {:.1f} m from the person in shot", d).c_str());
+					} else if (g_testModifierOn) {
+						SetTestModifier(false, "conversation over");
+					}
+				}
 
 				// Data collection and experiments (main thread).
 				{
@@ -2881,7 +2969,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.13 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.14 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

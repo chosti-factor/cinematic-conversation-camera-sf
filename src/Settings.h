@@ -151,6 +151,11 @@ namespace CCC
 		// the camera is further than fNoBlurBeyond metres from the person in shot.
 		std::int32_t blurExperiment{ 2 };
 		float        noBlurBeyond{ 3.5f };
+		// Image-space modifier test (0.4.14): a modifier's form ID (from the log's list) to
+		// apply with the game's own function, as the console's imod and Starvegas do.
+		// 0 = off. Mode 1 = the whole conversation, 2 = only the longer shots (fNoBlurBeyond).
+		std::uint32_t testModifier{ 0 };
+		std::int32_t  testModifierMode{ 1 };
 
 		static Settings& Get();
 		void             Load();
