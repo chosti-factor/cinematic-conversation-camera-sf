@@ -173,6 +173,7 @@ namespace CCC
 				a_s.focusMethod = 1;  // bFocusOnSubject=1 from older INIs = the 0.4.8 method
 			}
 			a_s.focusMethod = std::clamp(ReadInt(a_path, L"Camera", L"iFocusMethod", a_s.focusMethod), 0, 6);
+			a_s.dialogueBlurTest = std::clamp(ReadInt(a_path, L"Camera", L"iDialogueBlurTest", a_s.dialogueBlurTest), 0, 3);
 			a_s.blurExperiment = std::clamp(ReadInt(a_path, L"Camera", L"iBlurExperiment", a_s.blurExperiment), 0, 2);
 			a_s.noBlurBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fNoBlurBeyond", a_s.noBlurBeyond), 0.0f, 20.0f);
 			{
