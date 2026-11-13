@@ -25,6 +25,10 @@ namespace CCC::Director
 	// its plain over-the-shoulder shot).
 	[[nodiscard]] std::optional<Camera::Pose> Update(const Frame& a_frame, std::chrono::steady_clock::time_point a_now);
 
+	// With the plain shots (seated people, merchants): the emotion close-up for an intense
+	// line, held until the line ends; nullopt = keep the plain shot.
+	[[nodiscard]] std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, std::chrono::steady_clock::time_point a_now);
+
 	// The setup on screen, for the log.
 	[[nodiscard]] const char* Current();
 }

@@ -139,7 +139,8 @@ namespace CCC
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
 		bool        emotionCloseUps{ true };
-		std::string closeUpEmotions{ "Angry,Irritated,Annoyed,Surprised,Fearful,Scared,Disgusted,Somber,Sad,Nervous,Worried,Concerned,Awed,Apologetic" };
+		int         extremeCloseUpChance{ 50 };  // % of emotion close-ups that are extreme close-ups
+		std::string closeUpEmotions{ "Angry,Irritated,Annoyed,Surprised,Fearful,Scared,Disgusted,Somber,Sad,Nervous,Worried,Concerned,Awed,Apologetic,Disgust,Serious,Confused" };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
 		bool        plainShotsSeated{ true };

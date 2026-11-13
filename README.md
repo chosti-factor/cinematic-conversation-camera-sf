@@ -55,7 +55,8 @@ Planned, roughly in order:
   tests switching the blur off on the longer shots only (`iBlurExperiment`).
 - Emotion close-ups, tuned: 0.4.14 pushes in on lines with heightened or emotional
   expressions, such as Irritated, Surprised, Somber, Nervous or Awed
-  (`sCloseUpEmotions`); the list will be narrowed from testing.
+  (`sCloseUpEmotions`), seated people and merchants included; the list will be
+  narrowed from testing.
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.

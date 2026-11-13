@@ -1352,21 +1352,35 @@ namespace CCC
 			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
+			// The expression tag of the line the speaker is starting (read once per line), for
+			// the emotion close-ups.
+			{
+				const bool talkingNow = speaker->IsTalking();
+				if (talkingNow && !g_state.speakerWasTalking) {
+					g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
+				}
+				g_state.speakerWasTalking = talkingNow;
+			}
 			std::optional<Camera::Pose> directed;
+			if (s.director && !waitingView && !pov && g_state.plainShots) {
+				// Plain shots (seated people, merchants): only the emotion close-ups, from in
+				// front of them, so the chair or the counter behind them stays out of the way.
+				Director::Frame frame;
+				frame.npcTurn = subject == Subject::kNpc;
+				frame.npcTalking = speaker->IsTalking();
+				frame.playerTalking = player->IsTalking();
+				frame.nearSeated = nearSeated;
+				frame.intenseLine = g_state.lineIntense;
+				frame.npcHead = *npcHead;
+				frame.playerHead = *playerHead;
+				directed = Director::UpdatePlain(frame, now);
+			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
 				Director::Frame frame;
 				frame.npcTurn = subject == Subject::kNpc;
 				frame.npcTalking = speaker->IsTalking();
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
-				// The expression tag of the line the speaker is starting (read once per line).
-				{
-					const bool talkingNow = speaker->IsTalking();
-					if (talkingNow && !g_state.speakerWasTalking) {
-						g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
-					}
-					g_state.speakerWasTalking = talkingNow;
-				}
 				frame.intenseLine = g_state.lineIntense;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
@@ -3025,7 +3039,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.14 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.15 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
