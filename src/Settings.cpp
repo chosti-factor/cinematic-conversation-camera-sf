@@ -71,7 +71,7 @@ namespace CCC
 
 		std::string ReadString(const wchar_t* a_path, const wchar_t* a_section, const wchar_t* a_key, const std::string& a_default)
 		{
-			wchar_t buffer[128]{};
+			wchar_t buffer[2048]{};  // 128 cut long lists such as sCloseUpEmotions short (0.4.15)
 			::GetPrivateProfileStringW(a_section, a_key, L"", buffer, static_cast<DWORD>(std::size(buffer)), a_path);
 			std::string out;
 			for (const wchar_t* c = buffer; *c; ++c) {
@@ -170,11 +170,15 @@ namespace CCC
 			a_s.blurExperiment = std::clamp(ReadInt(a_path, L"Camera", L"iBlurExperiment", a_s.blurExperiment), 0, 2);
 			a_s.noBlurBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fNoBlurBeyond", a_s.noBlurBeyond), 0.0f, 20.0f);
 			{
+				// A key missing from this file keeps the value read so far (0.4.14-0.4.15 reset it,
+				// so the _user.ini pass always switched the test off). "0" or "off" = off.
 				const auto text = ReadString(a_path, L"Camera", L"sTestModifier", "");
-				try {
-					a_s.testModifier = text.empty() ? 0u : static_cast<std::uint32_t>(std::stoul(text, nullptr, 16));
-				} catch (...) {
-					a_s.testModifier = 0;
+				if (!text.empty()) {
+					try {
+						a_s.testModifier = (text == "off" || text == "OFF") ? 0u : static_cast<std::uint32_t>(std::stoul(text, nullptr, 16));
+					} catch (...) {
+						a_s.testModifier = 0;
+					}
 				}
 			}
 			a_s.testModifierMode = std::clamp(ReadInt(a_path, L"Camera", L"iTestModifierMode", a_s.testModifierMode), 1, 2);
