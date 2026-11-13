@@ -1,0 +1,253 @@
+# Changelog
+
+All notable changes to Cinematic Conversation Camera SF, newest first. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
+test build; "diagnostic" items only add information to the log for testing.
+
+## 0.4.15 - 2026-11-12
+
+### Changed
+- Emotion close-ups are more distinct: half are extreme close-ups (`iExtremeCloseUpChance`),
+  and the regular one pushes in slowly and strongly, as in CCC's Close preset.
+- Seated people and merchants get emotion close-ups too, from in front of them, then go back
+  to the plain shot when the line ends.
+- Disgust, Serious and Confused added to the close-up emotions.
+- The on-screen emotion message says what the camera did: close-up, extreme close-up or no cut.
+
+## 0.4.14 - 2026-11-12
+
+### Added
+- Emotion close-ups: lines tagged with heightened or emotional expressions (Irritated,
+  Surprised, Somber, Nervous, Awed and others, set in `sCloseUpEmotions`) push in to a
+  close-up of the speaker, after CCC's close-ups on intense lines.
+- On-screen message with each spoken line's expression tag (`bShowEmotions`), to help choose
+  the close-up emotions.
+- Test switch to apply one of the game's image-space modifiers during conversations
+  (`sTestModifier`), the way the console's `imod` does.
+
+### Changed
+- Crew recruits get this mod's camera instead of being treated as a quest scene.
+
+### Fixed
+- The search for the game's image spaces read the list header in the wrong order and found
+  nothing.
+
+### Diagnostic
+- The scene check logs the quest each scene belongs to.
+
+## 0.4.13 - 2026-11-12
+
+### Fixed
+- Merchants no longer fade in when the camera comes back to them: on your lines the camera
+  stands in front of and beside them instead of behind them.
+
+### Diagnostic
+- Find the game's image spaces and image-space modifiers by scanning, and list them.
+
+## 0.4.12 - 2026-11-12
+
+### Added
+- Merchants are recognised by the vendor flag on their faction, wherever the shop is, and
+  get the plain over-the-shoulder shot.
+- Blur experiment (`iBlurExperiment`): switch off the game's depth of field on the longer shots.
+
+### Diagnostic
+- Each line's expression tag (Friendly, Irritated...) written to the log.
+
+## 0.4.11 - 2026-11-11
+
+### Changed
+- The focus fix from 0.4.8 is off by default: it shifted angled shots sideways, leaving
+  people at the edge of the frame.
+- Outdoor shots may stand up to 5 m away again.
+- On your lines, the seated shot keeps about 1 m from the seated person, who no longer fades
+  out and back in.
+
+### Fixed
+- When the speaker is in a background scene, the camera is no longer switched to first
+  person and back mid-conversation (one cause of stacked lines).
+
+### Diagnostic
+- Searches for the game's focus distance, the line's response data and faction data.
+
+## 0.4.10 - 2026-11-11
+
+### Added
+- Seated people get the plain over-the-shoulder shot instead of the shot library, whose
+  angles could put the chair in front of them.
+
+### Fixed
+- Over-the-shoulder shots no longer swing in so close to the line between the two of you
+  that the near person's shoulder hides the speaker.
+- The NPC shot from your eyes no longer lingers after a late body rebuild.
+- A likely crash in the test-only line diagnostic (seen with Ularu).
+
+### Changed
+- Outdoor shots limited to 3 m (undone in 0.4.11).
+
+## 0.4.9 - 2026-11-11
+
+### Fixed
+- About one conversation in five had rotated or swinging shots: the camera layout was
+  guessed per conversation and sometimes guessed wrong. It's now fixed.
+
+## 0.4.8 - 2026-11-11
+
+### Added
+- Focus fix: move the game's camera so its depth of field lands on the person in shot
+  (turned off in 0.4.11).
+
+### Changed
+- Everyday background scenes (people chatting, a receptionist's greeting) keep this mod's camera.
+
+## 0.4.7 - 2026-11-11
+
+### Added
+- Quest scenes you take part in keep the game's own camera, decided on the first frame.
+  The idea comes from Player Camera During Dialogue.
+
+### Fixed
+- Merchants were wrongly treated as scenes in 0.4.6.
+
+## 0.4.6 - 2026-11-11
+
+### Added
+- First attempt at handing scripted scenes back to the game's camera (replaced in 0.4.7).
+
+## 0.4.5 - 2026-11-11
+
+### Diagnostic
+- Look for the spoken line's dialogue record; depth-of-field test settings.
+
+## 0.4.4 - 2026-11-11
+
+### Added
+- CREDITS.md and an updated README.
+
+### Diagnostic
+- The game's depth-of-field settings and the line's response data (emotions).
+
+## 0.4.3 - 2026-11-11
+
+### Changed
+- Cutting styles renamed: Cinematic, Odyssey, SpaceWestern, Dogfight, SpaceOpera (old names
+  still accepted).
+
+## 0.4.2 - 2026-11-11
+
+### Added
+- Cutting styles: how often the camera takes a fresh angle when the turn passes, how many
+  lines per angle, and the shortest hold.
+
+## 0.4.1 - 2026-11-11
+
+### Changed
+- Each shot holds its angle and framing; each person keeps their angle across the
+  back-and-forth; the camera may stand further back outdoors.
+
+## 0.4.0 - 2026-11-10
+
+### Added
+- The CCC port begins: all 39 camera setups, the director with its presets (Standard, Close,
+  Room) and cutting rules, camera moves.
+- Small speakers (robots) keep the game's own camera.
+
+### Changed
+- Over-the-shoulder shots swing in until the near person's shoulder is in frame through
+  Starfield's narrow lens. The INI was reorganised.
+
+## 0.3.36 - 2026-11-10
+
+### Changed
+- Conversation start behaviour chosen separately for first and third person; no exit cover
+  by default.
+
+### Fixed
+- Camera stuck behind the head after switching view.
+
+## 0.3.35 - 2026-11-10
+
+### Added
+- Transition test settings: start-frame prediction, exit cover modes, game settings changed
+  from the INI while the game runs.
+
+## 0.3.34 - 2026-11-10
+
+### Changed
+- From first person: open over the shoulder, hold the last shot to the end and cut straight
+  back to your view.
+
+## 0.3.33 - 2026-11-10
+
+### Fixed
+- Exit glitches: the passing third-person frame and player visibility on the way back.
+- Your character is hidden while the body rebuilds.
+
+## 0.3.32 - 2026-11-10
+
+### Fixed
+- The first frames no longer flash a wide view; the opening shot holds until the first cut.
+
+## 0.3.29 to 0.3.31 - 2026-11-10
+
+### Changed
+- Your full body is built with a direct refresh of your character, without switching
+  cameras (idea from Cassiopeia Papyrus Extender); the camera switch is kept as a fallback.
+
+## 0.3.27 to 0.3.28 - 2026-11-10
+
+### Added
+- Field-of-view and body-refresh test settings.
+
+## 0.3.12 to 0.3.26 - 2026-11-09 to 2026-11-10
+
+### Changed
+- Many rounds of first-person body rebuild work: waiting for a quiet moment, retries with
+  back-off, predicting where the game's camera will be, holding the view steady during the
+  rebuild.
+- Your character is revealed on the same frame as the first shot of them.
+
+### Diagnostic
+- Camera modes, field of view, camera positions and the game's settings.
+
+## 0.3.10 to 0.3.11 - 2026-11-09
+
+### Fixed
+- A crash during a second body rebuild (camera changes now only happen on the main thread).
+
+## 0.3.5 to 0.3.9 - 2026-11-09
+
+### Added
+- Seated shot: when the person nearest the camera is sitting, the camera stands in front of
+  them instead of behind the chair.
+- An opening grace period and a shortest time between cuts.
+
+### Changed
+- The body rebuild checks your head is at standing height before showing you, and keeps the
+  camera off you when the full body can't be built.
+
+## 0.3.0 to 0.3.4 - 2026-11-09
+
+### Added
+- From first person, your full body is rebuilt so you look right from outside.
+- The last shot holds while the game's dialogue camera winds down; smooth head following.
+
+### Removed
+- A fast exit that left controls locked.
+
+## 0.2.0 to 0.2.3 - 2026-11-09
+
+### Added
+- Only the picture on screen moves, so NPCs keep facing you; your character is shown.
+
+### Fixed
+- A freeze on the first conversation frame, and the camera's orientation in Starfield.
+
+## 0.1.0 to 0.1.4 - 2026-11-09
+
+### Added
+- First version: the dialogue camera replaced by over-the-shoulder shots that follow whoever
+  is speaking.
+
+### Fixed
+- Distances in metres, and Starfield's camera axis layout.
