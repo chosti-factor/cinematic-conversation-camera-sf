@@ -35,8 +35,8 @@ Working:
   several people taking turns) keep the game's own camera.
 - **Focus on the person in shot:** the game's conversation blur is refocused on every
   shot onto whoever is in it, so they're sharp and the background stays softly blurred,
-  even on longer outdoor shots (`bFocusOnSubject`). Optionally a deeper sharp zone on long
-  shots (`bDeepFocusLongShots`).
+  even on longer outdoor shots (`bFocusOnSubject`). Two focus styles (`sFocusStyle`):
+  Cinematic (more background blur) and Wide (deeper sharp zone, softer background blur).
 - **Emotion close-ups:** lines the game tags with heightened or emotional expressions
   (Irritated, Surprised, Somber, Nervous, Awed and others, `sCloseUpEmotions`) push in to a
   close-up of the speaker, 40% of them extreme close-ups, as CCC does with lines Skyrim's

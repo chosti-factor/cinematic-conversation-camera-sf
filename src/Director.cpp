@@ -374,8 +374,8 @@ namespace CCC::Director
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
-		REX::INFO("Settings in effect: focus on the person in shot {}, deep focus on long shots {} (beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
-			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "on" : "off", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
+		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
+			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
 			s.closeUpEmotions);
 	}
 

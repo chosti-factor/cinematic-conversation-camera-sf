@@ -157,11 +157,13 @@ namespace CCC
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
 		// Focus on the person in shot (0.5.0): the game's conversation blur is focused at the
-		// distance from the camera to whoever is in shot. Optionally a much deeper sharp zone
-		// on shots further than deepFocusBeyond (softer background blur).
-		bool  focusOnSubject{ true };
-		bool  deepFocusLongShots{ false };
-		float deepFocusBeyond{ 3.5f };
+		// distance from the camera to whoever is in shot. Focus style (0.5.1): Cinematic = the
+		// game's own sharp zone (more background blur); Wide = a much deeper sharp zone on shots
+		// further than deepFocusBeyond (softer background blur).
+		bool        focusOnSubject{ true };
+		std::string focusStyle{ "Cinematic" };
+		bool        deepFocusLongShots{ false };  // derived from focusStyle
+		float       deepFocusBeyond{ 3.5f };
 
 		static Settings& Get();
 		void             Load();
