@@ -62,6 +62,20 @@ namespace CCC
 			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
+			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
+			// jitter seen with NPCs posing or working at a crafting table).
+			struct HeadMotion
+			{
+				std::optional<RE::NiPoint3> last;
+				std::uint32_t               frames{ 0 };
+				float                       seconds{ 0.0f };
+				float                       path{ 0.0f };       // metres travelled
+				float                       peakSpeed{ 0.0f };  // m/s
+				float                       gapSum{ 0.0f };     // raw head to smoothed head, summed
+				float                       gapMax{ 0.0f };
+				const char*                 shot{ nullptr };
+				int                         subject{ -1 };
+			} head;
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
 			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
 			bool                                  focusLogged{ false };
@@ -576,9 +590,14 @@ namespace CCC
 			}
 		}
 
+		void LogHeadMotion(const char* a_why);
+
 		void End()
 		{
 			if (g_state.active) {
+				if (Settings::Get().debugLog) {
+					LogHeadMotion("conversation end");
+				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
 				if (g_state.rootBeforeFocus) {
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && camera->QCameraEquals(RE::CameraState::kDialogue)) {
@@ -823,6 +842,18 @@ namespace CCC
 
 		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
 		std::string LineEmotion(RE::Actor* a_speaker);
+
+		void LogHeadMotion(const char* a_why)
+		{
+			auto& m = g_state.head;
+			if (m.frames >= 20 && m.seconds > 0.3f) {
+				auto* speaker = Speaker();
+				const char* name = speaker ? speaker->GetDisplayFullName() : nullptr;
+				REX::INFO("Head motion ({}; {} on {}, {:.1f} s): average {:.2f} m/s, peak {:.2f} m/s; camera follows {:.1f} cm behind on average, {:.1f} cm at most",
+					a_why, name ? name : "speaker", m.shot ? m.shot : "plain shot", m.seconds, m.path / m.seconds, m.peakSpeed, 100.0f * m.gapSum / m.frames, 100.0f * m.gapMax);
+			}
+			m = {};
+		}
 
 		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
 		bool IsCloseUpEmotion(std::string_view a_emotion)
@@ -1199,8 +1230,29 @@ namespace CCC
 					feet.z += g_standingHeadHeight;
 					playerHead = feet;
 				}
+				const auto rawNpcHead = *npcHead;
 				npcHead = follow(g_state.smoothNpcHead, *npcHead);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
+				// Measurement: how much the speaker's head moves, and how far the smoothed head
+				// the camera follows lags behind it.
+				if (s.debugLog) {
+					auto&       m = g_state.head;
+					const float gx = rawNpcHead.x - npcHead->x, gy = rawNpcHead.y - npcHead->y, gz = rawNpcHead.z - npcHead->z;
+					const float gap = std::sqrt(gx * gx + gy * gy + gz * gz);
+					if (m.last && delta > 0.0f && delta < 0.1f) {
+						const float mx = rawNpcHead.x - m.last->x, my = rawNpcHead.y - m.last->y, mz = rawNpcHead.z - m.last->z;
+						const float step = std::sqrt(mx * mx + my * my + mz * mz);
+						if (step < 0.5f) {
+							m.path += step;
+							m.seconds += delta;
+							m.peakSpeed = (std::max)(m.peakSpeed, step / delta);
+						}
+					}
+					m.last = rawNpcHead;
+					++m.frames;
+					m.gapSum += gap;
+					m.gapMax = (std::max)(m.gapMax, gap);
+				}
 			}
 
 			// Data collection: the first frames of every conversation, and one steady frame.
@@ -1394,6 +1446,18 @@ namespace CCC
 			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide, s.vendorHeight) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
+			if (s.debugLog) {
+				// Head-motion measurement: one line per shot (the shot name changes, or the
+				// camera turns to the other person).
+				const char* shotName = directed ? Director::Current() : nullptr;
+				const int   who = static_cast<int>(subject);
+				auto&       m = g_state.head;
+				if (m.frames > 0 && (shotName != m.shot || who != m.subject)) {
+					LogHeadMotion("shot changed");
+				}
+				g_state.head.shot = shotName;
+				g_state.head.subject = who;
+			}
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
 				return;
@@ -2514,6 +2578,8 @@ namespace CCC
 			return out;
 		}
 
+		void WalkForLiveBlur(const char* a_when, std::uintptr_t a_manager);
+
 		void LogLiveBlur(const char* a_when)
 		{
 			static std::uintptr_t manager = 0;
@@ -2539,6 +2605,10 @@ namespace CCC
 				REX::INFO("Live blur: image-space manager {} ({} found:{})", manager ? "found" : "not found", found, where);
 			}
 			if (!manager) {
+				static int walksWithout = 0;
+				if (walksWithout++ < 6) {
+					WalkForLiveBlur(a_when, 0);
+				}
 				return;
 			}
 			// The dialogue blur records, to recognise their live copies.
@@ -2605,6 +2675,88 @@ namespace CCC
 			}
 			const float d = g_shotDistance.load(std::memory_order_relaxed);
 			REX::INFO("Live blur ({}): {} modifier instances found; shot {:.2f} m from the person in shot", a_when, instances, d);
+			static int walks = 0;
+			if (walks < 12) {
+				++walks;
+				WalkForLiveBlur(a_when, manager);
+			}
+		}
+
+		// 0.4.19: the live blur wasn't held directly in the manager. Walk out from the manager,
+		// the dialogue camera, the player camera and the render camera (3 levels, up to 20,000
+		// objects) for live image-space effects of any kind, and for any reference to the
+		// Dialogue_*_DOF records, logging the path to each. Read-only.
+		void WalkForLiveBlur(const char* a_when, std::uintptr_t a_manager)
+		{
+			static const std::array<std::pair<std::uintptr_t, const char*>, 5> vtables{ {
+				{ RE::VTABLE::ImageSpaceModifierInstanceForm[0].address(), "form effect" },
+				{ RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address(), "DOF effect" },
+				{ RE::VTABLE::ImageSpaceModifierInstance[0].address(), "effect" },
+				{ RE::VTABLE::ImageSpaceModifierInstanceCinematic[0].address(), "cinematic effect" },
+				{ RE::VTABLE::ImageSpaceModifierInstanceRB[0].address(), "radial blur effect" },
+			} };
+			const std::array<std::pair<std::uintptr_t, const char*>, 4> dialogue{ {
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A27)), "Dialogue_Close_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A4C)), "Dialogue_Medium_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10E34)), "Dialogue_Long_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x1928B)), "DialogueImod" },
+			} };
+			struct Node
+			{
+				std::uintptr_t address;
+				std::string    path;
+				int            depth;
+			};
+			std::vector<Node> queue;
+			if (a_manager) {
+				queue.push_back({ a_manager, "image-space manager", 0 });
+			}
+			if (g_dialogueStateObject) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(g_dialogueStateObject), "dialogue camera", 0 });
+			}
+			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(camera), "PlayerCamera", 0 });
+			}
+			if (auto* render = Camera::RenderCameraObject()) {
+				queue.push_back({ reinterpret_cast<std::uintptr_t>(render), "render camera", 0 });
+			}
+			std::unordered_set<std::uintptr_t> seen;
+			std::size_t                        visited = 0;
+			int                                hits = 0, dumped = 0;
+			for (std::size_t i = 0; i < queue.size() && visited < 20000 && hits < 40; ++i) {
+				const Node node = queue[i];
+				if (!seen.insert(node.address).second) {
+					continue;
+				}
+				++visited;
+				std::array<std::uint64_t, 64> words{};
+				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(node.address), sizeof(words))) {
+					continue;
+				}
+				for (const auto& [vt, name] : vtables) {
+					if (vt && words[0] == vt) {
+						++hits;
+						REX::INFO("Live blur walk ({}): {} at {}", a_when, name, node.path);
+						if (dumped < 6) {
+							++dumped;
+							DumpObject(std::format("live {} at {}", name, node.path).c_str(), reinterpret_cast<const void*>(node.address), 0x180);
+						}
+					}
+				}
+				for (std::size_t k = 0; k < words.size(); ++k) {
+					const auto w = static_cast<std::uintptr_t>(words[k]);
+					for (const auto& [form, name] : dialogue) {
+						if (form && w == form) {
+							++hits;
+							REX::INFO("Live blur walk ({}): reference to {} at {}+{:X}", a_when, name, node.path, k * 8);
+						}
+					}
+					if (node.depth < 3 && w > 0x10000 && w < 0x7FFFFFFFFFFF && (w & 7) == 0 && queue.size() < 60000) {
+						queue.push_back({ w, std::format("{}+{:X}", node.path, k * 8), node.depth + 1 });
+					}
+				}
+			}
+			REX::INFO("Live blur walk ({}): {} objects visited, {} findings", a_when, visited, hits);
 		}
 
 		// ---- Image-space modifier test (0.4.14) -----------------------------------------
@@ -3250,7 +3402,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.18 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.19 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
