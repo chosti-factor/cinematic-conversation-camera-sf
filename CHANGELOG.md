@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.4.19 - 2026-11-12
+
+### Diagnostic
+- The live conversation blur search now also walks out from the image-space manager, the
+  dialogue camera, the player camera and the render camera, and reports any reference to the
+  Dialogue_*_DOF records. Read-only, no INI changes needed.
+- Per-shot measurement of how much the speaker's head moves, and how far the smoothed head
+  the camera follows lags behind it (for the jitter with NPCs posing or at crafting tables).
+
 ## 0.4.18 - 2026-11-12
 
 ### Changed
