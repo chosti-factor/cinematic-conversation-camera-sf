@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.4.21 - 2026-11-13
+
+### Changed
+- Steadier following while the speaker moves starts at 0.25 m/s (`fBusyHeadSpeed`), so it
+  reacts to walking rather than ordinary talking.
+
+### Diagnostic
+- The game's dialogue blur modifiers, Starvegas's and Chargen_DoF dumped in full (4 KB each), to
+  find their focus distance, sharp-zone depth and blur strength.
+- How often the steadier following switched on, per conversation.
+- Finding: moving the game's camera never moves the conversation focus (methods 1-6, and the
+  game doesn't put its camera back after the hook). That route is closed.
+
 ## 0.4.20 - 2026-11-13
 
 ### Fixed

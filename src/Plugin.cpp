@@ -69,6 +69,8 @@ namespace CCC
 			std::optional<RE::NiPoint3>           rootAfterHook{};          // where our hook left the game camera this frame
 			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
+			int                                   busySwitches{ 0 };
+			float                                 busySeconds{ 0.0f };
 			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
 			// jitter seen with NPCs posing or working at a crafting table).
 			struct HeadMotion
@@ -604,6 +606,8 @@ namespace CCC
 			if (g_state.active) {
 				if (Settings::Get().debugLog) {
 					LogHeadMotion("conversation end");
+					REX::INFO("Steadier following (speaker's head above {:.2f} m/s): switched on {} times, {:.1f} s in all", Settings::Get().busyHeadSpeed, g_state.busySwitches,
+						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
 				if (g_state.rootBeforeFocus) {
@@ -1221,8 +1225,14 @@ namespace CCC
 					}
 					g_state.lastRawNpcHead = *npcHead;
 					const bool busy = g_state.npcHeadBusy ? g_state.npcHeadSpeed > s.busyHeadSpeed * 0.6f : g_state.npcHeadSpeed > s.busyHeadSpeed;
+					if (g_state.npcHeadBusy) {
+						g_state.busySeconds += dt;
+					}
 					if (busy != g_state.npcHeadBusy) {
 						g_state.npcHeadBusy = busy;
+						if (busy) {
+							++g_state.busySwitches;
+						}
 						if (s.debugLog) {
 							REX::INFO("Speaker's head {} ({:.2f} m/s): following with {:.2f} s of smoothing", busy ? "moving fast" : "settled", g_state.npcHeadSpeed,
 								busy ? s.busyFollowSmoothing : s.followSmoothing);
@@ -2540,13 +2550,11 @@ namespace CCC
 				const bool wanted = lower.starts_with("dialogue") || lower.find("starvegas") != std::string::npos || lower == "chargen_dof" ||
 				                    lower == "shipdockingdofimod" || lower == "chronomarkdof";
 				if (wanted && dumped < 16) {
+					// 0.4.21: the whole record, 4 KB in 1 KB pieces. The first 0x300 bytes were the
+					// same for all of them (0.4.20), so the depth-of-field values sit further in.
 					++dumped;
-					DumpObject(std::format("modifier {:08X} '{}'", id, name).c_str(), reinterpret_cast<const void*>(form), 0x300);
-					for (const std::size_t off : { std::size_t{ 0x40 }, std::size_t{ 0x48 } }) {
-						std::uintptr_t block = 0;
-						if (SafeCopy(&block, reinterpret_cast<const void*>(form + off), sizeof(block)) && block > 0x10000 && block < 0x7FFFFFFFFFFF) {
-							DumpObject(std::format("modifier {:08X} '{}' data at +{:X}", id, name, off).c_str(), reinterpret_cast<const void*>(block), 0x200);
-						}
+					for (std::size_t chunk = 0; chunk < 0x1000; chunk += 0x400) {
+						DumpObject(std::format("modifier {:08X} '{}' chunk {:X}", id, name, chunk).c_str(), reinterpret_cast<const void*>(form + chunk), 0x400);
 					}
 				}
 			}
@@ -3490,7 +3498,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.20 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.21 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

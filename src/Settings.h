@@ -49,7 +49,7 @@ namespace CCC
 		// While the speaker's head moves fast (walking), follow it more steadily: the head bone
 		// bobs with each step and is sampled mid-animation, which made the picture jitter.
 		float busyFollowSmoothing{ 1.0f };
-		float busyHeadSpeed{ 0.2f };  // m/s; back to normal below 60% of this
+		float busyHeadSpeed{ 0.25f };  // m/s; back to normal below 60% of this
 
 		// Seconds to blend between shots. 0 = hard cut (CCC's default style).
 		float blendSeconds{ 0.0f };
