@@ -59,7 +59,25 @@ namespace CCC::Director
 			std::mt19937              rng{ std::random_device{}() };
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
+			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
 		} g;
+
+		// Emotion close-ups with the plain shots (seated people, merchants): held for the line.
+		struct PlainIntense
+		{
+			std::optional<ShotType> shot;
+			clock::time_point       cutAt{};
+			float                   heldAngle{ std::numeric_limits<float>::quiet_NaN() };
+			float                   heldLookSign{ 0.0f };
+			bool                    wasTalking{ false };
+		} gp;
+
+		// CCC's Close preset: a slower, stronger push-in, so the emotion close-up reads as a
+		// deliberate move rather than the regular close-up of the rotation.
+		Setup IntenseSetup(ShotType a_type)
+		{
+			return a_type == ShotType::kExtremeClose ? Setup{ 1, Move::kZoomIn, 40, 9.0f } : Setup{ 1, Move::kPushIn, 40, 8.0f };
+		}
 
 		struct PresetEntry
 		{
@@ -220,7 +238,7 @@ namespace CCC::Director
 		// The close-up for an intense line: a third of the time the extreme close-up.
 		std::optional<ShotType> IntenseShot(const Frame& a_frame)
 		{
-			const bool extreme = std::uniform_int_distribution<int>{ 1, 3 }(g.rng) == 1;
+			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChance;
 			if (extreme && Placeable(ShotType::kExtremeClose, a_frame)) {
 				return ShotType::kExtremeClose;
 			}
@@ -290,6 +308,7 @@ namespace CCC::Director
 		void Cut(ShotType a_type, const Frame& a_frame, clock::time_point a_now, const char* a_why, bool a_newAngle)
 		{
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
+			g.intenseSetup.reset();
 			g.current = a_type;
 			g.currentNpcSide = a_frame.npcTurn;
 			g.cutAt = a_now;
@@ -341,6 +360,9 @@ namespace CCC::Director
 		g.npcLine = {};
 		g.playerLine = {};
 		g.loggedEmpty = false;
+		g.intensePending = false;
+		g.intenseSetup.reset();
+		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject; cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
 	}
@@ -367,6 +389,7 @@ namespace CCC::Director
 			// The turn passes to them on an intense line: the turn's cut is the close-up.
 			if (const auto shot = IntenseShot(a_frame)) {
 				Cut(*shot, a_frame, a_now, "turn, intense line", true);
+				g.intenseSetup = IntenseSetup(*shot);
 				g.intensePending = false;
 			}
 		}
@@ -390,6 +413,7 @@ namespace CCC::Director
 			// last cut, so a turn cut and this one never come back to back).
 			if (const auto shot = IntenseShot(a_frame)) {
 				Cut(*shot, a_frame, a_now, "intense line", true);
+				g.intenseSetup = IntenseSetup(*shot);
 			}
 			g.intensePending = false;
 		} else if (g.intensePending && alreadyClose) {
@@ -410,7 +434,7 @@ namespace CCC::Director
 			}
 		}
 
-		const auto& setup = g.setups[static_cast<std::size_t>(*g.current)];
+		const auto& setup = g.intenseSetup ? *g.intenseSetup : g.setups[static_cast<std::size_t>(*g.current)];
 		const float progress = setup.seconds > 0.0f ? std::chrono::duration<float>(a_now - g.cutAt).count() / setup.seconds : 1.0f;
 		auto        in = InputFor(a_frame, setup, progress);
 		in.heldAngle = g.heldAngle;
@@ -420,6 +444,46 @@ namespace CCC::Director
 			return std::nullopt;
 		}
 		return solved.pose;
+	}
+
+	std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, clock::time_point a_now)
+	{
+		const auto& s = Settings::Get();
+		const bool  started = a_frame.npcTalking && !gp.wasTalking;
+		gp.wasTalking = a_frame.npcTalking;
+		if (!a_frame.npcTalking || !a_frame.npcTurn || !s.emotionCloseUps) {
+			if (gp.shot) {
+				REX::INFO("Director: emotion close-up over; back to the plain shot");
+			}
+			gp.shot.reset();
+			return std::nullopt;
+		}
+		if (started) {
+			gp.shot.reset();
+			if (a_frame.intenseLine) {
+				if (const auto shot = IntenseShot(a_frame)) {
+					const auto setup = IntenseSetup(*shot);
+					const auto solved = Shots::Solve(*shot, InputFor(a_frame, setup, 0.0f));
+					if (solved.ok) {
+						gp.shot = shot;
+						gp.cutAt = a_now;
+						gp.heldAngle = solved.angle;
+						gp.heldLookSign = solved.lookSign;
+						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees)", Shots::Key(*shot), solved.distance, solved.angle);
+					}
+				}
+			}
+		}
+		if (!gp.shot) {
+			return std::nullopt;
+		}
+		const auto  setup = IntenseSetup(*gp.shot);
+		const float progress = std::chrono::duration<float>(a_now - gp.cutAt).count() / setup.seconds;
+		auto        in = InputFor(a_frame, setup, progress);
+		in.heldAngle = gp.heldAngle;
+		in.heldLookSign = gp.heldLookSign;
+		const auto solved = Shots::Solve(*gp.shot, in);
+		return solved.ok ? std::optional<Camera::Pose>{ solved.pose } : std::nullopt;
 	}
 
 	const char* Current()
