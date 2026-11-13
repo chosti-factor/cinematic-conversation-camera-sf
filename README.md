@@ -54,10 +54,10 @@ Working:
 Differences from CCC, because of Starfield:
 
 - Starfield's conversation lens is fixed and narrower (about 30 degrees) than the ones
-  CCC uses, so its framings want the camera further back. Until wall detection exists the
-  camera stays within 3 m of the person it frames indoors and 7 m outdoors; shots that
-  would need more room come out tighter, and the two-person and room shots are mostly
-  unavailable.
+  CCC uses, so its framings want the camera further back. Each preset lets the camera
+  go as far as its widest shot needs (Standard: 7 m indoors, 10.5 m outdoors), and
+  obstacle detection pulls it in or picks another angle where walls are closer. CCC's
+  room shots (Master, Wide, Distant) aren't available yet: they need the room measured.
 - Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
   close-ups are chosen from the line's expression tag instead.
 - There's no in-game settings menu; everything is in the INI.

@@ -135,8 +135,8 @@ namespace CCC
 		int         maxLines{ 5 };             // ...up to this many (random in between)
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
 		float       shortestHold{ 2.0f };      // never change angle sooner than this
-		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
-		float       maxCameraDistanceExterior{ 7.0f };
+		float       maxCameraDistance{ 0.0f }; // metres from the person framed, indoors (0 = the preset's own)
+		float       maxCameraDistanceExterior{ 0.0f };  // outdoors (0 = the preset's own)
 		bool        obstacleCheck{ true };       // skip or pull in shots the game's collision says are blocked
 		float       obstacleRadius{ 0.05f };     // width of the check (the game's own dialogue camera uses 0.05)
 		bool        true180{ false };
