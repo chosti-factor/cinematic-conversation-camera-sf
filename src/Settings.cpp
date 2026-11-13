@@ -169,8 +169,18 @@ namespace CCC
 			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeight", a_s.minSpeakerHeight), 0.0f, 3.0f);
 			a_s.gameCameraInScenes = ReadInt(a_path, L"Camera", L"bGameCameraInScenes", a_s.gameCameraInScenes ? 1 : 0) != 0;
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
-			a_s.deepFocusLongShots = ReadInt(a_path, L"Camera", L"bDeepFocusLongShots", a_s.deepFocusLongShots ? 1 : 0) != 0;
+			// sFocusStyle (0.5.1); bDeepFocusLongShots=1 from 0.5.0 INIs means Wide.
+			if (ReadInt(a_path, L"Camera", L"bDeepFocusLongShots", -1) == 1) {
+				a_s.focusStyle = "Wide";
+			}
+			a_s.focusStyle = ReadString(a_path, L"Camera", L"sFocusStyle", a_s.focusStyle);
+			{
+				std::string style = a_s.focusStyle;
+				std::ranges::transform(style, style.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				a_s.deepFocusLongShots = style == "wide";
+			}
 			a_s.deepFocusBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fDeepFocusBeyond", a_s.deepFocusBeyond), 0.0f, 20.0f);
+			a_s.deepFocusBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fWideFocusBeyond", a_s.deepFocusBeyond), 0.0f, 20.0f);
 
 			a_s.distanceBehind = ReadFloat(a_path, L"PlainCamera", L"fDistanceBehind", a_s.distanceBehind);
 			a_s.sideOffset = ReadFloat(a_path, L"PlainCamera", L"fSideOffset", a_s.sideOffset);

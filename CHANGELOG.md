@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## Unreleased
+
+### Changed
+- Focus styles (`sFocusStyle`): Cinematic (more background blur) and Wide (deeper sharp zone,
+  softer background blur), replacing `bDeepFocusLongShots` (still read: 1 = Wide).
+  `fDeepFocusBeyond` is now `fWideFocusBeyond` (old name still read).
+
 ## 0.5.0 - 2026-11-13
 
 The focus milestone: the person in shot is sharp at any camera distance.
