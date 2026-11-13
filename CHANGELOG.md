@@ -4,6 +4,11 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## Unreleased
+
+### Changed
+- Focus style Wide (deeper sharp zone, softer background blur) is the default.
+
 ## 0.5.1 - 2026-11-13
 
 ### Changed

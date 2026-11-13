@@ -161,7 +161,7 @@ namespace CCC
 		// game's own sharp zone (more background blur); Wide = a much deeper sharp zone on shots
 		// further than deepFocusBeyond (softer background blur).
 		bool        focusOnSubject{ true };
-		std::string focusStyle{ "Cinematic" };
+		std::string focusStyle{ "Wide" };
 		bool        deepFocusLongShots{ false };  // derived from focusStyle
 		float       deepFocusBeyond{ 3.5f };
 
