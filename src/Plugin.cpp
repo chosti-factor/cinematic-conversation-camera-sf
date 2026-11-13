@@ -2502,8 +2502,17 @@ namespace CCC
 					}
 					return;
 				}
-				ApplyModifier(form, 1.0f);
-				g_testModifierForm = form;
+				// Calling the Papyrus native directly (Cassiopeia's way) crashed in 1.16.244 (0.4.16
+				// crash log: null pointer inside the game's apply). Not called until a safe route
+				// is in place.
+				(void)ApplyModifier;
+				static bool warnedUnsafe = false;
+				if (!warnedUnsafe) {
+					warnedUnsafe = true;
+					REX::WARN("Modifier test: applying {:08X} is disabled in this build (the direct call crashed in 0.4.16)", id);
+				}
+				g_testModifierOn = true;
+				return;
 				REX::INFO("Modifier test: applied {:08X} '{}' ({})", id, editorId ? editorId : "", a_why);
 			} else if (g_testModifierForm) {
 				RemoveModifier(g_testModifierForm);
