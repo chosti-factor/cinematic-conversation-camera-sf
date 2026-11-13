@@ -63,10 +63,6 @@ namespace CCC
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
-			// For the main-thread focus test and timing check (0.4.20).
-			float                                 focusWanted{ 0.0f };
-			std::optional<RE::NiPoint3>           focusNpcHead{};
-			std::optional<RE::NiPoint3>           rootAfterHook{};          // where our hook left the game camera this frame
 			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			int                                   busySwitches{ 0 };
@@ -86,8 +82,6 @@ namespace CCC
 				int                         subject{ -1 };
 			} head;
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
-			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
-			bool                                  focusLogged{ false };
 			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
 			std::uint32_t                         driftBits{ 0 };            // last 32 frames: 1 = the game moved its camera after us
 			int                                   driftLogged{ 0 };
@@ -610,11 +604,6 @@ namespace CCC
 						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
-				if (g_state.rootBeforeFocus) {
-					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && camera->QCameraEquals(RE::CameraState::kDialogue)) {
-						Camera::SetRootPosition(camera->cameraRoot.get(), *g_state.rootBeforeFocus);
-					}
-				}
 				Camera::RestoreRender();
 				if (g_wantRevealPlayer || g_wantHidePlayer) {
 					g_needVisibilityRestore = true;
@@ -681,36 +670,6 @@ namespace CCC
 			std::uint32_t offset;
 			float         value;
 		};
-
-		// Floats within a_tolerance of either value (0.4.11 focus search).
-		[[maybe_unused]] std::size_t ScanNear(const void* a_base, std::size_t a_bytes, float a_a, float a_b, float a_tolerance, FloatAt* a_out, std::size_t a_max)
-		{
-			std::size_t n = 0;
-			__try {
-				for (std::size_t off = 0; off + 4 <= a_bytes && n < a_max; off += 4) {
-					const float v = *reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
-					if ((a_a > 0.0f && std::abs(v - a_a) < a_tolerance) || (a_b > 0.0f && std::abs(v - a_b) < a_tolerance)) {
-						a_out[n++] = { static_cast<std::uint32_t>(off), v };
-					}
-				}
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-			return n;
-		}
-
-		[[maybe_unused]] void LogNearValues(const char* a_what, const void* a_base, std::size_t a_bytes, float a_speaker, float a_you)
-		{
-			if (!a_base) {
-				return;
-			}
-			std::array<FloatAt, 48> found{};
-			const auto              n = ScanNear(a_base, a_bytes, a_speaker, a_you, 0.05f, found.data(), found.size());
-			std::string             text;
-			for (std::size_t i = 0; i < n; ++i) {
-				text += std::format(" +{:X}={:.3f}", found[i].offset, found[i].value);
-			}
-			REX::INFO("Focus search, {} (speaker {:.3f} m, you {:.3f} m):{}", a_what, a_speaker, a_you, text.empty() ? " none" : text);
-		}
 
 		std::size_t ScanFloats(const void* a_base, std::size_t a_from, std::size_t a_to, FloatAt* a_out, std::size_t a_max)
 		{
@@ -1552,39 +1511,6 @@ namespace CCC
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
 				g_shotDistance.store(waitingView || pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz), std::memory_order_relaxed);
 			}
-			// Depth of field: the game focuses at the distance from its own camera (at your eyes)
-			// to the NPC, about 2 m, while the picture is drawn from further back, so the person
-			// in shot was out of focus and whoever happened to be 2 m from the lens was sharp.
-			// Move the game's camera straight back along the line from the NPC (so the NPC still
-			// faces the same way) until its distance matches the distance to the person in shot.
-			// The focus move, worked out here and applied before or after the shot is placed
-			// depending on iFocusMethod (0.4.17 test).
-			const bool focusAllowed = s.focusMethod != 0 && s.cameraTarget == 1 && !waitingView && !pov && !predictedRoot && !startRoot && g_repair.stage == RepairStage::kIdle;
-			float      focusWanted = 0.0f;
-			if (focusAllowed) {
-				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
-				const float fx = pose->position.x - subjectHead.x, fy = pose->position.y - subjectHead.y, fz = pose->position.z - subjectHead.z;
-				focusWanted = std::clamp(std::sqrt(fx * fx + fy * fy + fz * fz), 0.5f, 10.0f);
-			}
-			auto moveForFocus = [&](bool a_local, bool a_world) {
-				const auto& now3 = root->local.translate;
-				const float gx = now3.x - npcHead->x, gy = now3.y - npcHead->y, gz = now3.z - npcHead->z;
-				const float gameFocus = std::sqrt(gx * gx + gy * gy + gz * gz);
-				if (std::abs(focusWanted - gameFocus) <= 0.05f) {
-					return;
-				}
-				if (const auto before = Camera::SetRootDistance(root, *npcHead, focusWanted, a_local, a_world)) {
-					g_state.rootBeforeFocus = before;
-					if (!g_state.focusLogged && s.debugLog) {
-						g_state.focusLogged = true;
-						REX::INFO("Focus (method {}): game camera moved from {:.2f} m to {:.2f} m from the NPC to match the shot", s.focusMethod, gameFocus, focusWanted);
-					}
-				}
-			};
-			if (focusAllowed && s.focusMethod == 1) {
-				moveForFocus(true, true);  // 0.4.8: before the shot is placed
-			}
-
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
 			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
@@ -1594,14 +1520,6 @@ namespace CCC
 			if (!applied) {
 				LogFailure("could not apply pose");
 				return;
-			}
-			g_state.focusWanted = focusAllowed ? focusWanted : 0.0f;
-			g_state.focusNpcHead = *npcHead;
-			g_state.rootAfterHook = root->local.translate;
-			if (focusAllowed && s.focusMethod >= 2 && s.focusMethod <= 4) {
-				// After the shot is placed: the picture was worked out against where the game
-				// put its camera; only the copy (or copies) the test names are moved.
-				moveForFocus(s.focusMethod != 2, s.focusMethod != 3);
 			}
 			g_state.lastPose = *pose;
 			g_state.lastAppliedFrame = g_state.framesThisConversation;
@@ -2387,437 +2305,13 @@ namespace CCC
 			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
-		// ---- Line emotion (0.4.8 diagnostic) ------------------------------------------------
-		// The speaker's voice data holds the subtitle of the line being spoken; look around it
-		// for the dialogue record (INFO) that line came from, whose responses carry the emotion.
-		[[maybe_unused]] void LogInfo(const std::string& a_where, std::uintptr_t a_info)
-		{
-			std::uint32_t type = 0, id = 0;
-			const char*   editorId = nullptr;
-			ReadFormInfo(a_info, type, id, editorId);
-			REX::INFO("Line emotion:   {}: INFO {:08X} '{}'", a_where, id, editorId ? editorId : "");
-			std::uintptr_t response = 0;
-			// 0.4.10 dumps: in 1.16.244 the responses list is at +0x70 (CommonLibSF says +0x68;
-			// +0x68 holds two 32-bit values instead).
-			SafeCopy(&response, reinterpret_cast<const void*>(a_info + 0x70), sizeof(response));
-			static int dumped = 0;
-			if (response > 0x10000 && response < 0x7FFFFFFFFFFF && dumped < 8) {
-				++dumped;
-				DumpObject(std::format("INFO {:08X} response", id).c_str(), reinterpret_cast<const void*>(response), 0xC0);
-			}
-			for (int i = 0; response && i < 4; ++i) {
-				std::array<std::uint64_t, 8> words{};
-				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(response), sizeof(words))) {
-					break;
-				}
-				std::string forms;
-				for (int k = 0; k < 8; ++k) {
-					std::uint32_t t = 0, fid = 0;
-					const char*   ed = nullptr;
-					if (words[k] > 0x10000 && words[k] < 0x7FFFFFFFFFFF && ReadFormInfo(static_cast<std::uintptr_t>(words[k]), t, fid, ed) && t < 0xB0 && fid != 0) {
-						forms += std::format(" +{:X}=type {} {:08X} '{}'", k * 8, t, fid, ed ? ed : "");
-					}
-				}
-				REX::INFO("Line emotion:     response {}: words {:016X} {:016X} {:016X} {:016X} {:016X} {:016X};{}", i, words[0], words[1], words[2], words[3], words[4], words[5], forms);
-				response = static_cast<std::uintptr_t>(words[0]);  // next response, if the list starts with it
-				if (response < 0x10000 || response > 0x7FFFFFFFFFFF) {
-					break;
-				}
-			}
-		}
-
-		// 0.4.9 found the line's dialogue record (INFO) at the same place for every line:
-		// the speaker's voice data +0x440 points to an object that holds it at +0x10. Read only
-		// that path now (the wide scan of 0.4.8/0.4.9 is gone), and dump the record's raw
-		// contents: its responses list was empty in memory, so look at what else it carries.
-		// ---- Depth of field through the game's image spaces (0.4.12) --------------------------
-		// Every image space record (TESImageSpace) carries depth-of-field settings at
-		// +0x150 (settings) +0x220 (DOF): mode, strength, far/near start and plane, and a
-		// "focus on the target" switch. List the ones with blur, and for the experiment set
-		// their strength to zero while a conversation runs (restored afterwards).
-		struct DofBlock
-		{
-			std::uint32_t mode;
-			float         strength, farStart, farPlane, nearStart, nearPlane;
-			bool          useTarget;
-		};
-
-		constexpr std::size_t kImageSpaceDof = 0x150 + 0x220;
-
-		bool ReadDof(std::uintptr_t a_form, DofBlock& a_out)
-		{
-			std::array<std::uint8_t, 0x60> raw{};
-			if (!SafeCopy(raw.data(), reinterpret_cast<const void*>(a_form + kImageSpaceDof), raw.size())) {
-				return false;
-			}
-			auto f = [&](std::size_t a_off) { float v; std::memcpy(&v, raw.data() + a_off, 4); return v; };
-			std::memcpy(&a_out.mode, raw.data(), 4);
-			a_out.strength = f(0x0C);
-			a_out.farStart = f(0x18);
-			a_out.farPlane = f(0x24);
-			a_out.nearStart = f(0x3C);
-			a_out.nearPlane = f(0x48);
-			a_out.useTarget = raw[0x5C] != 0;
-			auto sane = [](float v) { return std::isfinite(v) && v > -1.0e6f && v < 1.0e7f; };
-			return a_out.mode < 16 && sane(a_out.strength) && sane(a_out.farStart) && sane(a_out.farPlane) && sane(a_out.nearStart) && sane(a_out.nearPlane);
-		}
-
-		struct BlurBackup
-		{
-			std::uintptr_t form;
-			float          strength;
-		};
-		std::vector<BlurBackup> g_blurSpaces;
-		bool                    g_blurListed = false;
-		bool                    g_blurOff = false;
-
-		// The documented position of the record lists (formArrays at +0x70) gave empty lists
-		// in 1.16.244 (0.4.12 log, and the dialogue records in 0.4.8), so find the list whose
-		// entries really are of the wanted type: scan the data handler for array headers
-		// (data pointer, then 32-bit size and capacity) and check the first entry's type.
-		std::pair<const RE::NiPointer<RE::TESForm>*, std::size_t> FindRecordList(RE::TESDataHandler* a_data, RE::FormType a_type)
-		{
-			const auto  base = reinterpret_cast<std::uintptr_t>(a_data);
-			static bool listedAll = false;
-			int         listed = 0;
-			for (std::size_t off = 0x28; off < 0x3000; off += 8) {
-				// BSTArray: 32-bit size, 32-bit capacity, then the data pointer (0.4.13 read the
-				// pointer first and found no lists at all).
-				struct Header
-				{
-					std::uint32_t  a, b;
-					std::uintptr_t data;
-				} h{};
-				if (!SafeCopy(&h, reinterpret_cast<const void*>(base + off), sizeof(h)) || h.data < 0x10000 || h.data > 0x7FFFFFFFFFFF) {
-					continue;
-				}
-				for (const auto [size, capacity] : { std::pair{ h.a, h.b }, std::pair{ h.b, h.a } }) {
-					if (size == 0 || size > 200000 || size > capacity || capacity > 400000) {
-						continue;
-					}
-					std::uintptr_t entry = 0;
-					std::uint32_t  type = 0, id = 0;
-					const char*    editorId = nullptr;
-					if (!SafeCopy(&entry, reinterpret_cast<const void*>(h.data), sizeof(entry)) || !ReadFormInfo(entry, type, id, editorId)) {
-						continue;
-					}
-					if (!listedAll && listed++ < 8) {
-						REX::INFO("Record list at data handler +{:X}: {} entries of form type {:#x}", off, size, type);
-					}
-					if (type == std::to_underlying(a_type)) {
-						REX::INFO("Record list for form type {:#x} found at data handler +{:X}: {} entries", type, off, size);
-						listedAll = true;
-						return { reinterpret_cast<const RE::NiPointer<RE::TESForm>*>(h.data), static_cast<std::size_t>(size) };
-					}
-					break;
-				}
-			}
-			listedAll = true;
-			REX::INFO("Record list for form type {:#x}: not found", std::to_underlying(a_type));
-			return { nullptr, 0 };
-		}
-
-		// Diagnostic (0.4.13): the game's image-space modifiers (what the console's imod and
-		// Papyrus ImageSpaceModifier.Apply use; Starvegas applies its own depth-of-field ones).
-		// Names, and the raw data of those that look like depth of field or conversation ones.
-		void ListModifiers(RE::TESDataHandler* a_data)
-		{
-			auto [first, count] = FindRecordList(a_data, RE::FormType::kIMAD);
-			std::string names;
-			int         dumped = 0;
-			for (std::size_t i = 0; first && i < (std::min)(count, std::size_t{ 5000 }); ++i) {
-				std::uintptr_t form = 0;
-				if (!SafeCopy(&form, first + i, sizeof(form))) {
-					break;
-				}
-				std::uint32_t type = 0, id = 0;
-				const char*   editorId = nullptr;
-				if (!ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD)) {
-					continue;
-				}
-				const std::string name{ editorId ? editorId : "" };
-				names += std::format(" {:08X}:{}", id, name);
-				if (names.size() > 1500) {
-					REX::INFO("Image space modifiers:{}", names);
-					names.clear();
-				}
-				std::string lower = name;
-				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-				// 0.4.20: the game's dialogue blurs (focus on a target) against Starvegas's own
-				// (fixed focus, applied per shot) and a few other depth-of-field ones, including
-				// the data their pointers at +0x40 and +0x48 lead to (where the Dialogue ones
-				// differ), to find where the focus distances are kept.
-				const bool wanted = lower.starts_with("dialogue") || lower.find("starvegas") != std::string::npos || lower == "chargen_dof" ||
-				                    lower == "shipdockingdofimod" || lower == "chronomarkdof";
-				if (wanted && dumped < 16) {
-					// 0.4.21: the whole record, 4 KB in 1 KB pieces. The first 0x300 bytes were the
-					// same for all of them (0.4.20), so the depth-of-field values sit further in.
-					++dumped;
-					for (std::size_t chunk = 0; chunk < 0x1000; chunk += 0x400) {
-						DumpObject(std::format("modifier {:08X} '{}' chunk {:X}", id, name, chunk).c_str(), reinterpret_cast<const void*>(form + chunk), 0x400);
-					}
-				}
-			}
-			if (!names.empty()) {
-				REX::INFO("Image space modifiers:{}", names);
-			}
-			REX::INFO("Image space modifiers: {} listed, {} dumped", count, dumped);
-		}
-
-		void ListBlurImageSpaces()
-		{
-			g_blurListed = true;
-			auto* data = RE::TESDataHandler::GetSingleton();
-			if (!data) {
-				return;
-			}
-			auto [first, count] = FindRecordList(data, RE::FormType::kIMGS);
-			std::size_t withBlur = 0;
-			for (std::size_t i = 0; first && i < count; ++i) {
-				std::uintptr_t form = 0;
-				if (!SafeCopy(&form, first + i, sizeof(form))) {
-					break;
-				}
-				std::uint32_t type = 0, id = 0;
-				const char*   editorId = nullptr;
-				DofBlock      dof{};
-				if (!ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMGS) || !ReadDof(form, dof)) {
-					continue;
-				}
-				if (dof.strength <= 0.0f) {
-					continue;
-				}
-				++withBlur;
-				g_blurSpaces.push_back({ form, dof.strength });
-				if (withBlur <= 80) {
-					REX::INFO("Image space {:08X} '{}': blur mode {} strength {:.2f}, far {:.2f}-{:.2f}, near {:.2f}-{:.2f}, focus on target {}", id, editorId ? editorId : "",
-						dof.mode, dof.strength, dof.farStart, dof.farPlane, dof.nearStart, dof.nearPlane, dof.useTarget ? "yes" : "no");
-				}
-			}
-			REX::INFO("Image spaces: {} in the game, {} with depth-of-field blur", count, withBlur);
-			ListModifiers(data);
-		}
-
-		// ---- The live conversation blur (0.4.18 diagnostic) --------------------------------
-		// When a conversation starts, the game starts one of its Dialogue_Close/Medium/Long_DOF
-		// image-space modifiers, which keeps a live copy (an ImageSpaceModifierInstanceForm) in
-		// the image-space manager. Find that copy and log what it holds, to learn where its
-		// focus is kept. Read-only: nothing is written or called.
-		std::size_t FindQwordInRange(std::uintptr_t a_begin, std::uintptr_t a_end, std::uint64_t a_value, std::uintptr_t* a_out, std::size_t a_max)
-		{
-			std::size_t n = 0;
-			__try {
-				for (auto p = a_begin; p + 8 <= a_end && n < a_max; p += 8) {
-					if (*reinterpret_cast<const std::uint64_t*>(p) == a_value) {
-						a_out[n++] = p;
-					}
-				}
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-			return n;
-		}
-
-		std::vector<std::pair<std::uintptr_t, std::uintptr_t>> WritableSections()
-		{
-			std::vector<std::pair<std::uintptr_t, std::uintptr_t>> out;
-			const auto base = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
-			const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
-			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
-			const auto* section = IMAGE_FIRST_SECTION(nt);
-			for (WORD i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
-				if (section[i].Characteristics & IMAGE_SCN_MEM_WRITE) {
-					const auto start = base + section[i].VirtualAddress;
-					out.emplace_back(start, start + (std::max)(section[i].Misc.VirtualSize, section[i].SizeOfRawData));
-				}
-			}
-			return out;
-		}
-
-		void WalkForLiveBlur(const char* a_when, std::uintptr_t a_manager);
-
-		void LogLiveBlur(const char* a_when)
-		{
-			static std::uintptr_t manager = 0;
-			static bool           searched = false;
-			static std::uintptr_t agentVt = 0, formVt = 0, dofVt = 0, baseVt = 0;
-			const auto            exe = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
-			if (!searched) {
-				searched = true;
-				agentVt = RE::VTABLE::ImageSpaceManagerAgent[0].address();
-				formVt = RE::VTABLE::ImageSpaceModifierInstanceForm[0].address();
-				dofVt = RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address();
-				baseVt = RE::VTABLE::ImageSpaceModifierInstance[0].address();
-				std::array<std::uintptr_t, 8> hits{};
-				std::size_t                   found = 0;
-				for (const auto& [begin, end] : WritableSections()) {
-					found += FindQwordInRange(begin, end, agentVt, hits.data() + found, hits.size() - found);
-				}
-				std::string where;
-				for (std::size_t i = 0; i < found; ++i) {
-					where += std::format(" Starfield.exe+{:X}", hits[i] - exe);
-				}
-				manager = found ? hits[0] : 0;
-				REX::INFO("Live blur: image-space manager {} ({} found:{})", manager ? "found" : "not found", found, where);
-			}
-			if (!manager) {
-				static int walksWithout = 0;
-				if (walksWithout++ < 6) {
-					WalkForLiveBlur(a_when, 0);
-				}
-				return;
-			}
-			// The dialogue blur records, to recognise their live copies.
-			std::array<std::pair<std::uintptr_t, const char*>, 4> dialogue{ {
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A27)), "Dialogue_Close_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A4C)), "Dialogue_Medium_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10E34)), "Dialogue_Long_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x1928B)), "DialogueImod" },
-			} };
-			auto typeName = [&](std::uintptr_t a_vt) -> const char* {
-				return a_vt == formVt ? "form" : a_vt == dofVt ? "DOF" : a_vt == baseVt ? "base" : nullptr;
-			};
-			std::array<std::uint64_t, 0x800> words{};  // 16 KB of the manager
-			if (!SafeCopy(words.data(), reinterpret_cast<const void*>(manager), sizeof(words))) {
-				REX::INFO("Live blur ({}): manager unreadable", a_when);
-				return;
-			}
-			std::unordered_set<std::uintptr_t> seen;
-			int                                instances = 0, dumped = 0;
-			auto inspect = [&](std::uintptr_t a_obj, const std::string& a_path) {
-				if (a_obj < 0x10000 || a_obj > 0x7FFFFFFFFFFF || !seen.insert(a_obj).second) {
-					return;
-				}
-				std::uintptr_t vt = 0;
-				if (!SafeCopy(&vt, reinterpret_cast<const void*>(a_obj), sizeof(vt))) {
-					return;
-				}
-				const char* kind = typeName(vt);
-				if (!kind) {
-					return;
-				}
-				++instances;
-				std::array<std::uint64_t, 0x30> body{};
-				SafeCopy(body.data(), reinterpret_cast<const void*>(a_obj), sizeof(body));
-				const char* modifier = nullptr;
-				std::size_t at = 0;
-				for (std::size_t k = 1; k < body.size() && !modifier; ++k) {
-					for (const auto& [form, name] : dialogue) {
-						if (form && body[k] == form) {
-							modifier = name;
-							at = k * 8;
-						}
-					}
-				}
-				REX::INFO("Live blur ({}): {} instance at {} {}", a_when, kind, a_path, modifier ? std::format("of {} (at +{:X})", modifier, at) : std::string{ "(other modifier)" });
-				if ((modifier || std::string_view{ kind } == "DOF") && dumped < 4) {
-					++dumped;
-					DumpObject(std::format("live blur {} {}", kind, modifier ? modifier : "").c_str(), reinterpret_cast<const void*>(a_obj), 0x180);
-				}
-			};
-			for (std::size_t k = 0; k + 1 < words.size(); ++k) {
-				inspect(static_cast<std::uintptr_t>(words[k]), std::format("manager+{:X}", k * 8));
-				// Arrays: 32-bit size and capacity, then the data pointer.
-				const auto size = static_cast<std::uint32_t>(words[k] & 0xFFFFFFFF), capacity = static_cast<std::uint32_t>(words[k] >> 32);
-				const auto data = static_cast<std::uintptr_t>(words[k + 1]);
-				if (size > 0 && size <= 256 && size <= capacity && capacity <= 4096 && data > 0x10000 && data < 0x7FFFFFFFFFFF) {
-					std::array<std::uint64_t, 256> items{};
-					if (SafeCopy(items.data(), reinterpret_cast<const void*>(data), size * 8)) {
-						for (std::uint32_t i = 0; i < size; ++i) {
-							inspect(static_cast<std::uintptr_t>(items[i]), std::format("manager+{:X}[{}]", k * 8, i));
-						}
-					}
-				}
-			}
-			const float d = g_shotDistance.load(std::memory_order_relaxed);
-			REX::INFO("Live blur ({}): {} modifier instances found; shot {:.2f} m from the person in shot", a_when, instances, d);
-			static int walks = 0;
-			if (walks < 12) {
-				++walks;
-				WalkForLiveBlur(a_when, manager);
-			}
-		}
-
-		// 0.4.19: the live blur wasn't held directly in the manager. Walk out from the manager,
-		// the dialogue camera, the player camera and the render camera (3 levels, up to 20,000
-		// objects) for live image-space effects of any kind, and for any reference to the
-		// Dialogue_*_DOF records, logging the path to each. Read-only.
-		void WalkForLiveBlur(const char* a_when, std::uintptr_t a_manager)
-		{
-			static const std::array<std::pair<std::uintptr_t, const char*>, 5> vtables{ {
-				{ RE::VTABLE::ImageSpaceModifierInstanceForm[0].address(), "form effect" },
-				{ RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address(), "DOF effect" },
-				{ RE::VTABLE::ImageSpaceModifierInstance[0].address(), "effect" },
-				{ RE::VTABLE::ImageSpaceModifierInstanceCinematic[0].address(), "cinematic effect" },
-				{ RE::VTABLE::ImageSpaceModifierInstanceRB[0].address(), "radial blur effect" },
-			} };
-			const std::array<std::pair<std::uintptr_t, const char*>, 4> dialogue{ {
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A27)), "Dialogue_Close_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A4C)), "Dialogue_Medium_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10E34)), "Dialogue_Long_DOF" },
-				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x1928B)), "DialogueImod" },
-			} };
-			struct Node
-			{
-				std::uintptr_t address;
-				std::string    path;
-				int            depth;
-			};
-			std::vector<Node> queue;
-			if (a_manager) {
-				queue.push_back({ a_manager, "image-space manager", 0 });
-			}
-			if (g_dialogueStateObject) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(g_dialogueStateObject), "dialogue camera", 0 });
-			}
-			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(camera), "PlayerCamera", 0 });
-			}
-			if (auto* render = Camera::RenderCameraObject()) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(render), "render camera", 0 });
-			}
-			std::unordered_set<std::uintptr_t> seen;
-			std::size_t                        visited = 0;
-			int                                hits = 0, dumped = 0;
-			for (std::size_t i = 0; i < queue.size() && visited < 20000 && hits < 40; ++i) {
-				const Node node = queue[i];
-				if (!seen.insert(node.address).second) {
-					continue;
-				}
-				++visited;
-				std::array<std::uint64_t, 64> words{};
-				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(node.address), sizeof(words))) {
-					continue;
-				}
-				for (const auto& [vt, name] : vtables) {
-					if (vt && words[0] == vt) {
-						++hits;
-						REX::INFO("Live blur walk ({}): {} at {}", a_when, name, node.path);
-						if (dumped < 6) {
-							++dumped;
-							DumpObject(std::format("live {} at {}", name, node.path).c_str(), reinterpret_cast<const void*>(node.address), 0x180);
-						}
-					}
-				}
-				for (std::size_t k = 0; k < words.size(); ++k) {
-					const auto w = static_cast<std::uintptr_t>(words[k]);
-					for (const auto& [form, name] : dialogue) {
-						if (form && w == form) {
-							++hits;
-							REX::INFO("Live blur walk ({}): reference to {} at {}+{:X}", a_when, name, node.path, k * 8);
-						}
-					}
-					if (node.depth < 3 && w > 0x10000 && w < 0x7FFFFFFFFFFF && (w & 7) == 0 && queue.size() < 60000) {
-						queue.push_back({ w, std::format("{}+{:X}", node.path, k * 8), node.depth + 1 });
-					}
-				}
-			}
-			REX::INFO("Live blur walk ({}): {} objects visited, {} findings", a_when, visited, hits);
-		}
-
-		// ---- Conversation blur records (0.4.22 test) ---------------------------------------
-		// The game's Dialogue_Close/Medium/Long_DOF records (0.4.21 dumps): +0x38C blur strength
-		// (2 / 2 / 0.7), +0x398 focus distance (1.5 / 3 / 8 m), +0x3A4 sharp-zone depth (6 / 12 /
-		// 20). Change them while a conversation runs and see whether the live blur follows.
+		// ---- Focus on the person in shot (0.5.0) --------------------------------------------
+		// The game's conversation blur is one of its Dialogue_Close/Medium/Long_DOF image-space
+		// modifiers, and it reads their settings live while it runs (0.4.22 tests). In 1.16.244:
+		// +0x38C blur strength (2 / 2 / 0.7), +0x398 focus distance (1.5 / 3 / 8 m), +0x3A4
+		// sharp-zone depth (6 / 12 / 20). The game focuses as if the camera were at your eyes;
+		// setting the focus distance to the distance from our camera to the person in shot puts
+		// the focus on them.
 		struct BlurRecord
 		{
 			std::uintptr_t form{ 0 };
@@ -2836,126 +2330,58 @@ namespace CCC
 			g_blurRecordsRead = true;
 			const std::array<std::uint32_t, 3> ids{ 0x10A27, 0x10A4C, 0x10E34 };
 			for (std::size_t i = 0; i < ids.size(); ++i) {
-				const auto     form = reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(ids[i]));
-				std::uint32_t  type = 0, id = 0;
-				const char*    editorId = nullptr;
-				BlurRecord     r{};
+				const auto    form = reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(ids[i]));
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				BlurRecord    r{};
 				if (!form || !ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD) ||
 					!SafeCopy(&r.strength, reinterpret_cast<const void*>(form + kBlurStrength), 4) ||
 					!SafeCopy(&r.distance, reinterpret_cast<const void*>(form + kBlurDistance), 4) ||
 					!SafeCopy(&r.range, reinterpret_cast<const void*>(form + kBlurRange), 4)) {
-					REX::WARN("Conversation blur test: record {:08X} not readable; test off", ids[i]);
+					REX::WARN("Focus: conversation blur record {:08X} not readable; focus on the person in shot is off", ids[i]);
 					g_blurRecords = {};
 					return false;
 				}
-				// Only if the values look like the 0.4.21 dumps (a different game version would
-				// put them elsewhere).
+				// Only if the values look like blur settings (another game version, or a mod that
+				// changes these records' layout, would put them elsewhere).
 				if (!(r.strength >= 0.0f && r.strength < 20.0f && r.distance > 0.1f && r.distance < 100.0f && r.range > 0.1f && r.range < 1000.0f)) {
-					REX::WARN("Conversation blur test: {} values ({}, {}, {}) don't look like blur settings; test off", editorId ? editorId : "", r.strength, r.distance, r.range);
+					REX::WARN("Focus: {} holds ({}, {}, {}), which don't look like blur settings; focus on the person in shot is off", editorId ? editorId : "",
+						r.strength, r.distance, r.range);
 					g_blurRecords = {};
 					return false;
 				}
 				r.form = form;
 				g_blurRecords[i] = r;
-				REX::INFO("Conversation blur record {:08X} '{}': strength {:.2f}, focus {:.2f} m, sharp zone {:.2f}", id, editorId ? editorId : "", r.strength, r.distance, r.range);
+				REX::INFO("Focus: conversation blur {:08X} '{}': strength {:.2f}, focus {:.2f} m, sharp zone {:.2f}", id, editorId ? editorId : "", r.strength,
+					r.distance, r.range);
 			}
 			return true;
 		}
 
-		void WriteBlurRecords(int a_mode, float a_shotDistance, float a_beyond)
+		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond)
 		{
 			for (const auto& r : g_blurRecords) {
 				if (!r.form) {
 					continue;
 				}
-				float strength = r.strength, distance = r.distance, range = r.range;
-				if (a_mode == 1) {
-					strength = 0.0f;
-				} else if (a_mode == 2 && a_shotDistance > 0.3f) {
-					distance = a_shotDistance;
-				} else if (a_mode == 3 && a_shotDistance > a_beyond) {
-					range = (std::max)(r.range * 4.0f, 50.0f);
-				}
-				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
+				const float distance = a_shotDistance > 0.3f ? a_shotDistance : r.distance;
+				const float range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
 			}
-			g_blurRecordsChanged = a_mode != 0;
+			g_blurRecordsChanged = true;
 		}
 
-		// ---- Image-space modifier test (0.4.14) -----------------------------------------
-		// The game's own apply/remove for image-space modifiers: the Papyrus natives behind
-		// ImageSpaceModifier.Apply() and .Remove() (Address Library IDs 171562 and 105038, from
-		// Cassiopeia Papyrus Extender by LarannKiar, which calls them the same way). Resolved
-		// only when the test is switched on, so a missing ID can't affect anyone else.
-		RE::TESForm* g_testModifierForm = nullptr;
-		bool         g_testModifierOn = false;
-
-		void ApplyModifier(RE::TESForm* a_modifier, float a_strength)
+		void PutBackBlurRecords()
 		{
-			static REL::Relocation<std::uintptr_t> apply{ REL::ID(171562) };
-			reinterpret_cast<void (*)(std::uintptr_t, std::uintptr_t, RE::TESForm*, float)>(apply.address())(0, 0, a_modifier, a_strength);
-		}
-
-		void RemoveModifier(RE::TESForm* a_modifier)
-		{
-			static REL::Relocation<std::uintptr_t> remove{ REL::ID(105038) };
-			reinterpret_cast<void (*)(RE::TESForm*)>(remove.address())(a_modifier);
-		}
-
-		void SetTestModifier(bool a_on, const char* a_why)
-		{
-			if (a_on == g_testModifierOn) {
-				return;
-			}
-			const auto wanted = Settings::Get().testModifier;
-			if (a_on) {
-				auto* form = wanted ? RE::TESForm::LookupByID(wanted) : nullptr;
-				std::uint32_t type = 0, id = 0;
-				const char*   editorId = nullptr;
-				if (!form || !ReadFormInfo(reinterpret_cast<std::uintptr_t>(form), type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD)) {
-					static std::uint32_t warned = 0;
-					if (warned != wanted) {
-						warned = wanted;
-						REX::WARN("Modifier test: {:08X} is not an image-space modifier; nothing applied", wanted);
-					}
-					return;
+			for (const auto& r : g_blurRecords) {
+				if (r.form) {
+					SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &r.strength, 4);
+					SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &r.distance, 4);
+					SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &r.range, 4);
 				}
-				// Calling the Papyrus native directly (Cassiopeia's way) crashed in 1.16.244 (0.4.16
-				// crash log: null pointer inside the game's apply). Not called until a safe route
-				// is in place.
-				(void)ApplyModifier;
-				static bool warnedUnsafe = false;
-				if (!warnedUnsafe) {
-					warnedUnsafe = true;
-					REX::WARN("Modifier test: applying {:08X} is disabled in this build (the direct call crashed in 0.4.16)", id);
-				}
-				g_testModifierOn = true;
-				return;
-				REX::INFO("Modifier test: applied {:08X} '{}' ({})", id, editorId ? editorId : "", a_why);
-			} else if (g_testModifierForm) {
-				RemoveModifier(g_testModifierForm);
-				REX::INFO("Modifier test: removed {:08X} ({})", g_testModifierForm->formID, a_why);
-				g_testModifierForm = nullptr;
 			}
-			g_testModifierOn = a_on;
-		}
-
-		void SetConversationBlur(bool a_off, const char* a_why)
-		{
-			if (a_off == g_blurOff) {
-				return;
-			}
-			g_blurOff = a_off;
-			for (const auto& space : g_blurSpaces) {
-				const float value = a_off ? 0.0f : space.strength;
-				std::uint8_t* where = reinterpret_cast<std::uint8_t*>(space.form + kImageSpaceDof + 0x0C);
-				SafeWrite(where, &value, sizeof(value));
-			}
-			static int logged = 0;
-			if (logged++ < 60) {
-				REX::INFO("Blur experiment: depth of field {} ({}; {} image spaces)", a_off ? "off" : "back on", a_why, g_blurSpaces.size());
-			}
+			g_blurRecordsChanged = false;
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:
@@ -3052,159 +2478,6 @@ namespace CCC
 				if (!closeUp) {
 					ShowHudMessage(std::format("{} (#{})", g_emotionMessage, g_emotionCount));
 				}
-			}
-		}
-
-		// ---- Depth of field (0.4.7 diagnostic) ------------------------------------------------
-		// Outdoors the conversation's depth of field focuses on the listener. The game most
-		// likely focuses at the distance from its own camera to whoever it is aimed at, while
-		// the picture is drawn from our camera further back. Look for the game's depth-of-field
-		// effect object (found by its type) near the camera, and log its values over time.
-		std::uintptr_t DofVtable()
-		{
-			static const std::uintptr_t vtable = [] {
-				try {
-					return RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address();
-				} catch (...) {
-					return std::uintptr_t{ 0 };
-				}
-			}();
-			return vtable;
-		}
-
-		struct DofHit
-		{
-			std::uintptr_t address;
-			std::string    path;
-		};
-		std::vector<DofHit> g_dofHits;
-		int                 g_dofConversation = -1;
-		int                 g_dofSamples = 0;
-		std::chrono::steady_clock::time_point g_dofNext{};
-
-		[[maybe_unused]] void FindDofObjects()
-		{
-			g_dofHits.clear();
-			const auto vtable = DofVtable();
-			if (!vtable) {
-				REX::INFO("Depth of field: the effect's type isn't in the address library");
-				return;
-			}
-			struct Node
-			{
-				std::uintptr_t address;
-				std::string    path;
-				int            depth;
-			};
-			std::vector<Node>                  queue;
-			std::unordered_set<std::uintptr_t> seen;
-			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(camera), "PlayerCamera", 0 });
-			}
-			if (g_dialogueStateObject) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(g_dialogueStateObject), "dialogue camera", 0 });
-			}
-			if (auto* render = Camera::RenderCameraObject()) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(render), "render camera", 0 });
-			}
-			if (auto* player = RE::PlayerCharacter::GetSingleton()) {
-				queue.push_back({ reinterpret_cast<std::uintptr_t>(player), "player", 1 });
-			}
-			std::size_t visited = 0;
-			for (std::size_t i = 0; i < queue.size() && visited < 15000 && g_dofHits.size() < 12; ++i) {
-				const Node node = queue[i];
-				if (!seen.insert(node.address).second) {
-					continue;
-				}
-				++visited;
-				std::array<std::uint64_t, 64> words{};
-				if (!SafeCopy(words.data(), reinterpret_cast<const void*>(node.address), sizeof(words))) {
-					continue;
-				}
-				for (std::size_t k = 0; k < words.size(); ++k) {
-					const auto w = words[k];
-					if (w == vtable) {
-						g_dofHits.push_back({ node.address + k * 8, std::format("{}+{:X}", node.path, k * 8) });
-					} else if (node.depth < 3 && w > 0x10000 && w < 0x7FFFFFFFFFFF && (w & 7) == 0 && queue.size() < 60000) {
-						queue.push_back({ static_cast<std::uintptr_t>(w), std::format("{}+{:X}", node.path, k * 8), node.depth + 1 });
-					}
-				}
-			}
-			REX::INFO("Depth of field: searched {} objects near the camera; {} depth-of-field effect objects found", visited, g_dofHits.size());
-			for (const auto& hit : g_dofHits) {
-				REX::INFO("Depth of field:   {:#x} at {}", hit.address, hit.path);
-			}
-		}
-
-		[[maybe_unused]] void LogDofSample()
-		{
-			auto* camera = RE::PlayerCamera::GetSingleton();
-			auto* speaker = Speaker();
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!camera || !speaker || !player) {
-				return;
-			}
-			const auto root = Camera::PoseOf(camera->cameraRoot.get());
-			const auto npc = Camera::HeadPosition(speaker);
-			const auto you = Camera::HeadPosition(player);
-			auto*      render = static_cast<RE::NiAVObject*>(Camera::RenderCameraObject());
-			auto dist = [](const RE::NiPoint3& a, const std::optional<RE::NiPoint3>& b) {
-				if (!b) {
-					return -1.0f;
-				}
-				const float dx = a.x - b->x, dy = a.y - b->y, dz = a.z - b->z;
-				return std::sqrt(dx * dx + dy * dy + dz * dz);
-			};
-			REX::INFO("Depth of field sample {}: {} talking; game camera to speaker {:.2f} m, to you {:.2f} m; picture to speaker {:.2f} m, to you {:.2f} m",
-				g_dofSamples, speaker->IsTalking() ? "they're" : "you're (or nobody)",
-				root ? dist(root->position, npc) : -1.0f, root ? dist(root->position, you) : -1.0f,
-				render ? dist(render->world.translate, npc) : -1.0f, render ? dist(render->world.translate, you) : -1.0f);
-			// Where the game keeps its focus distance: a value equal to the distance from its
-			// camera to the speaker (or to you, on your lines) that follows it between samples.
-			if (root) {
-				const float toSpeaker = dist(root->position, npc);
-				const float toYou = speaker->IsTalking() ? -1.0f : dist(root->position, you);
-				LogNearValues("dialogue camera", g_dialogueStateObject, 0x600, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
-				LogNearValues("PlayerCamera", camera, 0x800, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
-				LogNearValues("render camera", render, 0x500, toSpeaker, toYou > 0.5f ? toYou : -1.0f);
-			}
-			int n = 0;
-			for (const auto& hit : g_dofHits) {
-				if (++n > 4) {
-					break;
-				}
-				std::array<float, 40> values{};
-				if (!SafeCopy(values.data(), reinterpret_cast<const void*>(hit.address), sizeof(values))) {
-					REX::INFO("Depth of field:   {} gone", hit.path);
-					continue;
-				}
-				std::string text;
-				for (std::size_t k = 2; k < values.size(); ++k) {  // skip the type pointer
-					const float v = values[k];
-					text += std::isfinite(v) && std::abs(v) > 1e-4f && std::abs(v) < 1e6f ? std::format(" +{:X}={:.3f}", k * 4, v) : "";
-				}
-				REX::INFO("Depth of field:   {}:{}", hit.path, text);
-			}
-		}
-
-		[[maybe_unused]] void DofDiagnostics(std::chrono::steady_clock::time_point a_now)
-		{
-			if (!g_state.active) {
-				return;
-			}
-			if (g_dofConversation != g_conversationNumber) {
-				if (g_state.framesThisConversation < 30) {
-					return;  // let the conversation settle first
-				}
-				g_dofConversation = g_conversationNumber;
-				g_dofSamples = 0;
-				g_dofHits.clear();  // the effect-object search (0.4.7-0.4.10) never found one; retired
-				g_dofNext = a_now;
-			}
-			if (a_now >= g_dofNext && g_dofSamples < 12) {
-				g_dofNext = a_now + 1500ms;
-				++g_dofSamples;
-				LogDofSample();
 			}
 		}
 
@@ -3325,137 +2598,30 @@ namespace CCC
 					PostEmotionMessage(now);
 					wasTalking = talking;
 				}
-				// Focus test and timing check on the main thread (0.4.20): is the game camera still
-				// where the hook left it by now (if the game puts it back after our hook, the
-				// focus is worked out before we move it)? Methods 5 and 6 move it here instead.
+				// Focus on the person in shot (0.5.0). The conversation blur reads its settings live
+				// from the game's Dialogue_Close/Medium/Long_DOF records; set their focus distance
+				// to the distance from the camera to the person in shot, every shot, and put them
+				// back afterwards (and in quest scenes, where the game's own camera is used).
 				{
-					static int         conversation = -1, checks = 0;
-					static const char* lastShot = nullptr;
-					auto*              cameraNow = RE::PlayerCamera::GetSingleton();
-					auto*              rootNow = cameraNow ? cameraNow->cameraRoot.get() : nullptr;
-					const auto&        st = Settings::Get();
-					if (g_state.active && !g_state.handedBack && rootNow && g_state.rootAfterHook && g_state.focusNpcHead) {
-						if (conversation != g_conversationNumber) {
-							conversation = g_conversationNumber;
-							checks = 0;
-							lastShot = nullptr;
-						}
-						const char* shot = Director::Current();
-						if (st.debugLog && checks < 6 && g_conversationNumber <= 8 && shot != lastShot) {
-							lastShot = shot;
-							++checks;
-							const auto& a = *g_state.rootAfterHook;
-							const auto& l = rootNow->local.translate;
-							const auto& w = rootNow->world.translate;
-							auto        dist = [](const RE::NiPoint3& p, const RE::NiPoint3& q) {
-                                const float dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z;
-                                return std::sqrt(dx * dx + dy * dy + dz * dz);
-							};
-							REX::INFO("Timing check (shot {}): main thread sees the game camera {:.2f} m (local) / {:.2f} m (world) from where the hook left it; {:.2f} m from the speaker",
-								shot, dist(l, a), dist(w, a), dist(l, *g_state.focusNpcHead));
-						}
-						if ((st.focusMethod == 5 || st.focusMethod == 6) && g_state.focusWanted > 0.0f) {
-							const auto previous = Camera::SetRootDistance(rootNow, *g_state.focusNpcHead, g_state.focusWanted, st.focusMethod == 5, true);
-							if (previous) {
-								g_state.rootBeforeFocus = previous;
-							}
-							if (previous && !g_state.focusLogged && st.debugLog) {
-								g_state.focusLogged = true;
-								REX::INFO("Focus (method {}): game camera moved on the main thread to {:.2f} m from the speaker", st.focusMethod, g_state.focusWanted);
-							}
-						}
-					}
-				}
-				// Diagnostic (0.4.18): the live conversation blur, a few times per conversation:
-				// shortly after it starts, then at each new shot, for the first conversations.
-				{
-					static int         conversation = -1, logged = 0;
-					static const char* lastShot = nullptr;
-					static std::chrono::steady_clock::time_point started{};
-					if (g_state.active && Settings::Get().debugLog && !g_state.handedBack && g_conversationNumber <= 8) {
-						if (conversation != g_conversationNumber) {
-							conversation = g_conversationNumber;
-							logged = 0;
-							lastShot = nullptr;
-							started = now;
-						}
-						const char* shot = Director::Current();
-						if (logged < 8 && now - started > 500ms && shot != lastShot) {
-							lastShot = shot;
-							++logged;
-							LogLiveBlur(std::format("conversation {}, shot {}", g_conversationNumber, shot).c_str());
-						}
-					}
-				}
-
-				// Diagnostic: where the game keeps the conversation's depth of field.
-				// Depth-of-field experiment through the game's image spaces (0.4.12).
-				{
-					const auto& st = Settings::Get();
-					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
-					if (live && !g_blurListed && (st.blurExperiment != 0 || st.debugLog)) {
-						ListBlurImageSpaces();
-					}
-					if (live && st.blurExperiment != 0) {
-						const float d = g_shotDistance.load(std::memory_order_relaxed);
-						bool        off = g_blurOff;
-						if (st.blurExperiment == 1) {
-							off = true;
-						} else if (d > st.noBlurBeyond + 0.15f) {
-							off = true;
-						} else if (d < st.noBlurBeyond - 0.15f) {
-							off = false;
-						}
-						SetConversationBlur(off, st.blurExperiment == 1 ? "whole conversation" : std::format("shot {:.1f} m from the person in shot", d).c_str());
-					} else if (g_blurOff) {
-						SetConversationBlur(false, "conversation over");
-					}
-				}
-				// Conversation blur test (0.4.22).
-				{
-					const auto& st = Settings::Get();
-					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
+					const auto&  st = Settings::Get();
+					const bool   live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
 					static float lastDistance = -1.0f;
-					static int   lastMode = 0;
-					if (live && st.dialogueBlurTest != 0 && ReadBlurRecords()) {
+					if (live && st.focusOnSubject && ReadBlurRecords()) {
 						const float d = g_shotDistance.load(std::memory_order_relaxed);
-						WriteBlurRecords(st.dialogueBlurTest, d, st.noBlurBeyond);
-						if (st.dialogueBlurTest != lastMode || std::abs(d - lastDistance) > 0.25f) {
-							lastMode = st.dialogueBlurTest;
+						WriteBlurRecords(d, st.deepFocusLongShots, st.deepFocusBeyond);
+						if (st.debugLog && std::abs(d - lastDistance) > 0.25f) {
 							lastDistance = d;
 							static int logged = 0;
-							if (logged++ < 80) {
-								REX::INFO("Conversation blur test {}: shot {:.2f} m from the person in shot; records {}", st.dialogueBlurTest, d,
-									st.dialogueBlurTest == 1 ? "set to no blur" :
-									st.dialogueBlurTest == 2 ? "focused at the shot's distance" :
-									d > st.noBlurBeyond     ? "given a deep sharp zone" :
-									                          "as the game has them");
+							if (logged++ < 60) {
+								REX::INFO("Focus: {:.2f} m (the person in shot){}", d, st.deepFocusLongShots && d > st.deepFocusBeyond ? ", deep sharp zone" : "");
 							}
 						}
 					} else if (g_blurRecordsChanged) {
-						WriteBlurRecords(0, 0.0f, 0.0f);
-						lastMode = 0;
+						PutBackBlurRecords();
 						lastDistance = -1.0f;
-						REX::INFO("Conversation blur test: records put back");
-					}
-				}
-				// Image-space modifier test (0.4.14).
-				{
-					const auto& st = Settings::Get();
-					const bool  live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
-					if (live && st.testModifier != 0) {
-						const float d = g_shotDistance.load(std::memory_order_relaxed);
-						bool        on = g_testModifierOn;
-						if (st.testModifierMode == 1) {
-							on = true;
-						} else if (d > st.noBlurBeyond + 0.15f) {
-							on = true;
-						} else if (d < st.noBlurBeyond - 0.15f) {
-							on = false;
+						if (st.debugLog) {
+							REX::INFO("Focus: the game's conversation blur settings put back");
 						}
-						SetTestModifier(on, st.testModifierMode == 1 ? "whole conversation" : std::format("shot {:.1f} m from the person in shot", d).c_str());
-					} else if (g_testModifierOn) {
-						SetTestModifier(false, "conversation over");
 					}
 				}
 
@@ -3595,7 +2761,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.22 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.5.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

@@ -4,6 +4,30 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.5.0 - 2026-11-13
+
+The focus milestone: the person in shot is sharp at any camera distance.
+
+### Added
+- **Focus on the person in shot** (`bFocusOnSubject`, on by default). The game's conversation
+  blur reads its settings live from its Dialogue_Close, Medium and Long_DOF records; on every
+  shot their focus distance is set to the distance from the camera to whoever is in shot, and
+  put back afterwards. Not used in quest scenes, where the game's own camera runs.
+- Optional deeper sharp zone on long shots (`bDeepFocusLongShots`, `fDeepFocusBeyond`), for a
+  softer background blur.
+
+### Changed
+- 40% of emotion close-ups are extreme close-ups (was 50%).
+- Steadier following while the speaker walks (from 0.4.20-0.4.21) and the emotion messages in
+  `[Debug]` are part of this release.
+
+### Removed
+- The experiments that led here: moving the game's camera for focus (`iFocusMethod`), the
+  image-space blur experiment (`iBlurExperiment`), applying modifiers by hand
+  (`sTestModifier`), the conversation blur test (`iDialogueBlurTest`, now the feature), the
+  searches for the live blur and the record dumps. Their INI lines are gone; old INIs that
+  still have them are harmless.
+
 ## 0.4.22 - 2026-11-13
 
 ### Added

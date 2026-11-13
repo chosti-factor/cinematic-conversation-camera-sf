@@ -12,7 +12,7 @@ dialogue camera builds on **Player Camera During Dialogue** by **rrrafau**
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.4.x)
+## Status: alpha (0.5.x)
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -33,6 +33,15 @@ Working:
   own camera), seated characters, and small speakers (robots), which keep the game's
   own camera. Quest scenes you take part in (someone walks up and starts talking,
   several people taking turns) keep the game's own camera.
+- **Focus on the person in shot:** the game's conversation blur is refocused on every
+  shot onto whoever is in it, so they're sharp and the background stays softly blurred,
+  even on longer outdoor shots (`bFocusOnSubject`). Optionally a deeper sharp zone on long
+  shots (`bDeepFocusLongShots`).
+- **Emotion close-ups:** lines the game tags with heightened or emotional expressions
+  (Irritated, Surprised, Somber, Nervous, Awed and others, `sCloseUpEmotions`) push in to a
+  close-up of the speaker, 40% of them extreme close-ups, as CCC does with lines Skyrim's
+  writers marked as intense. The expression of each line can be shown on screen while
+  testing (`bShowEmotions`).
 - **Seated people and merchants** get the plain over-the-shoulder shot instead of the
   shot library, whose angles often put the chair, the shop counter or the clutter around
   it in front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are
@@ -45,24 +54,15 @@ Differences from CCC, because of Starfield:
   camera stays within 3 m of the person it frames indoors and 5 m outdoors; shots that
   would need more room come out tighter, and the two-person and room shots are mostly
   unavailable.
-- Extreme close-ups are rarer: CCC reserves them for intense lines, which this mod can't
-  read yet.
+- Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
+  close-ups are chosen from the line's expression tag instead.
 - There's no in-game settings menu; everything is in the INI.
 
 Planned, roughly in order:
 
-- Depth of field on the person in shot. Outdoors the game's conversation blur focuses
-  about 2 m from the camera, set when the conversation starts, so on longer shots the
-  near person can be sharp and the speaker soft. Ruled out so far (0.4.8-0.4.19): moving
-  the game's camera, the image-space records, applying the game's dialogue blur
-  modifiers (they focus on a target given when started), and a search for the running
-  blur from the image-space manager and the cameras. Next: tracing the code that starts
-  the conversation blur.
-- Emotion close-ups, tuned: 0.4.14 pushes in on lines with heightened or emotional
-  expressions, such as Irritated, Surprised, Somber, Nervous or Awed
-  (`sCloseUpEmotions`), seated people and merchants included; the list will be
-  narrowed from testing.
-- Wall and obstacle detection, which also unlocks the longer and room shots.
+- Emotion close-ups, tuned from testing (which expressions push in, and how often).
+- Wall and obstacle detection, which also unlocks the longer and room shots (now that
+  focus works at any distance).
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.
 - Polish for unusual setups: talking to a seated person from the side (about 90 degrees)

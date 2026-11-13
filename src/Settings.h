@@ -143,7 +143,7 @@ namespace CCC
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
 		bool        emotionCloseUps{ true };
-		int         extremeCloseUpChance{ 50 };  // % of emotion close-ups that are extreme close-ups
+		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
 		std::string closeUpEmotions{ "Angry,Irritated,Annoyed,Surprised,Fearful,Scared,Disgusted,Somber,Sad,Nervous,Worried,Concerned,Awed,Apologetic,Disgust,Serious,Confused" };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
@@ -156,27 +156,12 @@ namespace CCC
 		// or without a head bone (small robots).
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
-		bool  focusOnSubject{ false };
-		// Focus test (0.4.17): how the game camera is moved to put the focus on the person in
-		// shot. 0 = off; 1 = as 0.4.8 (position moved before the shot is placed, both copies);
-		// 2 = only its world position, after the shot is placed; 3 = only its local position,
-		// after; 4 = both, after (the shot placed against where the game put its camera).
-		std::int32_t focusMethod{ 0 };
-		// Conversation blur test (0.4.22): change the game's Dialogue_Close/Medium/Long_DOF records
-		// while a conversation runs (restored afterwards). 0 = off; 1 = blur strength 0;
-		// 2 = focus distance = the shot's distance; 3 = deeper sharp zone on shots further than
-		// fNoBlurBeyond.
-		std::int32_t dialogueBlurTest{ 0 };
-		// Depth-of-field experiment (0.4.12): the game's image spaces carry the blur settings.
-		// 0 = leave them, 1 = no blur during conversations, 2 = no blur only on shots where
-		// the camera is further than fNoBlurBeyond metres from the person in shot.
-		std::int32_t blurExperiment{ 0 };
-		float        noBlurBeyond{ 3.5f };
-		// Image-space modifier test (0.4.14): a modifier's form ID (from the log's list) to
-		// apply with the game's own function, as the console's imod and Starvegas do.
-		// 0 = off. Mode 1 = the whole conversation, 2 = only the longer shots (fNoBlurBeyond).
-		std::uint32_t testModifier{ 0 };
-		std::int32_t  testModifierMode{ 1 };
+		// Focus on the person in shot (0.5.0): the game's conversation blur is focused at the
+		// distance from the camera to whoever is in shot. Optionally a much deeper sharp zone
+		// on shots further than deepFocusBeyond (softer background blur).
+		bool  focusOnSubject{ true };
+		bool  deepFocusLongShots{ false };
+		float deepFocusBeyond{ 3.5f };
 
 		static Settings& Get();
 		void             Load();
