@@ -94,6 +94,19 @@ namespace CCC::Camera
 		return Shot(a_nearHead, a_farHead, s.distanceBehind, s.sideOffset, s.heightOffset);
 	}
 
+	void PullIn(Pose& a_pose, const RE::NiPoint3& a_subject, float a_limit)
+	{
+		const RE::NiPoint3 d{ a_pose.position.x - a_subject.x, a_pose.position.y - a_subject.y, a_pose.position.z - a_subject.z };
+		const float        length = std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
+		if (!std::isfinite(a_limit) || a_limit <= 0.0f || length <= a_limit || length < 1e-3f) {
+			return;
+		}
+		const float        k = a_limit / length;
+		const RE::NiPoint3 moved{ a_subject.x + d.x * k, a_subject.y + d.y * k, a_subject.z + d.z * k };
+		a_pose.lookAt = { a_pose.lookAt.x + moved.x - a_pose.position.x, a_pose.lookAt.y + moved.y - a_pose.position.y, a_pose.lookAt.z + moved.z - a_pose.position.z };
+		a_pose.position = moved;
+	}
+
 	namespace
 	{
 		// How the camera's facing, up and side directions are stored in its rotation

@@ -4,6 +4,31 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.5.3 - 2026-11-13
+
+### Added
+- Obstacle detection, step 3: before the camera cuts to a shot, the game's own collision check
+  tests the line from the person in shot to where the camera would stand (and to where its
+  move ends).
+  - A wall or object close behind the camera pulls the camera in to just in front of it, when
+    that keeps at least 70% of the distance (and, over a shoulder, keeps the camera behind
+    that shoulder).
+  - Anything closer to the person in shot (a ladder in front of their face) skips the shot;
+    the Director picks another. Emotion close-ups are checked the same way.
+  - The near person's own body in an over-the-shoulder shot doesn't count: the check carries
+    on past them.
+  - If the plain over-the-shoulder shot is blocked too, the camera shoots from just in front
+    of the other person's eyes instead.
+  - `bObstacleCheck` (on) and `fObstacleRadius` (0.05 m, as the game's own dialogue camera)
+    in `[Director]`. The log lists skipped and pulled-in shots.
+
+### Fixed
+- The 0.5.2 obstacle log measured the wrong lengths: the game's cast moves the end point it's
+  given back to the safe spot, so it now gets copies.
+
+### Removed
+- The 0.5.1 search for the game's camera-collision code (done).
+
 ## 0.5.2 - 2026-11-13
 
 ### Changed

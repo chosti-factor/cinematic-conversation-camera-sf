@@ -137,6 +137,8 @@ namespace CCC
 		float       shortestHold{ 2.0f };      // never change angle sooner than this
 		float       maxCameraDistance{ 3.0f }; // metres from the person framed, indoors
 		float       maxCameraDistanceExterior{ 7.0f };
+		bool        obstacleCheck{ true };       // skip or pull in shots the game's collision says are blocked
+		float       obstacleRadius{ 0.05f };     // width of the check (the game's own dialogue camera uses 0.05)
 		bool        true180{ false };
 		bool        cameraMoves{ true };
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is

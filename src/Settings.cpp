@@ -148,6 +148,8 @@ namespace CCC
 			a_s.shortestHold = std::clamp(ReadFloat(a_path, L"Director", L"fShortestHold", a_s.shortestHold), 0.3f, 9.0f);
 			a_s.maxCameraDistance = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistance", a_s.maxCameraDistance), 1.0f, 15.0f);
 			a_s.maxCameraDistanceExterior = std::clamp(ReadFloat(a_path, L"Director", L"fMaxCameraDistanceExterior", a_s.maxCameraDistanceExterior), 1.0f, 15.0f);
+			a_s.obstacleCheck = ReadInt(a_path, L"Director", L"bObstacleCheck", a_s.obstacleCheck ? 1 : 0) != 0;
+			a_s.obstacleRadius = std::clamp(ReadFloat(a_path, L"Director", L"fObstacleRadius", a_s.obstacleRadius), 0.01f, 0.3f);
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
 			a_s.emotionCloseUps = ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps ? 1 : 0) != 0;
 			a_s.closeUpEmotions = ReadString(a_path, L"Director", L"sCloseUpEmotions", a_s.closeUpEmotions);

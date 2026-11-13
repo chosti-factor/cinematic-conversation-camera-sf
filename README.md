@@ -46,6 +46,10 @@ Working:
   shot library, whose angles often put the chair, the shop counter or the clutter around
   it in front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are
   recognised by the game's vendor flag on their faction, wherever the shop is.
+- **Obstacle detection:** before each cut, the game's own camera collision test checks the
+  line from the person in shot to the camera. A wall behind the camera pulls it in; a
+  ladder or pillar in front of the person skips the shot for another angle
+  (`bObstacleCheck`).
 
 Differences from CCC, because of Starfield:
 
@@ -60,10 +64,9 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Wall and obstacle detection: shots that would have a wall, pillar or object in the way are
-  skipped, which also allows longer outdoor shots and CCC's room shots (Wide, Master,
-  Distant). In progress: 0.5.2 checks every shot with the game's own camera collision test
-  and logs the result.
+- Wall and obstacle detection, next steps: longer outdoor shots and CCC's room shots (Wide,
+  Master, Distant), measured with the same collision test. Blocked shots are already
+  skipped or pulled in (0.5.3).
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.
 - Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
