@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.4.18 - 2026-11-12
+
+### Changed
+- The image-space blur experiment is off by default (`iBlurExperiment=0`): it only reached
+  the distant-haze settings, not the conversation blur. `iFocusMethod` stays off by
+  default: none of its four ways of moving the game's camera moved the focus.
+
+### Diagnostic
+- Finds the game's live conversation blur (the running copy of Dialogue_Close, Medium or
+  Long_DOF) and logs what it holds, a few times per conversation. Read-only.
+
 ## 0.4.17 - 2026-11-12
 
 ### Added

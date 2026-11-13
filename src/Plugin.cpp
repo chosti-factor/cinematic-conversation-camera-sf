@@ -2479,6 +2479,134 @@ namespace CCC
 			ListModifiers(data);
 		}
 
+		// ---- The live conversation blur (0.4.18 diagnostic) --------------------------------
+		// When a conversation starts, the game starts one of its Dialogue_Close/Medium/Long_DOF
+		// image-space modifiers, which keeps a live copy (an ImageSpaceModifierInstanceForm) in
+		// the image-space manager. Find that copy and log what it holds, to learn where its
+		// focus is kept. Read-only: nothing is written or called.
+		std::size_t FindQwordInRange(std::uintptr_t a_begin, std::uintptr_t a_end, std::uint64_t a_value, std::uintptr_t* a_out, std::size_t a_max)
+		{
+			std::size_t n = 0;
+			__try {
+				for (auto p = a_begin; p + 8 <= a_end && n < a_max; p += 8) {
+					if (*reinterpret_cast<const std::uint64_t*>(p) == a_value) {
+						a_out[n++] = p;
+					}
+				}
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+			}
+			return n;
+		}
+
+		std::vector<std::pair<std::uintptr_t, std::uintptr_t>> WritableSections()
+		{
+			std::vector<std::pair<std::uintptr_t, std::uintptr_t>> out;
+			const auto base = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
+			const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+			const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS64*>(base + dos->e_lfanew);
+			const auto* section = IMAGE_FIRST_SECTION(nt);
+			for (WORD i = 0; i < nt->FileHeader.NumberOfSections; ++i) {
+				if (section[i].Characteristics & IMAGE_SCN_MEM_WRITE) {
+					const auto start = base + section[i].VirtualAddress;
+					out.emplace_back(start, start + (std::max)(section[i].Misc.VirtualSize, section[i].SizeOfRawData));
+				}
+			}
+			return out;
+		}
+
+		void LogLiveBlur(const char* a_when)
+		{
+			static std::uintptr_t manager = 0;
+			static bool           searched = false;
+			static std::uintptr_t agentVt = 0, formVt = 0, dofVt = 0, baseVt = 0;
+			const auto            exe = reinterpret_cast<std::uintptr_t>(::GetModuleHandleW(nullptr));
+			if (!searched) {
+				searched = true;
+				agentVt = RE::VTABLE::ImageSpaceManagerAgent[0].address();
+				formVt = RE::VTABLE::ImageSpaceModifierInstanceForm[0].address();
+				dofVt = RE::VTABLE::ImageSpaceModifierInstanceDOF[0].address();
+				baseVt = RE::VTABLE::ImageSpaceModifierInstance[0].address();
+				std::array<std::uintptr_t, 8> hits{};
+				std::size_t                   found = 0;
+				for (const auto& [begin, end] : WritableSections()) {
+					found += FindQwordInRange(begin, end, agentVt, hits.data() + found, hits.size() - found);
+				}
+				std::string where;
+				for (std::size_t i = 0; i < found; ++i) {
+					where += std::format(" Starfield.exe+{:X}", hits[i] - exe);
+				}
+				manager = found ? hits[0] : 0;
+				REX::INFO("Live blur: image-space manager {} ({} found:{})", manager ? "found" : "not found", found, where);
+			}
+			if (!manager) {
+				return;
+			}
+			// The dialogue blur records, to recognise their live copies.
+			std::array<std::pair<std::uintptr_t, const char*>, 4> dialogue{ {
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A27)), "Dialogue_Close_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10A4C)), "Dialogue_Medium_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x10E34)), "Dialogue_Long_DOF" },
+				{ reinterpret_cast<std::uintptr_t>(RE::TESForm::LookupByID(0x1928B)), "DialogueImod" },
+			} };
+			auto typeName = [&](std::uintptr_t a_vt) -> const char* {
+				return a_vt == formVt ? "form" : a_vt == dofVt ? "DOF" : a_vt == baseVt ? "base" : nullptr;
+			};
+			std::array<std::uint64_t, 0x800> words{};  // 16 KB of the manager
+			if (!SafeCopy(words.data(), reinterpret_cast<const void*>(manager), sizeof(words))) {
+				REX::INFO("Live blur ({}): manager unreadable", a_when);
+				return;
+			}
+			std::unordered_set<std::uintptr_t> seen;
+			int                                instances = 0, dumped = 0;
+			auto inspect = [&](std::uintptr_t a_obj, const std::string& a_path) {
+				if (a_obj < 0x10000 || a_obj > 0x7FFFFFFFFFFF || !seen.insert(a_obj).second) {
+					return;
+				}
+				std::uintptr_t vt = 0;
+				if (!SafeCopy(&vt, reinterpret_cast<const void*>(a_obj), sizeof(vt))) {
+					return;
+				}
+				const char* kind = typeName(vt);
+				if (!kind) {
+					return;
+				}
+				++instances;
+				std::array<std::uint64_t, 0x30> body{};
+				SafeCopy(body.data(), reinterpret_cast<const void*>(a_obj), sizeof(body));
+				const char* modifier = nullptr;
+				std::size_t at = 0;
+				for (std::size_t k = 1; k < body.size() && !modifier; ++k) {
+					for (const auto& [form, name] : dialogue) {
+						if (form && body[k] == form) {
+							modifier = name;
+							at = k * 8;
+						}
+					}
+				}
+				REX::INFO("Live blur ({}): {} instance at {} {}", a_when, kind, a_path, modifier ? std::format("of {} (at +{:X})", modifier, at) : std::string{ "(other modifier)" });
+				if ((modifier || std::string_view{ kind } == "DOF") && dumped < 4) {
+					++dumped;
+					DumpObject(std::format("live blur {} {}", kind, modifier ? modifier : "").c_str(), reinterpret_cast<const void*>(a_obj), 0x180);
+				}
+			};
+			for (std::size_t k = 0; k + 1 < words.size(); ++k) {
+				inspect(static_cast<std::uintptr_t>(words[k]), std::format("manager+{:X}", k * 8));
+				// Arrays: 32-bit size and capacity, then the data pointer.
+				const auto size = static_cast<std::uint32_t>(words[k] & 0xFFFFFFFF), capacity = static_cast<std::uint32_t>(words[k] >> 32);
+				const auto data = static_cast<std::uintptr_t>(words[k + 1]);
+				if (size > 0 && size <= 256 && size <= capacity && capacity <= 4096 && data > 0x10000 && data < 0x7FFFFFFFFFFF) {
+					std::array<std::uint64_t, 256> items{};
+					if (SafeCopy(items.data(), reinterpret_cast<const void*>(data), size * 8)) {
+						for (std::uint32_t i = 0; i < size; ++i) {
+							inspect(static_cast<std::uintptr_t>(items[i]), std::format("manager+{:X}[{}]", k * 8, i));
+						}
+					}
+				}
+			}
+			const float d = g_shotDistance.load(std::memory_order_relaxed);
+			REX::INFO("Live blur ({}): {} modifier instances found; shot {:.2f} m from the person in shot", a_when, instances, d);
+		}
+
 		// ---- Image-space modifier test (0.4.14) -----------------------------------------
 		// The game's own apply/remove for image-space modifiers: the Papyrus natives behind
 		// ImageSpaceModifier.Apply() and .Remove() (Address Library IDs 171562 and 105038, from
@@ -2921,6 +3049,27 @@ namespace CCC
 					PostEmotionMessage(now);
 					wasTalking = talking;
 				}
+				// Diagnostic (0.4.18): the live conversation blur, a few times per conversation:
+				// shortly after it starts, then at each new shot, for the first conversations.
+				{
+					static int         conversation = -1, logged = 0;
+					static const char* lastShot = nullptr;
+					static std::chrono::steady_clock::time_point started{};
+					if (g_state.active && Settings::Get().debugLog && !g_state.handedBack && g_conversationNumber <= 8) {
+						if (conversation != g_conversationNumber) {
+							conversation = g_conversationNumber;
+							logged = 0;
+							lastShot = nullptr;
+							started = now;
+						}
+						const char* shot = Director::Current();
+						if (logged < 8 && now - started > 500ms && shot != lastShot) {
+							lastShot = shot;
+							++logged;
+							LogLiveBlur(std::format("conversation {}, shot {}", g_conversationNumber, shot).c_str());
+						}
+					}
+				}
 
 				// Diagnostic: where the game keeps the conversation's depth of field.
 				// Depth-of-field experiment through the game's image spaces (0.4.12).
@@ -3101,7 +3250,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.17 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.18 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
