@@ -53,8 +53,9 @@ Planned, roughly in order:
   camera, so on longer shots the near person can be sharp and the speaker soft. The
   0.4.8 attempt (moving the game's camera) shifted angled shots and is off. 0.4.12
   tests switching the blur off on the longer shots only (`iBlurExperiment`).
-- Close-ups driven by each line's emotion (the game's facial-expression tag on each
-  line, such as Friendly, Irritated or Surprised, is now read; 0.4.12 logs it).
+- Emotion close-ups, tuned: 0.4.14 pushes in on lines tagged Angry, Irritated,
+  Surprised, Fearful, Scared or Disgusted (`sCloseUpEmotions`); the list will be
+  adjusted from testing.
 - Wall and obstacle detection, which also unlocks the longer and room shots.
 - Close-ups that follow the face, the 180-degree rule tuned for Starfield.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.

@@ -35,6 +35,7 @@
 #include <array>
 #include <atomic>
 #include <bit>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <chrono>

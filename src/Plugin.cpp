@@ -60,6 +60,8 @@ namespace CCC
 			bool                                  handedBack{ false };       // quest scene: leave it to the game
 			bool                                  plainShots{ false };       // seated speaker or merchant: plain over-the-shoulder shot
 			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
+			bool                                  speakerWasTalking{ false };
+			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
 			std::optional<RE::NiPoint3>           rootBeforeFocus{};          // where the game put its camera before the focus move
 			bool                                  focusLogged{ false };
@@ -820,6 +822,38 @@ namespace CCC
 		std::uint64_t g_hookCalls = 0;
 
 		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
+		std::string LineEmotion(RE::Actor* a_speaker);
+
+		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
+		bool IsCloseUpEmotion(std::string_view a_emotion)
+		{
+			if (a_emotion.empty() || a_emotion == "none") {
+				return false;
+			}
+			auto lower = [](std::string_view a_text) {
+				std::string out;
+				for (const char c : a_text) {
+					if (c != ' ') {
+						out.push_back(static_cast<char>(std::tolower(static_cast<unsigned char>(c))));
+					}
+				}
+				return out;
+			};
+			const auto        wanted = lower(a_emotion);
+			const std::string list = lower(Settings::Get().closeUpEmotions);
+			std::size_t       start = 0;
+			while (start <= list.size()) {
+				const auto end = list.find(',', start);
+				if (list.substr(start, end == std::string::npos ? std::string::npos : end - start) == wanted) {
+					return true;
+				}
+				if (end == std::string::npos) {
+					break;
+				}
+				start = end + 1;
+			}
+			return false;
+		}
 
 		RE::BGSScene* CurrentSceneUnsafe(RE::TESObjectREFR* a_ref)
 		{
@@ -1325,6 +1359,15 @@ namespace CCC
 				frame.npcTalking = speaker->IsTalking();
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
+				// The expression tag of the line the speaker is starting (read once per line).
+				{
+					const bool talkingNow = speaker->IsTalking();
+					if (talkingNow && !g_state.speakerWasTalking) {
+						g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
+					}
+					g_state.speakerWasTalking = talkingNow;
+				}
+				frame.intenseLine = g_state.lineIntense;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				directed = Director::Update(frame, now);
@@ -2517,7 +2560,20 @@ namespace CCC
 			}
 			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
 			const auto  emotion = LineEmotion(a_speaker);
-			REX::INFO("Line emotion: {} for '{}'", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60));
+			const bool  closeUp = Settings::Get().emotionCloseUps && IsCloseUpEmotion(emotion);
+			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
+			// On-screen message (testing aid), through the game's own HUD message event.
+			if (Settings::Get().showEmotions) {
+				static std::unordered_map<std::string, int> seen;
+				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;
+				const int   count = ++seen[key];
+				const char* name = a_speaker->GetDisplayFullName();
+				const auto  text = std::format("{}: {}{} (#{})", name ? name : "Speaker", key, closeUp ? " - close-up" : "", count);
+				if (auto* source = RE::ShowHUDMessageEvent::GetEventSource()) {
+					RE::ShowHUDMessageEvent event{ RE::BSFixedString{ text.c_str() }, RE::BSFixedString{ "" }, false, false };
+					source->Notify(event);
+				}
+			}
 		}
 
 		// ---- Depth of field (0.4.7 diagnostic) ------------------------------------------------
@@ -2782,7 +2838,7 @@ namespace CCC
 				// Diagnostic: the dialogue record of each line the speaker starts.
 				{
 					static bool wasTalking = false;
-					auto*       speaker = g_state.active && Settings::Get().debugLog ? Speaker() : nullptr;
+					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showEmotions) ? Speaker() : nullptr;
 					const bool  talking = speaker && speaker->IsTalking();
 					if (talking && !wasTalking) {
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
