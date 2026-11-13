@@ -153,6 +153,11 @@ namespace CCC
 		float minSpeakerHeight{ 1.0f };
 		bool  gameCameraInScenes{ true };
 		bool  focusOnSubject{ false };
+		// Focus test (0.4.17): how the game camera is moved to put the focus on the person in
+		// shot. 0 = off; 1 = as 0.4.8 (position moved before the shot is placed, both copies);
+		// 2 = only its world position, after the shot is placed; 3 = only its local position,
+		// after; 4 = both, after (the shot placed against where the game put its camera).
+		std::int32_t focusMethod{ 0 };
 		// Depth-of-field experiment (0.4.12): the game's image spaces carry the blur settings.
 		// 0 = leave them, 1 = no blur during conversations, 2 = no blur only on shots where
 		// the camera is further than fNoBlurBeyond metres from the person in shot.

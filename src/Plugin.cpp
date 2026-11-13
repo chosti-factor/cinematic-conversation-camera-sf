@@ -1451,22 +1451,32 @@ namespace CCC
 			// in shot was out of focus and whoever happened to be 2 m from the lens was sharp.
 			// Move the game's camera straight back along the line from the NPC (so the NPC still
 			// faces the same way) until its distance matches the distance to the person in shot.
-			if (s.focusOnSubject && s.cameraTarget == 1 && !waitingView && !pov && !predictedRoot && !startRoot && g_repair.stage == RepairStage::kIdle) {
+			// The focus move, worked out here and applied before or after the shot is placed
+			// depending on iFocusMethod (0.4.17 test).
+			const bool focusAllowed = s.focusMethod != 0 && s.cameraTarget == 1 && !waitingView && !pov && !predictedRoot && !startRoot && g_repair.stage == RepairStage::kIdle;
+			float      focusWanted = 0.0f;
+			if (focusAllowed) {
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float fx = pose->position.x - subjectHead.x, fy = pose->position.y - subjectHead.y, fz = pose->position.z - subjectHead.z;
-				const float focus = std::clamp(std::sqrt(fx * fx + fy * fy + fz * fz), 0.5f, 10.0f);
+				focusWanted = std::clamp(std::sqrt(fx * fx + fy * fy + fz * fz), 0.5f, 10.0f);
+			}
+			auto moveForFocus = [&](bool a_local, bool a_world) {
 				const auto& now3 = root->local.translate;
 				const float gx = now3.x - npcHead->x, gy = now3.y - npcHead->y, gz = now3.z - npcHead->z;
 				const float gameFocus = std::sqrt(gx * gx + gy * gy + gz * gz);
-				if (std::abs(focus - gameFocus) > 0.05f) {
-					if (const auto before = Camera::SetRootDistance(root, *npcHead, focus)) {
-						g_state.rootBeforeFocus = before;
-						if (!g_state.focusLogged && s.debugLog) {
-							g_state.focusLogged = true;
-							REX::INFO("Focus: game camera moved from {:.2f} m to {:.2f} m from the NPC to match the shot", gameFocus, focus);
-						}
+				if (std::abs(focusWanted - gameFocus) <= 0.05f) {
+					return;
+				}
+				if (const auto before = Camera::SetRootDistance(root, *npcHead, focusWanted, a_local, a_world)) {
+					g_state.rootBeforeFocus = before;
+					if (!g_state.focusLogged && s.debugLog) {
+						g_state.focusLogged = true;
+						REX::INFO("Focus (method {}): game camera moved from {:.2f} m to {:.2f} m from the NPC to match the shot", s.focusMethod, gameFocus, focusWanted);
 					}
 				}
+			};
+			if (focusAllowed && s.focusMethod == 1) {
+				moveForFocus(true, true);  // 0.4.8: before the shot is placed
 			}
 
 			// Prefer moving only the rendered view; if the render camera can't be found,
@@ -1478,6 +1488,11 @@ namespace CCC
 			if (!applied) {
 				LogFailure("could not apply pose");
 				return;
+			}
+			if (focusAllowed && s.focusMethod >= 2) {
+				// After the shot is placed: the picture was worked out against where the game
+				// put its camera; only the copy (or copies) the test names are moved.
+				moveForFocus(s.focusMethod != 2, s.focusMethod != 3);
 			}
 			g_state.lastPose = *pose;
 			g_state.lastAppliedFrame = g_state.framesThisConversation;
@@ -3086,7 +3101,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.16 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.17 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

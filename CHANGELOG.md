@@ -4,11 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## Unreleased
+## 0.4.17 - 2026-11-12
+
+### Added
+- Focus test (`iFocusMethod`): four ways of moving the game's camera so its depth of field
+  lands on the person in shot, to find one that doesn't shift the picture as 0.4.8 did.
 
 ### Fixed
 - Crash when `sTestModifier` was set (0.4.16): the direct call to the game's apply function
-  is disabled until a safe route is in place.
+  is disabled. The game's dialogue blur modifiers focus on a target, so applying them by
+  hand isn't the way forward.
 
 ## 0.4.16 - 2026-11-12
 
