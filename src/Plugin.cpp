@@ -63,6 +63,10 @@ namespace CCC
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
+			// For the main-thread focus test and timing check (0.4.20).
+			float                                 focusWanted{ 0.0f };
+			std::optional<RE::NiPoint3>           focusNpcHead{};
+			std::optional<RE::NiPoint3>           rootAfterHook{};          // where our hook left the game camera this frame
 			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
@@ -1581,7 +1585,10 @@ namespace CCC
 				LogFailure("could not apply pose");
 				return;
 			}
-			if (focusAllowed && s.focusMethod >= 2) {
+			g_state.focusWanted = focusAllowed ? focusWanted : 0.0f;
+			g_state.focusNpcHead = *npcHead;
+			g_state.rootAfterHook = root->local.translate;
+			if (focusAllowed && s.focusMethod >= 2 && s.focusMethod <= 4) {
 				// After the shot is placed: the picture was worked out against where the game
 				// put its camera; only the copy (or copies) the test names are moved.
 				moveForFocus(s.focusMethod != 2, s.focusMethod != 3);
@@ -2526,9 +2533,21 @@ namespace CCC
 				}
 				std::string lower = name;
 				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-				if (dumped < 12 && (lower.find("dof") != std::string::npos || lower.find("dialog") != std::string::npos || lower.find("depth") != std::string::npos)) {
+				// 0.4.20: the game's dialogue blurs (focus on a target) against Starvegas's own
+				// (fixed focus, applied per shot) and a few other depth-of-field ones, including
+				// the data their pointers at +0x40 and +0x48 lead to (where the Dialogue ones
+				// differ), to find where the focus distances are kept.
+				const bool wanted = lower.starts_with("dialogue") || lower.find("starvegas") != std::string::npos || lower == "chargen_dof" ||
+				                    lower == "shipdockingdofimod" || lower == "chronomarkdof";
+				if (wanted && dumped < 16) {
 					++dumped;
 					DumpObject(std::format("modifier {:08X} '{}'", id, name).c_str(), reinterpret_cast<const void*>(form), 0x300);
+					for (const std::size_t off : { std::size_t{ 0x40 }, std::size_t{ 0x48 } }) {
+						std::uintptr_t block = 0;
+						if (SafeCopy(&block, reinterpret_cast<const void*>(form + off), sizeof(block)) && block > 0x10000 && block < 0x7FFFFFFFFFFF) {
+							DumpObject(std::format("modifier {:08X} '{}' data at +{:X}", id, name, off).c_str(), reinterpret_cast<const void*>(block), 0x200);
+						}
+					}
 				}
 			}
 			if (!names.empty()) {
@@ -3228,6 +3247,47 @@ namespace CCC
 					}
 					PostEmotionMessage(now);
 					wasTalking = talking;
+				}
+				// Focus test and timing check on the main thread (0.4.20): is the game camera still
+				// where the hook left it by now (if the game puts it back after our hook, the
+				// focus is worked out before we move it)? Methods 5 and 6 move it here instead.
+				{
+					static int         conversation = -1, checks = 0;
+					static const char* lastShot = nullptr;
+					auto*              cameraNow = RE::PlayerCamera::GetSingleton();
+					auto*              rootNow = cameraNow ? cameraNow->cameraRoot.get() : nullptr;
+					const auto&        st = Settings::Get();
+					if (g_state.active && !g_state.handedBack && rootNow && g_state.rootAfterHook && g_state.focusNpcHead) {
+						if (conversation != g_conversationNumber) {
+							conversation = g_conversationNumber;
+							checks = 0;
+							lastShot = nullptr;
+						}
+						const char* shot = Director::Current();
+						if (st.debugLog && checks < 6 && g_conversationNumber <= 8 && shot != lastShot) {
+							lastShot = shot;
+							++checks;
+							const auto& a = *g_state.rootAfterHook;
+							const auto& l = rootNow->local.translate;
+							const auto& w = rootNow->world.translate;
+							auto        dist = [](const RE::NiPoint3& p, const RE::NiPoint3& q) {
+                                const float dx = p.x - q.x, dy = p.y - q.y, dz = p.z - q.z;
+                                return std::sqrt(dx * dx + dy * dy + dz * dz);
+							};
+							REX::INFO("Timing check (shot {}): main thread sees the game camera {:.2f} m (local) / {:.2f} m (world) from where the hook left it; {:.2f} m from the speaker",
+								shot, dist(l, a), dist(w, a), dist(l, *g_state.focusNpcHead));
+						}
+						if ((st.focusMethod == 5 || st.focusMethod == 6) && g_state.focusWanted > 0.0f) {
+							const auto previous = Camera::SetRootDistance(rootNow, *g_state.focusNpcHead, g_state.focusWanted, st.focusMethod == 5, true);
+							if (previous) {
+								g_state.rootBeforeFocus = previous;
+							}
+							if (previous && !g_state.focusLogged && st.debugLog) {
+								g_state.focusLogged = true;
+								REX::INFO("Focus (method {}): game camera moved on the main thread to {:.2f} m from the speaker", st.focusMethod, g_state.focusWanted);
+							}
+						}
+					}
 				}
 				// Diagnostic (0.4.18): the live conversation blur, a few times per conversation:
 				// shortly after it starts, then at each new shot, for the first conversations.

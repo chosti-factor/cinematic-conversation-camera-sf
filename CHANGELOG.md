@@ -11,9 +11,14 @@ test build; "diagnostic" items only add information to the log for testing.
   their head moves faster than `fBusyHeadSpeed` (0.2 m/s), the camera follows with
   `fBusyFollowSmoothing` (1.0 s) of smoothing instead of 0.35 s.
 
+### Added
+- Focus test methods 5 and 6 (`iFocusMethod`): move the game's camera later in the frame, on
+  the main thread, in case the game works out its focus before the hook's move.
+
 ### Diagnostic
-- The live-blur search stays in, but the depth-of-field work is parked: nothing in the image-
-  space manager or the cameras refers to the dialogue blur (0.4.19 log).
+- Timing check: whether the game camera is still where the hook left it later in the frame.
+- The game's dialogue blur modifiers, Starvegas's own and a few other depth-of-field ones are
+  dumped with the data they point to, to find where their focus distances are kept.
 
 ## 0.4.19 - 2026-11-12
 
