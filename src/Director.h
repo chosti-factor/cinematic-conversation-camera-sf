@@ -29,6 +29,10 @@ namespace CCC::Director
 	// line, held until the line ends; nullopt = keep the plain shot.
 	[[nodiscard]] std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, std::chrono::steady_clock::time_point a_now);
 
+	// The last emotion close-up the camera cut to: 1 = close-up, 2 = extreme close-up (0 =
+	// none yet), and when (for the on-screen messages).
+	[[nodiscard]] int LastEmotionCut(std::chrono::steady_clock::time_point& a_when);
+
 	// The setup on screen, for the log.
 	[[nodiscard]] const char* Current();
 }
