@@ -51,10 +51,13 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Depth of field on the person in shot. Outdoors the game focuses about 2 m from the
-  camera, so on longer shots the near person can be sharp and the speaker soft. The
-  0.4.8 attempt (moving the game's camera) shifted angled shots and is off. 0.4.12
-  tests switching the blur off on the longer shots only (`iBlurExperiment`).
+- Depth of field on the person in shot. Outdoors the game's conversation blur focuses
+  about 2 m from the camera, set when the conversation starts, so on longer shots the
+  near person can be sharp and the speaker soft. Ruled out so far (0.4.8-0.4.19): moving
+  the game's camera, the image-space records, applying the game's dialogue blur
+  modifiers (they focus on a target given when started), and a search for the running
+  blur from the image-space manager and the cameras. Next: tracing the code that starts
+  the conversation blur.
 - Emotion close-ups, tuned: 0.4.14 pushes in on lines with heightened or emotional
   expressions, such as Irritated, Surprised, Somber, Nervous or Awed
   (`sCloseUpEmotions`), seated people and merchants included; the list will be

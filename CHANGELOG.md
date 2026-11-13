@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.4.20 - 2026-11-13
+
+### Fixed
+- The picture jittered while the speaker walked (their head bobs with each step). While
+  their head moves faster than `fBusyHeadSpeed` (0.2 m/s), the camera follows with
+  `fBusyFollowSmoothing` (1.0 s) of smoothing instead of 0.35 s.
+
+### Diagnostic
+- The live-blur search stays in, but the depth-of-field work is parked: nothing in the image-
+  space manager or the cameras refers to the dialogue blur (0.4.19 log).
+
 ## 0.4.19 - 2026-11-12
 
 ### Diagnostic
