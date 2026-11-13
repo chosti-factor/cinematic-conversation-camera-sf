@@ -62,6 +62,9 @@ namespace CCC
 			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
+			std::optional<RE::NiPoint3>           lastRawNpcHead{};
+			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
+			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
 			// jitter seen with NPCs posing or working at a crafting table).
 			struct HeadMotion
@@ -1200,7 +1203,32 @@ namespace CCC
 			// shot against idle head bob. Large jumps (teleports, body rebuild) snap.
 			{
 				const float k = 1.0f - std::exp(-(std::clamp(delta, 0.0f, 0.1f)) / (std::max)(s.followSmoothing, 0.001f));
-				auto        follow = [k](std::optional<RE::NiPoint3>& a_state, const RE::NiPoint3& a_raw) {
+				// How fast the speaker's head moves (smoothed over about 0.3 s). Walking makes the
+				// head bob with each step; follow it more steadily then (0.4.20).
+				{
+					const float dt = std::clamp(delta, 0.0f, 0.1f);
+					if (g_state.lastRawNpcHead && dt > 0.0f) {
+						const float mx = npcHead->x - g_state.lastRawNpcHead->x, my = npcHead->y - g_state.lastRawNpcHead->y, mz = npcHead->z - g_state.lastRawNpcHead->z;
+						const float step = std::sqrt(mx * mx + my * my + mz * mz);
+						if (step < 0.5f) {
+							const float a = 1.0f - std::exp(-dt / 0.3f);
+							g_state.npcHeadSpeed += (step / dt - g_state.npcHeadSpeed) * a;
+						}
+					}
+					g_state.lastRawNpcHead = *npcHead;
+					const bool busy = g_state.npcHeadBusy ? g_state.npcHeadSpeed > s.busyHeadSpeed * 0.6f : g_state.npcHeadSpeed > s.busyHeadSpeed;
+					if (busy != g_state.npcHeadBusy) {
+						g_state.npcHeadBusy = busy;
+						if (s.debugLog) {
+							REX::INFO("Speaker's head {} ({:.2f} m/s): following with {:.2f} s of smoothing", busy ? "moving fast" : "settled", g_state.npcHeadSpeed,
+								busy ? s.busyFollowSmoothing : s.followSmoothing);
+						}
+					}
+				}
+				const float kNpc = g_state.npcHeadBusy ?
+				                       1.0f - std::exp(-(std::clamp(delta, 0.0f, 0.1f)) / (std::max)(s.busyFollowSmoothing, 0.001f)) :
+				                       k;
+				auto follow = [](std::optional<RE::NiPoint3>& a_state, const RE::NiPoint3& a_raw, float a_k) {
                     if (!a_state) {
                         a_state = a_raw;
                     } else {
@@ -1208,9 +1236,9 @@ namespace CCC
                         if (dx * dx + dy * dy + dz * dz > 4.0f) {
                             a_state = a_raw;
                         } else {
-                            a_state->x += dx * k;
-                            a_state->y += dy * k;
-                            a_state->z += dz * k;
+                            a_state->x += dx * a_k;
+                            a_state->y += dy * a_k;
+                            a_state->z += dz * a_k;
                         }
                     }
                     return *a_state;
@@ -1231,8 +1259,8 @@ namespace CCC
 					playerHead = feet;
 				}
 				const auto rawNpcHead = *npcHead;
-				npcHead = follow(g_state.smoothNpcHead, *npcHead);
-				playerHead = follow(g_state.smoothPlayerHead, *playerHead);
+				npcHead = follow(g_state.smoothNpcHead, *npcHead, kNpc);
+				playerHead = follow(g_state.smoothPlayerHead, *playerHead, k);
 				// Measurement: how much the speaker's head moves, and how far the smoothed head
 				// the camera follows lags behind it.
 				if (s.debugLog) {
@@ -3402,7 +3430,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.4.19 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.4.20 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
