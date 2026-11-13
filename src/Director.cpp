@@ -58,6 +58,7 @@ namespace CCC::Director
 			Line                      playerLine;
 			std::mt19937              rng{ std::random_device{}() };
 			bool                      loggedEmpty{ false };
+			bool                      intensePending{ false };  // an intense line started; close-up owed
 		} g;
 
 		struct PresetEntry
@@ -205,6 +206,33 @@ namespace CCC::Director
 			return solved.ok && solved.wantedDistance <= g.maxDistance * 2.5f;
 		}
 
+		// Like Usable, but regardless of the preset's weight: the emotion close-ups use the
+		// close-up and extreme close-up even in presets that leave them out (CCC does the same).
+		bool Placeable(ShotType a_type, const Frame& a_frame)
+		{
+			if (!Shots::Neutral(a_type) && Shots::OnNpc(a_type) != a_frame.npcTurn) {
+				return false;
+			}
+			const auto solved = Shots::Solve(a_type, InputFor(a_frame, g.setups[static_cast<std::size_t>(a_type)], 0.0f));
+			return solved.ok && solved.wantedDistance <= g.maxDistance * 2.5f;
+		}
+
+		// The close-up for an intense line: a third of the time the extreme close-up.
+		std::optional<ShotType> IntenseShot(const Frame& a_frame)
+		{
+			const bool extreme = std::uniform_int_distribution<int>{ 1, 3 }(g.rng) == 1;
+			if (extreme && Placeable(ShotType::kExtremeClose, a_frame)) {
+				return ShotType::kExtremeClose;
+			}
+			if (Placeable(ShotType::kCloseUp, a_frame)) {
+				return ShotType::kCloseUp;
+			}
+			if (Placeable(ShotType::kExtremeClose, a_frame)) {
+				return ShotType::kExtremeClose;
+			}
+			return std::nullopt;
+		}
+
 		std::optional<ShotType> Pick(const Frame& a_frame)
 		{
 			std::vector<std::pair<ShotType, int>> pool;
@@ -326,6 +354,23 @@ namespace CCC::Director
 		const float held = std::chrono::duration<float>(a_now - g.cutAt).count();
 		auto&       side = a_frame.npcTurn ? g.npc : g.player;
 
+		// Emotion close-ups: a line tagged with one of the chosen expressions starts.
+		if (npcStarted) {
+			g.intensePending = a_frame.intenseLine && s.emotionCloseUps;
+		}
+		if (!a_frame.npcTalking) {
+			g.intensePending = false;
+		}
+		const bool alreadyClose = g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
+
+		if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
+			// The turn passes to them on an intense line: the turn's cut is the close-up.
+			if (const auto shot = IntenseShot(a_frame)) {
+				Cut(*shot, a_frame, a_now, "turn, intense line", true);
+				g.intensePending = false;
+			}
+		}
+
 		if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 			// The reverse: back to this person's own setup, unless they're due a new one.
 			const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
@@ -340,6 +385,15 @@ namespace CCC::Director
 					return std::nullopt;
 				}
 			}
+		} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && held >= 0.7f) {
+			// An intense line in the middle of their turn: push in (not within 0.7 s of the
+			// last cut, so a turn cut and this one never come back to back).
+			if (const auto shot = IntenseShot(a_frame)) {
+				Cut(*shot, a_frame, a_now, "intense line", true);
+			}
+			g.intensePending = false;
+		} else if (g.intensePending && alreadyClose) {
+			g.intensePending = false;
 		} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
 			if (const auto pick = Pick(a_frame); pick && pick != g.current) {
 				Cut(*pick, a_frame, a_now, "new angle", true);
@@ -347,7 +401,8 @@ namespace CCC::Director
 				side.changeDue = false;
 				side.lines = 0;
 			}
-		} else if (!Usable(*g.current, a_frame)) {
+		} else if (!Usable(*g.current, a_frame) &&
+				   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame))) {
 			if (const auto pick = Pick(a_frame)) {
 				Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 			} else {

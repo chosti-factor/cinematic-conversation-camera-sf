@@ -13,6 +13,7 @@ namespace CCC::Director
 		bool         npcTalking{ false };
 		bool         playerTalking{ false };
 		bool         nearSeated{ false };  // the person nearest the camera sits lower: no over-the-shoulders
+		bool         intenseLine{ false }; // the speaker's current line carries an expression from sCloseUpEmotions
 		RE::NiPoint3 npcHead{};
 		RE::NiPoint3 playerHead{};
 	};

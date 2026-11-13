@@ -13,6 +13,7 @@ namespace CCC
 	{
 		bool     enabled{ true };
 		bool     debugLog{ true };
+		bool     showEmotions{ true };  // on-screen message with each line's expression tag (testing aid)
 		ShotMode shotMode{ ShotMode::kFollowSpeaker };
 
 		// Over-the-shoulder geometry, in meters (Starfield's world unit; Skyrim's was ~1.43 cm).
@@ -134,6 +135,11 @@ namespace CCC
 		float       maxCameraDistanceExterior{ 5.0f };
 		bool        true180{ false };
 		bool        cameraMoves{ true };
+		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is
+		// in this list, the camera pushes in to a close-up (a third of the time an extreme
+		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
+		bool        emotionCloseUps{ true };
+		std::string closeUpEmotions{ "Angry,Irritated,Surprised,Fearful,Scared,Disgusted" };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
 		bool        plainShotsSeated{ true };
