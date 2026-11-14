@@ -151,7 +151,9 @@ namespace CCC
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
 		bool        reactionShots{ true };    // now and then, one of the NPC's lines is shown on you listening
-		int         reactionEvery{ 3 };       // every Nth NPC line of a reply may be a reaction (CCC: 3)
+		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
+		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
+		float       bystanderStill{ 1.5f };   // seconds without moving before a bystander counts
 		int         reactionChance{ 50 };     // percent
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
 		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };

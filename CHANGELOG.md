@@ -4,6 +4,24 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.5 - unreleased
+
+### Added
+- Bystanders (`bAvoidBystanders`, `fBystanderStill`): someone standing still (1.5 s) whose body
+  would cover the face in shot, or who'd fill most of the picture from close to the camera,
+  now pulls the camera in past them or makes it pick another angle, like a wall. The game's
+  collision check doesn't see people (0.7.4: Sarah standing still covered most of a shot in
+  the Viewport). People walking through a shot are left in.
+
+### Changed
+- Reaction shots: counted over the whole conversation, not per reply. Once `iReactionEvery`
+  (now 2) of the NPC's lines have been heard, each further line has an `iReactionChance` (50%)
+  chance of being a reaction; a reaction starts the count again. CCC's per-reply count with
+  Starfield's mostly two-line replies gave no reactions at all in 0.7.4.
+- Lines you click past within 1.2 s don't count towards a reaction.
+- The persuasion log calls the last round "over" rather than won or lost (a won last round can
+  still lose the persuasion).
+
 ## 0.7.4 - 2026-11-14
 
 ### Changed

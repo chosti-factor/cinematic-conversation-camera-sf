@@ -317,6 +317,7 @@ namespace CCC::Director
 						result.length = c.length;
 					}
 					result.pastNear = result.pastNear || c.pastNear;
+					result.bystander = result.bystander || c.bystander;
 					result.fallbackOk = result.fallbackOk && c.fallbackOk;
 				}
 				if (InputFor(a_frame, a_setup, 0.0f).move == Move::kLocked) {
@@ -325,7 +326,7 @@ namespace CCC::Director
 			}
 			if (!result.usable) {
 				g.skipped += std::format("{}{} (blocked {:.1f} m from them{})", g.skipped.empty() ? "" : ", ", Shots::Key(a_type), result.blockedAt,
-					result.pastNear ? ", beyond the near person" : "");
+					result.bystander ? " by someone standing there" : result.pastNear ? ", beyond the near person" : "");
 			}
 			cached = result;
 			return result;

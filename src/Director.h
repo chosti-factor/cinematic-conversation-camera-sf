@@ -39,6 +39,7 @@ namespace CCC::Director
 		float length{ 0.0f };                                    // subject to camera, as asked
 		float blockedAt{ -1.0f };                                // where the line was blocked, m from the subject (-1 = clear)
 		bool  pastNear{ false };                                 // the line touched the near person, and was checked beyond them
+		bool  bystander{ false };                                // blocked by someone standing still, not by the scenery
 		bool  fallbackOk{ false };                               // blocked, but pulled in to limit it still makes a shot when nothing else fits
 	};
 	using ObstacleTest = Clearance (*)(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);

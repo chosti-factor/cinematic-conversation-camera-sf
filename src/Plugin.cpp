@@ -72,6 +72,7 @@ namespace CCC
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
+			bool                                  lineCounted{ false };      // this line counted towards a reaction
 			std::string                           lastLineText{};
 			std::uintptr_t                        playerLineInfo{ 0 };       // diagnostic: your last dialogue record
 			std::string                           playerLineText{};
@@ -280,6 +281,17 @@ namespace CCC
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
+
+		// Bystanders (0.7.5): people standing still near the conversation, other than the two
+		// of you. Gathered on the main thread a few times a second; the camera's shot test
+		// (worker threads) reads the list.
+		struct Bystander
+		{
+			RE::NiPoint3 feet{};
+			RE::NiPoint3 head{};
+		};
+		std::mutex             g_bystanderLock;
+		std::vector<Bystander> g_bystanders;
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
@@ -695,9 +707,6 @@ namespace CCC
 			if (g_state.subject == Subject::kNpc && a_now - g_state.npcQuietSince < kPlayerCutDelay) {
 				return Subject::kNpc;
 			}
-			// Their reply is over: reaction counts start again with the next one.
-			g_state.reactionLines = 0;
-			g_state.reactionOwed = false;
 			return g_state.subject == Subject::kNone ? Subject::kNpc : Subject::kPlayer;
 		}
 
@@ -1085,6 +1094,86 @@ namespace CCC
 		//    obstacle, if that keeps at least 70% of the distance (and, over a shoulder, keeps
 		//    the camera behind that shoulder);
 		//  - blocked closer to the subject (a ladder in front of their face): skip the shot.
+		// Shortest distance between segments P0-P1 and Q0-Q1; a_t: where on P (0-1).
+		float SegmentDistance(const RE::NiPoint3& a_p0, const RE::NiPoint3& a_p1, const RE::NiPoint3& a_q0, const RE::NiPoint3& a_q1, float& a_t)
+		{
+			const RE::NiPoint3 d1{ a_p1.x - a_p0.x, a_p1.y - a_p0.y, a_p1.z - a_p0.z };
+			const RE::NiPoint3 d2{ a_q1.x - a_q0.x, a_q1.y - a_q0.y, a_q1.z - a_q0.z };
+			const RE::NiPoint3 r{ a_p0.x - a_q0.x, a_p0.y - a_q0.y, a_p0.z - a_q0.z };
+			auto        dot = [](const RE::NiPoint3& a, const RE::NiPoint3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; };
+			const float a = dot(d1, d1), e = dot(d2, d2), f = dot(d2, r);
+			float       t = 0.0f, u = 0.0f;
+			if (a <= 1e-6f && e <= 1e-6f) {
+				a_t = 0.0f;
+				return std::sqrt(dot(r, r));
+			}
+			if (a <= 1e-6f) {
+				u = std::clamp(f / e, 0.0f, 1.0f);
+			} else {
+				const float c = dot(d1, r);
+				if (e <= 1e-6f) {
+					t = std::clamp(-c / a, 0.0f, 1.0f);
+				} else {
+					const float b = dot(d1, d2), denom = a * e - b * b;
+					t = denom > 1e-6f ? std::clamp((b * f - c * e) / denom, 0.0f, 1.0f) : 0.0f;
+					u = (b * t + f) / e;
+					if (u < 0.0f) {
+						u = 0.0f;
+						t = std::clamp(-c / a, 0.0f, 1.0f);
+					} else if (u > 1.0f) {
+						u = 1.0f;
+						t = std::clamp((b - c) / a, 0.0f, 1.0f);
+					}
+				}
+			}
+			a_t = t;
+			const RE::NiPoint3 cp{ a_p0.x + d1.x * t - (a_q0.x + d2.x * u), a_p0.y + d1.y * t - (a_q0.y + d2.y * u), a_p0.z + d1.z * t - (a_q0.z + d2.z * u) };
+			return std::sqrt(dot(cp, cp));
+		}
+
+		// Where a still bystander blocks the line from the subject to the camera, in metres from
+		// the subject, or -1 for none.
+		float BystanderBlock(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_dir, float a_length)
+		{
+			if (!Settings::Get().avoidBystanders) {
+				return -1.0f;
+			}
+			std::vector<Bystander> people;
+			{
+				std::scoped_lock lock{ g_bystanderLock };
+				people = g_bystanders;
+			}
+			float closest = -1.0f;
+			for (const auto& p : people) {
+				const RE::NiPoint3 top{ p.head.x, p.head.y, p.head.z + 0.12f };
+				const RE::NiPoint3 bottom{ p.feet.x, p.feet.y, p.feet.z + 0.3f };
+				// Along the line from the subject, between them and the camera?
+				const RE::NiPoint3 mid{ (top.x + bottom.x) * 0.5f, (top.y + bottom.y) * 0.5f, (top.z + bottom.z) * 0.5f };
+				const float along = (mid.x - a_subjectHead.x) * a_dir.x + (mid.y - a_subjectHead.y) * a_dir.y + (mid.z - a_subjectHead.z) * a_dir.z;
+				if (along < 0.4f || along > a_length + 0.3f) {
+					continue;
+				}
+				bool  blocks = false;
+				float t = 0.0f;
+				// Their body (a capsule about 0.3 m wide) across the line to the face in shot.
+				if (SegmentDistance(a_subjectHead, a_camera, bottom, top, t) < 0.32f) {
+					blocks = true;
+				} else {
+					// Or close enough to the camera to fill most of the picture (the lens is about
+					// 30 degrees wide: someone 0.6 m wide within 1.7 m of it takes up most of it).
+					const RE::NiPoint3 toMid{ mid.x - a_camera.x, mid.y - a_camera.y, mid.z - a_camera.z };
+					const float        d = std::sqrt(toMid.x * toMid.x + toMid.y * toMid.y + toMid.z * toMid.z);
+					const float        cosine = d > 1e-3f ? -(toMid.x * a_dir.x + toMid.y * a_dir.y + toMid.z * a_dir.z) / d : 0.0f;
+					blocks = d < 1.7f && cosine > std::cos(0.30f);
+				}
+				const float at = (std::max)(0.0f, along - 0.35f);  // just short of their body
+				if (blocks && (closest < 0.0f || at < closest)) {
+					closest = at;
+				}
+			}
+			return closest;
+		}
+
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder)
 		{
 			constexpr float kMargin = 0.25f;  // stop this far short of the obstacle
@@ -1093,25 +1182,42 @@ namespace CCC
 			if (!Settings::Get().obstacleCheck || result.length < 0.05f) {
 				return result;
 			}
-			float fraction = 1.0f;
-			if (!Cast(a_subjectHead, a_camera, fraction) || fraction >= 0.999f) {
-				return result;
-			}
+			float              fraction = 1.0f;
+			const bool         cast = Cast(a_subjectHead, a_camera, fraction);
 			const float        length = result.length;
 			const RE::NiPoint3 dir{ (a_camera.x - a_subjectHead.x) / length, (a_camera.y - a_subjectHead.y) / length, (a_camera.z - a_subjectHead.z) / length };
-			float              blockedAt = fraction * length;
-			const RE::NiPoint3 hitPoint{ a_subjectHead.x + dir.x * blockedAt, a_subjectHead.y + dir.y * blockedAt, a_subjectHead.z + dir.z * blockedAt };
-			const float        fromNear = std::sqrt((hitPoint.x - a_nearHead.x) * (hitPoint.x - a_nearHead.x) + (hitPoint.y - a_nearHead.y) * (hitPoint.y - a_nearHead.y));
-			if (fromNear < 0.45f && hitPoint.z < a_nearHead.z + 0.3f && hitPoint.z > a_nearHead.z - 1.8f) {
-				// The near person's body. What matters is whether the rest of the way is clear.
-				result.pastNear = true;
-				float rest = 1.0f;
-				if (!Cast(a_nearHead, a_camera, rest) || rest >= 0.999f) {
-					return result;
+			// Bystanders standing still: one whose body crosses the line to the person in shot, or
+			// who fills most of the picture from close to the camera, blocks like a wall at their
+			// distance (0.7.4: Sarah standing still covered most of a shot in the Viewport).
+			const float bystanderAt = BystanderBlock(a_subjectHead, a_camera, dir, length);
+			if ((!cast || fraction >= 0.999f) && bystanderAt < 0.0f) {
+				return result;
+			}
+			const bool hit = cast && fraction < 0.999f;
+			float      blockedAt = hit ? fraction * length : length + 1.0f;  // past the camera = clear
+			if (hit) {
+				const RE::NiPoint3 hitPoint{ a_subjectHead.x + dir.x * blockedAt, a_subjectHead.y + dir.y * blockedAt, a_subjectHead.z + dir.z * blockedAt };
+				const float        fromNear = std::sqrt((hitPoint.x - a_nearHead.x) * (hitPoint.x - a_nearHead.x) + (hitPoint.y - a_nearHead.y) * (hitPoint.y - a_nearHead.y));
+				if (fromNear < 0.45f && hitPoint.z < a_nearHead.z + 0.3f && hitPoint.z > a_nearHead.z - 1.8f) {
+					// The near person's body. What matters is whether the rest of the way is clear.
+					result.pastNear = true;
+					float rest = 1.0f;
+					if (!Cast(a_nearHead, a_camera, rest) || rest >= 0.999f) {
+						blockedAt = length + 1.0f;
+					} else {
+						const RE::NiPoint3 p{ a_nearHead.x + (a_camera.x - a_nearHead.x) * rest, a_nearHead.y + (a_camera.y - a_nearHead.y) * rest,
+							a_nearHead.z + (a_camera.z - a_nearHead.z) * rest };
+						blockedAt = (p.x - a_subjectHead.x) * dir.x + (p.y - a_subjectHead.y) * dir.y + (p.z - a_subjectHead.z) * dir.z;
+					}
 				}
-				const RE::NiPoint3 p{ a_nearHead.x + (a_camera.x - a_nearHead.x) * rest, a_nearHead.y + (a_camera.y - a_nearHead.y) * rest,
-					a_nearHead.z + (a_camera.z - a_nearHead.z) * rest };
-				blockedAt = (p.x - a_subjectHead.x) * dir.x + (p.y - a_subjectHead.y) * dir.y + (p.z - a_subjectHead.z) * dir.z;
+			}
+			if (bystanderAt >= 0.0f && bystanderAt < blockedAt) {
+				blockedAt = bystanderAt;
+				result.pastNear = false;
+				result.bystander = true;
+			}
+			if (blockedAt > length) {
+				return result;  // clear (past the near person, if it touched them)
 			}
 			result.blockedAt = blockedAt;
 			const float safe = blockedAt - kMargin;
@@ -1139,7 +1245,7 @@ namespace CCC
 				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): clear{}", a_shot, a_who, c.length, c.pastNear ? " (past the near person)" : "");
 			} else {
 				REX::INFO("Obstacle check ({}, {} in shot, {:.1f} m): blocked {:.1f} m from them{}, {}", a_shot, a_who, c.length, c.blockedAt,
-					c.pastNear ? " (beyond the near person)" : "", c.usable ? std::format("could pull in to {:.1f} m", c.limit) : std::string{ "blocked" });
+					c.bystander ? " (someone standing there)" : c.pastNear ? " (beyond the near person)" : "", c.usable ? std::format("could pull in to {:.1f} m", c.limit) : std::string{ "blocked" });
 			}
 		}
 
@@ -1550,22 +1656,22 @@ namespace CCC
 						if (fresh) {
 							g_state.lastLineText = text;
 						}
+						// 0.7.4: once iReactionEvery of their lines have been heard in this
+						// conversation (not per reply: Starfield's replies are mostly two lines, so
+						// CCC's per-reply count rarely got there), each further line has an
+						// iReactionChance chance of being shown on you; a reaction starts the count
+						// again. Emotion close-up lines and persuasion answers keep their close-up.
+						g_state.lineCounted = false;
 						if (fresh && s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat && text.size() >= 40) {
-							if (g_state.reactionOwed && !g_state.lineIntense) {
-								g_state.reactionOwed = false;
+							if (g_state.reactionLines >= s.reactionEvery && !g_state.lineIntense &&
+								std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
+								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
 								REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
-							} else if (!g_state.reactionOwed && ++g_state.reactionLines >= s.reactionEvery) {
-								g_state.reactionLines = 0;
-								if (std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
-									if (g_state.lineIntense) {
-										g_state.reactionOwed = true;  // this one keeps its close-up; the next line is the reaction
-									} else {
-										g_state.reactionActive = true;
-										REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
-									}
-								}
+							} else {
+								++g_state.reactionLines;
+								g_state.lineCounted = true;
 							}
 						}
 					}
@@ -1588,6 +1694,11 @@ namespace CCC
 				if (!talkingNow && g_state.speakerWasTalking) {
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;
+					// A line you clicked past (over within 1.2 s) wasn't really heard: it doesn't count.
+					if (g_state.lineCounted && now - g_state.lineStart < 1200ms && g_state.reactionLines > 0) {
+						--g_state.reactionLines;
+					}
+					g_state.lineCounted = false;
 				}
 				g_state.speakerWasTalking = talkingNow;
 			}
@@ -3032,6 +3143,54 @@ namespace CCC
 			}
 		}
 
+		void UpdateBystanders(std::chrono::steady_clock::time_point a_now)
+		{
+			struct Track
+			{
+				RE::NiPoint3                          at{};
+				std::chrono::steady_clock::time_point since{};
+				std::chrono::steady_clock::time_point seen{};
+			};
+			static std::unordered_map<std::uint32_t, Track> tracks;
+			std::vector<Bystander>                          still;
+			const auto&                                     s = Settings::Get();
+			auto*                                           player = RE::PlayerCharacter::GetSingleton();
+			constexpr std::uint64_t                         kProcessListsSingleton = 937584;
+			if (s.avoidBystanders && g_state.active && !g_state.handedBack && player && Hud::AddressKnown(kProcessListsSingleton)) {
+				if (auto* lists = RE::ProcessLists::GetSingleton()) {
+					const auto center = player->GetPosition();
+					for (const auto& handle : lists->highActorHandles) {
+						const auto actor = handle.get();
+						if (!actor || actor.get() == player || actor->formID == g_state.speakerId) {
+							continue;
+						}
+						const auto  feet = actor->GetPosition();
+						const float dx = feet.x - center.x, dy = feet.y - center.y;
+						if (dx * dx + dy * dy > 15.0f * 15.0f) {
+							continue;
+						}
+						auto& t = tracks[actor->formID];
+						const float mx = feet.x - t.at.x, my = feet.y - t.at.y, mz = feet.z - t.at.z;
+						if (t.seen == std::chrono::steady_clock::time_point{} || mx * mx + my * my + mz * mz > 0.25f * 0.25f) {
+							t.at = feet;
+							t.since = a_now;
+						}
+						t.seen = a_now;
+						if (std::chrono::duration<float>(a_now - t.since).count() >= s.bystanderStill) {
+							const auto head = Camera::HeadPosition(actor.get());
+							still.push_back({ feet, head ? *head : RE::NiPoint3{ feet.x, feet.y, feet.z + 1.6f } });
+						}
+					}
+				}
+			}
+			std::erase_if(tracks, [&](const auto& a_entry) { return a_now - a_entry.second.seen > std::chrono::seconds(5); });
+			std::scoped_lock lock{ g_bystanderLock };
+			if (still.size() != g_bystanders.size() && s.debugLog && g_state.active) {
+				REX::INFO("Bystanders: {} standing still near the conversation", still.size());
+			}
+			g_bystanders = std::move(still);
+		}
+
 		void Watchdog()
 		{
 			if (::GetCurrentThreadId() != g_mainThreadId) {
@@ -3094,6 +3253,15 @@ namespace CCC
 				const auto       now = std::chrono::steady_clock::now();
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
+
+				// Who's standing still near the conversation (bystanders the camera avoids).
+				{
+					static auto nextScan = now;
+					if (now >= nextScan) {
+						nextScan = now + 250ms;
+						UpdateBystanders(now);
+					}
+				}
 
 				// Letterbox, subtitles and dialogue options (0.6.3).
 				{
@@ -3320,7 +3488,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.4 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
