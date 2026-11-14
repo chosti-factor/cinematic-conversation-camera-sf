@@ -87,7 +87,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   collision test.
 - Reaction shots and holding on the answer after a persuasion check (in testing, 0.7.1+).
 - Your character's face (the game keeps it neutral, and your lines carry no expression
-  tags): first, prove an expression can be set on your face at all. Then, while you listen,
+  tags; first step in testing, 0.7.8): first, prove an expression can be set on your face at all. Then, while you listen,
   your face responds to the NPC's line (their tags are real data: mirrored or complemented);
   while you speak, the option's skill tag ([Intimidate], [Persuade]...), background and trait
   tags, and cautiously the text itself; your traits set a temperament over all of it
