@@ -25,6 +25,13 @@ namespace CCC::Face
 	// face would otherwise go back to neutral.
 	[[nodiscard]] std::string MaybeSignature();
 
+	// What the last MaybeSignature came from (a background's name, or "Wanted").
+	[[nodiscard]] const std::string& SignatureSource();
+
+	// Your emotion close-up chance with your traits applied (Introvert half, Extrovert half
+	// again). Any thread.
+	[[nodiscard]] int CloseUpChance(int a_percent);
+
 	// The expression set now ("" = the game's own).
 	[[nodiscard]] const std::string& Current();
 

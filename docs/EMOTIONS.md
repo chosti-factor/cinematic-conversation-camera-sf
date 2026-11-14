@@ -109,3 +109,91 @@ Notes:
   close-up list.
 - 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
   Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
+
+## Your character's face
+
+The game keeps your face neutral and your lines carry no expression tags, so the mod sets
+your expression (`[Face]` in the INI). Kept up to date with every build.
+
+Last updated: 0.7.11 (2026-11-14).
+
+### Listening: your face's answer to the NPC's line
+
+Mirrored where it's natural, otherwise a listener's response. Lines with no expression (or
+Neutral) leave your face to the game, or show your background now and then (below).
+
+| NPC's expression | Your face |
+|---|---|
+| Friendly, Grateful | Friendly |
+| Amused | Amused |
+| Happy, Impressed | Happy |
+| Relieved | Relieved |
+| Smirk, Sarcastic, Flirting, Smug | Smirk |
+| SinisterSmile | Suspicious |
+| Thinking, Concentrating | Concentrating |
+| Question, Puzzled | Thinking |
+| Confused | Confused |
+| Concerned, Worried, Nervous, Apologetic, Pleading, InPain, Tired | Concerned |
+| Afraid | Worried |
+| Somber, Depressed, Dying | Somber |
+| Serious, Stern, Defiant | Serious |
+| Suspicious | Suspicious |
+| Surprised, Shocked, Disbelief | Surprised |
+| Awed | Awed |
+| Disgust | Disgust |
+| Irritated | Serious or Irritated (at random) |
+| Angry, VeryAngry | Stern, Irritated or VeryAngry (at random) |
+| Rage | Afraid, VeryAngry or Rage (at random) |
+
+### Choosing an option with a skill tag
+
+| Tag contains | Your face |
+|---|---|
+| Persua, Commerce | Confident |
+| Intimidat, Threat | Stern |
+| Manipulat, Deceiv, Lie, Bribe | Smirk |
+| Flirt | Flirting |
+| Charm, Diplomacy | Friendly |
+| Lecture, Theology | Serious |
+| Medicine | Concerned |
+| Attack | VeryAngry |
+| Pay | Neutral |
+
+### Your background (`iSignatureChance`, 30%)
+
+At moments your face would otherwise be neutral (an NPC line with no expression, an option
+without a skill tag), this chance of your background's expression instead.
+
+| Background | Expression |
+|---|---|
+| Space Scoundrel, Cyber Runner | Smirk |
+| Gangster | Smug |
+| Bounty Hunter | Suspicious |
+| Diplomat, Homesteader | Friendly |
+| Professor, Sculptor | Thinking |
+| Soldier, Beast Hunter | Serious |
+| Bouncer, Ronin | Stern |
+| Chef | Happy |
+| Combat Medic | Concerned |
+| Explorer | Awed |
+| Industrialist | Confident |
+| Long Hauler | Tired |
+| Pilgrim | Relieved |
+| Cyberneticist, Xenobiologist | Concentrating |
+
+### Your traits
+
+| Trait | Effect |
+|---|---|
+| Introvert | Subtler: 40% of lines get no visible answer; background expressions and your emotion close-ups half as often |
+| Extrovert | Fuller: background expressions and your emotion close-ups half as often again |
+| Empath | Mirrors the speaker: Worried, Nervous, Afraid, Apologetic, Somber, Depressed, Pleading, InPain, Happy, Amused, Grateful, Relieved, Surprised, Awed, Confused, Thinking, Concerned and Tired are worn as they are; anger brings concern (Rage: Afraid) |
+| Wanted | Wary: 15% of neutral moments show Suspicious, whatever your background |
+
+Other traits don't change your face.
+
+### Your emotion close-ups (`iPlayerCloseUpChance`, 20%)
+
+When your face answers a line with an expression (40 characters or longer, not an NPC
+emotion close-up), this chance the line is shown on you as a close-up, pushing in; an
+extreme close-up as often as `iExtremeCloseUpChance`. Counts as a reaction shot.

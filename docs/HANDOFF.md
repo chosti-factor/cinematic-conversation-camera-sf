@@ -11,7 +11,8 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   Actions build (Windows, xmake, CommonLibSF). Pushes to `main` also replace the rolling
   "Test build" pre-release; pushes to other branches only build.
 - `.md`-only pushes don't build and can go out freely.
-- Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change.
+- Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change, and
+  docs/EMOTIONS.md (the NPC expressions and your face's tables) with every build.
 - A pure SFSE DLL, no .esp. Minor versions mark milestones (0.6 obstacle detection, 0.7 the
   interface); 1.0 is the public beta.
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the

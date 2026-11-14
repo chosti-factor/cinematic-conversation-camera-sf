@@ -1879,7 +1879,7 @@ namespace CCC
 							// Your emotion close-up (0.7.11): when your face answers the line with an
 							// expression, an iPlayerCloseUpChance chance the line is shown on you, close.
 							const bool closeUp = !rolled && s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) && !g_state.lineIntense &&
-							                     text.size() >= 40 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
+							                     text.size() >= 40 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < Face::CloseUpChance(s.playerCloseUpChance);
 							if (rolled || closeUp) {
 								REX::INFO("Reaction shot: '{}' shown on you listening{} ({} sentences heard since the last)", text.substr(0, 60),
 									closeUp ? ", close (your expression)" : "", g_state.reactionLines);
@@ -3285,9 +3285,7 @@ namespace CCC
 					reason = close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "your choice" };
 				} else if (expression = Face::MaybeSignature(); !expression.empty()) {
 					// An option without a skill tag: now and then you say it in character.
-					std::string background;
-					(void)Face::Signature(&background);
-					reason = background;
+					reason = Face::SignatureSource();
 				}
 				if (!expression.empty()) {
 					Face::Set(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
@@ -3499,10 +3497,8 @@ namespace CCC
 				auto why = std::format("listening to {}: {}", who ? who : "the speaker", emotion.empty() ? "no expression" : emotion);
 				if (expression.empty()) {
 					// A neutral moment: now and then your background shows (0.7.11).
-					std::string background;
 					if (expression = Face::MaybeSignature(); !expression.empty()) {
-						(void)Face::Signature(&background);
-						why += std::format("; your {} side", background);
+						why += std::format("; your {} side", Face::SignatureSource());
 					}
 				}
 				Face::Set(expression, why);
