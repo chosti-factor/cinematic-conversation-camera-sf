@@ -1089,6 +1089,24 @@ namespace CCC
 			return true;
 		}
 
+		// As Cast, plus what the cast reports beside the fraction (room measurement diagnostics):
+		// whether it hit, and the safe point it writes back into the end of the line.
+		bool CastDetail(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float& a_fraction, bool& a_hit, RE::NiPoint3& a_safe)
+		{
+			void* query = CollisionQuery();
+			if (!query) {
+				return false;
+			}
+			RE::NiPoint3 from = a_from, to = a_to;
+			void*        what = nullptr;
+			a_fraction = 1.0f;
+			if (!SphereCastUnsafe(query, &from, &to, Settings::Get().obstacleRadius, a_hit, a_fraction, what)) {
+				return false;
+			}
+			a_safe = to;
+			return true;
+		}
+
 		float Distance(const RE::NiPoint3& a, const RE::NiPoint3& b)
 		{
 			const float dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
@@ -1284,12 +1302,35 @@ namespace CCC
 			const RE::NiPoint3 mid{ (a_npcHead.x + a_playerHead.x) * 0.5f, (a_npcHead.y + a_playerHead.y) * 0.5f, (a_npcHead.z + a_playerHead.z) * 0.5f };
 			const float        eyeline = std::atan2(a_npcHead.y - a_playerHead.y, a_npcHead.x - a_playerHead.x);  // towards them
 
-			float up = 1.0f;
-			if (!Cast(mid, { mid.x, mid.y, mid.z + kSky }, up)) {
+			// The ceiling. 0.7.5 test: every roofed place measured 1.6 m (the cast's fraction
+			// came back 0 going straight up). Now from the safe point the cast writes back,
+			// cross-checked by casts from higher up, and the floor straight down.
+			float        up = 1.0f;
+			bool         upHit = false;
+			RE::NiPoint3 upSafe{};
+			if (!CastDetail(mid, { mid.x, mid.y, mid.z + kSky }, up, upHit, upSafe)) {
 				return;
 			}
-			const bool  roofed = up < 0.999f;
-			const float ceiling = roofed ? mid.z + up * kSky - a_ground : 0.0f;
+			float        down = 1.0f, up2 = 1.0f;
+			bool         downHit = false, up2Hit = false;
+			RE::NiPoint3 downSafe{}, up2Safe{};
+			CastDetail(mid, { mid.x, mid.y, mid.z - 4.0f }, down, downHit, downSafe);
+			const RE::NiPoint3 above{ mid.x, mid.y, mid.z + 0.8f };
+			CastDetail(above, { mid.x, mid.y, mid.z + kSky }, up2, up2Hit, up2Safe);
+			REX::INFO("Room: straight up from between you: hit {} at fraction {:.3f}, safe point {:.2f} m up; from 0.8 m higher: hit {} at {:.3f}, safe point {:.2f} m up; "
+					  "straight down: hit {} at {:.3f}, safe point {:.2f} m down (your feet {:.2f} m down)",
+				upHit, up, upSafe.z - mid.z, up2Hit, up2, up2Safe.z - mid.z, downHit, down, mid.z - downSafe.z, mid.z - a_ground);
+			// The safe point is the better reading when it's sensible (the fraction may be
+			// measured differently going up).
+			float rise = kSky;
+			if (upHit) {
+				rise = upSafe.z - mid.z > 0.05f && upSafe.z - mid.z < kSky ? upSafe.z - mid.z : up * kSky;
+				if (rise < 0.3f && up2Hit && up2Safe.z - mid.z > 0.85f) {
+					rise = up2Safe.z - mid.z;
+				}
+			}
+			const bool  roofed = upHit && rise < kSky - 0.01f;
+			const float ceiling = roofed ? mid.z + rise - a_ground : 0.0f;
 			const float highRise = roofed ? std::clamp(ceiling - (mid.z - a_ground) - 0.4f, 0.0f, 1.5f) : 1.5f;
 
 			// Towards either person the cast meets their body first; past them it starts again.
@@ -3393,6 +3434,9 @@ namespace CCC
 			std::chrono::steady_clock::time_point seen{};
 			std::uint32_t                         addressed = 0;   // formID; 0x14 = you
 			std::uint32_t                         lines = 0;
+			std::uintptr_t                        lastInfo = 0;    // the dialogue record last seen on them
+			std::string                           lastSubtitle;
+			bool                                  primed = false;  // seen once (what they said before isn't a new line)
 		};
 
 		std::unordered_map<std::uint32_t, Talker> g_talkers;
@@ -3507,17 +3551,37 @@ namespace CCC
 			const auto&             s = Settings::Get();
 			auto*                   player = RE::PlayerCharacter::GetSingleton();
 			constexpr std::uint64_t kProcessListsSingleton = 937584;
-			if (!(s.debugLog || s.showMessages) || !player || !Hud::AddressKnown(kProcessListsSingleton)) {
+			if (!(s.debugLog || s.showMessages) || !player) {
+				return;
+			}
+			// 0.7.5 test: no line was ever noticed. Say why, now and then.
+			static auto nextSummary = a_now + 10s;
+			const bool  summary = s.debugLog && a_now >= nextSummary;
+			if (summary) {
+				nextSummary = a_now + 10s;
+			}
+			if (!Hud::AddressKnown(kProcessListsSingleton)) {
+				static bool warned = false;
+				if (!warned && s.debugLog) {
+					warned = true;
+					REX::WARN("Overheard: the game's list of nearby actors isn't in the Address Library; not listening");
+				}
 				return;
 			}
 			auto* lists = RE::ProcessLists::GetSingleton();
 			if (!lists) {
+				if (summary) {
+					REX::INFO("Overheard: no list of nearby actors yet");
+				}
 				return;
 			}
+			int         listed = 0, inRange = 0, talkingNow = 0, withLine = 0;
+			std::string talkers;
 			const auto playerFeet = player->GetPosition();
 			const auto playerHeadAt = Camera::HeadPosition(player);
 			const auto playerHead = playerHeadAt ? *playerHeadAt : RE::NiPoint3{ playerFeet.x, playerFeet.y, playerFeet.z + 1.6f };
 			for (const auto& handle : lists->highActorHandles) {
+				++listed;
 				const auto actor = handle.get();
 				if (!actor || actor.get() == player || actor->IsDead()) {
 					continue;
@@ -3526,6 +3590,7 @@ namespace CCC
 				if (FlatDistance(feet, playerFeet) > kOverhearRange || std::abs(feet.z - playerFeet.z) > 6.0f) {
 					continue;
 				}
+				++inRange;
 				auto& t = g_talkers[actor->formID];
 				if (t.name.empty()) {
 					const char* name = actor->GetDisplayFullName();
@@ -3538,13 +3603,33 @@ namespace CCC
 				t.seen = a_now;
 				const bool talking = actor->IsTalking();
 				const bool ours = g_state.active && actor->formID == g_state.speakerId;
-				if (talking && !t.talking && !ours) {
+				// A new line: they start talking, or a new dialogue record or subtitle turns up
+				// on them (in case "talking" isn't set for lines not spoken to you).
+				const auto  info = LineInfo(actor.get());
+				const char* sub = actor->currentProcess && actor->currentProcess->high ? actor->currentProcess->high->strVoiceSubtitle.c_str() : nullptr;
+				const std::string subtitle{ sub ? sub : "" };
+				const bool        newInfo = t.primed && info != 0 && info != t.lastInfo;
+				const bool        newSubtitle = t.primed && !subtitle.empty() && subtitle != t.lastSubtitle;
+				if (talking) {
+					++talkingNow;
+					talkers += (talkers.empty() ? "" : ", ") + t.name + (ours ? " (yours)" : "");
+				}
+				if (info) {
+					++withLine;
+				}
+				if (!ours && !t.pending && ((talking && !t.talking) || newInfo || newSubtitle)) {
 					t.pending = true;
 					t.lineStart = a_now;
 					t.lastLine = a_now;
 					++t.lines;
+					if (s.debugLog) {
+						REX::INFO("Overheard: '{}' starts a line ({}{}{})", t.name, talking && !t.talking ? "talking" : "", newInfo ? " new record" : "", newSubtitle ? " new subtitle" : "");
+					}
 				}
 				t.talking = talking;
+				t.lastInfo = info ? info : t.lastInfo;
+				t.lastSubtitle = subtitle.empty() ? t.lastSubtitle : subtitle;
+				t.primed = true;
 				// Report once the subtitle is there (it often isn't when the line starts), or
 				// after 0.6 s without one.
 				if (t.pending) {
@@ -3557,6 +3642,10 @@ namespace CCC
 				}
 			}
 			std::erase_if(g_talkers, [&](const auto& a_entry) { return a_now - a_entry.second.seen > 30s; });
+			if (summary) {
+				REX::INFO("Overheard: {} actors nearby in the game's list, {} within 20 m, {} with a dialogue record, {} talking now{}{}", listed, inRange, withLine, talkingNow,
+					talkers.empty() ? "" : ": ", talkers);
+			}
 		}
 
 		void UpdateBystanders(std::chrono::steady_clock::time_point a_now)
