@@ -293,6 +293,7 @@ namespace CCC
 		void                OnOptionChosen(const std::string& a_text);
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		void                QueueHudMessage(std::string a_text);
+		void                ShowHudMessage(const std::string& a_text);
 
 		// Bystanders (0.7.5): people standing still near the conversation, other than the two
 		// of you. Gathered on the main thread a few times a second; the camera's shot test
