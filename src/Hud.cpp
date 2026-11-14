@@ -358,17 +358,19 @@ namespace CCC::Hud
 			return SafeInvoke(&a_parent, "getChildByName", &a_out, &name, 1) && a_out.IsDisplayObject();
 		}
 
-		// ---- Dialogue options fade in --------------------------------------------------------
+		// ---- Dialogue options fade ------------------------------------------------------------
 		// The game shows and hides the option list (DialogueList_mc; PersuasionList_mc during a
-		// persuasion) itself. When it appears, ease it in instead of letting it pop.
+		// persuasion) itself: hidden during most NPC lines, but shown during the greeting, where
+		// the subtitle then runs across the last option (0.5.2 clip). The list fades out while
+		// the NPC speaks (CCC's option) and fades in when it appears, instead of popping.
 		struct OptionsFade
 		{
 			bool  wasVisible[2]{ false, false };
-			float shownFor[2]{ 99.0f, 99.0f };
+			float alpha[2]{ 1.0f, 1.0f };
 			bool  listDumped{ false };
 		} g_options;
 
-		void UpdateOptions(Value& a_top, float a_delta, bool a_dump)
+		void UpdateOptions(Value& a_top, float a_delta, bool a_dump, bool a_npcTalking)
 		{
 			const auto& s = Settings::Get();
 			Value       menu;
@@ -384,7 +386,7 @@ namespace CCC::Hud
 				Value      visible;
 				const bool now = SafeGet(&list, "visible", &visible) && visible.IsBoolean() && visible.GetBoolean();
 				if (now && !g_options.wasVisible[i]) {
-					g_options.shownFor[i] = 0.0f;
+					g_options.alpha[i] = s.fadeOptions ? 0.0f : 1.0f;
 					if (a_dump && i == 0 && !g_options.listDumped) {
 						g_options.listDumped = true;
 						int count = 0;
@@ -392,12 +394,15 @@ namespace CCC::Hud
 					}
 				}
 				g_options.wasVisible[i] = now;
-				if (!now || !s.fadeOptions) {
+				if (!now) {
 					continue;
 				}
-				if (g_options.shownFor[i] < s.optionsFade) {
-					g_options.shownFor[i] += a_delta;
-					const float t = std::clamp(g_options.shownFor[i] / (std::max)(s.optionsFade, 0.01f), 0.0f, 1.0f);
+				const float target = s.hideOptionsWhileSpeaking && a_npcTalking ? 0.0f : 1.0f;
+				const float before = g_options.alpha[i];
+				const float step = s.fadeOptions ? a_delta / (std::max)(s.optionsFade, 0.01f) : 1.0f;
+				g_options.alpha[i] = before < target ? (std::min)(target, before + step) : (std::max)(target, before - step);
+				if (g_options.alpha[i] != before || g_options.alpha[i] < 1.0f) {
+					const float t = g_options.alpha[i];
 					const Value alpha{ static_cast<double>(t * t * (3.0f - 2.0f * t)) };
 					SafeSet(&list, "alpha", &alpha);
 				}
@@ -506,10 +511,10 @@ namespace CCC::Hud
 		}
 	}
 
-	void Update(bool a_filming, float a_delta)
+	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking) || !CheckReady()) {
 			return;
 		}
 		static float dialogueOpenFor = 0.0f;
@@ -533,11 +538,11 @@ namespace CCC::Hud
 		if (s.letterbox && !g_broken) {
 			UpdateLetterbox(a_filming && dialogueOpen, a_delta);
 		}
-		if (dialogueOpen && !g_broken && (s.fadeOptions || s.dumpMenus)) {
+		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {
-					UpdateOptions(top, a_delta, s.dumpMenus);
+					UpdateOptions(top, a_delta, s.dumpMenus, a_filming && a_npcTalking);
 				}
 			}
 		} else if (!dialogueOpen) {
