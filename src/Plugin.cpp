@@ -105,6 +105,9 @@ namespace CCC
 			bool                                  directFailed{ false };
 			int                                   directStable{ 0 };
 			std::chrono::steady_clock::time_point directAt{};
+			int                                   directRetries{ 0 };    // 3D update requests repeated while waiting
+			std::optional<RE::NiPoint3>           smoothNpcFeet{};       // where each stands, steadied (the eyeline's bearing)
+			std::optional<RE::NiPoint3>           smoothPlayerFeet{};
 			std::chrono::steady_clock::time_point directLastSample{};
 			std::optional<RE::NiPoint3>           directLastHead{};
 			bool                                  bodyReady{ true };         // safe to show the player
@@ -1509,6 +1512,7 @@ namespace CCC
 					g_state.started = now - kRepairStartDelay;  // no opening delay this time
 					g_state.directRequested = false;
 					g_state.directFailed = false;
+					g_state.directRetries = 0;
 				}
 			}
 
@@ -1544,6 +1548,34 @@ namespace CCC
 						REX::INFO("Side: {} of the line from you to them (coin toss; room not measured)", g_state.side > 0.0f ? "right" : "left");
 					}
 				}
+			}
+			// Where each stands, steadied: the camera's angles are measured off the line between
+			// these, and at 10 m a centimetre of the character controller settling on the
+			// ground turned into visible horizontal jitter on wide shots (0.6.2, Dirk). Moves
+			// under 3 cm are ignored and the rest eased over about a third of a second; a step of
+			// a metre or more (a teleport) snaps.
+			RE::NiPoint3 npcFeet, playerFeet;
+			{
+				const float kFeet = 1.0f - std::exp(-(std::clamp(delta, 0.0f, 0.1f)) / 0.3f);
+				auto        steady = [kFeet](std::optional<RE::NiPoint3>& a_held, const RE::NiPoint3& a_raw) {
+                    if (!a_held) {
+                        a_held = a_raw;
+                        return a_raw;
+                    }
+                    const float dx = a_raw.x - a_held->x, dy = a_raw.y - a_held->y, dz = a_raw.z - a_held->z;
+                    const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+                    if (dist > 1.0f) {
+                        a_held = a_raw;
+                    } else if (dist > 0.03f) {
+                        const float f = (dist - 0.03f) / dist * kFeet;
+                        a_held->x += dx * f;
+                        a_held->y += dy * f;
+                        a_held->z += dz * f;
+                    }
+                    return *a_held;
+				};
+				npcFeet = steady(g_state.smoothNpcFeet, speaker->GetPosition());
+				playerFeet = steady(g_state.smoothPlayerFeet, player->GetPosition());
 			}
 			// Which way each face points, for close-ups that follow the face.
 			const char* speakerName = speaker->GetDisplayFullName();
@@ -1644,11 +1676,11 @@ namespace CCC
 				frame.playerFaceValid = playerFaceValid;
 				frame.npcFacing = g_state.npcFace.facing;
 				frame.playerFacing = g_state.playerFace.facing;
-				frame.npcGround = speaker->GetPosition().z;
-				frame.playerGround = player->GetPosition().z;
+				frame.npcGround = npcFeet.z;
+				frame.playerGround = playerFeet.z;
 				frame.feetValid = true;
-				frame.npcFeet = speaker->GetPosition();
-				frame.playerFeet = player->GetPosition();
+				frame.npcFeet = npcFeet;
+				frame.playerFeet = playerFeet;
 				directed = Director::UpdatePlain(frame, now);
 			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
@@ -1665,11 +1697,11 @@ namespace CCC
 				frame.playerFaceValid = playerFaceValid;
 				frame.npcFacing = g_state.npcFace.facing;
 				frame.playerFacing = g_state.playerFace.facing;
-				frame.npcGround = speaker->GetPosition().z;
-				frame.playerGround = player->GetPosition().z;
+				frame.npcGround = npcFeet.z;
+				frame.playerGround = playerFeet.z;
 				frame.feetValid = true;
-				frame.npcFeet = speaker->GetPosition();
-				frame.playerFeet = player->GetPosition();
+				frame.npcFeet = npcFeet;
+				frame.playerFeet = playerFeet;
 				directed = Director::Update(frame, now);
 			}
 			// The plain shots stage on the same side of the line as the shot library: over your
@@ -2311,6 +2343,23 @@ namespace CCC
 						return;
 					}
 					if (waited < 700) {
+						return;
+					}
+					// 0.6.2 logs: the game sometimes takes 1.5-3 s to act on the request (the new
+					// model arrived after we had given up, so a conversation with Violet showed no
+					// player, and Dirk's and a merchant's fell back to the camera cycle, which
+					// flickers). Ask again, keep the camera off the player meanwhile (their shots
+					// of the NPC from the player's eyes), and wait longer before the fallback.
+					const int dueRetries = waited < 1500 ? 1 : waited < 2500 ? 2 : 3;
+					if (g_state.directRetries < dueRetries && waited < 4000) {
+						++g_state.directRetries;
+						g_state.povNpcShot = true;
+						REX::INFO("Body rebuild (direct): no full body yet after {} ms (head {:.2f} m above feet); asking again ({})", waited, PlayerHeadAboveFeet(),
+							g_state.directRetries);
+						player->Set3DUpdateFlag(static_cast<std::uint32_t>(Settings::Get().bodyUpdateFlags));
+						return;
+					}
+					if (waited < (g_state.backgroundScene ? 4000 : 2000)) {
 						return;
 					}
 					if (g_state.backgroundScene) {
@@ -3039,7 +3088,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.6.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.6.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
