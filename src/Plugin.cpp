@@ -3727,6 +3727,21 @@ namespace CCC
 			return out;
 		}
 
+		// An actor's name and whether it's talking, guarded: 0.7.8 crashed in the game's
+		// display-name function on an actor from the lower-process lists, not fully set up yet.
+		bool SafeActorBasics(RE::Actor* a_actor, const char*& a_name, bool& a_talking)
+		{
+			__try {
+				a_name = a_actor->GetDisplayFullName();
+				a_talking = a_actor->IsTalking();
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				a_name = nullptr;
+				a_talking = false;
+				return false;
+			}
+		}
+
 		void UpdateOverheard(std::chrono::steady_clock::time_point a_now)
 		{
 			const auto&             s = Settings::Get();
@@ -3758,22 +3773,32 @@ namespace CCC
 				if (FlatDistance(feet, playerFeet) > kOverhearRange || std::abs(feet.z - playerFeet.z) > 6.0f) {
 					continue;
 				}
+				// Only actors with their full (high) process are asked anything beyond where they
+				// stand: the others may not be fully set up (0.7.8 crash). They're still counted.
+				const bool highProcess = actor->currentProcess && actor->currentProcess->high;
+				const char* name = nullptr;
+				bool        talkingNowFlag = false;
+				if (!highProcess || !SafeActorBasics(actor.get(), name, talkingNowFlag)) {
+					++inRange;
+					if (summary && inRange <= 15) {
+						around += std::format("{}{:08X} (not high process)", around.empty() ? "" : ", ", actor->formID);
+					}
+					continue;
+				}
 				++inRange;
 				auto& t = g_talkers[actor->formID];
 				if (t.name.empty()) {
-					const char* name = actor->GetDisplayFullName();
 					t.name = name && *name ? name : std::format("{:08X}", actor->formID);
 				}
 				if (summary && inRange <= 15) {
-					const bool high = actor->currentProcess && actor->currentProcess->high;
-					around += std::format("{}{}{}", around.empty() ? "" : ", ", t.name, high ? "" : " (not high process)");
+					around += std::format("{}{}", around.empty() ? "" : ", ", t.name);
 				}
 				const auto head = Camera::HeadPosition(actor.get());
 				t.feet = feet;
 				t.head = head ? *head : RE::NiPoint3{ feet.x, feet.y, feet.z + 1.6f };
 				t.heading = actor->GetAngleZ();
 				t.seen = a_now;
-				const bool talking = actor->IsTalking();
+				const bool talking = talkingNowFlag;
 				const bool ours = g_state.active && actor->formID == g_state.speakerId;
 				// A new line: they start talking, or a new dialogue record or subtitle turns up
 				// on them (in case "talking" isn't set for lines not spoken to you).
@@ -4177,7 +4202,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.8 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.9 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

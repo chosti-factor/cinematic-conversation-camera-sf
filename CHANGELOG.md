@@ -4,7 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.8 - unreleased
+## 0.7.9 - unreleased
+
+### Fixed
+- A crash shortly after loading a save (0.7.8): listening to the game's lower-process actor
+  lists asked an actor that wasn't fully set up for its name. Only actors with their full
+  process are now asked anything beyond where they stand (the others are still counted in
+  the log), and those questions are guarded.
+
+## 0.7.8 - 2026-11-14
 
 ### Added
 - Your character's face, first step (`[Face]` `bPlayerFace`): the game keeps your face
