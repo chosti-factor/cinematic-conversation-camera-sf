@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.0 - 2026-11-14
+
+Milestone: the conversation's on-screen dressing from CCC is in place. Black bars slide in
+while the camera films (0.6.3), the dialogue options stay hidden while the NPC speaks and
+fade in when the line ends (0.6.4-0.6.5), and Starfield's own subtitle sits in the bottom
+bar (optionally centred in it).
+
+### Changed
+- `fOptionsFade` is limited to 0.1-1.5 s. The fade applies when the options appear; when
+  they go, the game hides them itself within 0.2 s, and the mod leaves that alone.
+
 ## 0.6.5 - 2026-11-13
 
 ### Added
