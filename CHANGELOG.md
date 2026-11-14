@@ -4,7 +4,11 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.5.5 - 2026-11-13
+## 0.6.0 - 2026-11-13
+
+Milestone: the two things that kept most of CCC's shots out of Starfield are solved. The
+person in shot is in focus at any distance (0.5.0), and shots that would put a wall or object
+in the way are skipped or pulled in (0.5.3-0.5.4).
 
 ### Added
 - Stardust preset (`sPreset=Stardust`), CCC SF's own: Standard's shoulders and close-ups

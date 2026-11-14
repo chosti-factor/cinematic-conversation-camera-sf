@@ -12,7 +12,7 @@ dialogue camera builds on **Player Camera During Dialogue** by **rrrafau**
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.5.x)
+## Status: alpha (0.6.x)
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
