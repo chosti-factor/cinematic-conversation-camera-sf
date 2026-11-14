@@ -380,9 +380,102 @@ namespace CCC::Hud
 			float alpha[2]{ 1.0f, 1.0f };
 			float setAlpha[2]{ -1.0f, -1.0f };  // what we wrote last frame (-1 = nothing), to see whether the game keeps it
 			int   logs{ 0 };                     // log lines this session (capped)
+			std::string highlighted;             // the option under the cursor, to know which was chosen
 			bool  overrideLogged{ false };
 			bool  listDumped{ false };
 		} g_options;
+
+		// ---- Persuasion outcome ---------------------------------------------------------------
+		// The persuasion panel (Menu_mc.PersuasionData_mc) shows during a persuasion; its
+		// SuccessAnim_mc and FailAnim_mc play when it's decided. Whichever comes first, the
+		// panel closing or one of those, marks the outcome; the NPC's answer then gets the
+		// persuasion beat (CCC's "Hold On Their Answer").
+		std::atomic<std::int64_t> g_persuasionOutcomeAt{ 0 };
+
+		struct PersuasionWatch
+		{
+			bool panel{ false };
+			bool success{ false };
+			bool fail{ false };
+		} g_persuasion;
+
+		// Option tags whose answer gets the beat ([Persuade] itself starts the mini-game, whose
+		// outcome is caught from its panel). Case-insensitive; a tag starting with one of
+		// these counts ("Pay" matches "Pay 500 Credits").
+		bool IsBeatTag(const std::string& a_tag)
+		{
+			std::string tag = a_tag;
+			std::ranges::transform(tag, tag.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			std::string list = Settings::Get().beatTags;
+			std::ranges::transform(list, list.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			std::size_t start = 0;
+			while (start <= list.size()) {
+				const auto  end = list.find(',', start);
+				std::string item = list.substr(start, end == std::string::npos ? std::string::npos : end - start);
+				while (!item.empty() && item.front() == ' ') {
+					item.erase(item.begin());
+				}
+				while (!item.empty() && item.back() == ' ') {
+					item.pop_back();
+				}
+				if (!item.empty() && tag.starts_with(item)) {
+					return true;
+				}
+				if (end == std::string::npos) {
+					break;
+				}
+				start = end + 1;
+			}
+			return false;
+		}
+
+		bool Shown(const Value& a_obj)
+		{
+			Value visible;
+			const bool shown = !SafeGet(&a_obj, "visible", &visible) || !visible.IsBoolean() || visible.GetBoolean();
+			return shown && Member(a_obj, "alpha", 1.0) > 0.05;
+		}
+
+		void WatchPersuasion(Value& a_menu)
+		{
+			Value panel;
+			if (!Child(a_menu, "PersuasionData_mc", panel)) {
+				return;
+			}
+			const bool open = Shown(panel);
+			bool       success = false, fail = false;
+			if (open) {
+				Value anim, glow, text;
+				if (Child(panel, "SuccessAnim_mc", anim)) {
+					// Its "CRITICAL SUCCESS!" text is hidden until it plays; any child shown counts.
+					success = Shown(anim) && Member(anim, "currentFrame", 1.0) > 1.0;
+				}
+				if (Child(panel, "FailAnim_mc", anim) && Child(anim, "FailGlow_mc", glow)) {
+					fail = Shown(glow);
+				}
+			}
+			const char* what = nullptr;
+			if (g_persuasion.panel && !open) {
+				what = "persuasion panel closed";
+			} else if (success && !g_persuasion.success) {
+				what = "persuasion success animation";
+			} else if (fail && !g_persuasion.fail) {
+				what = "persuasion failure animation";
+			}
+			if (open && !g_persuasion.panel) {
+				REX::INFO("HUD: persuasion panel open");
+			}
+			if (what) {
+				const auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+				// One outcome per persuasion: the panel closing just after an animation isn't a second one.
+				const auto last = g_persuasionOutcomeAt.load(std::memory_order_relaxed);
+				if (now - last > std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::seconds(3)).count()) {
+					g_persuasionOutcomeAt.store(now, std::memory_order_release);
+					REX::INFO("HUD: {} - the NPC's answer gets the persuasion beat", what);
+				}
+			}
+			g_persuasion = { open, success, fail };
+		}
 
 		void UpdateOptions(Value& a_top, float a_delta, bool a_dump, bool a_npcTalking)
 		{
@@ -396,6 +489,7 @@ namespace CCC::Hud
 				}
 				return;
 			}
+			WatchPersuasion(menu);
 			const char* names[2]{ "DialogueList_mc", "PersuasionList_mc" };
 			for (int i = 0; i < 2; ++i) {
 				Value list;
@@ -418,6 +512,40 @@ namespace CCC::Hud
 					}
 				}
 				g_options.setAlpha[i] = -1.0f;
+				// The option under the cursor (its text at full opacity; the others are dimmed).
+				// When the list goes, that's the one chosen: a skill-check option ([Intimidate],
+				// [Manipulation], [Pay 500 Credits]...) gets the persuasion beat on the answer.
+				if (i == 0 && now) {
+					Value holder;
+					if (Child(list, "EntryHolder_mc", holder)) {
+						for (int e = 0; e < 12; ++e) {
+							Value entry, textHolder, field;
+							const auto name = std::format("Entry{}", e);
+							if (!Child(holder, name.c_str(), entry)) {
+								break;
+							}
+							if (Child(entry, "TextHolder_mc", textHolder) && Member(textHolder, "alpha", 0.0) > 0.9 && Child(textHolder, "textField", field)) {
+								g_options.highlighted = StringMember(field, "text");
+								break;
+							}
+						}
+					}
+				}
+				if (i == 0 && !now && g_options.wasVisible[0] && !g_options.highlighted.empty()) {
+					const auto& chosen = g_options.highlighted;
+					if (chosen.starts_with('[')) {
+						const auto close = chosen.find(']');
+						const auto tag = chosen.substr(1, close == std::string::npos ? 0 : close - 1);
+						if (IsBeatTag(tag)) {
+							g_persuasionOutcomeAt.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_release);
+							REX::INFO("HUD: chose '{}' - a [{}] check; the NPC's answer gets the persuasion beat", chosen.substr(0, 60), tag);
+						} else if (g_options.logs < 40) {
+							++g_options.logs;
+							REX::INFO("HUD: chose '{}' ([{}] isn't on sBeatTags)", chosen.substr(0, 60), tag);
+						}
+					}
+					g_options.highlighted.clear();
+				}
 				if (now != g_options.wasVisible[i] && g_options.logs < 40) {
 					++g_options.logs;
 					REX::INFO("HUD: {} {} ({}NPC speaking)", names[i], now ? "shown by the game" : "hidden by the game", a_npcTalking ? "" : "no ");
@@ -649,10 +777,15 @@ namespace CCC::Hud
 		}
 	}
 
+	std::int64_t PersuasionOutcomeAt() noexcept
+	{
+		return g_persuasionOutcomeAt.load(std::memory_order_acquire);
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat) || !CheckReady()) {
 			return;
 		}
 		static float dialogueOpenFor = 0.0f;
@@ -679,7 +812,7 @@ namespace CCC::Hud
 				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
 			}
 		}
-		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus)) {
+		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {

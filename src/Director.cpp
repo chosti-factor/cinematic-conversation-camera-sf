@@ -67,6 +67,7 @@ namespace CCC::Director
 			std::array<std::optional<Clearance>, kCount> clearance{};
 			clock::time_point                            clearanceAt{};
 			std::string                                  skipped;  // shots left out for obstacles, for the next Director line
+			bool                                         beatActive{ false };  // holding the persuasion beat's close-up
 			std::optional<bool>                          plainTurn;  // nothing fitted this turn (true = theirs): plain shot until the turn changes
 		} g;
 
@@ -552,6 +553,7 @@ namespace CCC::Director
 		g.intenseSetup.reset();
 		g.limit = std::numeric_limits<float>::infinity();
 		g.plainTurn.reset();
+		g.beatActive = false;
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
@@ -594,57 +596,82 @@ namespace CCC::Director
 		}
 		const bool alreadyClose = g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
 
-		if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
-			// The turn passes to them on an intense line: the turn's cut is the close-up.
-			if (const auto shot = IntenseShot(a_frame)) {
-				Cut(*shot, a_frame, a_now, "turn, intense line", true);
-				g.intenseSetup = IntenseSetup(*shot);
-				NoteEmotionCut(*shot);
-				g.intensePending = false;
+		// Persuasion beat (CCC's "Hold On Their Answer"): the NPC's answer to a persuasion's
+		// outcome is a close-up of them, held for the whole line while the camera pushes in.
+		if (a_frame.persuasionBeat && a_frame.npcTurn && !g.beatActive) {
+			std::optional<ShotType> shot;
+			if (Placeable(ShotType::kCloseUp, a_frame)) {
+				shot = ShotType::kCloseUp;
+			} else if (Placeable(ShotType::kExtremeClose, a_frame)) {
+				shot = ShotType::kExtremeClose;
 			}
-		}
-
-		if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
-			// The reverse: back to this person's own setup, unless they're due a new one.
-			const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
-			if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
-				Cut(*side.shot, a_frame, a_now, "turn", false);
+			if (shot) {
+				Cut(*shot, a_frame, a_now, "persuasion beat", true);
+				g.intenseSetup = IntenseSetup(ShotType::kCloseUp);
+				g.beatActive = true;
 			} else {
-				g.current = side.shot;  // so Pick avoids repeating it
+				REX::INFO("Director: persuasion beat skipped (no clear close-up)");
+				g.beatActive = true;  // don't retry every frame
+			}
+			g.intensePending = false;
+		}
+		if (!a_frame.persuasionBeat) {
+			g.beatActive = false;
+		}
+		const bool holding = g.beatActive && a_frame.npcTurn && g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
+		if (!holding) {
+			if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
+				// The turn passes to them on an intense line: the turn's cut is the close-up.
+				if (const auto shot = IntenseShot(a_frame)) {
+					Cut(*shot, a_frame, a_now, "turn, intense line", true);
+					g.intenseSetup = IntenseSetup(*shot);
+					NoteEmotionCut(*shot);
+					g.intensePending = false;
+				}
+			}
+
+			if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
+				// The reverse: back to this person's own setup, unless they're due a new one.
+				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
+				if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
+					Cut(*side.shot, a_frame, a_now, "turn", false);
+				} else {
+					g.current = side.shot;  // so Pick avoids repeating it
+					if (const auto pick = Pick(a_frame)) {
+						Cut(*pick, a_frame, a_now, side.shot ? "turn, new angle" : "turn", true);
+					} else {
+						g.current.reset();
+						g.plainTurn = a_frame.npcTurn;
+						return std::nullopt;
+					}
+				}
+			} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && held >= 0.7f) {
+				// An intense line in the middle of their turn: push in (not within 0.7 s of the
+				// last cut, so a turn cut and this one never come back to back).
+				if (const auto shot = IntenseShot(a_frame)) {
+					Cut(*shot, a_frame, a_now, "intense line", true);
+					g.intenseSetup = IntenseSetup(*shot);
+					NoteEmotionCut(*shot);
+				}
+				g.intensePending = false;
+			} else if (g.intensePending && alreadyClose) {
+				g.intensePending = false;
+			} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
+				if (const auto pick = Pick(a_frame); pick && pick != g.current) {
+					Cut(*pick, a_frame, a_now, "new angle", true);
+				} else {
+					side.changeDue = false;
+					side.lines = 0;
+				}
+			} else if (!Usable(*g.current, a_frame, false) &&
+					   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame, false))) {
 				if (const auto pick = Pick(a_frame)) {
-					Cut(*pick, a_frame, a_now, side.shot ? "turn, new angle" : "turn", true);
+					Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 				} else {
 					g.current.reset();
 					g.plainTurn = a_frame.npcTurn;
 					return std::nullopt;
 				}
-			}
-		} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && held >= 0.7f) {
-			// An intense line in the middle of their turn: push in (not within 0.7 s of the
-			// last cut, so a turn cut and this one never come back to back).
-			if (const auto shot = IntenseShot(a_frame)) {
-				Cut(*shot, a_frame, a_now, "intense line", true);
-				g.intenseSetup = IntenseSetup(*shot);
-				NoteEmotionCut(*shot);
-			}
-			g.intensePending = false;
-		} else if (g.intensePending && alreadyClose) {
-			g.intensePending = false;
-		} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
-			if (const auto pick = Pick(a_frame); pick && pick != g.current) {
-				Cut(*pick, a_frame, a_now, "new angle", true);
-			} else {
-				side.changeDue = false;
-				side.lines = 0;
-			}
-		} else if (!Usable(*g.current, a_frame, false) &&
-				   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame, false))) {
-			if (const auto pick = Pick(a_frame)) {
-				Cut(*pick, a_frame, a_now, "shot no longer fits", true);
-			} else {
-				g.current.reset();
-				g.plainTurn = a_frame.npcTurn;
-				return std::nullopt;
 			}
 		}
 
@@ -677,8 +704,8 @@ namespace CCC::Director
 		}
 		if (started) {
 			gp.shot.reset();
-			if (a_frame.intenseLine) {
-				if (const auto shot = IntenseShot(a_frame)) {
+			if (a_frame.intenseLine || a_frame.persuasionBeat) {
+				if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
 					const auto setup = IntenseSetup(*shot);
 					const auto solved = Shots::Solve(*shot, InputFor(a_frame, setup, 0.0f));
 					if (solved.ok) {

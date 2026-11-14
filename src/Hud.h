@@ -10,4 +10,8 @@ namespace CCC::Hud
 	// (not the game's own camera in a quest scene). a_delta: seconds since the last call.
 	// a_npcTalking: the NPC is speaking a line (the dialogue options fade out meanwhile).
 	void Update(bool a_filming, bool a_npcTalking, float a_delta);
+
+	// A persuasion just ended (the persuasion panel closed, or its success or failure
+	// animation started), in steady_clock ticks; 0 = none yet. Safe from any thread.
+	[[nodiscard]] std::int64_t PersuasionOutcomeAt() noexcept;
 }
