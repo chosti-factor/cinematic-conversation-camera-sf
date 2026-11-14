@@ -4,7 +4,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.2 - unreleased
+## 0.7.2 - 2026-11-14
 
 ### Diagnostic
 - Your own lines' expression tags: the game never reports the player as talking, so 0.7.1's
