@@ -13,8 +13,11 @@ test build; "diagnostic" items only add information to the log for testing.
   looks smug, Bounty Hunter suspicious, Diplomat friendly, Professor thoughtful... (all 20
   backgrounds: see the INI or `docs/EMOTIONS.md`). The background is read from your perks with the game's own
   check behind Papyrus' HasPerk (found in 1.16.244, Address Library ID 101224).
+- Background and trait options: choosing an option tagged with a background ("[Space
+  Scoundrel]") or a trait ("[Wanted]", "[Empath]") sets an expression for it, like the
+  skill tags do: a background's own expression, and one per trait (see `docs/EMOTIONS.md`).
 - `docs/EMOTIONS.md` now has your face's tables (answers to each NPC expression, skill tags,
-  backgrounds), kept up to date with every build.
+  backgrounds, background and trait options), kept up to date with every build.
 - Your emotion close-ups (`[Face]` `iPlayerCloseUpChance`, 20%): when your face answers an
   NPC's line with an expression, that line may be shown on you as a close-up, pushing in
   (an extreme close-up as often as the NPC's, `iExtremeCloseUpChance`). It counts as a

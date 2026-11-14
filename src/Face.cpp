@@ -164,6 +164,25 @@ namespace CCC::Face
 				return std::string{ expression };
 			}
 		}
+		// Background options ("[Space Scoundrel] ..."): that background's expression.
+		for (const auto& bg : kBackgrounds) {
+			if (tag.find(Lower(bg.name)) != std::string::npos) {
+				return std::string{ bg.expression };
+			}
+		}
+		// Trait options ("[Wanted] ...").
+		static const std::vector<std::pair<std::string_view, std::string_view>> byTrait{
+			{ "introvert", "Concentrating" }, { "extrovert", "Happy" }, { "empath", "Concerned" }, { "wanted", "Suspicious" },
+			{ "kid stuff", "Friendly" }, { "street rat", "Smirk" }, { "uc native", "Confident" }, { "united colonies", "Confident" },
+			{ "freestar", "Confident" }, { "raised universal", "Thinking" }, { "raised enlightened", "Confident" },
+			{ "serpent", "Serious" }, { "hero worship", "Smirk" }, { "dream home", "Concerned" }, { "alien dna", "Confident" },
+			{ "spaced", "Thinking" }, { "taskmaster", "Stern" }, { "terra firma", "Relieved" },
+		};
+		for (const auto& [key, expression] : byTrait) {
+			if (tag.find(key) != std::string::npos) {
+				return std::string{ expression };
+			}
+		}
 		return {};
 	}
 

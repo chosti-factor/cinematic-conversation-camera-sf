@@ -159,6 +159,27 @@ Neutral) leave your face to the game, or show your background now and then (belo
 | Attack | VeryAngry |
 | Pay | Neutral |
 
+### Choosing a background or trait option
+
+Options tagged with a background ("[Space Scoundrel] ...") take that background's
+expression (table below). Trait options:
+
+| Trait tag | Your face |
+|---|---|
+| Introvert | Concentrating |
+| Extrovert | Happy |
+| Empath | Concerned |
+| Wanted | Suspicious |
+| Kid Stuff | Friendly |
+| Neon Street Rat | Smirk |
+| UC Native, Freestar Settler, Raised Enlightened, Alien DNA | Confident |
+| Raised Universal, Spaced | Thinking |
+| Serpent's Embrace | Serious |
+| Hero Worshipped | Smirk |
+| Dream Home | Concerned |
+| Taskmaster | Stern |
+| Terra Firma | Relieved |
+
 ### Your background (`iSignatureChance`, 30%)
 
 At moments your face would otherwise be neutral (an NPC line with no expression, an option
