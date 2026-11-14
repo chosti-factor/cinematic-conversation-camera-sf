@@ -16,7 +16,7 @@ first showed it could be done. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.6.x)
+## Status: alpha (0.7.x)
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -60,6 +60,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   SpaceOpera.
 - **Stardust preset:** Standard's shoulders and close-ups with Room's wider shots mixed in,
   the wider ones moving (cranes, pull-outs, drifts).
+- **Letterbox:** black bars slide in while the camera films a conversation, with
+  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
+  NPC speaks and fade in when the line ends (`[Interface]`).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
@@ -82,7 +85,6 @@ Planned, roughly in order:
 
 - CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
   collision test.
-- Black bars, fading the dialogue options during speech, subtitles in the bars.
 - Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
   conversations, NPCs stepping away from work to talk.
 - Polish: emotion close-ups tuned from testing (which expressions push in, and how often;
