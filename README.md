@@ -32,6 +32,10 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
   `bTrue180` films everything from that one side).
 
+- **Letterbox:** black bars slide in while the camera films a conversation, with
+  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
+  NPC speaks and fade in when the line ends (`[Interface]`).
+
 ### New in CCC SF
 
 - **Your character in shot from first person:** your full body is built at the start of
@@ -60,9 +64,6 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   SpaceOpera.
 - **Stardust preset:** Standard's shoulders and close-ups with Room's wider shots mixed in,
   the wider ones moving (cranes, pull-outs, drifts).
-- **Letterbox:** black bars slide in while the camera films a conversation, with
-  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
-  NPC speaks and fade in when the line ends (`[Interface]`).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
