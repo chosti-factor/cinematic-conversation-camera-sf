@@ -23,6 +23,9 @@ namespace CCC::Director
 		RE::NiPoint3 playerFacing{};
 		float        npcGround{ std::numeric_limits<float>::quiet_NaN() };
 		float        playerGround{ std::numeric_limits<float>::quiet_NaN() };
+		bool         feetValid{ false };    // where each stands (steadies the eyeline)
+		RE::NiPoint3 npcFeet{};
+		RE::NiPoint3 playerFeet{};
 	};
 
 	// Obstacle detection (0.5.3): what the game's collision says about a camera spot.

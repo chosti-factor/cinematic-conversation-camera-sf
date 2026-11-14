@@ -1646,6 +1646,9 @@ namespace CCC
 				frame.playerFacing = g_state.playerFace.facing;
 				frame.npcGround = speaker->GetPosition().z;
 				frame.playerGround = player->GetPosition().z;
+				frame.feetValid = true;
+				frame.npcFeet = speaker->GetPosition();
+				frame.playerFeet = player->GetPosition();
 				directed = Director::UpdatePlain(frame, now);
 			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
@@ -1664,6 +1667,9 @@ namespace CCC
 				frame.playerFacing = g_state.playerFace.facing;
 				frame.npcGround = speaker->GetPosition().z;
 				frame.playerGround = player->GetPosition().z;
+				frame.feetValid = true;
+				frame.npcFeet = speaker->GetPosition();
+				frame.playerFeet = player->GetPosition();
 				directed = Director::Update(frame, now);
 			}
 			// The plain shots stage on the same side of the line as the shot library: over your

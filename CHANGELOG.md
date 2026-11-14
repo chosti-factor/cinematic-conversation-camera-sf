@@ -19,6 +19,12 @@ test build; "diagnostic" items only add information to the log for testing.
 - `fFaceDeadband` (0.04 m): the camera ignores head movement smaller than this, so idle sway
   and the bob of someone working at a bench stay off the screen.
 
+### Fixed
+- Sway: every shot's angle was measured off the line between the two heads, so when a head
+  swayed a few centimetres the camera orbited with it, by more the further out it stood (most
+  visible from 0.6.0, with the camera up to 7-10 m away). The line's bearing now comes from
+  where the two stand, as CCC measures it between steady points (`bSteadyEyeline`).
+
 ## 0.6.0 - 2026-11-13
 
 Milestone: the two things that kept most of CCC's shots out of Starfield are solved. The
