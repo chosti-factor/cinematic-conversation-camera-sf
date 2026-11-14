@@ -115,7 +115,7 @@ Notes:
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.7.11 (2026-11-14).
+Last updated: 0.7.12 (2026-11-14).
 
 ### Listening: your face's answer to the NPC's line
 
@@ -125,6 +125,7 @@ Neutral) leave your face to the game, or show your background now and then (belo
 | NPC's expression | Your face |
 |---|---|
 | Friendly, Grateful | Friendly |
+| Confident | Confident |
 | Amused | Amused |
 | Happy, Impressed | Happy |
 | Relieved | Relieved |

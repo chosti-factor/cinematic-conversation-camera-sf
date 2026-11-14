@@ -6,6 +6,10 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.7.12 - unreleased
 
+### Changed
+- Your face answers a Confident line with Confident (it was treated as neutral; Confident
+  is about one NPC line in ten).
+
 ### Fixed
 - Close-ups of you (0.7.11 test): the one that came up followed your face from the line
   before (the camera decided before your face was set for the new line), and the camera

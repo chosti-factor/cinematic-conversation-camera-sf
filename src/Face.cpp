@@ -128,7 +128,7 @@ namespace CCC::Face
 			return it->second[std::uniform_int_distribution<std::size_t>{ 0, it->second.size() - 1 }(rng)];
 		}
 		static const std::unordered_map<std::string, std::string> responses{
-			{ "friendly", "Friendly" }, { "amused", "Amused" }, { "happy", "Happy" }, { "grateful", "Friendly" },
+			{ "friendly", "Friendly" }, { "confident", "Confident" }, { "amused", "Amused" }, { "happy", "Happy" }, { "grateful", "Friendly" },
 			{ "impressed", "Happy" }, { "relieved", "Relieved" }, { "smirk", "Smirk" }, { "sarcastic", "Smirk" },
 			{ "flirting", "Smirk" }, { "smug", "Smirk" }, { "sinistersmile", "Suspicious" },
 			{ "thinking", "Concentrating" }, { "question", "Thinking" }, { "concentrating", "Concentrating" },
