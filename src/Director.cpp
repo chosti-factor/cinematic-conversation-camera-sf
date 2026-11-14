@@ -258,6 +258,8 @@ namespace CCC::Director
 			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
 			in.npcFeet = a_frame.npcFeet;
 			in.playerFeet = a_frame.playerFeet;
+			in.npcSwayHead = a_frame.npcSwayHead;
+			in.playerSwayHead = a_frame.playerSwayHead;
 			in.progress = a_progress;
 			in.move = s.cameraMoves ? a_setup.move : Move::kLocked;
 			in.moveAmount = a_setup.amount;

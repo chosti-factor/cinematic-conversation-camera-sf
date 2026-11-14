@@ -15,6 +15,10 @@ test build; "diagnostic" items only add information to the log for testing.
 - Mild horizontal jitter on wide shots (the two-shot at 10 m): the camera's angles are
   measured off where the two people stand, and those positions twitched by a centimetre or
   so as the characters settled on the ground. They're now steadied (3 cm dead band, eased).
+- `iCameraSway` barely did anything: the percentage was applied after the 4 cm head dead band
+  had already removed most of the motion it was meant to scale. It now scales the whole small
+  head motion, the camera's angle and its framing point alike: 0 = steady, 100 = exactly
+  0.6.0's sway, linear in between.
 
 ## 0.6.2 - 2026-11-13
 

@@ -138,6 +138,8 @@ namespace CCC::Shots
 		// How much of the heads' sway the camera follows, 0-1 (iCameraSway / 100): 0 = the
 		// bearing from where they stand only, 1 = from the heads (the full sway of 0.6.0).
 		float        sway{ 0.4f };
+		RE::NiPoint3 npcSwayHead{};   // the heads before the dead band, whose bearing is the swaying one
+		RE::NiPoint3 playerSwayHead{};
 
 		// 180-degree rule: never let an angle (after face turns and moves) cross the eyeline
 		// or come within a few degrees of it (CCC's bEnforceLine).
