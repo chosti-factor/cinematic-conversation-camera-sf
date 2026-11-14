@@ -24,18 +24,19 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   up; the safe point is right).
 - 0.7.7 (committed, held, see below): the game's actor list. CommonLibSF's
   `ProcessLists::highActorHandles` (+0x58) is always empty on Starfield 1.16.244, so
-  bystander avoidance (0.7.5) and overheard NPC lines never saw anyone. 0.7.7 searches
-  ProcessLists at runtime for the array whose 32-bit handles resolve to actors (BSTArray
-  layout: size u32, capacity u32, data pointer at +8), logs its offset ("found the game's
-  actor list at ProcessLists +..."), and falls back to the player's cell references.
+  bystander avoidance (0.7.5) and overheard NPC lines never saw anyone. 0.7.7 reads the
+  list where the game does, +0x60 (BSTArray: size u32, capacity u32, data pointer at +8;
+  32-bit handles), and falls back to the player's cell references.
   The reaction log also says why a due line wasn't a reaction.
 
 ## Next, with access to the gaming PC
 
-1. Confirm the actor list's real offset in 1.16.244 (from `Starfield.exe` and the Address
-   Library's `versionlib-1-16-244-0.bin`, singleton ID 937584; or from 0.7.7's log line),
-   then write it in and drop the runtime search.
-2. Read test logs straight from `Documents\My Games\Starfield\SFSE\Logs`.
+1. Done: the actor list is at ProcessLists +0x60 (count) / +0x68 (handles) in 1.16.244,
+   found in Starfield.exe (loads of the singleton, RVA 0x5FD9B88, ID 937584). The exe is on
+   the gaming PC (F:\SteamLibrary\steamapps\common\Starfield); the Address Library is in
+   Mod Organizer's mods folder (F:\Ad Astra\mods\Address Library for SFSE Plugins). With pefile
+   and capstone (pip through the proxy: NO_PROXY=localhost) code can be read directly.
+2. Read test logs straight from `C:\Users\ricar\OneDrive\Documents\My Games\Starfield\SFSE\Logs`.
 3. Then: NPC-to-NPC filming (prompt / seated / standing still triggers, see README),
    room shots with Starfield framing (CCC's need 18-27 m at this 30 degree lens), your
    character's face (ChangeAnimFaceArchetype at RVA 0x18E0220; credit rrrafau), polish.

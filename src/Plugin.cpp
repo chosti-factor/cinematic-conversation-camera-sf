@@ -3601,12 +3601,14 @@ namespace CCC
 		}
 
 		// ---- Nearby actors ----------------------------------------------------------------------
-		// The game's list of actors in high process (ProcessLists): 0.7.6 found it always empty
-		// on 1.16.244 through CommonLibSF's layout (high actors at +58), so neither bystanders
-		// nor overheard lines ever saw anyone. The list is found here instead: of the
-		// array-shaped members of ProcessLists (count, capacity, pointer to 32-bit handles), the
-		// one whose handles turn into the most actors near you. Its position is logged, to be
-		// written in once confirmed; until it's found, the actors in your cell are used.
+		// The game's list of actors in high process. CommonLibSF puts it at ProcessLists +58,
+		// where 1.16.244 has nothing (0.7.6 test: always empty, so neither bystanders nor
+		// overheard lines ever saw anyone). Starfield.exe 1.16.244 itself reads it 8 bytes
+		// further on: count at +60, the handles' pointer at +68 (25 loops over it, e.g. at
+		// +BBF454 measuring each actor's distance; the other three lists follow at +70, +80
+		// and +90). If it ever comes back empty, the actors in your cell are used instead.
+		constexpr std::size_t kHighActors = 0x60;
+
 		__declspec(noinline) RE::Actor* ResolveActorHandle(std::uint32_t a_handle)
 		{
 			RE::BSPointerHandle<RE::Actor> handle;
@@ -3661,43 +3663,7 @@ namespace CCC
 			return actors;
 		}
 
-		std::optional<std::size_t> g_actorListOffset;
-
-		void FindActorList(RE::ProcessLists* a_lists, std::chrono::steady_clock::time_point a_now)
-		{
-			static auto next = a_now;
-			static int  tries = 0;
-			if (g_actorListOffset || a_now < next || tries >= 60) {
-				return;
-			}
-			next = a_now + 5s;  // nobody about yet: try again shortly (for five minutes)
-			++tries;
-			const auto  base = reinterpret_cast<std::uintptr_t>(a_lists);
-			std::string seen;
-			int         best = 0;
-			std::size_t bestOffset = 0;
-			for (std::size_t offset = 0x10; offset < 0x300; offset += 8) {
-				const int actors = ReadActorArray(base, offset, 256, nullptr);
-				if (actors < 0) {
-					continue;
-				}
-				std::uint32_t size = 0;
-				SafeCopy(&size, reinterpret_cast<const void*>(base + offset), sizeof(size));
-				seen += std::format(" +{:X}: {} entries, {} actors;", offset, size, actors);
-				if (actors > best) {
-					best = actors;
-					bestOffset = offset;
-				}
-			}
-			if (best > 0) {
-				g_actorListOffset = bestOffset;
-				REX::INFO("Nearby actors: found the game's actor list at ProcessLists +{:X} ({} actors; CommonLibSF has it at +58). Arrays seen:{}", bestOffset, best, seen);
-			} else if (Settings::Get().debugLog && (tries == 1 || tries % 12 == 0)) {
-				REX::INFO("Nearby actors: no actor list found in ProcessLists yet (try {}). Arrays seen:{}", tries, seen.empty() ? " none" : seen);
-			}
-		}
-
-		// Who's around: the game's actor list once found, or else the actors in your cell.
+		// Who's around: the game's actor list, or else the actors in your cell.
 		std::vector<RE::NiPointer<RE::Actor>> NearbyActors(RE::PlayerCharacter* a_player, const char*& a_source)
 		{
 			std::vector<RE::NiPointer<RE::Actor>> out;
@@ -3706,16 +3672,13 @@ namespace CCC
 			constexpr std::uint64_t kGetSmartPointer = 35638;  // turns a handle into the actor
 			if (Hud::AddressKnown(kProcessListsSingleton) && Hud::AddressKnown(kGetSmartPointer)) {
 				if (auto* lists = RE::ProcessLists::GetSingleton()) {
-					FindActorList(lists, std::chrono::steady_clock::now());
-					if (g_actorListOffset) {
-						std::vector<RE::Actor*> actors;
-						if (ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), *g_actorListOffset, 2000, &actors) > 0) {
-							for (auto* actor : actors) {
-								out.emplace_back(actor);
-							}
-							a_source = "the game's actor list";
-							return out;
+					std::vector<RE::Actor*> actors;
+					if (ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), kHighActors, 2000, &actors) > 0) {
+						for (auto* actor : actors) {
+							out.emplace_back(actor);
 						}
+						a_source = "the game's actor list";
+						return out;
 					}
 				}
 			}
