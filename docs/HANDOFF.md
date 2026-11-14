@@ -18,19 +18,27 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-14)
+## Where things stand (2026-11-14, 0.8.0)
 
-- 0.7.6 is the current Test build: testing messages in the top bar (the notifications' own
-  look: `$MAIN_Font_Bold`, 18, white, learned from `HUDMessagesMenu.Menu_mc.Messages_mc...
-  Text_tf`), third-person exit holds the last shot to the end, reactions counted in
-  sentences, ceiling measured from the cast's safe point (its fraction is 0 going straight
-  up; the safe point is right).
-- 0.7.7 (committed, held, see below): the game's actor list. CommonLibSF's
-  `ProcessLists::highActorHandles` (+0x58) is always empty on Starfield 1.16.244, so
-  bystander avoidance (0.7.5) and overheard NPC lines never saw anyone. 0.7.7 reads the
-  list where the game does, +0x60 (BSTArray: size u32, capacity u32, data pointer at +8;
-  32-bit handles), and falls back to the player's cell references.
-  The reaction log also says why a due line wasn't a reaction.
+- 0.8.0 is the current Test build, not yet tested in game:
+  - The conversation lens (`fConversationLens`, 45): the game's camera FOV update
+    (Starfield.exe +BCB990, ID 64682) passes `fDialogueCameraFailsafeFPFOV` (30) to
+    PlayerCamera's set-FOV (+1E92650, ID 113443; writes PlayerCamera +0x280 and the
+    frustum) every frame. THook call-site hooks at its three callers (IDs 64682 +0xF43,
+    113316 +0x1FD, 113488 +0x498) swap the value while the mod films. Shots are framed for
+    the lens via `Director::LensDegrees()`.
+  - Room shots: MeasureRoom (16 bearings, ceiling from the cast's safe point) gives each of
+    Wide/Master/Distant an angle on the conversation's side, a distance and a ceiling
+    limit; `Shots::Solve` places them from that (`Input::roomAngle/roomDistance/roomRise`).
+  - Filming people talking near you, first step (`[Overhear]`): prompt, listen key (N),
+    `FilmFrame()` applies the render camera from the first/third-person update hooks.
+  - Your face (`src/Face.cpp`): ChangeAnimFaceArchetype (ID 100510); background from the
+    perk-rank lookup behind HasPerk (ID 101224); tables in docs/EMOTIONS.md.
+- Earlier: the game's high-process actor list is at ProcessLists +0x60, not CommonLibSF's
+  +0x58 (reported upstream, libxse/commonlibsf#57, confirmed by another modder; the user
+  will offer a PR if it isn't fixed by about 2026-11-28).
+- Crash lessons: don't read the lower-process actor lists or the cell's references (0.7.9
+  and 0.7.10 crashed on load); only high-process actors are asked anything, guarded.
 
 ## Next, with access to the gaming PC
 
