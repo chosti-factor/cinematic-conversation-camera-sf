@@ -140,7 +140,7 @@ namespace CCC
 			a_s.fadeOptions = ReadInt(a_path, L"Interface", L"bFadeOptions", a_s.fadeOptions ? 1 : 0) != 0;
 			a_s.subtitlesInBars = ReadInt(a_path, L"Interface", L"bSubtitlesInBars", a_s.subtitlesInBars ? 1 : 0) != 0;
 			a_s.hideOptionsWhileSpeaking = ReadInt(a_path, L"Interface", L"bHideOptionsWhileSpeaking", a_s.hideOptionsWhileSpeaking ? 1 : 0) != 0;
-			a_s.optionsFade = std::clamp(ReadFloat(a_path, L"Interface", L"fOptionsFade", a_s.optionsFade), 0.1f, 1.5f);
+			a_s.optionsFade = std::clamp(ReadFloat(a_path, L"Interface", L"fOptionsFade", a_s.optionsFade), 0.0f, 1.5f);
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);

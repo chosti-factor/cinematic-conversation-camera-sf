@@ -6,6 +6,10 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.7.2 - unreleased
 
+### Changed
+- The dialogue options appear at once by default (`fOptionsFade=0`, was 0.6 s); any value up
+  to 1.5 s fades them in.
+
 ### Fixed
 - Reaction shots never happened: the subtitle (used to skip short lines) isn't there yet
   when a line starts, so every line looked empty. The decision now waits up to half a second
