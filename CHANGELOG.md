@@ -4,12 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.4 - unreleased
+## 0.7.4 - 2026-11-14
 
 ### Changed
 - Emotion close-ups: Stern, Defiant, Smug, Sarcastic, Flirting, Pleading and Disbelief join the
   expressions that push in (`sCloseUpEmotions`). `docs/EMOTIONS.md` lists all 43 of the game's
   expressions, seen or not.
+- Six guessed names on that list that aren't real expressions (Angry, Annoyed, Fearful,
+  Scared, Disgusted, Sad) are replaced with the game's own: VeryAngry, Rage, Afraid,
+  Depressed and Shocked.
 
 ## 0.7.3 - 2026-11-14
 

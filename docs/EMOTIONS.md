@@ -46,8 +46,6 @@ Notes:
   Serious and Smirk account for over half of that.
 - New since the last tally: SinisterSmile (one line, Ularu Chen). Not on the list yet; a
   candidate for close-ups.
-- On the list but never seen yet: Angry, Annoyed, Fearful, Scared, Disgusted, Sad (guessed
-  names; the game uses Irritated and Disgust).
 - Starfield has no emotion strength per line (Skyrim's writers set one, which CCC uses), so
   the tag is all there is to go on.
 
@@ -62,7 +60,7 @@ character's face (planned).
 | Expression | Seen in testing | On the close-up list |
 |---|---|---|
 | Neutral | yes |  |
-| Afraid | - |  |
+| Afraid | - | ✱ |
 | Amused | yes |  |
 | Angry | - | ✱ |
 | Apologetic | yes | ✱ |
@@ -72,7 +70,7 @@ character's face (planned).
 | Confident | yes |  |
 | Confused | yes | ✱ |
 | Defiant | - | ✱ |
-| Depressed | - |  |
+| Depressed | - | ✱ |
 | Disbelief | - | ✱ |
 | Disgust | yes | ✱ |
 | Dying | - |  |
@@ -88,11 +86,11 @@ character's face (planned).
 | Pleading | - | ✱ |
 | Puzzled | yes | ✱ |
 | Question | yes |  |
-| Rage | - |  |
+| Rage | - | ✱ |
 | Relieved | yes | ✱ |
 | Sarcastic | - | ✱ |
 | Serious | yes | ✱ |
-| Shocked | - |  |
+| Shocked | - | ✱ |
 | SinisterSmile | yes |  |
 | Smirk | yes | ✱ |
 | Smug | - | ✱ |
@@ -102,12 +100,12 @@ character's face (planned).
 | Suspicious | yes | ✱ |
 | Thinking | yes |  |
 | Tired | yes |  |
-| VeryAngry | - |  |
+| VeryAngry | - | ✱ |
 | Worried | yes | ✱ |
 
 Notes:
 
 - 0.7.4 added Stern, Defiant, Smug, Sarcastic, Flirting, Pleading and Disbelief to the
   close-up list.
-- Angry, Annoyed, Fearful, Scared, Disgusted and Sad on the list are guessed names that aren't
-  real expressions; the game's own are Afraid, VeryAngry, Rage, Depressed and Shocked.
+- 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
+  Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
