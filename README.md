@@ -16,7 +16,7 @@ first showed it could be done. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.7.x)
+## Status: alpha (0.8.x)
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -34,6 +34,14 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
+- **Reaction shots:** now and then a line is shown on you listening (counted in sentences;
+  `iReactionEvery`, `iReactionChance`), with seated people and merchants too.
+- **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
+  reply is a close-up, pushing in (`bPersuasionBeat`).
+- **Room shots** (Wide, Master, Distant, in the Room and Stardust presets): placed where
+  the room around the two of you has space for them, measured with the game's collision
+  check, on the conversation's side of the line and with both faces in view
+  (`iRoomShotMinRoom`).
 
 ### New or distinct in CCC SF
 
@@ -66,51 +74,65 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
+- **A wider conversation lens:** Starfield films conversations through a narrow 30 degree
+  lens; the mod widens it while it films (`fConversationLens`, 45 by default; 0 keeps the
+  game's), so CCC's framings fit from closer.
+- **Your character's face:** the game keeps it neutral and your lines carry no expression
+  tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
+  listener would), options with a skill, background or trait tag ([Persuade], [Space
+  Scoundrel], [Wanted]...) and questions show on it, and your background colours neutral
+  moments. Close-ups of you when your face shows something (`[Face]`; tables in
+  [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
+- **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
+  included; a notification offers to film them, and the listen key (N) starts and stops it
+  (`[Overhear]`; first step, in testing).
+- **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
+  a wall; people walking through stay in.
+- **Testing messages:** each line's expression, your face's answer and the shot used, with
+  why, in the top bar while a conversation is filmed (`bShowMessages`, `fMessageSeconds`).
 - Clean exits in both perspectives (starts can still show a frame or two of the game's
   own camera). Small speakers (robots) and quest scenes you take part in (someone walks
   up and starts talking, several people taking turns) keep the game's own camera.
 
 ### Differences from CCC, because of Starfield
 
-- Starfield's conversation lens is fixed and narrower (about 30 degrees) than the ones
-  CCC uses, so its framings want the camera further back. Each preset lets the camera
-  go as far as its widest shot needs (Standard: 7 m indoors, 10.5 m outdoors), and
-  obstacle detection pulls it in or picks another angle where walls are closer. CCC's
-  room shots (Master, Wide, Distant) aren't available yet: they need the room measured.
+- Starfield's conversation lens is narrower (30 degrees) than the ones CCC was made for,
+  so its framings want the camera further back. The mod widens the lens (45 degrees by
+  default), each preset lets the camera go as far as its widest shot needs (Standard: 7 m
+  indoors, 10.5 m outdoors), and obstacle detection pulls it in or picks another angle
+  where walls are closer.
 - Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
   close-ups are chosen from the line's expression tag instead.
 - There's no in-game settings menu; everything is in the INI.
 
 ### Planned, roughly in order
 
-- CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
-  collision test.
-- Reaction shots and holding on the answer after a persuasion check (in testing, 0.7.1+).
-- Your character's face (the game keeps it neutral, and your lines carry no expression
-  tags). In testing since 0.7.8: while you listen, your face answers the NPC's line
-  (mirrored or a listener's response); skill-tagged options ([Persuade], [Intimidate]...)
-  and your background show on it; close-ups of you when it does (tables in
-  [docs/EMOTIONS.md](docs/EMOTIONS.md)). Later, maybe: your traits setting a temperament
-  (Introvert subtler, Extrovert fuller, Empath mirrors more), and cautiously the text of
-  your lines.
-- Filming NPC-to-NPC conversations near you, filmed like your own: NPCs within 5 m of each
-  other who've spoken recently form one scene, groups of three or more included; each line
-  is shot on its speaker against whoever they're addressing, with occasional group shots.
-  Three ways to start it, each its own setting: a prompt when a conversation is near you
-  ("Conversation nearby: press [key] to listen"); automatically while you sit (at a bar, on
-  a bench); and, optionally, automatically after standing still near them for a while.
-  Never in combat; moving or any input hands the camera back.
-- Polish: emotion close-ups tuned from testing (which expressions push in, and how often;
-  see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
-  (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
-  scenes recognised by their quest rather than the scene's name; plants and other objects
-  without collision (which the obstacle check can't see) in front of wide outdoor shots, and
-  walls it passes through (beside Commander Tuala at the MAST, every check said clear);
-  the default amount of camera sway (`iCameraSway`); leaving a conversation in third
-  person (the camera rests on the NPC's middle for a moment: frame their head, or go
-  straight to the game's camera as in first person); large speakers such as Vasco, whose
-  bigger body can block you in over-the-shoulder shots; a seated NPC hidden behind your body in
-  the plain over-the-shoulder shot.
+- In testing (0.8): the wider lens, room shots, filming people talking near you, your
+  character's face, reaction shots and holding on the answer after a persuasion.
+- Filming people talking near you, the rest: groups of three or more with occasional group
+  shots; the letterbox and obstacle checks while filming them; starting it automatically
+  while you sit (at a bar, on a bench) and, optionally, after standing still near them; a
+  controller button. Never in combat; moving or any input hands the camera back.
+- Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
+  Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
+- Polish:
+  - **Distance, lens, or both:** how the shots get CCC's framing through Starfield's
+    narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
+    Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
+    (CCC's own distances with a lens as wide as CCC's), or a hybrid (a moderately wider lens
+    with somewhat longer distances, as 0.8 does at 45 degrees); perhaps per preset.
+  - Emotion close-ups tuned from testing (which expressions push in, and how often; see
+    [docs/EMOTIONS.md](docs/EMOTIONS.md)).
+  - Talking to a seated person from the side (about 90 degrees) leaves you out of the
+    picture; a seated NPC hidden behind your body in the plain over-the-shoulder shot; a
+    switch for reaction shots with seated people and merchants.
+  - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
+    shots.
+  - Plants and other objects without collision (which the obstacle check can't see) in
+    front of wide outdoor shots, and walls it passes through (beside Commander Tuala at the
+    MAST, every check said clear).
+  - Smoother conversation starts; quest scenes recognised by their quest rather than the
+    scene's name; the default amount of camera sway (`iCameraSway`).
 - Public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
   replacer, a subtitle mod) and listing compatibility.
 
@@ -141,13 +163,16 @@ apply without restarting the game.
 | Section | What's in it |
 |---|---|
 | `[General]` | On/off, extra logging |
-| `[Director]` | Preset, cutting style, camera distance limits indoors and outdoors, 180-degree rule, camera moves |
+| `[Director]` | Preset, cutting style, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | Who gets the camera (shot/reverse or fixed), follow smoothing, third-person exit hold, small-speaker height |
+| `[Camera]` | The conversation lens, who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height |
 | `[Body]` | Showing your character, building the full body from first person |
 | `[Transitions]` | How the first and last frames of a conversation are handled |
 | `[PlainCamera]` | The simple over-the-shoulder shots used when the director is off |
-| `[Debug]` | Hook and camera-target switches for troubleshooting |
+| `[Interface]` | Letterbox, subtitles in the bars, dialogue options while the NPC speaks |
+| `[Overhear]` | Filming people talking near you: on/off, the listen key, how far |
+| `[Face]` | Your character's face: on/off, background expressions, questions, close-ups of you |
+| `[Debug]` | Testing messages, hook and camera-target switches for troubleshooting |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
 Each setting is explained in the INI itself.
@@ -171,4 +196,15 @@ xmake build
 
 ## License
 
-GPL-3.0-or-later. If you distribute a build, you must also publish its source.
+Copyright (C) 2026 chosti-factor and the Cinematic Conversation Camera SF contributors.
+
+This program is free software: you can redistribute it and/or modify it under the terms of
+the GNU General Public License as published by the Free Software Foundation, either
+version 3 of the License, or (at your option) any later version. It is distributed in the
+hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the full text in
+[LICENSE](LICENSE).
+
+It includes work from Cinematic Conversation Camera by hashhbbrown and Player Camera During
+Dialogue by rrrafau, both GPL-3.0-or-later (details in [CREDITS.md](CREDITS.md)). If you
+distribute a build, you must also publish its source.
