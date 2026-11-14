@@ -254,7 +254,8 @@ namespace CCC::Director
 			in.playerFacing = a_frame.playerFacing;
 			in.npcGround = a_frame.npcGround;
 			in.playerGround = a_frame.playerGround;
-			in.feetValid = a_frame.feetValid && Settings::Get().steadyEyeline;
+			in.feetValid = a_frame.feetValid;
+			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
 			in.npcFeet = a_frame.npcFeet;
 			in.playerFeet = a_frame.playerFeet;
 			in.progress = a_progress;
@@ -559,8 +560,9 @@ namespace CCC::Director
 			s.closeUpEmotions);
 		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
 			s.obstacleCheck && !g_obstacleTest ? ", but the game's collision check isn't available" : "");
-		REX::INFO("Settings in effect: close-ups follow the face {}, 180-degree rule {}, never across the eyeline {}", s.followFace ? "on" : "off",
-			s.true180 ? "on (one side for the whole conversation)" : "off (each person over their own side)", s.enforceLine || s.true180 ? "on" : "off");
+		REX::INFO("Settings in effect: close-ups follow the face {}, 180-degree rule {}, never across the eyeline {}, camera sway {}%, head dead band {:.2f} m",
+			s.followFace ? "on" : "off", s.true180 ? "on (one side for the whole conversation)" : "off (each person over their own side)",
+			s.enforceLine || s.true180 ? "on" : "off", s.cameraSway, s.faceDeadband);
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)

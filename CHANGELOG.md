@@ -22,8 +22,9 @@ test build; "diagnostic" items only add information to the log for testing.
 ### Fixed
 - Sway: every shot's angle was measured off the line between the two heads, so when a head
   swayed a few centimetres the camera orbited with it, by more the further out it stood (most
-  visible from 0.6.0, with the camera up to 7-10 m away). The line's bearing now comes from
-  where the two stand, as CCC measures it between steady points (`bSteadyEyeline`).
+  visible from 0.6.0, with the camera up to 7-10 m away). `iCameraSway` (0-100%, default 40)
+  sets how much of that sway the camera follows: 0 measures the line from where the two
+  stand, as CCC does between steady points; 100 is 0.6.0's full sway.
 
 ## 0.6.0 - 2026-11-13
 

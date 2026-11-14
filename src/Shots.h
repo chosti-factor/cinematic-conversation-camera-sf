@@ -135,6 +135,9 @@ namespace CCC::Shots
 		bool         feetValid{ false };
 		RE::NiPoint3 npcFeet{};
 		RE::NiPoint3 playerFeet{};
+		// How much of the heads' sway the camera follows, 0-1 (iCameraSway / 100): 0 = the
+		// bearing from where they stand only, 1 = from the heads (the full sway of 0.6.0).
+		float        sway{ 0.4f };
 
 		// 180-degree rule: never let an angle (after face turns and moves) cross the eyeline
 		// or come within a few degrees of it (CCC's bEnforceLine).

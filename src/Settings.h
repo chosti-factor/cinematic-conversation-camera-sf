@@ -143,7 +143,7 @@ namespace CCC
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
-		bool        steadyEyeline{ true };    // the eyeline's bearing from where people stand, not their heads
+		int         cameraSway{ 40 };         // % of the heads' sway the camera's angle follows (0 = none, 100 = full)
 		bool        cameraMoves{ true };
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
