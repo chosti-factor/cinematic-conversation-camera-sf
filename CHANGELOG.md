@@ -4,7 +4,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.12 - unreleased
+## 0.7.12 - 2026-11-14
 
 ### Added
 - Your face for more skill checks: science options ([Astrophysics], [Geology], [Botany],
