@@ -71,6 +71,8 @@ namespace CCC
 			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
+			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
+			std::string                           lastLineText{};
 			bool                                  playerWasTalking{ false };
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
 			std::optional<RE::NiPoint3>           slackNpcHead{};    // head point after the dead band
@@ -1522,32 +1524,44 @@ namespace CCC
 					g_state.lineStart = now;
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;
-					std::size_t length = 0;
+					g_state.reactionPending = true;
+				}
+				// Reaction shots (CCC): every iReactionEvery-th line of their reply (Starfield's
+				// replies are mostly two or three lines, so the roll is on that line itself rather
+				// than CCC's next one), an iReactionChance chance it's shown on you. Short lines
+				// (under 40 characters) neither count nor become reactions; an emotion close-up line
+				// keeps its close-up and the reaction waits for the next line. The subtitle text is
+				// only there a moment after the line starts (0.7.1 never saw it at the start), so
+				// this waits up to half a second for it to change.
+				if (talkingNow && g_state.reactionPending) {
 					std::string text;
 					if (auto* actor = static_cast<RE::Actor*>(speaker); actor->currentProcess && actor->currentProcess->high) {
 						if (const char* raw = actor->currentProcess->high->strVoiceSubtitle.c_str()) {
 							text = raw;
-							length = text.size();
 						}
 					}
-					// Reaction shots (CCC): after iReactionEvery of their lines in a reply, an
-					// iReactionChance chance that the next one is shown on you. Short lines
-					// (under 40 characters) neither count nor become reactions; an emotion
-					// close-up line keeps its close-up and the reaction waits for the next line.
-					if (s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady) {
-						const bool eligible = length >= 40;
-						const bool takeable = !g_state.lineIntense;
-						if (eligible) {
-							if (g_state.reactionOwed) {
-								if (takeable) {
-									g_state.reactionOwed = false;
-									g_state.reactionActive = true;
-									g_state.reactionLines = 0;
-									REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
-								}
-							} else if (++g_state.reactionLines >= s.reactionEvery) {
+					const bool fresh = !text.empty() && text != g_state.lastLineText;
+					if (fresh || now - g_state.lineStart > 500ms) {
+						g_state.reactionPending = false;
+						if (fresh) {
+							g_state.lastLineText = text;
+						}
+						if (fresh && s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
+							!g_state.lineBeat && text.size() >= 40) {
+							if (g_state.reactionOwed && !g_state.lineIntense) {
+								g_state.reactionOwed = false;
+								g_state.reactionActive = true;
+								REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
+							} else if (!g_state.reactionOwed && ++g_state.reactionLines >= s.reactionEvery) {
 								g_state.reactionLines = 0;
-								g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
+								if (std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
+									if (g_state.lineIntense) {
+										g_state.reactionOwed = true;  // this one keeps its close-up; the next line is the reaction
+									} else {
+										g_state.reactionActive = true;
+										REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
+									}
+								}
 							}
 						}
 					}
@@ -1557,7 +1571,9 @@ namespace CCC
 				if (talkingNow && s.persuasionBeat && !g_state.lineBeat && now - g_state.lineStart < 1500ms) {
 					const auto outcome = Hud::PersuasionOutcomeAt();
 					const auto age = now.time_since_epoch().count() - outcome;
-					if (outcome != 0 && outcome != g_state.beatConsumed && age >= 0 &&
+					// Only outcomes from this conversation (0.7.1: a hire at the end of one carried
+					// into the next).
+					if (outcome != 0 && outcome != g_state.beatConsumed && age >= 0 && outcome > g_state.started.time_since_epoch().count() &&
 						age < std::chrono::duration_cast<std::chrono::steady_clock::duration>(8s).count()) {
 						g_state.beatConsumed = outcome;
 						g_state.lineBeat = true;
@@ -3198,7 +3214,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
