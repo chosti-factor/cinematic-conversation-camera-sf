@@ -33,10 +33,11 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 
 1. Done: the actor list is at ProcessLists +0x60 (count) / +0x68 (handles) in 1.16.244,
    found in Starfield.exe (loads of the singleton, RVA 0x5FD9B88, ID 937584). The exe is on
-   the gaming PC (F:\SteamLibrary\steamapps\common\Starfield); the Address Library is in
-   Mod Organizer's mods folder (F:\Ad Astra\mods\Address Library for SFSE Plugins). With pefile
+   the gaming PC (the Steam install folder); the Address Library is in Mod Organizer's mods
+   folder ("Address Library for SFSE Plugins"). With pefile
    and capstone (pip through the proxy: NO_PROXY=localhost) code can be read directly.
-2. Read test logs straight from `C:\Users\ricar\OneDrive\Documents\My Games\Starfield\SFSE\Logs`.
+2. Read test logs straight from `Documents\My Games\Starfield\SFSE\Logs` on the gaming PC, and crash
+   logs from Mod Organizer's `overwrite\SFSE\Plugins` folder.
 3. Then: NPC-to-NPC filming (prompt / seated / standing still triggers, see README),
    room shots with Starfield framing (CCC's need 18-27 m at this 30 degree lens), your
    character's face (ChangeAnimFaceArchetype at RVA 0x18E0220; credit rrrafau), polish.
