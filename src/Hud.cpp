@@ -378,6 +378,9 @@ namespace CCC::Hud
 		{
 			bool  wasVisible[2]{ false, false };
 			float alpha[2]{ 1.0f, 1.0f };
+			float setAlpha[2]{ -1.0f, -1.0f };  // what we wrote last frame (-1 = nothing), to see whether the game keeps it
+			int   logs{ 0 };                     // log lines this session (capped)
+			bool  overrideLogged{ false };
 			bool  listDumped{ false };
 		} g_options;
 
@@ -396,6 +399,20 @@ namespace CCC::Hud
 				}
 				Value      visible;
 				const bool now = SafeGet(&list, "visible", &visible) && visible.IsBoolean() && visible.GetBoolean();
+				// Did what we wrote last frame stick? (If the game resets it, the fade can't show.)
+				if (now && g_options.setAlpha[i] >= 0.0f && !g_options.overrideLogged) {
+					const double found = Member(list, "alpha", -1.0);
+					if (found >= 0.0 && std::abs(found - g_options.setAlpha[i]) > 0.05) {
+						g_options.overrideLogged = true;
+						REX::WARN("HUD: the game reset {}'s transparency (set {:.2f}, found {:.2f}); the options fade can't show this way", names[i],
+							g_options.setAlpha[i], found);
+					}
+				}
+				g_options.setAlpha[i] = -1.0f;
+				if (now != g_options.wasVisible[i] && g_options.logs < 40) {
+					++g_options.logs;
+					REX::INFO("HUD: {} {} ({}NPC speaking)", names[i], now ? "shown by the game" : "hidden by the game", a_npcTalking ? "" : "no ");
+				}
 				if (now && !g_options.wasVisible[i]) {
 					g_options.alpha[i] = s.fadeOptions ? 0.0f : 1.0f;
 					if (a_dump && i == 0 && !g_options.listDumped) {
@@ -414,8 +431,14 @@ namespace CCC::Hud
 				g_options.alpha[i] = before < target ? (std::min)(target, before + step) : (std::max)(target, before - step);
 				if (g_options.alpha[i] != before || g_options.alpha[i] < 1.0f) {
 					const float t = g_options.alpha[i];
-					const Value alpha{ static_cast<double>(t * t * (3.0f - 2.0f * t)) };
+					const float a = t * t * (3.0f - 2.0f * t);
+					const Value alpha{ static_cast<double>(a) };
 					SafeSet(&list, "alpha", &alpha);
+					g_options.setAlpha[i] = a;
+				}
+				if ((before >= 1.0f && g_options.alpha[i] < 1.0f) != (before > 0.0f && g_options.alpha[i] <= 0.0f) && g_options.logs < 40) {
+					++g_options.logs;
+					REX::INFO("HUD: {} {} ({:.2f} s)", names[i], before >= 1.0f ? "fading out while the NPC speaks" : "faded out", s.optionsFade);
 				}
 			}
 		}
