@@ -11,6 +11,7 @@
 
 #include "Camera.h"
 #include "Director.h"
+#include "Hud.h"
 #include "Settings.h"
 #include "Visibility.h"
 
@@ -2888,6 +2889,14 @@ namespace CCC
 				const auto       now = std::chrono::steady_clock::now();
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
+
+				// Letterbox, subtitles and dialogue options (0.6.3).
+				{
+					static auto last = now;
+					const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
+					last = now;
+					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, dt);
+				}
 
 				// Conversation field of view: keep the game's setting at the value asked for, so
 				// it is in place whenever the dialogue camera starts.

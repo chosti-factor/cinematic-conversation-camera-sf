@@ -14,6 +14,10 @@ namespace CCC
 		bool     enabled{ true };
 		bool     debugLog{ true };
 		bool     showEmotions{ true };  // on-screen message with each line's expression tag (testing aid)
+		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
+		bool     letterbox{ true };     // black bars while the camera films a conversation
+		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height
+		float    letterboxFade{ 0.4f };     // seconds for the bars to slide in or out
 		ShotMode shotMode{ ShotMode::kFollowSpeaker };
 
 		// Over-the-shoulder geometry, in meters (Starfield's world unit; Skyrim's was ~1.43 cm).

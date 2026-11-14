@@ -6,6 +6,17 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.6.3 - unreleased
 
+### Added
+- Letterbox (CCC's black bars, `[Interface]` `bLetterbox`, `fLetterboxHeight`,
+  `fLetterboxFade`): black bars slide in at the top and bottom of the screen while the camera
+  films a conversation. They're added inside the dialogue menu, under its own content, so its
+  subtitles and options stay on top (the first step towards subtitles in the bars).
+
+### Diagnostic
+- `bDumpMenus`: the dialogue menu's and the HUD's layout (every element's name, position, size
+  and text) is written to the log once per game session, to find the subtitle and the dialogue
+  options for the next steps.
+
 ### Fixed
 - Player missing from a conversation (Violet), and some conversations starting with the
   camera-switching fallback, which flickers (Dirk, a merchant): the game sometimes takes
