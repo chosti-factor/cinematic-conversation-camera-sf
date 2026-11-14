@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.6.5 - unreleased
+
+### Added
+- Subtitles in the bars (CCC's option; `[Interface]` `bSubtitlesInBars`): while the bars are
+  in, the conversation's subtitle (the HUD messages menu's `SubtitleText_mc`, found by 0.6.4's
+  search) slides down with them until its text is centred in the bottom bar, and back when
+  they go, since the same element shows ambient lines outside conversations. Long subtitles
+  stay on screen.
+
 ## 0.6.4 - 2026-11-13
 
 ### Added

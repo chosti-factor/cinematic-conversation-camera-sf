@@ -18,6 +18,7 @@ namespace CCC
 		bool     letterbox{ true };     // black bars while the camera films a conversation
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height
 		float    letterboxFade{ 0.4f };     // seconds for the bars to slide in or out
+		bool     subtitlesInBars{ true };    // the conversation's subtitle sits inside the bottom bar
 		bool     fadeOptions{ true };       // the dialogue options fade in and out instead of popping
 		bool     hideOptionsWhileSpeaking{ true };  // the options fade out while the NPC speaks
 		float    optionsFade{ 0.35f };      // seconds

@@ -138,6 +138,7 @@ namespace CCC
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
 			a_s.letterboxFade = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxFade", a_s.letterboxFade), 0.0f, 3.0f);
 			a_s.fadeOptions = ReadInt(a_path, L"Interface", L"bFadeOptions", a_s.fadeOptions ? 1 : 0) != 0;
+			a_s.subtitlesInBars = ReadInt(a_path, L"Interface", L"bSubtitlesInBars", a_s.subtitlesInBars ? 1 : 0) != 0;
 			a_s.hideOptionsWhileSpeaking = ReadInt(a_path, L"Interface", L"bHideOptionsWhileSpeaking", a_s.hideOptionsWhileSpeaking ? 1 : 0) != 0;
 			a_s.optionsFade = std::clamp(ReadFloat(a_path, L"Interface", L"fOptionsFade", a_s.optionsFade), 0.0f, 3.0f);
 

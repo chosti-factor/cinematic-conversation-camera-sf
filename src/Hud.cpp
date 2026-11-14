@@ -82,6 +82,17 @@ namespace CCC::Hud
 			}
 		}
 
+		bool SafeCreateObjectArgs(MovieRoot* a_root, Value* a_out, const char* a_class, const Value* a_args, std::uint32_t a_count)
+		{
+			__try {
+				a_root->CreateObject(a_out, a_class, a_args, a_count);
+				return a_out->IsObject();
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				g_broken = true;
+				return false;
+			}
+		}
+
 		bool SafeGet(const Value* a_obj, const char* a_name, Value* a_out)
 		{
 			__try {
@@ -511,6 +522,101 @@ namespace CCC::Hud
 		}
 	}
 
+	namespace
+	{
+		// ---- Subtitles in the bottom bar ---------------------------------------------------
+		// The conversation's subtitle is the HUD messages menu's
+		// Menu_mc.BottomCenterGroup_mc.SubtitleText_mc (0.6.4 search); it normally sits at the
+		// bar's top edge. While the bars are in, it's moved down so its text is centred in the
+		// bottom bar, and put back as they go (the same element shows ambient lines outside
+		// conversations).
+		struct SubtitleState
+		{
+			bool   active{ false };  // moved from the game's position
+			double baseY{ 0.0 };     // the game's own y for it
+			double lastSet{ 0.0 };
+			bool   missingLogged{ false };
+			bool   movedLogged{ false };
+		} g_sub;
+
+		bool GlobalY(MovieRoot* a_root, Value& a_obj, double a_localY, double& a_out)
+		{
+			const Value args[2]{ Value{ 0.0 }, Value{ a_localY } };
+			Value       point;
+			if (!SafeCreateObjectArgs(a_root, &point, "flash.geom.Point", args, 2)) {
+				return false;
+			}
+			Value global;
+			if (!SafeInvoke(&a_obj, "localToGlobal", &global, &point, 1) || !global.IsObject()) {
+				return false;
+			}
+			a_out = Member(global, "y", std::numeric_limits<double>::quiet_NaN());
+			return std::isfinite(a_out);
+		}
+
+		void UpdateSubtitles(float a_ease)
+		{
+			const auto& s = Settings::Get();
+			const auto  ref = OpenMovie("HUDMessagesMenu");
+			if (!ref) {
+				g_sub.active = false;
+				return;
+			}
+			Value top, menu, group, holder, text;
+			if (!RootObject(ref->root, top, "HUDMessagesMenu") || !Child(top, "Menu_mc", menu) || !Child(menu, "BottomCenterGroup_mc", group) ||
+				!Child(group, "SubtitleText_mc", holder) || !Child(holder, "SubtitleText_tf", text)) {
+				if (!g_sub.missingLogged && a_ease > 0.0f) {
+					g_sub.missingLogged = true;
+					REX::WARN("HUD: couldn't find the subtitle (HUDMessagesMenu Menu_mc.BottomCenterGroup_mc.SubtitleText_mc); subtitles stay where they are");
+				}
+				return;
+			}
+			const double y = Member(holder, "y", std::numeric_limits<double>::quiet_NaN());
+			if (!std::isfinite(y)) {
+				return;
+			}
+			if (!g_sub.active) {
+				if (a_ease <= 0.0f) {
+					return;
+				}
+				g_sub.active = true;
+				g_sub.baseY = y;
+				g_sub.lastSet = y;
+			} else if (std::abs(y - g_sub.lastSet) > 0.5) {
+				g_sub.baseY = y;  // the game placed it again
+			}
+			double target = g_sub.baseY;
+			double g0 = 0.0, g100 = 0.0;
+			if (a_ease > 0.0f && GlobalY(ref->root, group, 0.0, g0) && GlobalY(ref->root, group, 100.0, g100) && std::abs(g100 - g0) > 1.0) {
+				const double scale = (g100 - g0) / 100.0;
+				double       stageHeight = 1080.0;
+				Value        stage;
+				if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
+					stageHeight = Member(stage, "stageHeight", stageHeight);
+				}
+				const double textHeight = Member(text, "textHeight", 0.0) * scale;
+				const double textTop = g0 + scale * (g_sub.baseY + Member(text, "y", 0.0) + 2.0);  // 2: the text field's gutter
+				const double bar = stageHeight * std::clamp(s.letterboxHeight, 0.02f, 0.3f);
+				double       wantTop = stageHeight - bar * 0.5 - textHeight * 0.5;
+				wantTop = (std::min)(wantTop, stageHeight - 6.0 - textHeight);  // a long line never runs off the bottom
+				const double e = a_ease * a_ease * (3.0 - 2.0 * a_ease);
+				target = g_sub.baseY + (wantTop - textTop) / scale * e;
+				if (!g_sub.movedLogged && a_ease >= 1.0f && textHeight > 1.0) {
+					g_sub.movedLogged = true;
+					REX::INFO("HUD: subtitle moved into the bottom bar (text {:.0f} high, from {:.0f} to {:.0f} on a {:.0f} stage)", textHeight, textTop, wantTop, stageHeight);
+				}
+			}
+			if (std::abs(target - y) > 0.25) {
+				const Value v{ target };
+				SafeSet(&holder, "y", &v);
+			}
+			g_sub.lastSet = target;
+			if (a_ease <= 0.0f) {
+				g_sub.active = false;  // back where the game had it
+			}
+		}
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
@@ -537,6 +643,9 @@ namespace CCC::Hud
 		}
 		if (s.letterbox && !g_broken) {
 			UpdateLetterbox(a_filming && dialogueOpen, a_delta);
+			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
+				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
+			}
 		}
 		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
