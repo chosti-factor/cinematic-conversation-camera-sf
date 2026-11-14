@@ -277,9 +277,16 @@ namespace CCC::Shots
 			const float fx = of.x - sf.x, fy = of.y - sf.y;
 			const float fl = std::sqrt(fx * fx + fy * fy);
 			const float hl = std::sqrt(toOther.x * toOther.x + toOther.y * toOther.y);
-			if (fl > 0.3f && hl > 0.05f) {
-				toOther.x = fx / fl * hl;
-				toOther.y = fy / fl * hl;
+			const float w = std::clamp(a_in.sway, 0.0f, 1.0f);
+			if (fl > 0.3f && hl > 0.05f && w < 1.0f) {
+				// Blend the two bearings: w of the heads' (swaying), the rest from the feet.
+				const float bx = fx / fl * (1.0f - w) + toOther.x / hl * w;
+				const float by = fy / fl * (1.0f - w) + toOther.y / hl * w;
+				const float bl = std::sqrt(bx * bx + by * by);
+				if (bl > 1.0e-3f) {
+					toOther.x = bx / bl * hl;
+					toOther.y = by / bl * hl;
+				}
 			}
 		}
 		toOther = { toOther.x / separation, toOther.y / separation, toOther.z / separation };
