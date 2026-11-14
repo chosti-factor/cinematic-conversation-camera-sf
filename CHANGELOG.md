@@ -4,7 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.9 - unreleased
+## 0.7.10 - unreleased
+
+### Fixed
+- Another crash while a save loaded (0.7.9): with the game's actor list empty during
+  loading, the mod went through your cell's references instead, whose layout isn't confirmed
+  for this game version. That route is gone, and so is reading the other three actor lists
+  (only their sizes are logged now). Nearby people come only from the game's high-process
+  list, which is confirmed, and nobody is looked up while the game is loading.
+
+### Diagnostic
+- 0.7.9's log answered the crowd question in part: in a busy spot, up to 100 people within
+  20 m were in the game's low-process list, none of them talking as far as the game says.
+  Crowd citizens' chatter may not go through the dialogue system at all.
+
+## 0.7.9 - 2026-11-14
 
 ### Fixed
 - A crash shortly after loading a save (0.7.8): listening to the game's lower-process actor
