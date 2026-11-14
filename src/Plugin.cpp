@@ -1321,6 +1321,9 @@ namespace CCC
 
 			float rawPlayerHeadHeight = 0.0f;
 
+			// The heads as smoothed but before the dead band: what iCameraSway lets the camera
+			// follow (the "handheld" part of the motion).
+			RE::NiPoint3 npcSwayHead{}, playerSwayHead{};
 			// Follow the heads through a short low-pass filter instead of frame by frame. Raw
 			// bone positions are sampled mid-animation on a worker thread, so tracking them
 			// directly made the picture vibrate when someone walked; this also steadies the
@@ -1394,6 +1397,8 @@ namespace CCC
 				// Dead band (0.6.1, CCC's face framing): the framed point only moves once the head
 				// has gone further than fFaceDeadband from it, so idle sway and the bob of
 				// someone working at a bench don't move the camera; leaning and walking do.
+				npcSwayHead = *npcHead;
+				playerSwayHead = *playerHead;
 				if (s.faceDeadband > 0.0f) {
 					auto slack = [band = s.faceDeadband](std::optional<RE::NiPoint3>& a_held, const RE::NiPoint3& a_live) {
 						if (!a_held) {
@@ -1412,6 +1417,15 @@ namespace CCC
 					};
 					npcHead = slack(g_state.slackNpcHead, *npcHead);
 					playerHead = slack(g_state.slackPlayerHead, *playerHead);
+					// iCameraSway: put that share of the small head motion back (0 = steady, 100 =
+					// the camera follows the heads exactly, as in 0.6.0). 0.6.1-0.6.2 applied the
+					// percentage only to the angle, after the dead band had already removed most
+					// of the motion, so even 100% hardly swayed.
+					const float w = std::clamp(s.cameraSway, 0, 100) / 100.0f;
+					npcHead = RE::NiPoint3{ npcHead->x + (npcSwayHead.x - npcHead->x) * w, npcHead->y + (npcSwayHead.y - npcHead->y) * w,
+						npcHead->z + (npcSwayHead.z - npcHead->z) * w };
+					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,
+						playerHead->z + (playerSwayHead.z - playerHead->z) * w };
 				}
 				// Measurement: how much the speaker's head moves, and how far the smoothed head
 				// the camera follows lags behind it.
@@ -1681,6 +1695,8 @@ namespace CCC
 				frame.feetValid = true;
 				frame.npcFeet = npcFeet;
 				frame.playerFeet = playerFeet;
+				frame.npcSwayHead = npcSwayHead;
+				frame.playerSwayHead = playerSwayHead;
 				directed = Director::UpdatePlain(frame, now);
 			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
@@ -1702,6 +1718,8 @@ namespace CCC
 				frame.feetValid = true;
 				frame.npcFeet = npcFeet;
 				frame.playerFeet = playerFeet;
+				frame.npcSwayHead = npcSwayHead;
+				frame.playerSwayHead = playerSwayHead;
 				directed = Director::Update(frame, now);
 			}
 			// The plain shots stage on the same side of the line as the shot library: over your

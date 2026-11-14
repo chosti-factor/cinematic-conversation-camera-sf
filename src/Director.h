@@ -26,6 +26,8 @@ namespace CCC::Director
 		bool         feetValid{ false };    // where each stands (steadies the eyeline)
 		RE::NiPoint3 npcFeet{};
 		RE::NiPoint3 playerFeet{};
+		RE::NiPoint3 npcSwayHead{};         // the heads before the dead band (iCameraSway)
+		RE::NiPoint3 playerSwayHead{};
 	};
 
 	// Obstacle detection (0.5.3): what the game's collision says about a camera spot.

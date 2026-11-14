@@ -278,10 +278,15 @@ namespace CCC::Shots
 			const float fl = std::sqrt(fx * fx + fy * fy);
 			const float hl = std::sqrt(toOther.x * toOther.x + toOther.y * toOther.y);
 			const float w = std::clamp(a_in.sway, 0.0f, 1.0f);
-			if (fl > 0.3f && hl > 0.05f && w < 1.0f) {
-				// Blend the two bearings: w of the heads' (swaying), the rest from the feet.
-				const float bx = fx / fl * (1.0f - w) + toOther.x / hl * w;
-				const float by = fy / fl * (1.0f - w) + toOther.y / hl * w;
+			const auto& sh = spec.onNpc ? a_in.npcSwayHead : a_in.playerSwayHead;
+			const auto& oh = spec.onNpc ? a_in.playerSwayHead : a_in.npcSwayHead;
+			const float sx = oh.x - sh.x, sy = oh.y - sh.y;
+			const float sl = std::sqrt(sx * sx + sy * sy);
+			if (fl > 0.3f && hl > 0.05f && sl > 0.05f) {
+				// Blend the two bearings: w of the heads' (swaying, before the dead band), the
+				// rest from where they stand.
+				const float bx = fx / fl * (1.0f - w) + sx / sl * w;
+				const float by = fy / fl * (1.0f - w) + sy / sl * w;
 				const float bl = std::sqrt(bx * bx + by * by);
 				if (bl > 1.0e-3f) {
 					toOther.x = bx / bl * hl;
