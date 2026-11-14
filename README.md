@@ -91,7 +91,8 @@ Planned, roughly in order:
   scenes recognised by their quest rather than the scene's name; plants and other objects
   without collision (which the obstacle check can't see) in front of wide outdoor shots; the default amount of
   camera sway (`iCameraSway`).
-- Public beta.
+- Public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
+  replacer, a subtitle mod) and listing compatibility.
 
 ## Requirements
 

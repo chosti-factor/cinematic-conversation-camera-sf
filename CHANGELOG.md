@@ -4,7 +4,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.6.5 - unreleased
+## 0.6.5 - 2026-11-13
 
 ### Added
 - Subtitles centred in the bottom bar, optional and off by default (`[Interface]`
