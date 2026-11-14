@@ -207,6 +207,12 @@ namespace CCC::Shots
 	}
 
 	bool   OnNpc(ShotType a_type) noexcept { return SpecFor(a_type).onNpc; }
+
+	bool FollowsFace(ShotType a_type) noexcept
+	{
+		const auto spec = SpecFor(a_type);
+		return spec.anchor == Anchor::kSubject && !spec.aimMidpoint && !spec.overShoulder && spec.fill >= 0.5f;
+	}
 	bool   OverShoulder(ShotType a_type) noexcept { return SpecFor(a_type).overShoulder; }
 	Anchor AnchorOf(ShotType a_type) noexcept { return SpecFor(a_type).anchor; }
 	bool   Neutral(ShotType a_type) noexcept { return SpecFor(a_type).anchor != Anchor::kSubject; }
@@ -285,11 +291,47 @@ namespace CCC::Shots
 		float       rise = spec.rise * kUnit;
 		float       angle = spec.angleDeg;
 
+		// Close-ups that follow the face (CCC's FaceFrame): turn toward where the face points,
+		// half of its bearing off the eyeline and at most 35 degrees, and drop to look up into a
+		// lowered face (60% of its pitch, -30 to +10 degrees). Decided at the cut, then held.
+		const bool         faced = a_in.followFace && FollowsFace(a_type) && (spec.onNpc ? a_in.npcFaceValid : a_in.playerFaceValid);
+		float              faceYaw = 0.0f;
+		float              facePitch = 0.0f;
+		if (faced) {
+			const auto& f = spec.onNpc ? a_in.npcFacing : a_in.playerFacing;
+			RE::NiPoint3 eyeline{ toOther.x, toOther.y, 0.0f };
+			RE::NiPoint3 flat{ f.x, f.y, 0.0f };
+			const float  el = Length(eyeline), fl = Length(flat);
+			if (el > 1.0e-3f && fl > 0.25f) {
+				eyeline = { eyeline.x / el, eyeline.y / el, 0.0f };
+				flat = { flat.x / fl, flat.y / fl, 0.0f };
+				const float cross = eyeline.x * flat.y - eyeline.y * flat.x;
+				const float dot = eyeline.x * flat.x + eyeline.y * flat.y;
+				faceYaw = std::clamp(std::atan2(cross, dot) / kDeg * 0.5f, -35.0f, 35.0f);
+			}
+			facePitch = std::clamp(std::asin(std::clamp(f.z, -1.0f, 1.0f)) / kDeg * 0.6f, -30.0f, 10.0f);
+			if (!std::isnan(a_in.heldFacePitch)) {
+				facePitch = a_in.heldFacePitch;
+			}
+		}
+		result.faced = faced;
+		result.faceYaw = faceYaw;
+		result.facePitch = facePitch;
+		// Continuity limits (CCC): singles stay at least 8 degrees off the eyeline, shots of
+		// the pair at least 34, and nothing swings round past 165.
+		const float lineFloor = spec.anchor == Anchor::kMidpoint ? 34.0f : 8.0f;
+
 		// Over-the-shoulder setups: CCC's angles assume a 40-60 degree lens. Through
 		// Starfield's 30 the near person would fall outside the frame, so swing the camera
 		// in toward the eyeline until their shoulder sits in the edge of the picture.
 		if (!std::isnan(a_in.heldAngle)) {
 			angle = a_in.heldAngle;
+		} else if (faced) {
+			// The turn is applied on the same side of the line as the setup's own angle.
+			angle += faceYaw * lineSide;
+			if (a_in.enforceLine) {
+				angle = std::clamp(angle, lineFloor, 165.0f);
+			}
 		} else if (spec.overShoulder) {
 			float standoff = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
 			standoff = (std::max)(standoff, separation + 60.0f * kUnit);
@@ -361,8 +403,18 @@ namespace CCC::Shots
 			break;
 		}
 
-		// Keep the camera near the conversation: there's no way to test for walls yet.
+		// A move (drift, orbit) never carries the camera across the eyeline either.
+		if (a_in.enforceLine && !spec.overShoulder && a_in.move != M::kLocked) {
+			angle = std::clamp(angle, lineFloor, 165.0f);
+		}
+
+		// The furthest the camera may stand (per preset; obstacles are handled outside).
 		distance = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
+		// Drop for a lowered face, by the height that puts the lens on its line (after the
+		// distance is known).
+		if (faced) {
+			rise += distance * std::sin(facePitch * kDeg);
+		}
 		if (spec.overShoulder) {
 			// Past the other person, so their shoulder is in the corner of the frame.
 			distance = (std::max)(distance, separation + 60.0f * kUnit);
@@ -396,6 +448,12 @@ namespace CCC::Shots
 				pose.position = { pose.position.x + right.x * truck, pose.position.y + right.y * truck, pose.position.z };
 				pose.lookAt = { pose.lookAt.x + right.x * truck, pose.lookAt.y + right.y * truck, pose.lookAt.z };
 			}
+		}
+		// Never below the floor the subject stands on (a lowered face on a seated person).
+		const float ground = spec.onNpc ? a_in.npcGround : a_in.playerGround;
+		if (faced && std::isfinite(ground) && pose.position.z < ground + 0.45f) {
+			const float lift = ground + 0.45f - pose.position.z;
+			pose.position.z += lift;
 		}
 		result.pose = pose;
 		result.ok = std::isfinite(pose.position.x) && std::isfinite(pose.lookAt.x);

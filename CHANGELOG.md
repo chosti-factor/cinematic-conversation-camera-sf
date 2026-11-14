@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.6.1 - unreleased
+
+### Added
+- Close-ups that follow the face (CCC's `bFollowFace`): the camera turns toward where a
+  face points (half its bearing off the eyeline, at most 35 degrees) and drops to look up
+  into a lowered face, decided at each cut and held. The face direction comes from the head
+  bone; its forward axis is chosen once per character model and logged.
+- The 180-degree rule: each conversation is staged from the side of the line between you
+  with more room (measured with the game's collision check; near-equal room is a coin toss).
+  `bEnforceLine` (on) keeps every shot, camera move and face turn at least 8 degrees off the
+  line (34 for shots of the pair). `bTrue180` puts every shot on that one side. The plain
+  shots follow the same side.
+- `fFaceDeadband` (0.04 m): the camera ignores head movement smaller than this, so idle sway
+  and the bob of someone working at a bench stay off the screen.
+
 ## 0.6.0 - 2026-11-13
 
 Milestone: the two things that kept most of CCC's shots out of Starfield are solved. The

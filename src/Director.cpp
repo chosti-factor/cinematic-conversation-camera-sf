@@ -53,6 +53,7 @@ namespace CCC::Director
 			Side                      player;
 			float                     heldAngle{ std::numeric_limits<float>::quiet_NaN() };
 			float                     heldLookSign{ 0.0f };
+			float                     heldFacePitch{ std::numeric_limits<float>::quiet_NaN() };
 			float                     maxDistance{ 3.0f };
 			Line                      npcLine;
 			Line                      playerLine;
@@ -78,6 +79,7 @@ namespace CCC::Director
 			clock::time_point       cutAt{};
 			float                   heldAngle{ std::numeric_limits<float>::quiet_NaN() };
 			float                   heldLookSign{ 0.0f };
+			float                   heldFacePitch{ std::numeric_limits<float>::quiet_NaN() };
 			bool                    wasTalking{ false };
 			float                   limit{ std::numeric_limits<float>::infinity() };
 		} gp;
@@ -243,6 +245,15 @@ namespace CCC::Director
 			in.lensDegrees = kLens;
 			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
+			in.side = a_frame.side;
+			in.enforceLine = s.enforceLine || s.true180;
+			in.followFace = s.followFace;
+			in.npcFaceValid = a_frame.npcFaceValid;
+			in.playerFaceValid = a_frame.playerFaceValid;
+			in.npcFacing = a_frame.npcFacing;
+			in.playerFacing = a_frame.playerFacing;
+			in.npcGround = a_frame.npcGround;
+			in.playerGround = a_frame.playerGround;
 			in.progress = a_progress;
 			in.move = s.cameraMoves ? a_setup.move : Move::kLocked;
 			in.moveAmount = a_setup.amount;
@@ -465,6 +476,11 @@ namespace CCC::Director
 			const auto   solved = Shots::Solve(a_type, in);
 			g.heldAngle = solved.angle;
 			g.heldLookSign = solved.lookSign;
+			g.heldFacePitch = solved.faced ? solved.facePitch : std::numeric_limits<float>::quiet_NaN();
+			if (solved.faced && (std::abs(solved.faceYaw) >= 3.0f || std::abs(solved.facePitch) >= 3.0f)) {
+				REX::INFO("Face: {} turned {:+.0f} degrees toward where the face points, camera {} {:.0f} degrees", Shots::Key(a_type), solved.faceYaw,
+					solved.facePitch < 0.0f ? "lowered" : "raised", std::abs(solved.facePitch));
+			}
 			const bool close = a_type == ShotType::kCloseUp || a_type == ShotType::kExtremeClose;
 			const auto clear = ClearanceFor(a_type, a_frame, close && a_why && std::string_view{ a_why }.find("intense") != std::string_view::npos ? IntenseSetup(a_type) : setup);
 			g.limit = clear.usable || clear.fallbackOk ? clear.limit : std::numeric_limits<float>::infinity();
@@ -517,6 +533,7 @@ namespace CCC::Director
 		g.player.linesTarget = NewLineTarget();
 		g.heldAngle = std::numeric_limits<float>::quiet_NaN();
 		g.heldLookSign = 0.0f;
+		g.heldFacePitch = std::numeric_limits<float>::quiet_NaN();
 		auto*      player = RE::PlayerCharacter::GetSingleton();
 		const bool interior = player && player->parentCell && player->parentCell->IsInterior();
 		const float playerCap = interior ? s.maxCameraDistance : s.maxCameraDistanceExterior;
@@ -539,6 +556,8 @@ namespace CCC::Director
 			s.closeUpEmotions);
 		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
 			s.obstacleCheck && !g_obstacleTest ? ", but the game's collision check isn't available" : "");
+		REX::INFO("Settings in effect: close-ups follow the face {}, 180-degree rule {}, never across the eyeline {}", s.followFace ? "on" : "off",
+			s.true180 ? "on (one side for the whole conversation)" : "off (each person over their own side)", s.enforceLine || s.true180 ? "on" : "off");
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
@@ -627,6 +646,7 @@ namespace CCC::Director
 		auto        in = InputFor(a_frame, setup, progress);
 		in.heldAngle = g.heldAngle;
 		in.heldLookSign = g.heldLookSign;
+		in.heldFacePitch = g.heldFacePitch;
 		const auto solved = Shots::Solve(*g.current, in);
 		if (!solved.ok) {
 			return std::nullopt;
@@ -660,6 +680,11 @@ namespace CCC::Director
 						gp.cutAt = a_now;
 						gp.heldAngle = solved.angle;
 						gp.heldLookSign = solved.lookSign;
+						gp.heldFacePitch = solved.faced ? solved.facePitch : std::numeric_limits<float>::quiet_NaN();
+						if (solved.faced && (std::abs(solved.faceYaw) >= 3.0f || std::abs(solved.facePitch) >= 3.0f)) {
+							REX::INFO("Face: {} turned {:+.0f} degrees toward where the face points, camera {} {:.0f} degrees", Shots::Key(*shot), solved.faceYaw,
+								solved.facePitch < 0.0f ? "lowered" : "raised", std::abs(solved.facePitch));
+						}
 						gp.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
 						NoteEmotionCut(*shot);
 						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees){}", Shots::Key(*shot), solved.distance, solved.angle,
@@ -677,6 +702,7 @@ namespace CCC::Director
 		auto        in = InputFor(a_frame, setup, progress);
 		in.heldAngle = gp.heldAngle;
 		in.heldLookSign = gp.heldLookSign;
+		in.heldFacePitch = gp.heldFacePitch;
 		const auto solved = Shots::Solve(*gp.shot, in);
 		if (!solved.ok) {
 			return std::nullopt;
