@@ -2895,7 +2895,7 @@ namespace CCC
 					static auto last = now;
 					const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
 					last = now;
-					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, dt);
+					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
 
 				// Conversation field of view: keep the game's setting at the value asked for, so

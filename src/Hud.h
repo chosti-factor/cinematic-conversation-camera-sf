@@ -8,5 +8,6 @@ namespace CCC::Hud
 {
 	// Main thread, every frame. a_filming: this mod's camera is filming the conversation
 	// (not the game's own camera in a quest scene). a_delta: seconds since the last call.
-	void Update(bool a_filming, float a_delta);
+	// a_npcTalking: the NPC is speaking a line (the dialogue options fade out meanwhile).
+	void Update(bool a_filming, bool a_npcTalking, float a_delta);
 }

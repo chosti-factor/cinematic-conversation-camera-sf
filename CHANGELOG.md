@@ -7,8 +7,10 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.6.4 - unreleased
 
 ### Added
-- The dialogue options fade in when the game shows them, instead of appearing at once
-  (`[Interface]` `bFadeOptions`, `fOptionsFade`).
+- The dialogue options fade out while the NPC speaks and back in when the line ends (CCC's
+  option; `[Interface]` `bHideOptionsWhileSpeaking`). The game already hides them during most
+  lines, but not during the greeting, where the subtitle ran across the last option. They
+  also fade in when the game shows them, instead of popping (`bFadeOptions`, `fOptionsFade`).
 
 ### Diagnostic
 - The HUD search: 0.6.3's dump of the HUD stopped at 400 elements before reaching the
