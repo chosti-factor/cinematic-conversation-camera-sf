@@ -94,7 +94,11 @@ namespace CCC
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			const char*                           castShot{ nullptr };       // obstacle check: last shot checked
 			int                                   castSubject{ -1 };
-			bool                                  roomMeasured{ false };     // room measurement (groundwork for room shots)
+			bool                                  roomMeasured{ false };     // room measurement (room shots, 0.8)
+			float                                 roomSide{ 0.0f };          // the side it was measured for
+			std::array<float, 3>                  roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+			std::array<float, 3>                  roomDistance{ 0.0f, 0.0f, 0.0f };
+			float                                 roomRise{ 10.0f };
 			RE::NiPoint3                          roomAt{};
 			std::chrono::steady_clock::time_point roomTime{};
 			int                                   plainCheckSubject{ -1 };   // obstacle check of the plain shot: whose turn it was done for
@@ -1318,14 +1322,14 @@ namespace CCC
 		// this lens), the best place it could actually stand, how big the people would be from
 		// there, and whether both faces are in clear view. Measured once per conversation and
 		// again when the two move more than 1.5 m.
-		void MeasureRoom(const RE::NiPoint3& a_npcHead, const RE::NiPoint3& a_playerHead, float a_ground)
+		void MeasureRoom(const RE::NiPoint3& a_npcHead, const RE::NiPoint3& a_playerHead, float a_ground, float a_side, bool a_log)
 		{
 			constexpr int   kBearings = 16;
 			constexpr float kReach = 25.0f;
 			constexpr float kSky = 15.0f;
 			constexpr float kWallMargin = 0.5f;
 			constexpr float kPeople = 1.8f;                  // height of a standing person
-			constexpr float kLens = 29.58f;                  // the conversation lens (horizontal)
+			const float     kLens = Director::LensDegrees();  // the conversation lens (horizontal)
 			const float     vertical = 2.0f * std::atan(std::tan(kLens * 0.5f * std::numbers::pi_v<float> / 180.0f) / 1.7778f);
 			const auto      share = [&](float a_distance) {  // of the frame's height, a person standing there
                 return a_distance > 0.1f ? kPeople / (2.0f * a_distance * std::tan(vertical * 0.5f)) : 1.0f;
@@ -1352,7 +1356,7 @@ namespace CCC
 			CastDetail(mid, { mid.x, mid.y, mid.z - 4.0f }, down, downHit, downSafe);
 			const RE::NiPoint3 higher{ mid.x, mid.y, mid.z + 0.8f };
 			CastDetail(higher, { mid.x, mid.y, mid.z + kSky }, up2, up2Hit, up2Safe);
-			REX::INFO("Room: straight up from between you: hit {} at fraction {:.3f}, safe point {:.2f} m up; from 0.8 m higher: hit {} at {:.3f}, safe point {:.2f} m up; "
+			if (a_log) REX::INFO("Room: straight up from between you: hit {} at fraction {:.3f}, safe point {:.2f} m up; from 0.8 m higher: hit {} at {:.3f}, safe point {:.2f} m up; "
 					  "straight down: hit {} at {:.3f}, safe point {:.2f} m down (your feet {:.2f} m down)",
 				upHit, up, upSafe.z - mid.z, up2Hit, up2, up2Safe.z - mid.z, downHit, down, mid.z - downSafe.z, mid.z - a_ground);
 			// The safe point is the better reading when it's sensible (the fraction may be
@@ -1395,12 +1399,16 @@ namespace CCC
 			}
 			const float along = low[0] + low[kBearings / 2];
 			const float across = low[kBearings / 4] + low[3 * kBearings / 4];
-			REX::INFO("Room: {}; {:.1f} m along the eyeline, {:.1f} m across it (wall to wall through the pair)", roofed ? std::format("ceiling {:.1f} m", ceiling) : "no ceiling within 15 m",
+			if (a_log) REX::INFO("Room: {}; {:.1f} m along the eyeline, {:.1f} m across it (wall to wall through the pair)", roofed ? std::format("ceiling {:.1f} m", ceiling) : "no ceiling within 15 m",
 				along, across);
-			REX::INFO("Room: open from the pair (degrees from the line towards them, anticlockwise: metres) at eye height {}; {:.1f} m higher {}", around, highRise, above);
+			if (a_log) REX::INFO("Room: open from the pair (degrees from the line towards them, anticlockwise: metres) at eye height {}; {:.1f} m higher {}", around, highRise, above);
 
 			// Each room shot: its setup's fill and height (Shots' SpecFor: Wide 0.11 and 24
-			// units up, Master 0.075 and 76 up, Distant 0.09 and 28 up).
+			// units up, Master 0.075 and 76 up, Distant 0.09 and 28 up), placed (0.8) at the
+			// direction with the most room on the conversation's side of the line (0 to 165
+			// degrees off it, as the solver counts), both faces in clear view, as far back as
+			// CCC's framing wants or the room allows; no room shot where the room gives less than
+			// iRoomShotMinRoom percent of that.
 			struct RoomShot
 			{
 				const char* name;
@@ -1408,27 +1416,47 @@ namespace CCC
 				float       rise;
 			};
 			constexpr std::array kShots{ RoomShot{ "Wide", 0.11f, 24.0f / 70.0f }, RoomShot{ "Master", 0.075f, 76.0f / 70.0f }, RoomShot{ "Distant", 0.09f, 28.0f / 70.0f } };
+			const float lineSide = a_side < 0.0f ? -1.0f : 1.0f;
+			const float minShare = static_cast<float>(Settings::Get().roomShotMinRoom) / 100.0f;
+			g_state.roomAngle.fill(std::numeric_limits<float>::quiet_NaN());
+			g_state.roomDistance.fill(0.0f);
+			g_state.roomRise = roofed ? (std::max)(0.2f, ceiling - (mid.z - a_ground) - 0.4f) : 10.0f;
 			std::string summary;
-			for (const auto& shot : kShots) {
+			for (std::size_t n = 0; n < kShots.size(); ++n) {
+				const auto& shot = kShots[n];
 				const float wanted = wants(shot.fill);
-				// The bearings with the most room at this shot's height, best first.
-				std::array<int, kBearings> order{};
+				const auto  room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
+				// The solver's angle for a bearing (bearings from the line towards the NPC,
+				// anticlockwise; the solver turns from the line towards you, by side).
+				const auto angleOf = [&](int i) {
+					float a = (static_cast<float>(i) * 360.0f / kBearings - 180.0f) * lineSide;
+					while (a <= -180.0f) {
+						a += 360.0f;
+					}
+					while (a > 180.0f) {
+						a -= 360.0f;
+					}
+					return a;
+				};
+				std::vector<int> order;
 				for (int i = 0; i < kBearings; ++i) {
-					order[i] = i;
+					const float a = angleOf(i);
+					if (a >= 0.0f && a <= 165.0f) {
+						order.push_back(i);
+					}
 				}
-				const auto room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
 				std::ranges::sort(order, [&](int a, int b) { return room(a) > room(b); });
 				float bestDistance = 0.0f;
 				int   bestBearing = -1;
 				bool  bestClear = false;
-				for (int k = 0; k < 4; ++k) {
+				for (std::size_t k = 0; k < order.size() && k < 4; ++k) {
 					const int   i = order[k];
 					const float d = std::clamp(room(i), 0.0f, wanted);
 					if (d < 1.0f) {
 						break;
 					}
 					const float        a = eyeline + i * 2.0f * std::numbers::pi_v<float> / kBearings;
-					const RE::NiPoint3 cam{ mid.x + std::cos(a) * d, mid.y + std::sin(a) * d, mid.z + shot.rise };
+					const RE::NiPoint3 cam{ mid.x + std::cos(a) * d, mid.y + std::sin(a) * d, mid.z + (std::min)(shot.rise, g_state.roomRise) };
 					const auto         toNpc = TestShot(a_npcHead, cam, a_playerHead, false);
 					const auto         toYou = TestShot(a_playerHead, cam, a_npcHead, false);
 					const bool         clear = toNpc.blockedAt < 0.0f && toYou.blockedAt < 0.0f;
@@ -1438,16 +1466,25 @@ namespace CCC
 						bestClear = clear;
 					}
 				}
+				const bool usable = bestBearing >= 0 && bestClear && bestDistance >= minShare * wanted;
+				if (usable) {
+					g_state.roomAngle[n] = angleOf(bestBearing);
+					g_state.roomDistance[n] = bestDistance;
+				}
+				if (!a_log) {
+					continue;
+				}
 				if (bestBearing < 0) {
-					REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); no room for it here", shot.name, wanted, 100.0f * share(wanted));
+					REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); no room for it on this side", shot.name, wanted, 100.0f * share(wanted));
 					summary += std::format("{}{} no room", summary.empty() ? "" : ", ", shot.name);
 					continue;
 				}
-				REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); best {:.1f} m at {} degrees (people {:.0f}%), {}", shot.name, wanted,
-					100.0f * share(wanted), bestDistance, bestBearing * 360 / kBearings, 100.0f * share(bestDistance), bestClear ? "both faces in clear view" : "a face is blocked from there");
-				summary += std::format("{}{} {:.1f}/{:.0f} m{}", summary.empty() ? "" : ", ", shot.name, bestDistance, wanted, bestClear ? "" : " (blocked)");
+				REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); best {:.1f} m at {:.0f} degrees off the line (people {:.0f}%), {}; {}",
+					shot.name, wanted, 100.0f * share(wanted), bestDistance, angleOf(bestBearing), 100.0f * share(bestDistance),
+					bestClear ? "both faces in clear view" : "a face is blocked from there", usable ? "available" : "not used");
+				summary += std::format("{}{} {:.1f}/{:.0f} m{}", summary.empty() ? "" : ", ", shot.name, bestDistance, wanted, usable ? "" : " (no)");
 			}
-			if (Settings::Get().showMessages) {
+			if (a_log && Settings::Get().showMessages) {
 				QueueHudMessage(std::format("Room: {:.0f} x {:.0f} m, {} | {}", along, across, roofed ? std::format("ceiling {:.1f} m", ceiling) : std::string{ "open sky" }, summary));
 			}
 		}
@@ -2143,6 +2180,9 @@ namespace CCC
 				frame.intenseLine = g_state.lineIntense;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
+				frame.roomAngle = g_state.roomAngle;
+				frame.roomDistance = g_state.roomDistance;
+				frame.roomRise = g_state.roomRise;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -2168,6 +2208,9 @@ namespace CCC
 				frame.intenseLine = g_state.lineIntense;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
+				frame.roomAngle = g_state.roomAngle;
+				frame.roomDistance = g_state.roomDistance;
+				frame.roomRise = g_state.roomRise;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -2324,12 +2367,14 @@ namespace CCC
 					QueueHudMessage(std::format("Camera: {} ({})", name, why));
 				}
 			}
-			// Measure the room around the two (log and messages only, for now): once, and again
-			// when they've moved more than 1.5 m (at most every 2 s).
-			if ((s.debugLog || s.showMessages) && s.obstacleCheck && !waitingView && !pov) {
+			// Measure the room around the two (0.8: where the room shots can stand): once, and
+			// again when they've moved more than 1.5 m (at most every 2 s) or the conversation's
+			// side of the line changes.
+			if (s.obstacleCheck && s.director && !waitingView && !pov) {
 				const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
 				const auto         now = std::chrono::steady_clock::now();
-				if (!g_state.roomMeasured || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
+				if (!g_state.roomMeasured || g_state.roomSide != g_state.side || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
+					g_state.roomSide = g_state.side;
 					g_state.roomMeasured = true;
 					g_state.roomAt = mid;
 					g_state.roomTime = now;
@@ -2337,7 +2382,7 @@ namespace CCC
 					if (g_state.smoothNpcFeet && g_state.smoothPlayerFeet) {
 						ground = (std::min)(g_state.smoothNpcFeet->z, g_state.smoothPlayerFeet->z);
 					}
-					MeasureRoom(*npcHead, *playerHead, ground);
+					MeasureRoom(*npcHead, *playerHead, ground, g_state.side, s.debugLog || s.showMessages);
 				}
 			}
 			// Obstacle check of the shot on screen, for the log: once per shot.
@@ -2655,6 +2700,46 @@ namespace CCC
 			static inline REL::THookVFT<void(void*, void*)> Hook{
 				"CCC_FirstPersonUpdate", REL::EHookStep::None, RE::VTABLE::FirstPersonState[0], kDialogueUpdateVtableIndex, Thunk
 			};
+		};
+
+		// ---- The conversation lens (0.8) ------------------------------------------------------
+		// Starfield draws conversations through a 30 degree lens (fDialogueCameraFailsafeFPFOV),
+		// put in place every frame by the camera's field-of-view update (Starfield.exe 1.16.244
+		// +BCB990, Address Library 64682), which hands it to the player camera's set-FOV
+		// function (+1E92650, ID 113443; writes PlayerCamera +280 and the render frustum). 0.3.x
+		// wrote that value and the frustum directly, and the next frame's update put 30 back.
+		// Here the value is changed on its way into the set-FOV call, at all three of its
+		// callers, while this mod films a conversation (fConversationLens; 0 = the game's).
+		std::atomic<bool>  g_lensActive{ false };  // set on the main thread
+		std::atomic<float> g_lensWanted{ 0.0f };
+		std::atomic<int>   g_lensCalls{ 0 };
+
+		float LensFor(float a_fov)
+		{
+			const float wanted = g_lensWanted.load(std::memory_order_relaxed);
+			if (!g_lensActive.load(std::memory_order_relaxed) || wanted < 10.0f) {
+				return a_fov;
+			}
+			if (g_lensCalls.fetch_add(1, std::memory_order_relaxed) == 0) {
+				REX::INFO("Conversation lens: the game asked for {:.1f} degrees; {:.1f} instead", a_fov, wanted);
+			}
+			return wanted;
+		}
+
+		struct LensHookMain
+		{
+			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static inline REL::THook<void(void*, float)> Hook{ "CCC_LensMain", REL::EHookStep::None, REL::ID(64682), 0xF43, Thunk };
+		};
+		struct LensHook2
+		{
+			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens2", REL::EHookStep::None, REL::ID(113316), 0x1FD, Thunk };
+		};
+		struct LensHook3
+		{
+			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens3", REL::EHookStep::None, REL::ID(113488), 0x498, Thunk };
 		};
 
 		struct ThirdPersonUpdateHook
@@ -4101,6 +4186,13 @@ namespace CCC
 					}
 					FlushHudMessages(now);
 					Face::Update(g_state.active && !g_state.handedBack);
+					// The conversation lens while this mod films (0.8).
+					g_lensWanted.store(Settings::Get().conversationLens, std::memory_order_relaxed);
+					g_lensActive.store(g_state.active && !g_state.handedBack && !g_state.smallSpeaker && Settings::Get().conversationLens >= 10.0f,
+						std::memory_order_relaxed);
+					if (!g_state.active) {
+						g_lensCalls.store(0, std::memory_order_relaxed);
+					}
 					wasTalking = talking;
 				}
 				// Focus on the person in shot (0.5.0). The conversation blur reads its settings live
@@ -4230,7 +4322,7 @@ namespace CCC
 
 SFSE_PLUGIN_PRELOAD(const SFSE::PreLoadInterface* a_sfse)
 {
-	SFSE::Init(a_sfse, { .trampoline = true, .trampolineSize = 64 });
+	SFSE::Init(a_sfse, { .trampoline = true, .trampolineSize = 160 });
 	return true;
 }
 
@@ -4257,6 +4349,16 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	} else if (!CCC::FirstPersonUpdateHook::Hook.Enable() || !CCC::ThirdPersonUpdateHook::Hook.Enable()) {
 		REX::WARN("Could not install the first/third-person camera hooks; the body cycle will be visible");
 	}
+	{
+		const bool lens = CCC::LensHookMain::Hook.Enable();
+		const bool lens2 = CCC::LensHook2::Hook.Enable();
+		const bool lens3 = CCC::LensHook3::Hook.Enable();
+		if (lens) {
+			REX::INFO("Conversation lens hook installed ({} of 2 other callers too)", (lens2 ? 1 : 0) + (lens3 ? 1 : 0));
+		} else {
+			REX::WARN("Could not install the conversation lens hook; conversations keep the game's 30 degree lens");
+		}
+	}
 
 	CCC::g_mainThreadId = ::GetCurrentThreadId();
 	if (const auto* tasks = SFSE::GetTaskInterface()) {
@@ -4266,7 +4368,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.8.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

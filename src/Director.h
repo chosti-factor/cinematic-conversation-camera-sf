@@ -16,6 +16,9 @@ namespace CCC::Director
 		bool         intenseLine{ false }; // the speaker's current line carries an expression from sCloseUpEmotions
 		bool         persuasionBeat{ false };  // the NPC's answer to a persuasion's outcome: held close-up
 		bool         playerCloseUp{ false };   // this reaction is your emotion close-up
+		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+		std::array<float, 3> roomDistance{ 0.0f, 0.0f, 0.0f };  // room shots' space (Shots::Input)
+		float                roomRise{ 10.0f };
 		RE::NiPoint3 npcHead{};
 		RE::NiPoint3 playerHead{};
 		float        side{ 1.0f };          // which side of the eyeline the conversation is staged on
@@ -62,6 +65,9 @@ namespace CCC::Director
 	// The last emotion close-up the camera cut to: 1 = close-up, 2 = extreme close-up (0 =
 	// none yet), and when (for the on-screen messages).
 	[[nodiscard]] int LastEmotionCut(std::chrono::steady_clock::time_point& a_when);
+
+	// The lens the shots are framed for, degrees (horizontal, as drawn).
+	[[nodiscard]] float LensDegrees();
 
 	// The setup on screen, for the log.
 	[[nodiscard]] const char* Current();

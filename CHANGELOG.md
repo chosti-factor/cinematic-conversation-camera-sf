@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.0 - unreleased
+
+### Added
+- The conversation lens (`[Camera]` `fConversationLens`, 45 in the INI, 0 = the game's 30):
+  Starfield films conversations through a 30 degree lens (`fDialogueCameraFailsafeFPFOV`),
+  put in place every frame by the camera's field-of-view update (found in Starfield.exe
+  1.16.244 at +BCB990; it hands the value to the player camera's set-FOV function at
+  +1E92650, which writes the value 0.3.x tried to change, and the next frame put 30 back).
+  The value is now changed on its way into that call, at all three of its callers, while
+  this mod films a conversation. Shots are framed for the lens in use.
+- Room shots (Room and Stardust presets: Wide, Master, Distant), from CCC: each stands where
+  the room measurement found the most space on the conversation's side of the line, with
+  both faces in clear view and under the ceiling, as far back as CCC's framing wants or the
+  room allows; left out where the room gives less than `iRoomShotMinRoom` (60%) of that.
+  The room is measured whenever the director films (before, only for the log).
+
 ## 0.7.12 - 2026-11-14
 
 ### Added

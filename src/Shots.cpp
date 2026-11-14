@@ -208,6 +208,21 @@ namespace CCC::Shots
 
 	bool   OnNpc(ShotType a_type) noexcept { return SpecFor(a_type).onNpc; }
 
+	int RoomIndex(ShotType a_type) noexcept
+	{
+		switch (a_type) {
+		case ShotType::kWide:
+			return 0;
+		case ShotType::kMaster:
+			return 1;
+		case ShotType::kDistant:
+		case ShotType::kDistantLow:
+			return 2;
+		default:
+			return -1;
+		}
+	}
+
 	bool FollowsFace(ShotType a_type) noexcept
 	{
 		const auto spec = SpecFor(a_type);
@@ -258,8 +273,11 @@ namespace CCC::Shots
 	{
 		Result     result;
 		const auto spec = SpecFor(a_type);
-		if (spec.anchor == Anchor::kScene) {
-			return result;  // needs a measurement of the room
+		// Room shots (0.8) stand where the room measurement found space for them; without
+		// one (not measured, no room on this side) they can't be framed.
+		const int room = spec.anchor == Anchor::kScene ? RoomIndex(a_type) : -1;
+		if (spec.anchor == Anchor::kScene && (room < 0 || std::isnan(a_in.roomAngle[room]) || a_in.roomDistance[room] < kMinDistance)) {
+			return result;
 		}
 
 		const auto& subject = spec.onNpc ? a_in.npcHead : a_in.playerHead;
@@ -354,7 +372,9 @@ namespace CCC::Shots
 		// Over-the-shoulder setups: CCC's angles assume a 40-60 degree lens. Through
 		// Starfield's 30 the near person would fall outside the frame, so swing the camera
 		// in toward the eyeline until their shoulder sits in the edge of the picture.
-		if (!std::isnan(a_in.heldAngle)) {
+		if (room >= 0) {
+			angle = a_in.roomAngle[room];  // where the room has space, on this side
+		} else if (!std::isnan(a_in.heldAngle)) {
 			angle = a_in.heldAngle;
 		} else if (faced) {
 			// The turn is applied on the same side of the line as the setup's own angle.
@@ -390,6 +410,11 @@ namespace CCC::Shots
 		}
 		float       aimLift = 0.0f;
 		float       truck = 0.0f;
+		// A room shot that pulls out starts close enough to end at the wall.
+		if (room >= 0) {
+			const float travelOut = (a_in.move == M::kPullOut || a_in.move == M::kZoomOut) ? FullScale(a_in.move) * std::clamp(a_in.moveAmount, 0, 100) / 100.0f : 0.0f;
+			distance = (std::min)(distance, a_in.roomDistance[room] / (1.0f + travelOut));
+		}
 
 		result.angle = angle;
 		const float p = Ease(a_in.progress);
@@ -438,8 +463,12 @@ namespace CCC::Shots
 			angle = std::clamp(angle, lineFloor, 165.0f);
 		}
 
-		// The furthest the camera may stand (per preset; obstacles are handled outside).
-		distance = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
+		// The furthest the camera may stand (per preset; a room shot: as far as its room allows;
+		// obstacles are handled outside).
+		distance = std::clamp(distance, kMinDistance, (std::max)(room >= 0 ? a_in.roomDistance[room] : a_in.maxDistance, kMinDistance));
+		if (room >= 0) {
+			rise = (std::min)(rise, a_in.roomRise);  // under the ceiling
+		}
 		// Drop for a lowered face, by the height that puts the lens on its line (after the
 		// distance is known).
 		if (faced) {

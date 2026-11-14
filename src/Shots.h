@@ -101,6 +101,13 @@ namespace CCC::Shots
 		float        lensDegrees{ 29.6f };  // horizontal
 		float        aspect{ 1.7778f };
 		float        closeUpScale{ 1.0f };  // close singles this much further back (iCloseUpDistance)
+		// Room shots (0.8): where the room measurement found space for Wide, Master and
+		// Distant (index 0-2): the angle off the eyeline, on the conversation's side
+		// (NaN = no room for it), the most distance the room allows, and the most the camera
+		// may rise above eye level under the ceiling.
+		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+		std::array<float, 3> roomDistance{ 0.0f, 0.0f, 0.0f };
+		float                roomRise{ 10.0f };
 		float        maxDistance{ 3.0f };   // from the framed subject (or midpoint)
 		float        side{ 1.0f };          // which side of the eyeline (180-degree rule)
 		bool         true180{ false };
@@ -163,6 +170,9 @@ namespace CCC::Shots
 	// Close singles frame the face (CCC: anchored on the subject, aimed at them, not over a
 	// shoulder, filling at least half the frame).
 	[[nodiscard]] bool FollowsFace(ShotType a_type) noexcept;
+
+	// Room shots: Wide 0, Master 1, Distant (and DistantLow) 2; -1 for any other setup.
+	[[nodiscard]] int RoomIndex(ShotType a_type) noexcept;
 
 	// Where the camera goes for this setup. Not ok when the setup can't be framed here:
 	// scene setups (they need to measure the room, not possible yet) and two-person

@@ -17,7 +17,20 @@ namespace CCC::Director
 		constexpr std::size_t kCount = static_cast<std::size_t>(ShotType::kCount);
 
 		// Starfield's dialogue camera lens (horizontal degrees), measured in 0.3.28.
-		constexpr float kLens = 29.58f;
+		constexpr float kLens = 29.58f;  // the game's 30 degree setting, as drawn
+
+		// The lens the shots are framed for: the game's, or fConversationLens (0.8), scaled the
+		// way the game turns its 30 degrees into the 29.58 drawn.
+		float Lens()
+		{
+			const float wanted = Settings::Get().conversationLens;
+			if (wanted < 10.0f) {
+				return kLens;
+			}
+			constexpr float kDeg = 3.14159265f / 180.0f;
+			const float     scale = std::tan(kLens * 0.5f * kDeg) / std::tan(15.0f * kDeg);
+			return 2.0f * std::atan(std::tan(wanted * 0.5f * kDeg) * scale) / kDeg;
+		}
 
 		struct Setup
 		{
@@ -247,7 +260,7 @@ namespace CCC::Director
 			Shots::Input in;
 			in.npcHead = a_frame.npcHead;
 			in.playerHead = a_frame.playerHead;
-			in.lensDegrees = kLens;
+			in.lensDegrees = Lens();
 			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
 			in.side = a_frame.side;
@@ -262,6 +275,9 @@ namespace CCC::Director
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
 			in.closeUpScale = static_cast<float>(s.closeUpDistance) / 100.0f;
+			in.roomAngle = a_frame.roomAngle;
+			in.roomDistance = a_frame.roomDistance;
+			in.roomRise = a_frame.roomRise;
 			in.npcFeet = a_frame.npcFeet;
 			in.playerFeet = a_frame.playerFeet;
 			in.npcSwayHead = a_frame.npcSwayHead;
@@ -810,6 +826,11 @@ namespace CCC::Director
 		auto pose = solved.pose;
 		Camera::PullIn(pose, SubjectHead(*gp.shot, a_frame), gp.limit);
 		return pose;
+	}
+
+	float LensDegrees()
+	{
+		return Lens();
 	}
 
 	int LastEmotionCut(clock::time_point& a_when)

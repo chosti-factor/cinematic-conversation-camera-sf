@@ -148,6 +148,9 @@ namespace CCC
 				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
 			}
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
+			a_s.roomShotMinRoom = std::clamp(ReadInt(a_path, L"Director", L"iRoomShotMinRoom", a_s.roomShotMinRoom), 30, 100);
+			a_s.conversationLens = ReadFloat(a_path, L"Camera", L"fConversationLens", a_s.conversationLens);
+			a_s.conversationLens = a_s.conversationLens < 10.0f ? 0.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bPlayerFace", a_s.playerFace ? 1 : 0) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChance", a_s.questionFaceChance), 0, 100);
 			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChance", a_s.signatureChance), 0, 100);

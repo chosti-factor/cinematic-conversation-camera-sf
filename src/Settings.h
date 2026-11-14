@@ -15,6 +15,8 @@ namespace CCC
 		bool     debugLog{ true };
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
+		float    conversationLens{ 0.0f };  // the conversation lens, degrees (0 = the game's 30)
+		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		bool     playerFace{ true };      // your character's expressions during conversations
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look
 		int      signatureChance{ 30 };     // % of neutral moments your background's expression shows
