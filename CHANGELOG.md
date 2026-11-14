@@ -19,6 +19,13 @@ test build; "diagnostic" items only add information to the log for testing.
   both faces in clear view and under the ceiling, as far back as CCC's framing wants or the
   room allows; left out where the room gives less than `iRoomShotMinRoom` (60%) of that.
   The room is measured whenever the director films (before, only for the log).
+- Filming people talking near you, first step (`[Overhear]`): when two people within 12 m
+  talk to each other, a notification offers it ("Sam Coe and Cora Coe are talking: press N
+  to listen"); the listen key (N, `iListenKey`) starts and stops it. The camera films whoever
+  is speaking against whoever they're addressing, through the gameplay camera's own update,
+  a new shot for each line (over the listener's shoulder, three-quarter, medium, close-up or
+  the two of them). Moving, a conversation of your own, or 10 s of silence hand the camera
+  back. No letterbox or obstacle check yet; keyboard only.
 
 ## 0.7.12 - 2026-11-14
 

@@ -295,6 +295,8 @@ namespace CCC
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
+		void                FilmFrame();
+		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		std::atomic<std::int64_t> g_faceLineAt{ 0 };    // when the main thread last set your face for a line (steady_clock ticks)
 		void                QueueHudMessage(std::string a_text);
@@ -2687,6 +2689,10 @@ namespace CCC
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				Hook(a_state, a_arg);
+				if (FilmingActive()) {
+					FilmFrame();  // people talking near you, filmed (0.8)
+					return;
+				}
 				if (ExitToFirstPerson()) {
 					return;  // this frame is drawn from the saved view; don't learn from it
 				}
@@ -2747,6 +2753,10 @@ namespace CCC
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				Hook(a_state, a_arg);
+				if (FilmingActive()) {
+					FilmFrame();  // people talking near you, filmed (0.8)
+					return;
+				}
 				MaskRepairFrame("third-person");
 				// A first-person exit cover still in place when the player switches to third
 				// person (0.3.35: the view stayed behind the head until the next conversation).
@@ -3894,7 +3904,7 @@ namespace CCC
 		{
 			const auto&             s = Settings::Get();
 			auto*                   player = RE::PlayerCharacter::GetSingleton();
-			if (!(s.debugLog || s.showMessages) || !player) {
+			if (!(s.debugLog || s.showMessages || s.filmConversations) || !player) {
 				return;
 			}
 			// 0.7.5 test: no line was ever noticed. Say why, now and then.
@@ -3993,6 +4003,231 @@ namespace CCC
 					counts[0], counts[1], counts[2], counts[3], inRange, withLine, talkingNow, talkers.empty() ? "" : ": ", talkers);
 				if (!around.empty()) {
 					REX::INFO("Overheard: within 20 m: {}{}", around, inRange > 15 ? ", ..." : "");
+				}
+			}
+		}
+
+		// ---- Filming NPC-to-NPC conversations (0.8, first step) ------------------------------
+		// When people near you talk to each other (the overheard lines), a prompt offers to
+		// film them; the listen key (iListenKey) starts and stops it. The camera then films
+		// whoever is speaking against whoever they're addressing, through the gameplay
+		// camera's own update (no conversation menu), one shot per line, picked from a few of
+		// the shot library's singles and the two-shot. Moving, the listen key, a conversation
+		// of your own or 10 s of silence hand the camera back.
+		struct Filming
+		{
+			std::mutex                            lock;
+			bool                                  active{ false };
+			std::uint32_t                         speaker{ 0 };
+			std::uint32_t                         listener{ 0 };
+			Shots::ShotType                       shot{ Shots::ShotType::kOverPlayerShoulder };
+			std::uint32_t                         line{ 0 };   // counts lines, to pick a new shot per line
+			std::optional<RE::NiPoint3>           smoothSpeaker, smoothListener;
+			bool                                  applied{ false };
+		} g_film;
+
+		struct FilmMain  // main thread only
+		{
+			bool                                  wasKeyDown{ false };
+			RE::NiPoint3                          playerAt{};
+			std::chrono::steady_clock::time_point lastLine{};
+			std::uint32_t                         lastSpeaker{ 0 };
+			std::chrono::steady_clock::time_point promptAt{};
+			std::uint32_t                         promptedPair{ 0 };
+		} g_filmMain;
+
+		bool GameHasFocus()
+		{
+			const HWND window = ::GetForegroundWindow();
+			DWORD      pid = 0;
+			::GetWindowThreadProcessId(window, &pid);
+			return window && pid == ::GetCurrentProcessId();
+		}
+
+		const char* KeyName(int a_key)
+		{
+			static std::string name;
+			const UINT         scan = ::MapVirtualKeyA(static_cast<UINT>(a_key), MAPVK_VK_TO_VSC);
+			char               buffer[64]{};
+			name = ::GetKeyNameTextA(static_cast<LONG>(scan << 16), buffer, sizeof(buffer)) > 0 ? buffer : std::format("key {}", a_key);
+			return name.c_str();
+		}
+
+		void StopFilming(const char* a_why)
+		{
+			{
+				std::scoped_lock lock{ g_film.lock };
+				if (!g_film.active) {
+					return;
+				}
+				g_film.active = false;
+				g_film.smoothSpeaker.reset();
+				g_film.smoothListener.reset();
+			}
+			g_lensActive.store(false, std::memory_order_relaxed);
+			Camera::RestoreRender();
+			REX::INFO("Filming people talking: stopped ({})", a_why);
+		}
+
+		bool FilmingActive()
+		{
+			std::scoped_lock lock{ g_film.lock };
+			return g_film.active;
+		}
+
+		// Main thread, every tick (after UpdateOverheard).
+		void UpdateFilming(std::chrono::steady_clock::time_point a_now)
+		{
+			const auto& s = Settings::Get();
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			if (!s.filmConversations || !player || g_state.active) {
+				StopFilming(g_state.active ? "your own conversation" : "off");
+				return;
+			}
+			// The conversation going on near you: the most recent NPC-to-NPC line within reach.
+			std::uint32_t speaker = 0, listener = 0;
+			auto          latest = std::chrono::steady_clock::time_point{};
+			const auto    playerFeet = player->GetPosition();
+			for (const auto& [id, t] : g_talkers) {
+				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || t.lastLine <= latest || FlatDistance(t.feet, playerFeet) > s.listenRange) {
+					continue;
+				}
+				if (a_now - t.lastLine > 10s) {
+					continue;
+				}
+				latest = t.lastLine;
+				speaker = id;
+				listener = t.addressed;
+			}
+			bool filming;
+			{
+				std::scoped_lock lock{ g_film.lock };
+				filming = g_film.active;
+			}
+			// The listen key.
+			const bool keyDown = s.listenKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.listenKey) & 0x8000) != 0;
+			const bool pressed = keyDown && !g_filmMain.wasKeyDown;
+			g_filmMain.wasKeyDown = keyDown;
+			if (filming) {
+				const auto feet = player->GetPosition();
+				const float moved = FlatDistance(feet, g_filmMain.playerAt);
+				if (pressed) {
+					StopFilming("listen key");
+				} else if (moved > 0.5f) {
+					StopFilming("you moved");
+				} else if (speaker == 0 && a_now - g_filmMain.lastLine > 10s) {
+					StopFilming("they've stopped talking");
+				} else if (speaker != 0) {
+					std::scoped_lock lock{ g_film.lock };
+					if (latest != g_filmMain.lastLine || speaker != g_filmMain.lastSpeaker) {
+						g_filmMain.lastLine = latest;
+						g_filmMain.lastSpeaker = speaker;
+						g_film.speaker = speaker;
+						g_film.listener = listener;
+						++g_film.line;
+					}
+				}
+				return;
+			}
+			if (speaker == 0) {
+				return;
+			}
+			if (pressed) {
+				std::scoped_lock lock{ g_film.lock };
+				g_film.active = true;
+				g_film.speaker = speaker;
+				g_film.listener = listener;
+				g_film.line = 1;
+				g_film.applied = false;
+				g_filmMain.playerAt = player->GetPosition();
+				g_filmMain.lastLine = latest;
+				g_filmMain.lastSpeaker = speaker;
+				g_lensWanted.store(s.conversationLens >= 10.0f ? s.conversationLens : 30.0f, std::memory_order_relaxed);
+				g_lensActive.store(true, std::memory_order_relaxed);
+				REX::INFO("Filming people talking: {} and {}", TalkerName(speaker), TalkerName(listener));
+				return;
+			}
+			// Offer it, once per pair a minute.
+			const std::uint32_t pair = speaker ^ (listener << 1);
+			if (s.listenKey > 0 && (pair != g_filmMain.promptedPair || a_now - g_filmMain.promptAt > 60s)) {
+				g_filmMain.promptedPair = pair;
+				g_filmMain.promptAt = a_now;
+				ShowHudMessage(std::format("{} and {} are talking: press {} to listen", TalkerName(speaker), TalkerName(listener), KeyName(s.listenKey)));
+			}
+		}
+
+		// Camera thread (the gameplay camera's update): the shot of the current speaker.
+		void FilmFrame()
+		{
+			std::uint32_t   speakerId = 0, listenerId = 0, line = 0;
+			Shots::ShotType shot{};
+			{
+				std::scoped_lock lock{ g_film.lock };
+				if (!g_film.active) {
+					return;
+				}
+				speakerId = g_film.speaker;
+				listenerId = g_film.listener;
+				line = g_film.line;
+				// A new shot for each line: over the listener's shoulder, a three-quarter or
+				// medium single, a close-up, or now and then the two of them.
+				static std::uint32_t pickedFor = 0;
+				if (pickedFor != line) {
+					pickedFor = line;
+					static std::mt19937 rng{ std::random_device{}() };
+					constexpr std::array kChoices{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
+						Shots::ShotType::kMediumNpc, Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
+					auto next = kChoices[std::uniform_int_distribution<std::size_t>{ 0, kChoices.size() - 1 }(rng)];
+					if (next == g_film.shot && next != Shots::ShotType::kOverPlayerShoulder) {
+						next = Shots::ShotType::kOverPlayerShoulder;
+					}
+					g_film.shot = next;
+				}
+				shot = g_film.shot;
+			}
+			auto* speaker = RE::TESForm::LookupByID<RE::Actor>(speakerId);
+			auto* listener = RE::TESForm::LookupByID<RE::Actor>(listenerId);
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (!speaker || !listener || !camera || !camera->cameraRoot) {
+				return;
+			}
+			const auto speakerHead = Camera::HeadPosition(speaker);
+			const auto listenerHead = Camera::HeadPosition(listener);
+			if (!speakerHead || !listenerHead) {
+				return;
+			}
+			// Heads eased (about a fifth of a second), so the shot doesn't shake with them.
+			RE::NiPoint3 sh = *speakerHead, lh = *listenerHead;
+			{
+				std::scoped_lock lock{ g_film.lock };
+				auto ease = [](std::optional<RE::NiPoint3>& a_smooth, const RE::NiPoint3& a_now) {
+					if (!a_smooth || Distance(*a_smooth, a_now) > 1.0f) {
+						a_smooth = a_now;
+					} else {
+						a_smooth->x += (a_now.x - a_smooth->x) * 0.1f;
+						a_smooth->y += (a_now.y - a_smooth->y) * 0.1f;
+						a_smooth->z += (a_now.z - a_smooth->z) * 0.1f;
+					}
+					return *a_smooth;
+				};
+				sh = ease(g_film.smoothSpeaker, *speakerHead);
+				lh = ease(g_film.smoothListener, *listenerHead);
+			}
+			Shots::Input in;
+			in.npcHead = sh;
+			in.playerHead = lh;
+			in.lensDegrees = Director::LensDegrees();
+			in.maxDistance = 7.0f;
+			in.enforceLine = true;
+			const auto solved = Shots::Solve(shot, in);
+			if (!solved.ok) {
+				return;
+			}
+			if (Camera::ApplyRender(camera->cameraRoot.get(), solved.pose, 0.0f)) {
+				std::scoped_lock lock{ g_film.lock };
+				if (!g_film.applied) {
+					g_film.applied = true;
+					REX::INFO("Filming people talking: {} on {}", Shots::Key(shot), speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
 				}
 			}
 		}
@@ -4123,6 +4358,7 @@ namespace CCC
 						nextScan = now + 100ms;
 						UpdateOverheard(now);
 					}
+					UpdateFilming(now);  // every tick, for the listen key
 				}
 
 				// Letterbox, subtitles and dialogue options (0.6.3).
@@ -4187,9 +4423,11 @@ namespace CCC
 					FlushHudMessages(now);
 					Face::Update(g_state.active && !g_state.handedBack);
 					// The conversation lens while this mod films (0.8).
-					g_lensWanted.store(Settings::Get().conversationLens, std::memory_order_relaxed);
-					g_lensActive.store(g_state.active && !g_state.handedBack && !g_state.smallSpeaker && Settings::Get().conversationLens >= 10.0f,
-						std::memory_order_relaxed);
+					// (Filming people talking near you uses the lens too, at least the game's 30.)
+					const bool filmingOthers = FilmingActive();
+					const float lens = Settings::Get().conversationLens;
+					g_lensWanted.store(filmingOthers && lens < 10.0f ? 30.0f : lens, std::memory_order_relaxed);
+					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
 						g_lensCalls.store(0, std::memory_order_relaxed);
 					}
