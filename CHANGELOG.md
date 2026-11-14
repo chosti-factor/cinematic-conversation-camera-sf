@@ -21,6 +21,13 @@ test build; "diagnostic" items only add information to the log for testing.
   collision check doesn't see people (0.7.4: Sarah standing still covered most of a shot in
   the Viewport). People walking through a shot are left in.
 
+- Groundwork for filming NPC-to-NPC conversations (nothing is filmed yet): each line an NPC
+  speaks within 20 m of you is logged with its words, expression, who the speaker is facing
+  (the person they're addressing within 5 m, or you, or no one) and their group (people
+  within 5 m of one another who've spoken in the last 20 s), and whether it's part of a quest
+  or random scene. With `bShowMessages`, NPC-to-NPC lines also show on screen ("Overheard:
+  Name -> Name: Happy (group of 3, 6 m)").
+
 ### Changed
 - Reaction shots: counted over the whole conversation, not per reply. Once `iReactionEvery`
   (now 2) of the NPC's lines have been heard, each further line has an `iReactionChance` (50%)

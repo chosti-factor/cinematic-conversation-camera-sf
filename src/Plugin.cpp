@@ -3236,6 +3236,191 @@ namespace CCC
 			}
 		}
 
+		// NPC-to-NPC conversations (planned for 0.8, groundwork): who near you is talking to
+		// whom, for the log (and on screen with bShowMessages). Nothing is filmed yet. Each
+		// line an NPC starts within 20 m is noted with its words, expression, who the speaker
+		// faces (the person they're addressing, if anyone within 5 m) and the group around
+		// them: people within 5 m of one another who've spoken in the last 20 s, plus whoever
+		// they addressed. Lines in your own conversation aren't counted.
+		struct Talker
+		{
+			std::string                           name;
+			RE::NiPoint3                          feet{};
+			RE::NiPoint3                          head{};
+			float                                 heading = 0.0f;
+			bool                                  talking = false;
+			bool                                  pending = false;  // a line started; waiting for its subtitle
+			std::chrono::steady_clock::time_point lineStart{};
+			std::chrono::steady_clock::time_point lastLine{};
+			std::chrono::steady_clock::time_point seen{};
+			std::uint32_t                         addressed = 0;   // formID; 0x14 = you
+			std::uint32_t                         lines = 0;
+		};
+
+		std::unordered_map<std::uint32_t, Talker> g_talkers;
+
+		constexpr float kOverhearRange = 20.0f;  // from you
+		constexpr float kGroupReach = 5.0f;      // between people in one conversation
+		constexpr auto  kGroupMemory = 20s;      // how long a speaker stays part of a group
+
+		float FlatDistance(const RE::NiPoint3& a_a, const RE::NiPoint3& a_b)
+		{
+			const float dx = a_a.x - a_b.x, dy = a_a.y - a_b.y;
+			return std::sqrt(dx * dx + dy * dy);
+		}
+
+		// Of the people within kGroupReach, the one the speaker is facing most directly
+		// (within 60 degrees of their heading); 0 if none.
+		std::uint32_t AddressedBy(std::uint32_t a_speaker, const Talker& a_t, const RE::NiPoint3& a_playerFeet, const RE::NiPoint3& a_playerHead)
+		{
+			const float   fx = std::sin(a_t.heading), fy = std::cos(a_t.heading);
+			std::uint32_t best = 0;
+			float         bestCos = 0.5f;
+			auto          consider = [&](std::uint32_t a_id, const RE::NiPoint3& a_feet, const RE::NiPoint3& a_head) {
+                const float d = FlatDistance(a_t.feet, a_feet);
+                if (d < 0.2f || d > kGroupReach) {
+                    return;
+                }
+                const float dx = a_head.x - a_t.head.x, dy = a_head.y - a_t.head.y;
+                const float len = std::sqrt(dx * dx + dy * dy);
+                const float c = len > 0.01f ? (dx * fx + dy * fy) / len : 0.0f;
+                if (c > bestCos) {
+                    bestCos = c;
+                    best = a_id;
+                }
+			};
+			for (const auto& [id, other] : g_talkers) {
+				if (id != a_speaker) {
+					consider(id, other.feet, other.head);
+				}
+			}
+			consider(0x14, a_playerFeet, a_playerHead);
+			return best;
+		}
+
+		std::string TalkerName(std::uint32_t a_id)
+		{
+			if (a_id == 0x14) {
+				return "you";
+			}
+			const auto it = g_talkers.find(a_id);
+			return it != g_talkers.end() && !it->second.name.empty() ? it->second.name : std::format("{:08X}", a_id);
+		}
+
+		// The speaker's group: people within kGroupReach of a member who've spoken lately,
+		// and whoever a member addressed.
+		std::vector<std::uint32_t> GroupOf(std::uint32_t a_speaker, std::chrono::steady_clock::time_point a_now)
+		{
+			std::vector<std::uint32_t> group{ a_speaker };
+			for (std::size_t i = 0; i < group.size(); ++i) {
+				const auto it = g_talkers.find(group[i]);
+				if (it == g_talkers.end()) {
+					continue;
+				}
+				const auto& member = it->second;
+				if (member.addressed != 0 && member.addressed != 0x14 && std::ranges::find(group, member.addressed) == group.end()) {
+					group.push_back(member.addressed);
+				}
+				for (const auto& [id, other] : g_talkers) {
+					if (std::ranges::find(group, id) != group.end() || other.lines == 0 || a_now - other.lastLine > kGroupMemory) {
+						continue;
+					}
+					if (FlatDistance(member.feet, other.feet) <= kGroupReach) {
+						group.push_back(id);
+					}
+				}
+			}
+			return group;
+		}
+
+		void ReportOverheardLine(RE::Actor* a_actor, Talker& a_t, std::chrono::steady_clock::time_point a_now, const RE::NiPoint3& a_playerFeet)
+		{
+			const auto& s = Settings::Get();
+			const char* raw = a_actor->currentProcess && a_actor->currentProcess->high ? a_actor->currentProcess->high->strVoiceSubtitle.c_str() : nullptr;
+			const std::string text{ raw ? raw : "" };
+			const auto        info = LineInfo(a_actor);
+			std::uint32_t     infoType = 0, infoId = 0;
+			const char*       infoEditorId = nullptr;
+			if (info) {
+				ReadFormInfo(info, infoType, infoId, infoEditorId);
+			}
+			const auto  emotion = info ? InfoEmotion(info) : std::string{ "unknown" };
+			const auto  group = GroupOf(a_actor->formID, a_now);
+			bool        inScene = false;
+			const auto  scene = SceneLabel(a_actor, inScene);
+			const bool  randomScene = a_actor->boolFlags.any(RE::Actor::BOOL_FLAGS::kInRandomScene);
+			const float distance = FlatDistance(a_t.feet, a_playerFeet);
+			std::string members;
+			for (const auto id : group) {
+				members += (members.empty() ? "" : ", ") + TalkerName(id);
+			}
+			const std::string to = a_t.addressed ? TalkerName(a_t.addressed) : std::string{ "no one in particular" };
+			if (s.debugLog) {
+				REX::INFO("Overheard: '{}' ({:08X}) to {}, {:.1f} m from you: {} '{}' (INFO {:08X}); group of {}: {}; {}{}", a_t.name, a_actor->formID, to, distance, emotion,
+					text.substr(0, 80), infoId, group.size(), members, scene, randomScene ? ", random scene" : "");
+			}
+			if (s.showMessages && a_t.addressed != 0 && a_t.addressed != 0x14) {  // NPC to NPC only
+				ShowHudMessage(std::format("Overheard: {} -> {}: {} (group of {}, {:.0f} m)", a_t.name, to, emotion, group.size(), distance));
+			}
+		}
+
+		void UpdateOverheard(std::chrono::steady_clock::time_point a_now)
+		{
+			const auto&             s = Settings::Get();
+			auto*                   player = RE::PlayerCharacter::GetSingleton();
+			constexpr std::uint64_t kProcessListsSingleton = 937584;
+			if (!(s.debugLog || s.showMessages) || !player || !Hud::AddressKnown(kProcessListsSingleton)) {
+				return;
+			}
+			auto* lists = RE::ProcessLists::GetSingleton();
+			if (!lists) {
+				return;
+			}
+			const auto playerFeet = player->GetPosition();
+			const auto playerHeadAt = Camera::HeadPosition(player);
+			const auto playerHead = playerHeadAt ? *playerHeadAt : RE::NiPoint3{ playerFeet.x, playerFeet.y, playerFeet.z + 1.6f };
+			for (const auto& handle : lists->highActorHandles) {
+				const auto actor = handle.get();
+				if (!actor || actor.get() == player || actor->IsDead()) {
+					continue;
+				}
+				const auto feet = actor->GetPosition();
+				if (FlatDistance(feet, playerFeet) > kOverhearRange || std::abs(feet.z - playerFeet.z) > 6.0f) {
+					continue;
+				}
+				auto& t = g_talkers[actor->formID];
+				if (t.name.empty()) {
+					const char* name = actor->GetDisplayFullName();
+					t.name = name && *name ? name : std::format("{:08X}", actor->formID);
+				}
+				const auto head = Camera::HeadPosition(actor.get());
+				t.feet = feet;
+				t.head = head ? *head : RE::NiPoint3{ feet.x, feet.y, feet.z + 1.6f };
+				t.heading = actor->GetAngleZ();
+				t.seen = a_now;
+				const bool talking = actor->IsTalking();
+				const bool ours = g_state.active && actor->formID == g_state.speakerId;
+				if (talking && !t.talking && !ours) {
+					t.pending = true;
+					t.lineStart = a_now;
+					t.lastLine = a_now;
+					++t.lines;
+				}
+				t.talking = talking;
+				// Report once the subtitle is there (it often isn't when the line starts), or
+				// after 0.6 s without one.
+				if (t.pending) {
+					const char* raw = actor->currentProcess && actor->currentProcess->high ? actor->currentProcess->high->strVoiceSubtitle.c_str() : nullptr;
+					if ((raw && *raw) || a_now - t.lineStart > 600ms) {
+						t.pending = false;
+						t.addressed = AddressedBy(actor->formID, t, playerFeet, playerHead);
+						ReportOverheardLine(actor.get(), t, a_now, playerFeet);
+					}
+				}
+			}
+			std::erase_if(g_talkers, [&](const auto& a_entry) { return a_now - a_entry.second.seen > 30s; });
+		}
+
 		void UpdateBystanders(std::chrono::steady_clock::time_point a_now)
 		{
 			struct Track
@@ -3353,6 +3538,14 @@ namespace CCC
 					if (now >= nextScan) {
 						nextScan = now + 250ms;
 						UpdateBystanders(now);
+					}
+				}
+				// NPCs talking to each other near you (groundwork for filming them, 0.8).
+				{
+					static auto nextScan = now;
+					if (now >= nextScan) {
+						nextScan = now + 100ms;
+						UpdateOverheard(now);
 					}
 				}
 
