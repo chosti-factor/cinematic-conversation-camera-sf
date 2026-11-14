@@ -279,6 +279,131 @@ namespace CCC::Hud
 			REX::INFO("HUD dump {}: {} objects{}", a_menu, count, count >= 400 ? " (stopped at 400)" : "");
 		}
 
+		// Big movies (the HUD has hundreds of elements): visit everything, but log only the top
+		// two levels and whatever sits under an element whose name suggests subtitles.
+		bool Interesting(const std::string& a_name)
+		{
+			std::string n = a_name;
+			std::ranges::transform(n, n.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			for (const char* key : { "subtitle", "speaker", "caption", "dialog", "conversation", "talk" }) {
+				if (n.find(key) != std::string::npos) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		void SearchTree(const Value& a_obj, const std::string& a_path, int a_depth, int a_under, int& a_visited, int& a_logged)
+		{
+			if (a_visited >= 5000 || a_logged >= 300 || g_broken) {
+				return;
+			}
+			++a_visited;
+			const std::string name = a_path.substr(a_path.rfind('.') + 1);
+			const bool        match = Interesting(name);
+			const int         under = match ? 4 : a_under;
+			const int         children = static_cast<int>(Member(a_obj, "numChildren", 0.0));
+			if (a_depth <= 1 || match || a_under > 0) {
+				++a_logged;
+				std::string text = StringMember(a_obj, "text");
+				if (text.size() > 60) {
+					text.resize(60);
+				}
+				for (auto& c : text) {
+					if (c == '\n' || c == '\r') {
+						c = ' ';
+					}
+				}
+				Value visible;
+				const bool shown = !SafeGet(&a_obj, "visible", &visible) || !visible.IsBoolean() || visible.GetBoolean();
+				REX::INFO("HUD find {}{}: x {:.0f} y {:.0f} w {:.0f} h {:.0f} alpha {:.2f}{}{}{}", match ? "* " : "", a_path, Member(a_obj, "x"), Member(a_obj, "y"),
+					Member(a_obj, "width"), Member(a_obj, "height"), Member(a_obj, "alpha", 1.0), shown ? "" : " hidden",
+					children > 0 ? std::format(" ({} children)", children) : std::string{}, text.empty() ? std::string{} : std::format(" text '{}'", text));
+			}
+			if (a_depth >= 10) {
+				return;
+			}
+			for (int i = 0; i < children; ++i) {
+				Value index{ static_cast<std::int32_t>(i) };
+				Value child;
+				if (!SafeInvoke(const_cast<Value*>(&a_obj), "getChildAt", &child, &index, 1) || !child.IsDisplayObject()) {
+					continue;
+				}
+				const std::string childName = StringMember(child, "name");
+				SearchTree(child, a_path + "." + (childName.empty() ? std::format("[{}]", i) : childName), a_depth + 1, under > 0 ? under - 1 : 0, a_visited,
+					a_logged);
+			}
+		}
+
+		void Search(const char* a_menu)
+		{
+			const auto ref = OpenMovie(a_menu);
+			if (!ref) {
+				REX::INFO("HUD find {}: not open", a_menu);
+				return;
+			}
+			Value top;
+			if (!RootObject(ref->root, top, a_menu)) {
+				return;
+			}
+			int visited = 0, logged = 0;
+			SearchTree(top, a_menu, 0, 0, visited, logged);
+			REX::INFO("HUD find {}: {} elements visited, {} logged", a_menu, visited, logged);
+		}
+
+		// The dialogue menu's lists, by path from its top object.
+		bool Child(Value& a_parent, const char* a_name, Value& a_out)
+		{
+			Value name{ a_name };
+			return SafeInvoke(&a_parent, "getChildByName", &a_out, &name, 1) && a_out.IsDisplayObject();
+		}
+
+		// ---- Dialogue options fade in --------------------------------------------------------
+		// The game shows and hides the option list (DialogueList_mc; PersuasionList_mc during a
+		// persuasion) itself. When it appears, ease it in instead of letting it pop.
+		struct OptionsFade
+		{
+			bool  wasVisible[2]{ false, false };
+			float shownFor[2]{ 99.0f, 99.0f };
+			bool  listDumped{ false };
+		} g_options;
+
+		void UpdateOptions(Value& a_top, float a_delta, bool a_dump)
+		{
+			const auto& s = Settings::Get();
+			Value       menu;
+			if (!Child(a_top, "Menu_mc", menu)) {
+				return;
+			}
+			const char* names[2]{ "DialogueList_mc", "PersuasionList_mc" };
+			for (int i = 0; i < 2; ++i) {
+				Value list;
+				if (!Child(menu, names[i], list)) {
+					continue;
+				}
+				Value      visible;
+				const bool now = SafeGet(&list, "visible", &visible) && visible.IsBoolean() && visible.GetBoolean();
+				if (now && !g_options.wasVisible[i]) {
+					g_options.shownFor[i] = 0.0f;
+					if (a_dump && i == 0 && !g_options.listDumped) {
+						g_options.listDumped = true;
+						int count = 0;
+						DumpTree(list, std::string{ "DialogueMenu.Menu_mc." } + names[i], 2, count);
+					}
+				}
+				g_options.wasVisible[i] = now;
+				if (!now || !s.fadeOptions) {
+					continue;
+				}
+				if (g_options.shownFor[i] < s.optionsFade) {
+					g_options.shownFor[i] += a_delta;
+					const float t = std::clamp(g_options.shownFor[i] / (std::max)(s.optionsFade, 0.01f), 0.0f, 1.0f);
+					const Value alpha{ static_cast<double>(t * t * (3.0f - 2.0f * t)) };
+					SafeSet(&list, "alpha", &alpha);
+				}
+			}
+		}
+
 		// ---- Letterbox -----------------------------------------------------------------------
 		constexpr const char* kTopName = "cccLetterboxTop";
 		constexpr const char* kBottomName = "cccLetterboxBottom";
@@ -384,7 +509,7 @@ namespace CCC::Hud
 	void Update(bool a_filming, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (g_broken || (!s.letterbox && !s.dumpMenus) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions) || !CheckReady()) {
 			return;
 		}
 		static float dialogueOpenFor = 0.0f;
@@ -399,11 +524,24 @@ namespace CCC::Hud
 			}
 			if (!dumpedHud) {
 				dumpedHud = true;
-				Dump("HUDMenu");
+				// 0.6.3's full dump of the HUD stopped at 400 elements before the subtitles:
+				// search it (and the HUD messages menu) for them instead.
+				Search("HUDMenu");
+				Search("HUDMessagesMenu");
 			}
 		}
 		if (s.letterbox && !g_broken) {
 			UpdateLetterbox(a_filming && dialogueOpen, a_delta);
+		}
+		if (dialogueOpen && !g_broken && (s.fadeOptions || s.dumpMenus)) {
+			if (const auto ref = OpenMovie("DialogueMenu")) {
+				Value top;
+				if (RootObject(ref->root, top, "DialogueMenu")) {
+					UpdateOptions(top, a_delta, s.dumpMenus);
+				}
+			}
+		} else if (!dialogueOpen) {
+			g_options.wasVisible[0] = g_options.wasVisible[1] = false;
 		}
 		if (g_broken) {
 			REX::WARN("HUD: a Scaleform call failed; letterbox and subtitle features are off for this session");

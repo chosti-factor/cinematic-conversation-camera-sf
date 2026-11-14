@@ -89,7 +89,8 @@ Planned, roughly in order:
   see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
   (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
   scenes recognised by their quest rather than the scene's name; plants and other objects
-  without collision (which the obstacle check can't see) in front of wide outdoor shots.
+  without collision (which the obstacle check can't see) in front of wide outdoor shots; the default amount of
+  camera sway (`iCameraSway`).
 - Public beta.
 
 ## Requirements
