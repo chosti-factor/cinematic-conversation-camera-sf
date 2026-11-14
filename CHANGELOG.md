@@ -13,12 +13,8 @@ test build; "diagnostic" items only add information to the log for testing.
   looks smug, Bounty Hunter suspicious, Diplomat friendly, Professor thoughtful... (all 20
   backgrounds: see the INI or `docs/EMOTIONS.md`). The background is read from your perks with the game's own
   check behind Papyrus' HasPerk (found in 1.16.244, Address Library ID 101224).
-- Your traits on your face: Introvert is subtler (40% of lines get no visible answer;
-  background expressions and close-ups of you half as often), Extrovert fuller (those half as
-  often again), Empath mirrors the speaker's expression itself (anger brings concern), and
-  Wanted shows a wary look at 15% of neutral moments. Read with the same perk check.
 - `docs/EMOTIONS.md` now has your face's tables (answers to each NPC expression, skill tags,
-  backgrounds, traits), kept up to date with every build.
+  backgrounds), kept up to date with every build.
 - Your emotion close-ups (`[Face]` `iPlayerCloseUpChance`, 20%): when your face answers an
   NPC's line with an expression, that line may be shown on you as a close-up, pushing in
   (an extreme close-up as often as the NPC's, `iExtremeCloseUpChance`). It counts as a

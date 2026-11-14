@@ -97,40 +97,9 @@ namespace CCC::Face
 			BackgroundFace{ 0x22EC6E, "Xenobiologist", "Concentrating" },
 		};
 
-		// Traits that change how your face behaves (perks in Starfield.esm).
-		constexpr RE::TESFormID kIntrovert = 0x227FD8;
-		constexpr RE::TESFormID kExtrovert = 0x227FD7;
-		constexpr RE::TESFormID kEmpath = 0x227FD6;
-		constexpr RE::TESFormID kWanted = 0x227FDD;
-
 		bool        g_signatureRead = false;
 		std::string g_signature;
 		std::string g_background;
-		bool        g_introvert = false;
-		bool        g_extrovert = false;
-		bool        g_empath = false;
-		bool        g_wanted = false;
-		std::string g_traits;  // for the log
-		std::string g_signatureSource;  // what the last MaybeSignature came from
-		std::atomic<int> g_closeUpPercent{ 100 };  // trait scale for your emotion close-ups (any thread)
-
-		std::mt19937& Rng()
-		{
-			static std::mt19937 rng{ std::random_device{}() };
-			return rng;
-		}
-
-		bool Roll(int a_percent)
-		{
-			return std::uniform_int_distribution<int>{ 0, 99 }(Rng()) < a_percent;
-		}
-
-		// Introvert: half as often; Extrovert: half as often again (at most 100%).
-		int TraitScaled(int a_percent)
-		{
-			const int scaled = g_introvert ? a_percent / 2 : g_extrovert ? a_percent * 3 / 2 : a_percent;
-			return std::clamp(scaled, 0, 100);
-		}
 
 		std::string Lower(std::string_view a_text)
 		{
@@ -144,27 +113,6 @@ namespace CCC::Face
 
 	std::string ListeningTo(std::string_view a_npcTag)
 	{
-		(void)Signature();  // traits read for this conversation
-		const auto tag = Lower(a_npcTag);
-		// Introvert: a subtler face; 40% of lines get no visible response.
-		if (g_introvert && !tag.empty() && tag != "none" && Roll(40)) {
-			return {};
-		}
-		// Empath: feels what the speaker feels, so mirrors the expression itself (anger
-		// excepted: that hurts, so concern).
-		if (g_empath) {
-			static const std::unordered_map<std::string, std::string> mirrored{
-				{ "worried", "Worried" }, { "nervous", "Nervous" }, { "afraid", "Afraid" }, { "apologetic", "Apologetic" },
-				{ "somber", "Somber" }, { "depressed", "Depressed" }, { "pleading", "Pleading" }, { "inpain", "InPain" },
-				{ "happy", "Happy" }, { "amused", "Amused" }, { "grateful", "Grateful" }, { "relieved", "Relieved" },
-				{ "surprised", "Surprised" }, { "awed", "Awed" }, { "confused", "Confused" }, { "thinking", "Thinking" },
-				{ "concerned", "Concerned" }, { "tired", "Tired" }, { "irritated", "Concerned" }, { "angry", "Concerned" },
-				{ "veryangry", "Concerned" }, { "rage", "Afraid" },
-			};
-			if (const auto it = mirrored.find(tag); it != mirrored.end()) {
-				return it->second;
-			}
-		}
 		// Subtle by default: mirrored where it's natural (a smile for a smile), otherwise a
 		// listener's response (concern for worry, attention for a question). Angry lines get
 		// a guarded look or anger back, picked at random each line. Untagged or neutral
@@ -175,8 +123,9 @@ namespace CCC::Face
 			{ "veryangry", { "Stern", "Irritated", "VeryAngry" } },
 			{ "rage", { "Afraid", "VeryAngry", "Rage" } },
 		};
-		if (const auto it = angry.find(tag); it != angry.end()) {
-			return it->second[std::uniform_int_distribution<std::size_t>{ 0, it->second.size() - 1 }(Rng())];
+		if (const auto it = angry.find(Lower(a_npcTag)); it != angry.end()) {
+			static std::mt19937 rng{ std::random_device{}() };
+			return it->second[std::uniform_int_distribution<std::size_t>{ 0, it->second.size() - 1 }(rng)];
 		}
 		static const std::unordered_map<std::string, std::string> responses{
 			{ "friendly", "Friendly" }, { "amused", "Amused" }, { "happy", "Happy" }, { "grateful", "Friendly" },
@@ -191,7 +140,7 @@ namespace CCC::Face
 			{ "surprised", "Surprised" }, { "shocked", "Surprised" }, { "disbelief", "Surprised" }, { "awed", "Awed" },
 			{ "disgust", "Disgust" },
 		};
-		const auto it = responses.find(tag);
+		const auto it = responses.find(Lower(a_npcTag));
 		return it != responses.end() ? it->second : std::string{};
 	}
 
@@ -251,40 +200,25 @@ namespace CCC::Face
 			constexpr std::uint64_t kLookupByID = 47401;
 			if (player && Hud::AddressKnown(kPerkRankEntry) && Hud::AddressKnown(kLookupByID)) {
 				const auto fn = reinterpret_cast<PerkRankEntry_t>(REL::ID(kPerkRankEntry).address());
-				bool failed = false;
-				auto has = [&](RE::TESFormID a_id) {
-					auto* form = RE::TESForm::LookupByID(a_id);
-					bool  result = false;
-					if (!failed && form && form->GetFormType() == RE::FormType::kPERK && !HasPerkUnsafe(fn, player, static_cast<RE::BGSPerk*>(form), result)) {
-						failed = true;
-						REX::WARN("Face: checking your background and traits failed; none used");
-					}
-					return !failed && result;
-				};
 				for (const auto& bg : kBackgrounds) {
-					if (has(bg.id)) {
+					auto* form = RE::TESForm::LookupByID(bg.id);
+					if (!form || form->GetFormType() != RE::FormType::kPERK) {
+						continue;
+					}
+					bool has = false;
+					if (!HasPerkUnsafe(fn, player, static_cast<RE::BGSPerk*>(form), has)) {
+						REX::WARN("Face: checking your background failed; no signature expression");
+						break;
+					}
+					if (has) {
 						g_background = bg.name;
 						g_signature = bg.expression;
 						break;
 					}
 				}
-				g_introvert = has(kIntrovert);
-				g_extrovert = has(kExtrovert);
-				g_empath = has(kEmpath);
-				g_wanted = has(kWanted);
-			} else {
-				g_introvert = g_extrovert = g_empath = g_wanted = false;
 			}
-			g_traits.clear();
-			for (const auto& [on, name] : { std::pair{ g_introvert, "Introvert (subtler)" }, std::pair{ g_extrovert, "Extrovert (fuller)" },
-					 std::pair{ g_empath, "Empath (mirrors)" }, std::pair{ g_wanted, "Wanted (wary)" } }) {
-				if (on) {
-					g_traits += (g_traits.empty() ? "" : ", ") + std::string{ name };
-				}
-			}
-			g_closeUpPercent.store(TraitScaled(100), std::memory_order_relaxed);
-			REX::INFO("Face: your background {}{}; traits that show on your face: {}", g_background.empty() ? "isn't one of the 20 known" : g_background,
-				g_signature.empty() ? "" : std::format(", signature expression {}", g_signature), g_traits.empty() ? "none" : g_traits);
+			REX::INFO("Face: your background {}{}", g_background.empty() ? "isn't one of the 20 known" : g_background,
+				g_signature.empty() ? "" : std::format(", signature expression {}", g_signature));
 		}
 		if (a_background) {
 			*a_background = g_background;
@@ -295,26 +229,11 @@ namespace CCC::Face
 	std::string MaybeSignature()
 	{
 		const auto signature = Signature();
-		// Wanted: a wary look now and then, whatever your background.
-		if (g_wanted && Roll(15)) {
-			g_signatureSource = "Wanted";
-			return "Suspicious";
-		}
 		if (signature.empty()) {
 			return {};
 		}
-		g_signatureSource = g_background;
-		return Roll(TraitScaled(Settings::Get().signatureChance)) ? signature : std::string{};
-	}
-
-	const std::string& SignatureSource()
-	{
-		return g_signatureSource;
-	}
-
-	int CloseUpChance(int a_percent)
-	{
-		return std::clamp(a_percent * g_closeUpPercent.load(std::memory_order_relaxed) / 100, 0, 100);
+		static std::mt19937 rng{ std::random_device{}() };
+		return std::uniform_int_distribution<int>{ 0, 99 }(rng) < Settings::Get().signatureChance ? signature : std::string{};
 	}
 
 	const std::string& Current()

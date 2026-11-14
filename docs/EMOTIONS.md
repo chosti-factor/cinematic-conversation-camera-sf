@@ -181,17 +181,6 @@ without a skill tag), this chance of your background's expression instead.
 | Pilgrim | Relieved |
 | Cyberneticist, Xenobiologist | Concentrating |
 
-### Your traits
-
-| Trait | Effect |
-|---|---|
-| Introvert | Subtler: 40% of lines get no visible answer; background expressions and your emotion close-ups half as often |
-| Extrovert | Fuller: background expressions and your emotion close-ups half as often again |
-| Empath | Mirrors the speaker: Worried, Nervous, Afraid, Apologetic, Somber, Depressed, Pleading, InPain, Happy, Amused, Grateful, Relieved, Surprised, Awed, Confused, Thinking, Concerned and Tired are worn as they are; anger brings concern (Rage: Afraid) |
-| Wanted | Wary: 15% of neutral moments show Suspicious, whatever your background |
-
-Other traits don't change your face.
-
 ### Your emotion close-ups (`iPlayerCloseUpChance`, 20%)
 
 When your face answers a line with an expression (40 characters or longer, not an NPC
