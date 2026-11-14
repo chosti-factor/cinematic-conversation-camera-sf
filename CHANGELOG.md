@@ -27,6 +27,13 @@ test build; "diagnostic" items only add information to the log for testing.
   within 5 m of one another who've spoken in the last 20 s), and whether it's part of a quest
   or random scene. With `bShowMessages`, NPC-to-NPC lines also show on screen ("Overheard:
   Name -> Name: Happy (group of 3, 6 m)").
+- Groundwork for CCC's room shots (Wide, Master, Distant; nothing is filmed differently yet):
+  each conversation's room is measured with the collision check from between the two people
+  (the ceiling, and how far it's open in 16 directions at eye height and higher up), again
+  when they move more than 1.5 m. The log gives, for each room shot, how far back it wants to
+  be, the best place it could stand, how big the people would be from there and whether both
+  faces are in clear view; with `bShowMessages`, a summary shows on screen ("Room: 8 x 6 m,
+  ceiling 3.0 m | Wide 3.8/18 m, Master 3.8/27 m, Distant 3.8/23 m").
 
 ### Changed
 - Reaction shots: counted over the whole conversation, not per reply. Once `iReactionEvery`

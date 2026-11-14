@@ -16,6 +16,7 @@
 #include "Visibility.h"
 
 #include <deque>
+#include <numbers>
 #include <random>
 
 namespace CCC
@@ -91,6 +92,9 @@ namespace CCC
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			const char*                           castShot{ nullptr };       // obstacle check: last shot checked
 			int                                   castSubject{ -1 };
+			bool                                  roomMeasured{ false };     // room measurement (groundwork for room shots)
+			RE::NiPoint3                          roomAt{};
+			std::chrono::steady_clock::time_point roomTime{};
 			int                                   plainCheckSubject{ -1 };   // obstacle check of the plain shot: whose turn it was done for
 			float                                 plainLimit{ std::numeric_limits<float>::infinity() };
 			bool                                  plainEyeLine{ false };     // plain shot blocked: shoot from the other person's eyes
@@ -1254,6 +1258,124 @@ namespace CCC
 			}
 		}
 
+		// Room measurement (groundwork for CCC's room shots, Wide, Master and Distant; log
+		// only, nothing is filmed differently yet). From between the two people: the ceiling,
+		// and how far it's open in 16 directions at eye height and 1.5 m higher, with the
+		// game's collision check. Then, for each room shot, how far back it wants to be (at
+		// this lens), the best place it could actually stand, how big the people would be from
+		// there, and whether both faces are in clear view. Measured once per conversation and
+		// again when the two move more than 1.5 m.
+		void MeasureRoom(const RE::NiPoint3& a_npcHead, const RE::NiPoint3& a_playerHead, float a_ground)
+		{
+			constexpr int   kBearings = 16;
+			constexpr float kReach = 25.0f;
+			constexpr float kSky = 15.0f;
+			constexpr float kWallMargin = 0.5f;
+			constexpr float kPeople = 1.8f;                  // height of a standing person
+			constexpr float kLens = 29.58f;                  // the conversation lens (horizontal)
+			const float     vertical = 2.0f * std::atan(std::tan(kLens * 0.5f * std::numbers::pi_v<float> / 180.0f) / 1.7778f);
+			const auto      share = [&](float a_distance) {  // of the frame's height, a person standing there
+                return a_distance > 0.1f ? kPeople / (2.0f * a_distance * std::tan(vertical * 0.5f)) : 1.0f;
+			};
+			const auto wants = [&](float a_fill) {  // distance for a 0.6 m extent filling a_fill (as Shots)
+				return 0.3f / std::tan(vertical * a_fill * 0.5f);
+			};
+
+			const RE::NiPoint3 mid{ (a_npcHead.x + a_playerHead.x) * 0.5f, (a_npcHead.y + a_playerHead.y) * 0.5f, (a_npcHead.z + a_playerHead.z) * 0.5f };
+			const float        eyeline = std::atan2(a_npcHead.y - a_playerHead.y, a_npcHead.x - a_playerHead.x);  // towards them
+
+			float up = 1.0f;
+			if (!Cast(mid, { mid.x, mid.y, mid.z + kSky }, up)) {
+				return;
+			}
+			const bool  roofed = up < 0.999f;
+			const float ceiling = roofed ? mid.z + up * kSky - a_ground : 0.0f;
+			const float highRise = roofed ? std::clamp(ceiling - (mid.z - a_ground) - 0.4f, 0.0f, 1.5f) : 1.5f;
+
+			// Towards either person the cast meets their body first; past them it starts again.
+			const float personZone = Distance(a_npcHead, a_playerHead) * 0.5f + 0.45f;
+			const auto  open = [&](const RE::NiPoint3& a_from, float a_dx, float a_dy, bool a_nearLine) {
+                float f = 1.0f;
+                Cast(a_from, { a_from.x + a_dx * kReach, a_from.y + a_dy * kReach, a_from.z }, f);
+                if (a_nearLine && f * kReach < personZone) {
+                    const RE::NiPoint3 past{ a_from.x + a_dx * personZone, a_from.y + a_dy * personZone, a_from.z };
+                    float              g = 1.0f;
+                    Cast(past, { a_from.x + a_dx * kReach, a_from.y + a_dy * kReach, a_from.z }, g);
+                    return personZone + g * (kReach - personZone);
+                }
+                return f * kReach;
+			};
+			std::array<float, kBearings> low{}, high{};
+			for (int i = 0; i < kBearings; ++i) {
+				const float a = eyeline + i * 2.0f * std::numbers::pi_v<float> / kBearings;
+				const bool  nearLine = i <= 2 || i >= kBearings - 2 || std::abs(i - kBearings / 2) <= 2;  // within 45 degrees of the line
+				low[i] = open(mid, std::cos(a), std::sin(a), nearLine);
+				high[i] = open({ mid.x, mid.y, mid.z + highRise }, std::cos(a), std::sin(a), nearLine);
+			}
+			std::string around, above;
+			for (int i = 0; i < kBearings; ++i) {
+				around += std::format("{}{}:{:.1f}", i ? " " : "", i * 360 / kBearings, low[i]);
+				above += std::format("{}{}:{:.1f}", i ? " " : "", i * 360 / kBearings, high[i]);
+			}
+			const float along = low[0] + low[kBearings / 2];
+			const float across = low[kBearings / 4] + low[3 * kBearings / 4];
+			REX::INFO("Room: {}; {:.1f} m along the eyeline, {:.1f} m across it (wall to wall through the pair)", roofed ? std::format("ceiling {:.1f} m", ceiling) : "no ceiling within 15 m",
+				along, across);
+			REX::INFO("Room: open from the pair (degrees from the line towards them, anticlockwise: metres) at eye height {}; {:.1f} m higher {}", around, highRise, above);
+
+			// Each room shot: its setup's fill and height (Shots' SpecFor: Wide 0.11 and 24
+			// units up, Master 0.075 and 76 up, Distant 0.09 and 28 up).
+			struct RoomShot
+			{
+				const char* name;
+				float       fill;
+				float       rise;
+			};
+			constexpr std::array kShots{ RoomShot{ "Wide", 0.11f, 24.0f / 70.0f }, RoomShot{ "Master", 0.075f, 76.0f / 70.0f }, RoomShot{ "Distant", 0.09f, 28.0f / 70.0f } };
+			std::string summary;
+			for (const auto& shot : kShots) {
+				const float wanted = wants(shot.fill);
+				// The bearings with the most room at this shot's height, best first.
+				std::array<int, kBearings> order{};
+				for (int i = 0; i < kBearings; ++i) {
+					order[i] = i;
+				}
+				const auto room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
+				std::ranges::sort(order, [&](int a, int b) { return room(a) > room(b); });
+				float bestDistance = 0.0f;
+				int   bestBearing = -1;
+				bool  bestClear = false;
+				for (int k = 0; k < 4; ++k) {
+					const int   i = order[k];
+					const float d = std::clamp(room(i), 0.0f, wanted);
+					if (d < 1.0f) {
+						break;
+					}
+					const float        a = eyeline + i * 2.0f * std::numbers::pi_v<float> / kBearings;
+					const RE::NiPoint3 cam{ mid.x + std::cos(a) * d, mid.y + std::sin(a) * d, mid.z + shot.rise };
+					const auto         toNpc = TestShot(a_npcHead, cam, a_playerHead, false);
+					const auto         toYou = TestShot(a_playerHead, cam, a_npcHead, false);
+					const bool         clear = toNpc.blockedAt < 0.0f && toYou.blockedAt < 0.0f;
+					if ((clear && !bestClear) || (clear == bestClear && d > bestDistance)) {
+						bestDistance = d;
+						bestBearing = i;
+						bestClear = clear;
+					}
+				}
+				if (bestBearing < 0) {
+					REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); no room for it here", shot.name, wanted, 100.0f * share(wanted));
+					summary += std::format("{}{} no room", summary.empty() ? "" : ", ", shot.name);
+					continue;
+				}
+				REX::INFO("Room shot {}: wants {:.1f} m back (people {:.0f}% of the picture's height); best {:.1f} m at {} degrees (people {:.0f}%), {}", shot.name, wanted,
+					100.0f * share(wanted), bestDistance, bestBearing * 360 / kBearings, 100.0f * share(bestDistance), bestClear ? "both faces in clear view" : "a face is blocked from there");
+				summary += std::format("{}{} {:.1f}/{:.0f} m{}", summary.empty() ? "" : ", ", shot.name, bestDistance, wanted, bestClear ? "" : " (blocked)");
+			}
+			if (Settings::Get().showMessages) {
+				QueueHudMessage(std::format("Room: {:.0f} x {:.0f} m, {} | {}", along, across, roofed ? std::format("ceiling {:.1f} m", ceiling) : std::string{ "open sky" }, summary));
+			}
+		}
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
@@ -2090,6 +2212,22 @@ namespace CCC
 						why += ", pulled in";
 					}
 					QueueHudMessage(std::format("Camera: {} ({})", name, why));
+				}
+			}
+			// Measure the room around the two (log and messages only, for now): once, and again
+			// when they've moved more than 1.5 m (at most every 2 s).
+			if ((s.debugLog || s.showMessages) && s.obstacleCheck && !waitingView && !pov) {
+				const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
+				const auto         now = std::chrono::steady_clock::now();
+				if (!g_state.roomMeasured || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
+					g_state.roomMeasured = true;
+					g_state.roomAt = mid;
+					g_state.roomTime = now;
+					float ground = mid.z - 1.6f;
+					if (g_state.smoothNpcFeet && g_state.smoothPlayerFeet) {
+						ground = (std::min)(g_state.smoothNpcFeet->z, g_state.smoothPlayerFeet->z);
+					}
+					MeasureRoom(*npcHead, *playerHead, ground);
 				}
 			}
 			// Obstacle check of the shot on screen, for the log: once per shot.
