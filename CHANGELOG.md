@@ -4,7 +4,10 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.3 - unreleased
+## 0.7.3 - 2026-11-14
+
+### Changed
+- Reaction shots: every 3rd line of a reply may be one (`iReactionEvery=3`, CCC's value; was 2).
 
 ### Fixed
 - Persuasion beat on every round of the mini-game: each round plays its own success or
