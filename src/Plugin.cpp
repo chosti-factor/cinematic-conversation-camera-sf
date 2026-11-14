@@ -74,7 +74,7 @@ namespace CCC
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
-			bool                                  lineCounted{ false };      // this line counted towards a reaction
+			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
 			int                                   msgSubject{ -1 };
 			std::uint32_t                         msgCuts{ 0 };
@@ -883,6 +883,36 @@ namespace CCC
 			m = {};
 		}
 
+		// Sentences in a subtitle, for the reaction count: each run of '.', '!', '?' or '...'
+		// (a pause) followed by a space or the end. A line with none counts as one.
+		int CountSentences(std::string_view a_text)
+		{
+			int  count = 0;
+			bool inRun = false;
+			for (std::size_t i = 0; i < a_text.size(); ++i) {
+				const char c = a_text[i];
+				const bool ellipsis = static_cast<unsigned char>(c) == 0xE2 && i + 2 < a_text.size() && static_cast<unsigned char>(a_text[i + 1]) == 0x80 &&
+				                      static_cast<unsigned char>(a_text[i + 2]) == 0xA6;  // U+2026 in UTF-8
+				if (c == '.' || c == '!' || c == '?' || ellipsis) {
+					inRun = true;
+					if (ellipsis) {
+						i += 2;
+					}
+					continue;
+				}
+				if (inRun) {
+					inRun = false;
+					if (c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '"' || c == '\'' || c == ')') {
+						++count;
+					}
+				}
+			}
+			if (inRun) {
+				++count;
+			}
+			return (std::max)(count, a_text.empty() ? 0 : 1);
+		}
+
 		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
 		bool IsCloseUpEmotion(std::string_view a_emotion)
 		{
@@ -1452,10 +1482,11 @@ namespace CCC
 					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
 				}
 				const float held = std::chrono::duration<float>(now - g_state.holdStarted).count();
-				// First-person conversations: keep the last shot until the game leaves its dialogue
-				// camera (the first-person camera hook then cuts straight to the player's view),
-				// instead of showing the game's own close-up for the last half second.
-				const bool holdToEnd = g_state.startedFirstPerson && g_firstPersonView && held < 3.0f;
+				// Keep the last shot until the game leaves its dialogue camera, then cut straight
+				// to the player's view: first person (the first-person hook cuts there) and, since
+				// 0.7.6, third person too (0.7.5 test: the saved third-person view shown meanwhile
+				// rested on the NPC's middle for a second before the game's camera took over).
+				const bool holdToEnd = held < 3.0f && (g_state.startedFirstPerson ? g_firstPersonView.has_value() : true);
 				if ((held < s.exitHoldSeconds || holdToEnd) && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
 					return;
 				}
@@ -1829,17 +1860,27 @@ namespace CCC
 						// CCC's per-reply count rarely got there), each further line has an
 						// iReactionChance chance of being shown on you; a reaction starts the count
 						// again. Emotion close-up lines and persuasion answers keep their close-up.
-						g_state.lineCounted = false;
+						// 0.7.6: counted in sentences (each ending in a full stop, ! or ?, or a
+						// pause, "..."), as you'd count lines of dialogue; a line on screen under
+						// half a second doesn't count (see where it ends). Only a line of 40
+						// characters or more becomes a reaction itself (a short one would be over
+						// before the cut settled).
+						g_state.lineCounted = 0;
 						if (fresh && s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
-							!g_state.lineBeat && text.size() >= 40) {
-							if (g_state.reactionLines >= s.reactionEvery && !g_state.lineIntense &&
+							!g_state.lineBeat) {
+							const int sentences = CountSentences(text);
+							if (g_state.reactionLines >= s.reactionEvery && !g_state.lineIntense && text.size() >= 40 &&
 								std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
+								REX::INFO("Reaction shot: '{}' shown on you listening ({} sentences heard since the last)", text.substr(0, 60), g_state.reactionLines);
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
-								REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
 							} else {
-								++g_state.reactionLines;
-								g_state.lineCounted = true;
+								g_state.reactionLines += sentences;
+								g_state.lineCounted = sentences;
+								if (s.debugLog) {
+									REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines,
+										g_state.reactionLines >= s.reactionEvery ? " (the next line may be a reaction)" : "");
+								}
 							}
 						}
 					}
@@ -1862,11 +1903,15 @@ namespace CCC
 				if (!talkingNow && g_state.speakerWasTalking) {
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;
-					// A line you clicked past (over within 1.2 s) wasn't really heard: it doesn't count.
-					if (g_state.lineCounted && now - g_state.lineStart < 1200ms && g_state.reactionLines > 0) {
-						--g_state.reactionLines;
+					// A line you clicked past almost at once (on screen under half a second) wasn't
+					// really heard: it doesn't count. One you skip after that still does.
+					if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {
+						g_state.reactionLines = (std::max)(0, g_state.reactionLines - g_state.lineCounted);
+						if (s.debugLog) {
+							REX::INFO("Reaction count: line skipped within half a second, not counted ({} heard)", g_state.reactionLines);
+						}
 					}
-					g_state.lineCounted = false;
+					g_state.lineCounted = 0;
 				}
 				g_state.speakerWasTalking = talkingNow;
 			}
@@ -3325,6 +3370,11 @@ namespace CCC
 
 		void ShowHudMessage(const std::string& a_text)
 		{
+			// During a filmed conversation, in the top bar (0.7.6: the game's notifications go
+			// by too fast); otherwise the game's own notification.
+			if (Hud::ShowMessage(a_text)) {
+				return;
+			}
 			if (auto* source = RE::ShowHUDMessageEvent::GetEventSource()) {
 				RE::ShowHUDMessageEvent event{ RE::BSFixedString{ a_text.c_str() }, RE::BSFixedString{ "" }, false, false };
 				source->Notify(event);
@@ -4001,7 +4051,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.5 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

@@ -738,6 +738,141 @@ namespace CCC::Hud
 			SafeSet(&upper, "visible", &shown);
 			SafeSet(&lower, "visible", &shown);
 		}
+
+		// ---- Testing messages in the top bar (0.7.6) --------------------------------------------
+		// bShowMessages' line and shot messages, while a conversation is filmed: one line of
+		// text in the top bar (or at the top of the screen without the bars), in the dialogue
+		// menu's own font, staying until the next replaces it or fMessageSeconds pass. The
+		// game's notifications go by too fast for a line and its shot together.
+		constexpr const char* kMessageName = "cccMessage";
+
+		struct MessageState
+		{
+			std::string text;             // waiting to be shown
+			bool        fresh{ false };
+			float       age{ 0.0f };      // seconds on screen
+			float       alpha{ 0.0f };
+			bool        available{ false };  // the dialogue menu is filmed: messages go here
+			std::string font;             // copied from the menu's own text
+			double      size{ 0.0 };
+			bool        embed{ true };
+			bool        logged{ false };
+		} g_msg;
+
+		// The font of the dialogue menu's own text: an option, or else the buttons' labels.
+		bool ReadMenuFont(Value& a_top)
+		{
+			Value menu, list, holder, entry, textHolder, field;
+			bool  found = Child(a_top, "Menu_mc", menu) && Child(menu, "DialogueList_mc", list) && Child(list, "EntryHolder_mc", holder) &&
+			             Child(holder, "Entry0", entry) && Child(entry, "TextHolder_mc", textHolder) && Child(textHolder, "textField", field);
+			if (!found) {
+				Value bar, button, label, instance;
+				found = Child(a_top, "Menu_mc", menu) && Child(menu, "ButtonBar_mc", bar) && Child(bar, "CancelButton_mc", button) && Child(button, "Label_mc", label) &&
+				        Child(label, "LabelInstance_mc", instance) && Child(instance, "Label_tf", field);
+			}
+			Value format;
+			if (!found || !SafeInvoke(&field, "getTextFormat", &format, nullptr, 0) || !format.IsObject()) {
+				return false;
+			}
+			g_msg.font = StringMember(format, "font");
+			g_msg.size = Member(format, "size", 0.0);
+			Value embed;
+			g_msg.embed = SafeGet(&field, "embedFonts", &embed) && embed.IsBoolean() ? embed.GetBoolean() : true;
+			return !g_msg.font.empty();
+		}
+
+		void UpdateMessage(bool a_filming, float a_delta)
+		{
+			const auto& s = Settings::Get();
+			g_msg.available = a_filming && !g_broken;
+			const auto ref = OpenMovie("DialogueMenu");
+			if (!ref) {
+				return;
+			}
+			Value top;
+			if (!RootObject(ref->root, top, "DialogueMenu")) {
+				return;
+			}
+			Value field;
+			bool  have = FindChild(top, kMessageName, field);
+			if (!have) {
+				if (!a_filming || !g_msg.fresh) {
+					return;
+				}
+				if (g_msg.font.empty() && !ReadMenuFont(top)) {
+					if (!g_msg.logged) {
+						g_msg.logged = true;
+						REX::WARN("HUD: couldn't read the dialogue menu's font; testing messages use the game's notifications");
+					}
+					g_msg.available = false;
+					return;
+				}
+				if (!SafeCreateObject(ref->root, &field, "flash.text.TextField")) {
+					g_msg.available = false;
+					return;
+				}
+				const Value no{ false };
+				const Value name{ kMessageName };
+				const Value embed{ g_msg.embed };
+				const Value autoSize{ "left" };
+				SafeSet(&field, "name", &name);
+				SafeSet(&field, "selectable", &no);
+				SafeSet(&field, "mouseEnabled", &no);
+				SafeSet(&field, "multiline", &no);
+				SafeSet(&field, "wordWrap", &no);
+				SafeSet(&field, "embedFonts", &embed);
+				SafeSet(&field, "autoSize", &autoSize);
+				if (!SafeInvoke(&top, "addChild", nullptr, &field, 1)) {
+					g_msg.available = false;
+					return;
+				}
+				if (!g_msg.logged) {
+					g_msg.logged = true;
+					REX::INFO("HUD: testing messages shown in the top bar, font '{}' (the menu's own text is {:.0f} high)", g_msg.font, g_msg.size);
+				}
+			}
+			double width = 1920.0, height = 1080.0;
+			Value  stage;
+			if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
+				width = Member(stage, "stageWidth", width);
+				height = Member(stage, "stageHeight", height);
+			}
+			if (g_msg.fresh) {
+				g_msg.fresh = false;
+				g_msg.age = 0.0f;
+				// White, a little smaller than the options; shrunk to fit one line if it's long.
+				const double maxWidth = width - 160.0;
+				for (double size = 22.0; size >= 14.0; size -= 2.0) {
+					const Value args[3]{ Value{ g_msg.font.c_str() }, Value{ size }, Value{ static_cast<std::uint32_t>(0xFFFFFF) } };
+					Value       format;
+					if (!SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 3)) {
+						break;
+					}
+					SafeSet(&field, "defaultTextFormat", &format);
+					const Value text{ g_msg.text.c_str() };
+					SafeSet(&field, "text", &text);
+					SafeInvoke(&field, "setTextFormat", nullptr, &format, 1);
+					if (Member(field, "textWidth", 0.0) <= maxWidth) {
+						break;
+					}
+				}
+			}
+			g_msg.age += a_delta;
+			const float seconds = std::clamp(s.messageSeconds, 1.0f, 30.0f);
+			const float target = a_filming && g_msg.age < seconds ? 1.0f : 0.0f;
+			const float step = a_delta / (target > g_msg.alpha ? 0.2f : 0.5f);
+			g_msg.alpha = g_msg.alpha < target ? (std::min)(target, g_msg.alpha + step) : (std::max)(target, g_msg.alpha - step);
+			// Centred in the top bar as it slides in, or near the top of the screen without it.
+			const double textHeight = Member(field, "textHeight", 24.0);
+			const double bar = s.letterbox ? g_bars.barHeight : 0.0;
+			const float  e = 1.0f - (1.0f - g_bars.ease) * (1.0f - g_bars.ease);
+			const double y = bar > textHeight + 8.0 ? (bar - textHeight) * 0.5 - 2.0 - bar * (1.0 - e) : 24.0;
+			const Value  vx{ 80.0 }, vy{ y }, va{ static_cast<double>(g_msg.alpha) }, vv{ g_msg.alpha > 0.001f };
+			SafeSet(&field, "x", &vx);
+			SafeSet(&field, "y", &vy);
+			SafeSet(&field, "alpha", &va);
+			SafeSet(&field, "visible", &vv);
+		}
 	}
 
 	namespace
@@ -835,6 +970,16 @@ namespace CCC::Hud
 		}
 	}
 
+	bool ShowMessage(const std::string& a_text)
+	{
+		if (!g_msg.available || g_broken) {
+			return false;
+		}
+		g_msg.text = a_text;
+		g_msg.fresh = true;
+		return true;
+	}
+
 	bool AddressKnown(std::uint64_t a_id)
 	{
 		return IddbPeek::Has(a_id);
@@ -853,7 +998,8 @@ namespace CCC::Hud
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages) || !CheckReady()) {
+			g_msg.available = false;
 			return;
 		}
 		static float dialogueOpenFor = 0.0f;
@@ -873,6 +1019,11 @@ namespace CCC::Hud
 				Search("HUDMenu");
 				Search("HUDMessagesMenu");
 			}
+		}
+		if (s.showMessages && !g_broken) {
+			UpdateMessage(a_filming && dialogueOpen, a_delta);
+		} else {
+			g_msg.available = false;
 		}
 		if (s.letterbox && !g_broken) {
 			UpdateLetterbox(a_filming && dialogueOpen, a_delta);

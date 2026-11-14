@@ -4,7 +4,39 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.5 - unreleased
+## 0.7.6 - unreleased
+
+### Added
+- Testing messages in the top bar: while a conversation is filmed, `bShowMessages`' line and
+  shot messages show as one line of white text in the top letterbox bar, in the dialogue
+  menu's own font, staying until the next one or `fMessageSeconds` (6) pass. The game's own
+  notifications went by too fast for a line and its shot together; outside conversations
+  (overheard NPC lines) they're still used.
+
+### Changed
+- Leaving a conversation in third person: the last shot is held until the game hands back
+  its camera, then cuts straight to your third-person view, as in first person. 0.7.5 showed
+  the third-person view from before the conversation meanwhile, resting on the NPC's middle
+  for about a second.
+- Reaction shots: lines are counted as sentences (each ending in a full stop, ! or ?, or a
+  pause, "..."), so a reply of three sentences counts three; any line counts, short ones too.
+  A line you skip after half a second on screen now counts (0.7.5: lines skipped within
+  1.2 s didn't). Only lines of 40 characters or more are shown as reactions themselves. The
+  log now notes the running count.
+
+### Fixed
+- Room measurement: every place with a roof measured a 1.6 m ceiling (the cast straight up
+  reported a hit at once), which also stopped the measurements higher up. The ceiling is now
+  read from the point the cast reports back, cross-checked from higher up and against the
+  floor, with the raw readings in the log.
+
+### Diagnostic
+- NPC-to-NPC conversations: 0.7.5 noticed no lines at all. A line is now also noticed when a
+  new dialogue record or subtitle turns up on someone (the game may only mark NPCs as talking
+  when they speak to you), and every 10 s the log sums up how many people are nearby, how many
+  have a line and who's talking.
+
+## 0.7.5 - 2026-11-14
 
 ### Added
 - Shot messages: each shot the camera uses is shown on screen by its `[Shots]` name and why

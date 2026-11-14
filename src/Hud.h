@@ -22,4 +22,9 @@ namespace CCC::Hud
 	// with an error box when used).
 	[[nodiscard]] bool AddressKnown(std::uint64_t a_id);
 	void SetChoiceListener(ChoiceListener a_listener);
+
+	// A testing message (bShowMessages) for the top bar while a conversation is filmed.
+	// False when it can't go there (no conversation filmed): use the game's notifications.
+	// Main thread.
+	bool ShowMessage(const std::string& a_text);
 }

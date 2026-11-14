@@ -147,6 +147,7 @@ namespace CCC
 				const std::int32_t fallback = legacy >= 0 ? legacy : (a_s.showMessages ? 1 : 0);
 				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
 			}
+			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
