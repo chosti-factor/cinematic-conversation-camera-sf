@@ -85,14 +85,18 @@ Planned, roughly in order:
 
 - CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
   collision test.
-- Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
-  conversations, NPCs stepping away from work to talk.
+- Reaction shots and holding on the answer after a persuasion check (in testing, 0.7.1+).
+- Your character's lines: they carry the same expression tags as the NPCs' (checked in
+  xEdit). Your face shows the expression of each line (the game keeps it neutral), and
+  reacts while listening; emotion close-ups of you on intense lines; CCC's line counting for
+  your turns.
+- Filming NPC-to-NPC conversations, NPCs stepping away from work to talk.
 - Polish: emotion close-ups tuned from testing (which expressions push in, and how often;
   see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
   (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
   scenes recognised by their quest rather than the scene's name; plants and other objects
-  without collision (which the obstacle check can't see) in front of wide outdoor shots; the default amount of
-  camera sway (`iCameraSway`).
+  without collision (which the obstacle check can't see) in front of wide outdoor shots;
+  the default amount of camera sway (`iCameraSway`).
 - Public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
   replacer, a subtitle mod) and listing compatibility.
 
