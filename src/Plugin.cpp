@@ -2066,9 +2066,9 @@ namespace CCC
 				LogFailure("could not apply pose");
 				return;
 			}
-			// On-screen message for each shot as it's used (bShowShots, a testing aid like the
-			// emotion messages): the setup's name as written in [Shots], and why.
-			if (s.showShots && !waitingView && !pov) {
+			// On-screen message for each shot as it's used (bShowMessages, a testing aid): the
+			// setup's name as written in [Shots], and why. Paired with the line it cut for.
+			if (s.showMessages && !waitingView && !pov) {
 				const char*         name = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain over-the-shoulder shot";
 				const int           who = static_cast<int>(subject);
 				const std::uint32_t cuts = directed ? Director::Cuts() : 0;
@@ -3114,11 +3114,35 @@ namespace CCC
 			return std::string{ name };
 		}
 
-		std::string                           g_emotionMessage;
-		int                                   g_emotionCount = 0;
-		bool                                  g_emotionWaiting = false;
-		std::chrono::steady_clock::time_point g_emotionLineAt{};
-		std::chrono::steady_clock::time_point g_emotionDeadline{};
+		// On-screen messages (bShowMessages, a testing aid): each line's expression tag and each
+		// shot the camera uses, as one message when a line and the cut it brings come together,
+		// e.g. "Sarah Morgan: Surprised (#3) | Camera: CloseUp (emotion close-up)".
+		using MsgClock = std::chrono::steady_clock;
+
+		struct HeldShot
+		{
+			std::string         text;
+			MsgClock::time_point at{};
+		};
+
+		struct HeldLine
+		{
+			std::string         text;
+			bool                 closeUp = false;
+			bool                 waiting = false;
+			MsgClock::time_point at{};
+		};
+
+		// How long a shot waits for a line to pair with (the camera may cut a frame or two
+		// before the line is noticed), and how long a line waits for its cut.
+		constexpr auto kShotWait = 350ms;
+		constexpr auto kLineWait = 500ms;
+		constexpr auto kCutBeforeLine = 300ms;
+
+		std::mutex           g_hudQueueLock;  // worker threads -> main thread
+		std::deque<HeldShot> g_hudQueue;
+		std::deque<HeldShot> g_heldShots;  // main thread only
+		HeldLine             g_heldLine;   // main thread only
 
 		void ShowHudMessage(const std::string& a_text)
 		{
@@ -3128,46 +3152,66 @@ namespace CCC
 			}
 		}
 
-		// Messages from the camera's worker threads, shown from the main thread.
-		std::mutex              g_hudQueueLock;
-		std::deque<std::string> g_hudQueue;
-
+		// A shot message from the camera's worker threads, shown from the main thread.
 		void QueueHudMessage(std::string a_text)
 		{
 			std::scoped_lock lock{ g_hudQueueLock };
 			if (g_hudQueue.size() < 6) {
-				g_hudQueue.push_back(std::move(a_text));
+				g_hudQueue.push_back({ std::move(a_text), MsgClock::now() });
 			}
 		}
 
-		void FlushHudMessages()
+		// The line's own part: a close-up emotion the camera didn't cut for says so.
+		std::string LineText(const HeldLine& a_line)
 		{
-			std::deque<std::string> pending;
+			if (!a_line.closeUp) {
+				return a_line.text;
+			}
+			MsgClock::time_point cutAt{};
+			const int            kind = Director::LastEmotionCut(cutAt);
+			return kind != 0 && cutAt >= a_line.at - kCutBeforeLine ? a_line.text : a_line.text + " - no close-up";
+		}
+
+		// Main thread, every tick.
+		void FlushHudMessages(MsgClock::time_point a_now)
+		{
 			{
 				std::scoped_lock lock{ g_hudQueueLock };
-				pending.swap(g_hudQueue);
+				while (!g_hudQueue.empty()) {
+					g_heldShots.push_back(std::move(g_hudQueue.front()));
+					g_hudQueue.pop_front();
+				}
 			}
-			for (const auto& text : pending) {
-				ShowHudMessage(text);
+			auto& line = g_heldLine;
+			if (line.waiting) {
+				// Shots from just before the line can be its cut; take the latest of them, once
+				// one arrives after the line starts or the wait is over.
+				const bool cutSince = std::ranges::any_of(g_heldShots, [&](const HeldShot& a_shot) { return a_shot.at >= line.at; });
+				if (cutSince || a_now >= line.at + kLineWait) {
+					auto paired = g_heldShots.end();
+					for (auto it = g_heldShots.begin(); it != g_heldShots.end(); ++it) {
+						if (it->at >= line.at - kCutBeforeLine) {
+							paired = it;
+						}
+					}
+					while (!g_heldShots.empty() && g_heldShots.begin() != paired) {
+						ShowHudMessage(g_heldShots.front().text);
+						g_heldShots.pop_front();
+					}
+					if (paired != g_heldShots.end()) {
+						ShowHudMessage(std::format("{} | {}", LineText(line), g_heldShots.front().text));
+						g_heldShots.pop_front();
+					} else {
+						ShowHudMessage(std::format("{} | same shot", LineText(line)));
+					}
+					line.waiting = false;
+				}
 			}
-		}
-
-		// Called every main-thread tick: posts a close-up emotion's message once the camera
-		// has cut (or not) for it.
-		void PostEmotionMessage(std::chrono::steady_clock::time_point a_now)
-		{
-			if (!g_emotionWaiting) {
-				return;
-			}
-			std::chrono::steady_clock::time_point cutAt{};
-			const int                             kind = Director::LastEmotionCut(cutAt);
-			// The camera may decide a frame before or after this line was noticed here.
-			if (kind != 0 && cutAt >= g_emotionLineAt - 300ms) {
-				g_emotionWaiting = false;
-				ShowHudMessage(std::format("{} - {} (#{})", g_emotionMessage, kind == 2 ? "extreme close-up" : "close-up", g_emotionCount));
-			} else if (a_now >= g_emotionDeadline) {
-				g_emotionWaiting = false;
-				ShowHudMessage(std::format("{} - no cut (#{})", g_emotionMessage, g_emotionCount));
+			// Shots with no line to pair with.
+			while (!g_heldShots.empty() && a_now >= g_heldShots.front().at + kShotWait &&
+				   !(line.waiting && g_heldShots.front().at >= line.at - kCutBeforeLine)) {
+				ShowHudMessage(g_heldShots.front().text);
+				g_heldShots.pop_front();
 			}
 		}
 
@@ -3180,21 +3224,15 @@ namespace CCC
 			const auto  emotion = LineEmotion(a_speaker);
 			const bool  closeUp = Settings::Get().emotionCloseUps && IsCloseUpEmotion(emotion);
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
-			// On-screen message (testing aid), through the game's own HUD message event. For a
-			// close-up emotion, wait for the camera's decision (posted by PostEmotionMessage).
-			if (Settings::Get().showEmotions) {
+			if (Settings::Get().showMessages) {
 				static std::unordered_map<std::string, int> seen;
 				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;
 				const int   count = ++seen[key];
 				const char* name = a_speaker->GetDisplayFullName();
-				g_emotionMessage = std::format("{}: {}", name ? name : "Speaker", key);
-				g_emotionCount = count;
-				g_emotionWaiting = closeUp;
-				g_emotionLineAt = std::chrono::steady_clock::now();
-				g_emotionDeadline = g_emotionLineAt + 350ms;
-				if (!closeUp) {
-					ShowHudMessage(std::format("{} (#{})", g_emotionMessage, g_emotionCount));
+				if (g_heldLine.waiting) {  // a line cut short before its message went out
+					ShowHudMessage(LineText(g_heldLine));
 				}
+				g_heldLine = { std::format("{}: {} (#{})", name ? name : "Speaker", key, count), closeUp, true, MsgClock::now() };
 			}
 		}
 
@@ -3372,13 +3410,12 @@ namespace CCC
 				// Diagnostic: the dialogue record of each line the speaker starts.
 				{
 					static bool wasTalking = false;
-					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showEmotions) ? Speaker() : nullptr;
+					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showMessages) ? Speaker() : nullptr;
 					const bool  talking = speaker && speaker->IsTalking();
 					if (talking && !wasTalking) {
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
 					}
-					PostEmotionMessage(now);
-					FlushHudMessages();
+					FlushHudMessages(now);
 					wasTalking = talking;
 				}
 				// Focus on the person in shot (0.5.0). The conversation blur reads its settings live

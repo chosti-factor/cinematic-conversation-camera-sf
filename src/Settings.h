@@ -13,8 +13,7 @@ namespace CCC
 	{
 		bool     enabled{ true };
 		bool     debugLog{ true };
-		bool     showEmotions{ true };  // on-screen message with each line's expression tag (testing aid)
-		bool     showShots{ true };     // on-screen message with each shot the camera uses (testing aid)
+		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
 		bool     letterbox{ true };     // black bars while the camera films a conversation
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height

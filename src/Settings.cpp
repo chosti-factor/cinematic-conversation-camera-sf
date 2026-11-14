@@ -1,4 +1,5 @@
 #include "Settings.h"
+#include <algorithm>
 
 namespace CCC
 {
@@ -131,9 +132,21 @@ namespace CCC
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
 			// [Debug] since 0.4.16; [General] still read for INIs from 0.4.14-0.4.15.
-			a_s.showEmotions = ReadInt(a_path, L"General", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
-			a_s.showEmotions = ReadInt(a_path, L"Debug", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
-			a_s.showShots = ReadInt(a_path, L"Debug", L"bShowShots", a_s.showShots ? 1 : 0) != 0;
+			// bShowMessages (0.7.5) replaces bShowEmotions and bShowShots; an older INI's keys
+			// still count when it has no bShowMessages (either one on = messages on).
+			{
+				std::int32_t legacy = -1;
+				for (const auto* key : { L"bShowEmotions", L"bShowShots" }) {
+					for (const auto* section : { L"General", L"Debug" }) {
+						const auto v = ReadInt(a_path, section, key, -1);
+						if (v >= 0) {
+							legacy = std::max(legacy, v != 0 ? 1 : 0);
+						}
+					}
+				}
+				const std::int32_t fallback = legacy >= 0 ? legacy : (a_s.showMessages ? 1 : 0);
+				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
+			}
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);

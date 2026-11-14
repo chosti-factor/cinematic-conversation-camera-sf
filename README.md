@@ -54,7 +54,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   (Irritated, Surprised, Somber, Nervous, Awed and others, `sCloseUpEmotions`) push in to a
   close-up of the speaker, 40% of them extreme close-ups. CCC does this with lines Skyrim's
   writers marked as intense; Starfield has no such mark, so the expression decides. The
-  expression of each line can be shown on screen while testing (`bShowEmotions`).
+  expression of each line can be shown on screen while testing (`bShowMessages`).
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
   library, whose angles often put the chair, the shop counter or the clutter around it in
   front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are recognised by
