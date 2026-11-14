@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.6.3 - unreleased
+
+### Fixed
+- Player missing from a conversation (Violet), and some conversations starting with the
+  camera-switching fallback, which flickers (Dirk, a merchant): the game sometimes takes
+  1.5-3 s to build the player's full body. The request is now repeated, the camera stays on
+  shots of the NPC from the player's eyes meanwhile, and the fallback waits 2 s (4 s when the
+  speaker is in a background scene, where it isn't used at all) instead of 0.7 s.
+- Mild horizontal jitter on wide shots (the two-shot at 10 m): the camera's angles are
+  measured off where the two people stand, and those positions twitched by a centimetre or
+  so as the characters settled on the ground. They're now steadied (3 cm dead band, eased).
+
 ## 0.6.2 - 2026-11-13
 
 ### Changed
