@@ -1,6 +1,8 @@
 # Handoff notes
 
 For picking this project up in a new Claude session (for example one linked to the gaming PC).
+Updated at milestones (each minor version), not every build. No personal folder paths here:
+the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
 ## Working rules
