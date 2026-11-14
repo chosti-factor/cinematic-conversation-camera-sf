@@ -292,6 +292,7 @@ namespace CCC
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
+		std::atomic<std::int64_t> g_faceLineAt{ 0 };    // when the main thread last set your face for a line (steady_clock ticks)
 		void                QueueHudMessage(std::string a_text);
 		void                ShowHudMessage(const std::string& a_text);
 
@@ -1855,7 +1856,11 @@ namespace CCC
 						}
 					}
 					const bool fresh = !text.empty() && text != g_state.lastLineText;
-					if (fresh || now - g_state.lineStart > 500ms) {
+					// 0.7.11 test: the decision came before your face was set for this line, so a close-up
+					// of you followed the previous line's face. Wait for it (at most 0.8 s).
+					const auto faceAt = std::chrono::steady_clock::time_point{ std::chrono::steady_clock::duration{ g_faceLineAt.load(std::memory_order_acquire) } };
+					const bool faceReady = !s.playerFace || faceAt >= g_state.lineStart - 150ms || now - g_state.lineStart > 800ms;
+					if ((fresh || now - g_state.lineStart > 500ms) && faceReady) {
 						g_state.reactionPending = false;
 						if (fresh) {
 							g_state.lastLineText = text;
@@ -3509,6 +3514,7 @@ namespace CCC
 				Face::Set(expression, why);
 			}
 			g_playerFaceShown.store(Settings::Get().playerFace && !Face::Current().empty(), std::memory_order_release);
+			g_faceLineAt.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_release);
 			if (Settings::Get().showMessages) {
 				static std::unordered_map<std::string, int> seen;
 				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;
@@ -3546,6 +3552,7 @@ namespace CCC
 			std::uintptr_t                        lastInfo = 0;    // the dialogue record last seen on them
 			std::string                           lastSubtitle;
 			bool                                  primed = false;  // seen once (what they said before isn't a new line)
+			const void*                           scene = nullptr;  // the scene they play a part in, if any
 		};
 
 		std::unordered_map<std::uint32_t, Talker> g_talkers;
@@ -3564,6 +3571,21 @@ namespace CCC
 		// (within 60 degrees of their heading); 0 if none.
 		std::uint32_t AddressedBy(std::uint32_t a_speaker, const Talker& a_t, const RE::NiPoint3& a_playerFeet, const RE::NiPoint3& a_playerHead)
 		{
+			// In a scene, they're answering whoever in the same scene spoke last (0.7.11 test:
+			// Andreja answering Matteo faced away from him, so came out "to no one").
+			if (a_t.scene) {
+				std::uint32_t partner = 0;
+				auto          latest = std::chrono::steady_clock::time_point{};
+				for (const auto& [id, other] : g_talkers) {
+					if (id != a_speaker && other.scene == a_t.scene && other.lines > 0 && other.lastLine > latest && FlatDistance(other.feet, a_t.feet) < 15.0f) {
+						latest = other.lastLine;
+						partner = id;
+					}
+				}
+				if (partner != 0) {
+					return partner;
+				}
+			}
 			const float   fx = std::sin(a_t.heading), fy = std::cos(a_t.heading);
 			std::uint32_t best = 0;
 			float         bestCos = 0.5f;
@@ -3874,6 +3896,7 @@ namespace CCC
 					const char* raw = actor->currentProcess && actor->currentProcess->high ? actor->currentProcess->high->strVoiceSubtitle.c_str() : nullptr;
 					if ((raw && *raw) || a_now - t.lineStart > 600ms) {
 						t.pending = false;
+						t.scene = CurrentSceneUnsafe(actor.get());
 						t.addressed = AddressedBy(actor->formID, t, playerFeet, playerHead);
 						ReportOverheardLine(actor.get(), t, a_now, playerFeet);
 					}
@@ -4243,7 +4266,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.12 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

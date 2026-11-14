@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.12 - unreleased
+
+### Fixed
+- Close-ups of you (0.7.11 test): the one that came up followed your face from the line
+  before (the camera decided before your face was set for the new line), and the camera
+  stayed on the three-quarter shot of you it was already on. It now waits for your face (at
+  most 0.8 s), and cuts to the close-up even when the camera is already on you.
+- Overheard conversations: someone in a scene answers whoever in the same scene spoke last
+  (0.7.11 test: Andreja, answering Matteo while facing away, came out as talking "to no one",
+  so her lines never showed on screen; the same for Cora Coe answering Sam).
+
 ## 0.7.11 - 2026-11-14
 
 ### Added

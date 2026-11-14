@@ -60,6 +60,7 @@ namespace CCC::Director
 			std::mt19937              rng{ std::random_device{}() };
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
+			bool                      playerCloseDone{ false }; // this reaction's close-up of you is done
 			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
 			float                     limit{ std::numeric_limits<float>::infinity() };  // obstacle: camera at most this far from the subject
 
@@ -653,10 +654,15 @@ namespace CCC::Director
 				}
 			}
 
-			if (a_frame.playerCloseUp && !a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
-				// Your emotion close-up: the reaction's cut is a close-up of you, pushing in. It
-				// doesn't become your usual angle.
-				if (const auto shot = PlayerCloseShot(a_frame)) {
+			// Your emotion close-up: the reaction's cut is a close-up of you, pushing in, once per
+			// reaction, also when the camera is already on you (0.7.11 test: it stayed on the
+			// three-quarter shot of you). It doesn't become your usual angle.
+			if (!a_frame.playerCloseUp) {
+				g.playerCloseDone = false;
+			} else if (!a_frame.npcTurn && !g.playerCloseDone) {
+				g.playerCloseDone = true;
+				const bool closeNow = g.current && (*g.current == ShotType::kClosePlayer || *g.current == ShotType::kExtremeClosePlayer);
+				if (const auto shot = closeNow ? std::optional<ShotType>{} : PlayerCloseShot(a_frame)) {
 					Cut(*shot, a_frame, a_now, "reaction, your expression", false);
 					g.intenseSetup = IntenseSetup(*shot);
 				}
@@ -695,7 +701,9 @@ namespace CCC::Director
 					side.lines = 0;
 				}
 			} else if (!Usable(*g.current, a_frame, false) &&
-					   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) && Placeable(*g.current, a_frame, false))) {
+					   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose || *g.current == ShotType::kClosePlayer ||
+						   *g.current == ShotType::kExtremeClosePlayer) &&
+						 Placeable(*g.current, a_frame, false))) {
 				if (const auto pick = Pick(a_frame)) {
 					Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 				} else {
