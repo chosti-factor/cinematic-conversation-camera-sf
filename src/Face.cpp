@@ -140,6 +140,11 @@ namespace CCC::Face
 		}
 	}
 
+	const std::string& Current()
+	{
+		return g_current;
+	}
+
 	void Update(bool a_filming)
 	{
 		if (!a_filming && !g_current.empty()) {

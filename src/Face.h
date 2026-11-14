@@ -17,6 +17,9 @@ namespace CCC::Face
 	// Sets your expression ("" puts the game's own back). a_why is for the log.
 	void Set(const std::string& a_expression, std::string_view a_why);
 
+	// The expression set now ("" = the game's own).
+	[[nodiscard]] const std::string& Current();
+
 	// Main thread, every tick: puts your face back once the conversation isn't filmed.
 	void Update(bool a_filming);
 }

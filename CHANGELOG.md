@@ -4,7 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.10 - unreleased
+## 0.7.11 - unreleased
+
+### Added
+- Your expression in the testing messages: a line's message ends with your face's answer
+  ("Sarah Morgan: Worried (#2) | You: Concerned | Camera: CloseUp (...)"), and choosing a
+  skill-tagged option shows "You: Confident ([Persuade])".
+
+### Diagnostic
+- Each overheard NPC-to-NPC message is noted in the log when it's sent (0.7.7 test:
+  Andreja's answers to Matteo didn't seem to show, only his lines).
+
+## 0.7.10 - 2026-11-14
 
 ### Fixed
 - Another crash while a save loaded (0.7.9): with the game's actor list empty during

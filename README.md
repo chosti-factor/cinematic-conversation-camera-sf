@@ -104,7 +104,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
   (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
   scenes recognised by their quest rather than the scene's name; plants and other objects
-  without collision (which the obstacle check can't see) in front of wide outdoor shots;
+  without collision (which the obstacle check can't see) in front of wide outdoor shots, and
+  walls it passes through (beside Commander Tuala at the MAST, every check said clear);
   the default amount of camera sway (`iCameraSway`); leaving a conversation in third
   person (the camera rests on the NPC's middle for a moment: frame their head, or go
   straight to the game's camera as in first person); large speakers such as Vasco, whose

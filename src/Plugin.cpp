@@ -3267,6 +3267,10 @@ namespace CCC
 			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
 				if (const auto expression = Face::ForChoice(a_text); !expression.empty()) {
 					Face::Set(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
+					if (Settings::Get().showMessages && Face::Current() == expression) {
+						const auto close = a_text.find(']');
+						ShowHudMessage(std::format("You: {} ({})", expression, close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "your choice" }));
+					}
 				}
 			}
 			if (!Settings::Get().debugLog) {
@@ -3478,7 +3482,10 @@ namespace CCC
 				if (g_heldLine.waiting) {  // a line cut short before its message went out
 					ShowHudMessage(LineText(g_heldLine));
 				}
-				g_heldLine = { std::format("{}: {} (#{})", name ? name : "Speaker", key, count), closeUp, true, MsgClock::now() };
+				// Your face's answer to the line, when it has one (0.7.11).
+				const auto& you = Face::Current();
+				const auto  yours = Settings::Get().playerFace && !you.empty() ? std::format(" | You: {}", you) : std::string{};
+				g_heldLine = { std::format("{}: {} (#{}){}", name ? name : "Speaker", key, count, yours), closeUp, true, MsgClock::now() };
 			}
 		}
 
@@ -3609,6 +3616,10 @@ namespace CCC
 					text.substr(0, 80), infoId, group.size(), members, scene, randomScene ? ", random scene" : "");
 			}
 			if (s.showMessages && a_t.addressed != 0 && a_t.addressed != 0x14) {  // NPC to NPC only
+				// 0.7.7 test: Andreja's answers to Matteo didn't seem to appear; note each one sent.
+				if (s.debugLog) {
+					REX::INFO("Overheard: message shown for '{}' to {}", a_t.name, to);
+				}
 				ShowHudMessage(std::format("Overheard: {} -> {}: {} (group of {}, {:.0f} m)", a_t.name, to, emotion, group.size(), distance));
 			}
 		}
@@ -4197,7 +4208,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.10 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.11 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
