@@ -17,6 +17,13 @@ namespace CCC::Face
 	// Sets your expression ("" puts the game's own back). a_why is for the log.
 	void Set(const std::string& a_expression, std::string_view a_why);
 
+	// Your answer to the NPC's line: waits while a choice's expression is showing.
+	void Listen(const std::string& a_expression, std::string_view a_why);
+
+	// Your expression for the option you chose: shows for a moment (1.5 s), then your answer
+	// to the NPC's line.
+	void Choose(const std::string& a_expression, std::string_view a_why);
+
 	// Your background's signature expression ("" if none or unknown), a_background its name.
 	// Read once per conversation.
 	[[nodiscard]] std::string Signature(std::string* a_background = nullptr);

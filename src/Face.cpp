@@ -97,6 +97,17 @@ namespace CCC::Face
 			BackgroundFace{ 0x22EC6E, "Xenobiologist", "Concentrating" },
 		};
 
+		// Your choice and the NPC's answer arrive together (your character isn't voiced, so
+		// the answer starts as you choose; 0.7.12 test: the choice's face, noticed a moment
+		// later, replaced the answer's for the whole line). The choice's face shows first, for
+		// a moment, then the answer's.
+		using Clock = std::chrono::steady_clock;
+		constexpr auto kChoiceHold = std::chrono::milliseconds{ 1500 };
+		Clock::time_point g_choiceAt{};
+		bool              g_listenPending = false;
+		std::string       g_listenExpression;
+		std::string       g_listenWhy;
+
 		bool        g_signatureRead = false;
 		std::string g_signature;
 		std::string g_background;
@@ -282,8 +293,41 @@ namespace CCC::Face
 		return g_current;
 	}
 
+	void Listen(const std::string& a_expression, std::string_view a_why)
+	{
+		if (Clock::now() - g_choiceAt < kChoiceHold) {
+			g_listenPending = true;
+			g_listenExpression = a_expression;
+			g_listenWhy = a_why;
+			return;
+		}
+		g_listenPending = false;
+		Set(a_expression, a_why);
+	}
+
+	void Choose(const std::string& a_expression, std::string_view a_why)
+	{
+		// The answer's face, if it's already showing, comes back after the choice's.
+		if (!g_listenPending) {
+			g_listenPending = true;
+			g_listenExpression = g_current;
+			g_listenWhy = "back to listening";
+		}
+		g_choiceAt = Clock::now();
+		Set(a_expression, a_why);
+	}
+
 	void Update(bool a_filming)
 	{
+		if (g_listenPending && Clock::now() - g_choiceAt >= kChoiceHold) {
+			g_listenPending = false;
+			if (a_filming) {
+				Set(g_listenExpression, g_listenWhy);
+			}
+		}
+		if (!a_filming) {
+			g_listenPending = false;
+		}
 		if (!a_filming) {
 			g_signatureRead = false;  // read again next conversation (a new game, a new background)
 		}

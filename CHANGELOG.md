@@ -6,6 +6,12 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.8.0 - unreleased
 
+### Fixed
+- Your face for a choice and for the NPC's answer: your character isn't voiced, so the
+  answer starts as you choose, and the choice (noticed a moment later) replaced the answer's
+  expression for the whole line (0.7.12 test: Sam Coe's awed answer met a questioning look
+  throughout). The choice's expression now shows for 1.5 s, then your answer to the line.
+
 ### Added
 - The conversation lens (`[Camera]` `fConversationLens`, 45 in the INI, 0 = the game's 30):
   Starfield films conversations through a 30 degree lens (`fDialogueCameraFailsafeFPFOV`),

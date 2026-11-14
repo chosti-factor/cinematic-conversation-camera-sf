@@ -3391,7 +3391,7 @@ namespace CCC
 					reason = background;
 				}
 				if (!expression.empty()) {
-					Face::Set(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
+					Face::Choose(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
 					if (Settings::Get().showMessages && Face::Current() == expression) {
 						ShowHudMessage(std::format("You: {} ({})", expression, reason));
 					}
@@ -3606,7 +3606,7 @@ namespace CCC
 						why += std::format("; your {} side", background);
 					}
 				}
-				Face::Set(expression, why);
+				Face::Listen(expression, why);
 			}
 			g_playerFaceShown.store(Settings::Get().playerFace && !Face::Current().empty(), std::memory_order_release);
 			g_faceLineAt.store(std::chrono::steady_clock::now().time_since_epoch().count(), std::memory_order_release);
