@@ -511,10 +511,10 @@ namespace CCC::Hud
 			const bool lastTurn = !turns.empty() && turns.find_first_not_of("0 ") == std::string::npos;
 			if (g_persuasion.panel && !open && !g_persuasion.decided) {
 				what = "persuasion panel closed";
-			} else if (success && !g_persuasion.success && lastTurn) {
-				what = "persuasion won on the last turn";
-			} else if (fail && !g_persuasion.fail && lastTurn) {
-				what = "persuasion lost (no turns left)";
+			} else if (((success && !g_persuasion.success) || (fail && !g_persuasion.fail)) && lastTurn) {
+				// The last round's own animation says nothing about the whole persuasion (0.7.4: a
+				// won last round, then "Then you're not hiring me"); the meter decides it.
+				what = "persuasion over (no turns left)";
 			}
 			if (open && !g_persuasion.panel) {
 				REX::INFO("HUD: persuasion panel open");
