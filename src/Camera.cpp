@@ -88,10 +88,10 @@ namespace CCC::Camera
 		return pose;
 	}
 
-	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead)
+	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_sideSign)
 	{
 		const auto& s = Settings::Get();
-		return Shot(a_nearHead, a_farHead, s.distanceBehind, s.sideOffset, s.heightOffset);
+		return Shot(a_nearHead, a_farHead, s.distanceBehind, s.sideOffset * (a_sideSign < 0.0f ? -1.0f : 1.0f), s.heightOffset);
 	}
 
 	void PullIn(Pose& a_pose, const RE::NiPoint3& a_subject, float a_limit)
@@ -653,5 +653,96 @@ namespace CCC::Camera
 		}
 		d.degrees = std::acos(std::clamp((trace - 1.0f) * 0.5f, -1.0f, 1.0f)) * 57.29578f;
 		return d;
+	}
+
+	bool TrackFacing(RE::TESObjectREFR* a_ref, const RE::NiPoint3& a_toward, FaceTrack& a_track, float a_delta, const char* a_who)
+	{
+		auto* root = Root3D(a_ref);
+		if (!root) {
+			a_track.primed = false;
+			return false;
+		}
+		RE::NiAVObject* head = nullptr;
+		for (const auto* name : { "C_Head", "Head", "NPC Head [Head]" }) {
+			if ((head = root->GetObjectByName(RE::BSFixedString{ name })) != nullptr) {
+				break;
+			}
+		}
+		if (!head || !Finite(head->world.translate)) {
+			return false;
+		}
+		const bool columns = g_axes ? g_axes->columns : true;
+		if (root != a_track.root || columns != a_track.columns) {
+			// Choose the face axis for this model.
+			a_track = FaceTrack{};
+			a_track.root = root;
+			a_track.columns = columns;
+			RE::NiPoint3 up{ 0.0f, 0.0f, 1.0f };
+			for (const auto* name : { "C_Neck1", "C_Neck", "Neck" }) {
+				if (auto* neck = root->GetObjectByName(RE::BSFixedString{ name })) {
+					if (const auto n = Normalized(Sub(head->world.translate, neck->world.translate))) {
+						up = *n;
+					}
+					break;
+				}
+			}
+			const float  heading = a_ref->GetAngleZ();
+			const RE::NiPoint3 forward{ std::sin(heading), std::cos(heading), 0.0f };
+			RE::NiPoint3 toward = Sub(a_toward, head->world.translate);
+			toward.z = 0.0f;
+			const auto towardN = Normalized(toward);
+			const auto hint = Normalized(towardN ? Add(forward, *towardN) : forward);
+			if (!hint) {
+				return false;
+			}
+			int   upIndex = 0;
+			float upAlign = -1.0f;
+			for (int i = 0; i < 3; ++i) {
+				const float align = std::abs(Dot(Vector(head->world.rotate, columns, i), up));
+				if (align > upAlign) {
+					upAlign = align;
+					upIndex = i;
+				}
+			}
+			float best = -2.0f, second = -2.0f;
+			for (int i = 0; i < 3; ++i) {
+				if (i == upIndex) {
+					continue;
+				}
+				for (const float sign : { 1.0f, -1.0f }) {
+					const float score = Dot(Scale(Vector(head->world.rotate, columns, i), sign), *hint);
+					if (score > best) {
+						second = best;
+						best = score;
+						a_track.index = i;
+						a_track.sign = sign;
+					} else if (score > second) {
+						second = score;
+					}
+				}
+			}
+			if (best < 0.30f || best - second < 0.15f) {
+				a_track.index = -1;
+			}
+			REX::INFO("Face axis for {}: head axis {}{} (score {:.2f}, next {:.2f}; neck axis {}){}", a_who ? a_who : "?", a_track.sign < 0.0f ? "-" : "+",
+				a_track.index >= 0 ? a_track.index : upIndex, best, second, upIndex, a_track.index < 0 ? "; not clear enough, close-ups won't turn" : "");
+		}
+		if (a_track.index < 0) {
+			return false;
+		}
+		const auto live = Normalized(Scale(Vector(head->world.rotate, a_track.columns, a_track.index), a_track.sign));
+		if (!live) {
+			return false;
+		}
+		if (!a_track.primed) {
+			a_track.facing = *live;
+			a_track.primed = true;
+		} else {
+			const float k = 1.0f - std::exp(-2.0f * std::clamp(a_delta, 0.0f, 0.1f));
+			if (const auto blended = Normalized(Add(a_track.facing, Scale(Sub(*live, a_track.facing), k)))) {
+				a_track.facing = *blended;
+			}
+		}
+		return true;
 	}
 }

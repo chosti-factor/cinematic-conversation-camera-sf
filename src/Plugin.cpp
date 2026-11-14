@@ -63,6 +63,12 @@ namespace CCC
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
+			std::optional<RE::NiPoint3>           slackNpcHead{};    // head point after the dead band
+			std::optional<RE::NiPoint3>           slackPlayerHead{};
+			Camera::FaceTrack                     npcFace{};         // which way each face points
+			Camera::FaceTrack                     playerFace{};
+			float                                 side{ 1.0f };      // side of the eyeline this conversation is staged on
+			bool                                  sideChosen{ false };
 			float                                 npcHeadSpeed{ 0.0f };      // smoothed, m/s
 			bool                                  npcHeadBusy{ false };      // walking: steadier following
 			const char*                           castShot{ nullptr };       // obstacle check: last shot checked
@@ -1382,6 +1388,28 @@ namespace CCC
 				const auto rawNpcHead = *npcHead;
 				npcHead = follow(g_state.smoothNpcHead, *npcHead, kNpc);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead, k);
+				// Dead band (0.6.1, CCC's face framing): the framed point only moves once the head
+				// has gone further than fFaceDeadband from it, so idle sway and the bob of
+				// someone working at a bench don't move the camera; leaning and walking do.
+				if (s.faceDeadband > 0.0f) {
+					auto slack = [band = s.faceDeadband](std::optional<RE::NiPoint3>& a_held, const RE::NiPoint3& a_live) {
+						if (!a_held) {
+							a_held = a_live;
+						} else {
+							const float dx = a_live.x - a_held->x, dy = a_live.y - a_held->y, dz = a_live.z - a_held->z;
+							const float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+							if (dist > band) {
+								const float f = (dist - band) / dist;
+								a_held->x += dx * f;
+								a_held->y += dy * f;
+								a_held->z += dz * f;
+							}
+						}
+						return *a_held;
+					};
+					npcHead = slack(g_state.slackNpcHead, *npcHead);
+					playerHead = slack(g_state.slackPlayerHead, *playerHead);
+				}
 				// Measurement: how much the speaker's head moves, and how far the smoothed head
 				// the camera follows lags behind it.
 				if (s.debugLog) {
@@ -1484,6 +1512,43 @@ namespace CCC
 				}
 			}
 
+			// Which side of the line between you the conversation is staged from (the 180-degree
+			// rule): the side with more room, measured once with the game's collision check from
+			// the midpoint between your heads; near-equal room is a coin toss (CCC's ChooseSide).
+			if (!g_state.sideChosen) {
+				g_state.sideChosen = true;
+				g_state.side = 1.0f;
+				const float ax = npcHead->x - playerHead->x, ay = npcHead->y - playerHead->y;
+				const float al = std::sqrt(ax * ax + ay * ay);
+				if (al > 0.05f) {
+					// +1 = to the right of the line from you to them (the camera over your right shoulder).
+					const RE::NiPoint3 right{ ay / al, -ax / al, 0.0f };
+					const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
+					constexpr float    kProbe = 3.7f;  // CCC: 260 units
+					float              fr = 1.0f, fl = 1.0f;
+					const bool         measured = s.obstacleCheck && Cast(mid, { mid.x + right.x * kProbe, mid.y + right.y * kProbe, mid.z }, fr) &&
+					                      Cast(mid, { mid.x - right.x * kProbe, mid.y - right.y * kProbe, mid.z }, fl);
+					const float        roomRight = fr * kProbe, roomLeft = fl * kProbe;
+					const char*        how = "coin toss";
+					if (measured && roomRight > roomLeft + 0.5f) {
+						how = "more room";
+					} else if (measured && roomLeft > roomRight + 0.5f) {
+						g_state.side = -1.0f;
+						how = "more room";
+					} else {
+						g_state.side = (std::chrono::steady_clock::now().time_since_epoch().count() & 1) ? 1.0f : -1.0f;
+					}
+					if (measured) {
+						REX::INFO("Side: {} of the line from you to them ({}; room left {:.1f} m, right {:.1f} m)", g_state.side > 0.0f ? "right" : "left", how, roomLeft, roomRight);
+					} else {
+						REX::INFO("Side: {} of the line from you to them (coin toss; room not measured)", g_state.side > 0.0f ? "right" : "left");
+					}
+				}
+			}
+			// Which way each face points, for close-ups that follow the face.
+			const char* speakerName = speaker->GetDisplayFullName();
+			const bool  npcFaceValid = s.followFace && Camera::TrackFacing(speaker, *playerHead, g_state.npcFace, delta, speakerName ? speakerName : "speaker");
+			const bool  playerFaceValid = s.followFace && Camera::TrackFacing(player, *npcHead, g_state.playerFace, delta, "you");
 			// Over the near character's shoulder, unless the near character is clearly lower
 			// (sitting): a camera behind a seated head ends up inside the chair back, so step
 			// in front of and beside them instead and shoot a clean single of the other person.
@@ -1574,6 +1639,13 @@ namespace CCC
 				frame.intenseLine = g_state.lineIntense;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
+				frame.side = g_state.side;
+				frame.npcFaceValid = npcFaceValid;
+				frame.playerFaceValid = playerFaceValid;
+				frame.npcFacing = g_state.npcFace.facing;
+				frame.playerFacing = g_state.playerFace.facing;
+				frame.npcGround = speaker->GetPosition().z;
+				frame.playerGround = player->GetPosition().z;
 				directed = Director::UpdatePlain(frame, now);
 			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
@@ -1585,16 +1657,27 @@ namespace CCC
 				frame.intenseLine = g_state.lineIntense;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
+				frame.side = g_state.side;
+				frame.npcFaceValid = npcFaceValid;
+				frame.playerFaceValid = playerFaceValid;
+				frame.npcFacing = g_state.npcFace.facing;
+				frame.playerFacing = g_state.playerFace.facing;
+				frame.npcGround = speaker->GetPosition().z;
+				frame.playerGround = player->GetPosition().z;
 				directed = Director::Update(frame, now);
 			}
+			// The plain shots stage on the same side of the line as the shot library: over your
+			// right shoulder on the right side; your own shots over their matching shoulder, or
+			// with bTrue180 over the opposite one.
+			const float plainSign = subject == Subject::kNpc ? g_state.side : (s.true180 ? -g_state.side : g_state.side);
 			auto        pose = waitingView ? waitingView :
 			                   pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
 			                   directed ? directed :
 			                   nearSeated || s.shotStyle == 1 ?
-			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide, s.seatedHeight) :
+			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide * plainSign, s.seatedHeight) :
 			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
-			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide, s.vendorHeight) :
-			                   Camera::OverShoulder(nearHeadRef, farHeadRef);
+			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide * plainSign, s.vendorHeight) :
+			                   Camera::OverShoulder(nearHeadRef, farHeadRef, plainSign);
 			// Obstacles on the plain shot (seated people, merchants, or nothing in the preset
 			// fits): checked when the camera turns to the other person. A wall behind the
 			// camera pulls it in; anything closer to the person in shot (a ladder in front of
@@ -2950,7 +3033,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.6.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.6.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

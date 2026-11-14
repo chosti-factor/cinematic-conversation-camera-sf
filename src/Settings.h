@@ -140,6 +140,9 @@ namespace CCC
 		bool        obstacleCheck{ true };       // skip or pull in shots the game's collision says are blocked
 		float       obstacleRadius{ 0.05f };     // width of the check (the game's own dialogue camera uses 0.05)
 		bool        true180{ false };
+		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
+		bool        followFace{ true };       // close-ups turn toward where the face points
+		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
 		bool        cameraMoves{ true };
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme

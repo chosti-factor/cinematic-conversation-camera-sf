@@ -16,6 +16,13 @@ namespace CCC::Director
 		bool         intenseLine{ false }; // the speaker's current line carries an expression from sCloseUpEmotions
 		RE::NiPoint3 npcHead{};
 		RE::NiPoint3 playerHead{};
+		float        side{ 1.0f };          // which side of the eyeline the conversation is staged on
+		bool         npcFaceValid{ false }; // where each face points (close-ups follow the face)
+		bool         playerFaceValid{ false };
+		RE::NiPoint3 npcFacing{};
+		RE::NiPoint3 playerFacing{};
+		float        npcGround{ std::numeric_limits<float>::quiet_NaN() };
+		float        playerGround{ std::numeric_limits<float>::quiet_NaN() };
 	};
 
 	// Obstacle detection (0.5.3): what the game's collision says about a camera spot.

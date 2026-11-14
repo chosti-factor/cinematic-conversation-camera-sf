@@ -112,6 +112,25 @@ namespace CCC::Shots
 		// frame the subject sits on. NaN / 0 = decide now.
 		float heldAngle{ std::numeric_limits<float>::quiet_NaN() };
 		float heldLookSign{ 0.0f };
+
+		// Close-ups that follow the face (CCC's bFollowFace): where each face points (unit
+		// vector, from the head bone), so a close-up turns toward a face turned to its work
+		// and drops to look up into a lowered one. Decided at the cut and held (heldFacePitch;
+		// the turn is part of heldAngle).
+		bool         followFace{ false };
+		bool         npcFaceValid{ false };
+		bool         playerFaceValid{ false };
+		RE::NiPoint3 npcFacing{};
+		RE::NiPoint3 playerFacing{};
+		float        heldFacePitch{ std::numeric_limits<float>::quiet_NaN() };
+		// Floor heights under each person (NaN = unknown): a lowered face never puts the
+		// camera in the floor.
+		float npcGround{ std::numeric_limits<float>::quiet_NaN() };
+		float playerGround{ std::numeric_limits<float>::quiet_NaN() };
+
+		// 180-degree rule: never let an angle (after face turns and moves) cross the eyeline
+		// or come within a few degrees of it (CCC's bEnforceLine).
+		bool enforceLine{ true };
 	};
 
 	struct Result
@@ -122,7 +141,14 @@ namespace CCC::Shots
 		float        wantedDistance{ 0.0f };  // before the cap
 		float        distance{ 0.0f };        // used
 		bool         ok{ false };
+		bool         faced{ false };          // framed on the face (close singles with followFace)
+		float        faceYaw{ 0.0f };         // degrees turned toward where the face points
+		float        facePitch{ 0.0f };       // degrees, negative = camera dropped for a lowered face
 	};
+
+	// Close singles frame the face (CCC: anchored on the subject, aimed at them, not over a
+	// shoulder, filling at least half the frame).
+	[[nodiscard]] bool FollowsFace(ShotType a_type) noexcept;
 
 	// Where the camera goes for this setup. Not ok when the setup can't be framed here:
 	// scene setups (they need to measure the room, not possible yet) and two-person
