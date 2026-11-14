@@ -6,6 +6,18 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.7.8 - unreleased
 
+### Added
+- Your character's face, first step (`[Face]` `bPlayerFace`): the game keeps your face
+  neutral, and your lines carry no expression tags. Now, while the NPC speaks, your face
+  answers their line's expression, mirrored where it's natural (a smile for a smile) or as a
+  listener would (concern for worry, attention for a question, a guarded look for anger);
+  an untagged line gives your face back to the game. Choosing an option with a skill tag
+  ([Persuade], [Intimidate], [Lie]...) sets an expression for it. Expressions are the game's
+  own facial archetypes, set with the function behind Papyrus' ChangeAnimFaceArchetype
+  (found by rrrafau for PointCameraAtPlayer; confirmed in 1.16.244 as Address Library ID
+  100510). The log notes each change ("Face: you look Concerned (listening to Sarah Morgan:
+  Worried)").
+
 ### Diagnostic
 - Overheard lines: the game's other three actor lists (low, middle-high and middle-low
   process) are listened to as well, and every 10 s the log lists who's within 20 m and

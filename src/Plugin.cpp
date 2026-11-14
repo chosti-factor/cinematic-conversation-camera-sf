@@ -11,6 +11,7 @@
 
 #include "Camera.h"
 #include "Director.h"
+#include "Face.h"
 #include "Hud.h"
 #include "Settings.h"
 #include "Visibility.h"
@@ -3262,6 +3263,12 @@ namespace CCC
 		// dialogue records, directly or one pointer away, and log each with its tag.
 		void OnOptionChosen(const std::string& a_text)
 		{
+			// Your face for an option with a skill tag (0.8).
+			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
+				if (const auto expression = Face::ForChoice(a_text); !expression.empty()) {
+					Face::Set(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
+				}
+			}
 			if (!Settings::Get().debugLog) {
 				return;
 			}
@@ -3457,6 +3464,12 @@ namespace CCC
 			const auto  emotion = LineEmotion(a_speaker);
 			const bool  closeUp = Settings::Get().emotionCloseUps && IsCloseUpEmotion(emotion);
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
+			// Your face answers the line (0.8): mirrored or a listener's response; untagged
+			// lines give your face back to the game.
+			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
+				const char* who = a_speaker->GetDisplayFullName();
+				Face::Set(Face::ListeningTo(emotion), std::format("listening to {}: {}", who ? who : "the speaker", emotion.empty() ? "no expression" : emotion));
+			}
 			if (Settings::Get().showMessages) {
 				static std::unordered_map<std::string, int> seen;
 				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;
@@ -3992,12 +4005,13 @@ namespace CCC
 				// Diagnostic: the dialogue record of each line the speaker starts.
 				{
 					static bool wasTalking = false;
-					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showMessages) ? Speaker() : nullptr;
+					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showMessages || Settings::Get().playerFace) ? Speaker() : nullptr;
 					const bool  talking = speaker && speaker->IsTalking();
 					if (talking && !wasTalking) {
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
 					}
 					FlushHudMessages(now);
+					Face::Update(g_state.active && !g_state.handedBack);
 					wasTalking = talking;
 				}
 				// Focus on the person in shot (0.5.0). The conversation blur reads its settings live

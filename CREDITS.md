@@ -3,18 +3,18 @@
 Running record of where Cinematic Conversation Camera SF's code and ideas come from.
 Kept up to date with each build; the Nexus credits page will be made from it at beta.
 
-Last updated: 0.6.0 (2026-11-13). Line counts are estimates over this project's own
-files (source, INI, build scripts): about 5,900 lines in total.
+Last updated: 0.7.8 (2026-11-14). Line counts are estimates over this project's own
+files (source, INI, build scripts): about 8,900 lines in total.
 
 ## Code by source
 
 | Source | Licence | Lines | Share | What |
 |---|---|---|---|---|
-| [Cinematic Conversation Camera](https://github.com/fatalCMD/ccc) by hashhbbrown | GPL-3.0-or-later | ~265 | ~5% | 39-shot framing table, framing-size and composition math, camera-move scales, preset weights and moves (`src/Shots.*`, `src/Director.cpp`), converted to metres |
-| [Player Camera During Dialogue](https://github.com/rrrafau1337/player-camera-during-dialogue) by rrrafau | GPL-3.0-or-later | ~10 | <1% | Dialogue camera update location for Starfield 1.16.244; vtable slot of the hide/show function (`src/Plugin.cpp`, `src/Visibility.cpp`) |
+| [Cinematic Conversation Camera](https://github.com/fatalCMD/ccc) by hashhbbrown | GPL-3.0-or-later | ~265 | ~3% | 39-shot framing table, framing-size and composition math, camera-move scales, preset weights and moves (`src/Shots.*`, `src/Director.cpp`), converted to metres |
+| [Player Camera During Dialogue](https://github.com/rrrafau1337/player-camera-during-dialogue) by rrrafau | GPL-3.0-or-later | ~12 | <1% | Dialogue camera update location for Starfield 1.16.244; vtable slot of the hide/show function (`src/Plugin.cpp`, `src/Visibility.cpp`); the function that sets an actor's facial expression (ChangeAnimFaceArchetype) for your character's face (`src/Face.cpp`) |
 | [Cassiopeia Papyrus Extender](https://www.nexusmods.com/starfield/mods/10896) by LarannKiar | - | 0 | 0% | Ideas only (below) |
 | [Starvegas - Cinematic Killcam](https://www.nexusmods.com/starfield/mods/8859) | - | 0 | 0% | Ideas only (below) |
-| Written for this project | GPL-3.0-or-later | ~5,625 | ~95% | Everything else |
+| Written for this project | GPL-3.0-or-later | ~8,620 | ~97% | Everything else |
 
 ## Built on
 

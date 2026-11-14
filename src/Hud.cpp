@@ -1128,7 +1128,7 @@ namespace CCC::Hud
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
 			g_msg.available = false;
 			return;
 		}
@@ -1161,7 +1161,7 @@ namespace CCC::Hud
 				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
 			}
 		}
-		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat)) {
+		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {
