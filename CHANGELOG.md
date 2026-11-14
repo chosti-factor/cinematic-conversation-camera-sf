@@ -7,6 +7,10 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.7.5 - unreleased
 
 ### Added
+- Shot messages (`[Debug]` `bShowShots`): each shot the camera uses is shown on screen by its
+  `[Shots]` name and why ("Camera: ThreeQuarterNpc (turn, new angle)", "Camera: ClosePlayer
+  (reaction: you listening)", "Camera: plain over-the-shoulder shot (seated)", ", pulled in"
+  for an obstacle). A testing aid like the emotion messages, and a guide to building presets.
 - Bystanders (`bAvoidBystanders`, `fBystanderStill`): someone standing still (1.5 s) whose body
   would cover the face in shot, or who'd fill most of the picture from close to the camera,
   now pulls the camera in past them or makes it pick another angle, like a wall. The game's

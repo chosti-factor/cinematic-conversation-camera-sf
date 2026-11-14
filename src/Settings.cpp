@@ -133,6 +133,7 @@ namespace CCC
 			// [Debug] since 0.4.16; [General] still read for INIs from 0.4.14-0.4.15.
 			a_s.showEmotions = ReadInt(a_path, L"General", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
 			a_s.showEmotions = ReadInt(a_path, L"Debug", L"bShowEmotions", a_s.showEmotions ? 1 : 0) != 0;
+			a_s.showShots = ReadInt(a_path, L"Debug", L"bShowShots", a_s.showShots ? 1 : 0) != 0;
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);

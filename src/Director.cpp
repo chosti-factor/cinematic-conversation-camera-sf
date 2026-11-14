@@ -68,6 +68,8 @@ namespace CCC::Director
 			clock::time_point                            clearanceAt{};
 			std::string                                  skipped;  // shots left out for obstacles, for the next Director line
 			bool                                         beatActive{ false };  // holding the persuasion beat's close-up
+			std::uint32_t                                cuts{ 0 };
+			const char*                                  why{ "" };
 			std::optional<bool>                          plainTurn;  // nothing fitted this turn (true = theirs): plain shot until the turn changes
 		} g;
 
@@ -470,6 +472,8 @@ namespace CCC::Director
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
 			g.current = a_type;
+			++g.cuts;
+			g.why = a_why;
 			g.currentNpcSide = a_frame.npcTurn;
 			g.cutAt = a_now;
 			if (a_newAngle) {
@@ -555,6 +559,8 @@ namespace CCC::Director
 		g.limit = std::numeric_limits<float>::infinity();
 		g.plainTurn.reset();
 		g.beatActive = false;
+		g.cuts = 0;
+		g.why = "";
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
@@ -713,6 +719,8 @@ namespace CCC::Director
 						const auto clear = ClearanceFor(*shot, a_frame, setup);
 						gp.shot = shot;
 						gp.cutAt = a_now;
+						++g.cuts;
+						g.why = a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up";
 						gp.heldAngle = solved.angle;
 						gp.heldLookSign = solved.lookSign;
 						gp.heldFacePitch = solved.faced ? solved.facePitch : std::numeric_limits<float>::quiet_NaN();
@@ -755,6 +763,24 @@ namespace CCC::Director
 
 	const char* Current()
 	{
+		if (gp.shot) {
+			return Shots::Key(*gp.shot);  // an emotion close-up over the plain shot
+		}
 		return g.current ? Shots::Key(*g.current) : "none";
+	}
+
+	std::uint32_t Cuts()
+	{
+		return g.cuts;
+	}
+
+	const char* Why()
+	{
+		return g.why;
+	}
+
+	bool PulledIn()
+	{
+		return gp.shot ? std::isfinite(gp.limit) : std::isfinite(g.limit);
 	}
 }

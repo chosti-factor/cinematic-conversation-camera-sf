@@ -64,4 +64,10 @@ namespace CCC::Director
 
 	// The setup on screen, for the log.
 	[[nodiscard]] const char* Current();
+
+	// For the on-screen shot messages: how many cuts so far this conversation, why the last
+	// one was made, and whether its camera was pulled in for an obstacle.
+	[[nodiscard]] std::uint32_t Cuts();
+	[[nodiscard]] const char*   Why();
+	[[nodiscard]] bool          PulledIn();
 }

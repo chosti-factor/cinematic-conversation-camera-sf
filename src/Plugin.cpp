@@ -15,6 +15,7 @@
 #include "Settings.h"
 #include "Visibility.h"
 
+#include <deque>
 #include <random>
 
 namespace CCC
@@ -73,6 +74,9 @@ namespace CCC
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			bool                                  lineCounted{ false };      // this line counted towards a reaction
+			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
+			int                                   msgSubject{ -1 };
+			std::uint32_t                         msgCuts{ 0 };
 			std::string                           lastLineText{};
 			std::uintptr_t                        playerLineInfo{ 0 };       // diagnostic: your last dialogue record
 			std::string                           playerLineText{};
@@ -281,6 +285,7 @@ namespace CCC
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
+		void                QueueHudMessage(std::string a_text);
 
 		// Bystanders (0.7.5): people standing still near the conversation, other than the two
 		// of you. Gathered on the main thread a few times a second; the camera's shot test
@@ -2061,6 +2066,32 @@ namespace CCC
 				LogFailure("could not apply pose");
 				return;
 			}
+			// On-screen message for each shot as it's used (bShowShots, a testing aid like the
+			// emotion messages): the setup's name as written in [Shots], and why.
+			if (s.showShots && !waitingView && !pov) {
+				const char*         name = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain over-the-shoulder shot";
+				const int           who = static_cast<int>(subject);
+				const std::uint32_t cuts = directed ? Director::Cuts() : 0;
+				if (name != g_state.msgShot || who != g_state.msgSubject || cuts != g_state.msgCuts) {
+					g_state.msgShot = name;
+					g_state.msgSubject = who;
+					g_state.msgCuts = cuts;
+					std::string why;
+					if (g_state.reactionActive && subject == Subject::kPlayer) {
+						why = "reaction: you listening";
+					} else if (directed) {
+						why = Director::Why();
+					} else if (g_state.plainEyeLine) {
+						why = "plain shot blocked";
+					} else {
+						why = nearSeated ? "seated" : g_state.plainShots && g_state.merchant ? "merchant" : g_state.plainShots ? "plain shots" : "nothing in the preset fits";
+					}
+					if (directed && Director::PulledIn()) {
+						why += ", pulled in";
+					}
+					QueueHudMessage(std::format("Camera: {} ({})", name, why));
+				}
+			}
 			// Obstacle check of the shot on screen, for the log: once per shot.
 			if (s.debugLog && !waitingView && !pov) {
 				const char* shotName = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain shot";
@@ -3097,6 +3128,30 @@ namespace CCC
 			}
 		}
 
+		// Messages from the camera's worker threads, shown from the main thread.
+		std::mutex              g_hudQueueLock;
+		std::deque<std::string> g_hudQueue;
+
+		void QueueHudMessage(std::string a_text)
+		{
+			std::scoped_lock lock{ g_hudQueueLock };
+			if (g_hudQueue.size() < 6) {
+				g_hudQueue.push_back(std::move(a_text));
+			}
+		}
+
+		void FlushHudMessages()
+		{
+			std::deque<std::string> pending;
+			{
+				std::scoped_lock lock{ g_hudQueueLock };
+				pending.swap(g_hudQueue);
+			}
+			for (const auto& text : pending) {
+				ShowHudMessage(text);
+			}
+		}
+
 		// Called every main-thread tick: posts a close-up emotion's message once the camera
 		// has cut (or not) for it.
 		void PostEmotionMessage(std::chrono::steady_clock::time_point a_now)
@@ -3323,6 +3378,7 @@ namespace CCC
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
 					}
 					PostEmotionMessage(now);
+					FlushHudMessages();
 					wasTalking = talking;
 				}
 				// Focus on the person in shot (0.5.0). The conversation blur reads its settings live
