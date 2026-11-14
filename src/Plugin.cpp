@@ -3288,7 +3288,7 @@ namespace CCC
 				std::string reason;
 				if (!expression.empty()) {
 					const auto close = a_text.find(']');
-					reason = close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "your choice" };
+					reason = close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "a question" };
 				} else if (expression = Face::MaybeSignature(); !expression.empty()) {
 					// An option without a skill tag: now and then you say it in character.
 					std::string background;

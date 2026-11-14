@@ -159,6 +159,13 @@ Neutral) leave your face to the game, or show your background now and then (belo
 | Medicine | Concerned |
 | Attack | VeryAngry |
 | Pay | Neutral |
+| Leadership | Confident |
+| Stealth | Suspicious |
+| Astrophysics, Geology, Botany, Zoology, Xenosociology, Research, Surveying, Scanning | Thinking |
+| Chemistry, Security, Engineering, Robotics, Piloting, Starship, Outpost, Weapon, Spacesuit | Concentrating |
+
+An option without a tag that asks a question ("...?"): Question, `iQuestionChance` (40%)
+of the time; otherwise your background may show (below).
 
 ### Choosing a background or trait option
 

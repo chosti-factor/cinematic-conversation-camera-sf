@@ -6,6 +6,13 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.7.12 - unreleased
 
+### Added
+- Your face for more skill checks: science options ([Astrophysics], [Geology], [Botany],
+  [Zoology]...) look thoughtful, technical ones ([Security], [Engineering], [Piloting]...)
+  focused, [Leadership] confident, [Stealth] suspicious.
+- Questions: an option without a tag that asks a question has a 40% chance of a questioning
+  look (`[Face]` `iQuestionChance`), the first use of your line's text.
+
 ### Changed
 - Your face answers a Confident line with Confident (it was treated as neutral; Confident
   is about one NPC line in ten).

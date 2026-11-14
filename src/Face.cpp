@@ -101,6 +101,12 @@ namespace CCC::Face
 		std::string g_signature;
 		std::string g_background;
 
+		bool Roll(int a_percent)
+		{
+			static std::mt19937 rng{ std::random_device{}() };
+			return std::uniform_int_distribution<int>{ 0, 99 }(rng) < a_percent;
+		}
+
 		std::string Lower(std::string_view a_text)
 		{
 			std::string out;
@@ -150,6 +156,15 @@ namespace CCC::Face
 		const auto open = a_optionText.find('[');
 		const auto close = a_optionText.find(']');
 		if (open == std::string_view::npos || close == std::string_view::npos || close < open || open > 3) {
+			// No tag: a question ("...?") now and then gets a questioning look (0.7.12; the
+			// first use of the option's text, kept to questions).
+			auto text = a_optionText;
+			while (!text.empty() && (text.back() == ' ' || text.back() == '"' || text.back() == '\'')) {
+				text.remove_suffix(1);
+			}
+			if (!text.empty() && text.back() == '?' && Roll(Settings::Get().questionFaceChance)) {
+				return "Question";
+			}
 			return {};
 		}
 		const auto tag = Lower(a_optionText.substr(open + 1, close - open - 1));
@@ -158,6 +173,13 @@ namespace CCC::Face
 			{ "deceiv", "Smirk" }, { "lie", "Smirk" }, { "flirt", "Flirting" }, { "charm", "Friendly" },
 			{ "lecture", "Serious" }, { "attack", "VeryAngry" }, { "bribe", "Smirk" }, { "pay", "Neutral" },
 			{ "commerce", "Confident" }, { "diplomacy", "Friendly" }, { "theology", "Serious" }, { "medicine", "Concerned" },
+			{ "leadership", "Confident" }, { "stealth", "Suspicious" },
+			// Science and technical checks: thinking it through, or focused on the task.
+			{ "astrophysics", "Thinking" }, { "geology", "Thinking" }, { "botany", "Thinking" }, { "zoology", "Thinking" },
+			{ "xenosociology", "Thinking" }, { "research", "Thinking" }, { "surveying", "Thinking" }, { "scanning", "Thinking" },
+			{ "chemistry", "Concentrating" }, { "security", "Concentrating" }, { "engineering", "Concentrating" },
+			{ "robotics", "Concentrating" }, { "piloting", "Concentrating" }, { "starship", "Concentrating" },
+			{ "outpost", "Concentrating" }, { "weapon", "Concentrating" }, { "spacesuit", "Concentrating" },
 		};
 		for (const auto& [key, expression] : byTag) {
 			if (tag.find(key) != std::string::npos) {
