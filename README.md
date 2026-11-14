@@ -35,7 +35,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
 
-### New in CCC SF
+### New or distinct in CCC SF
 
 - **Your character in shot from first person:** your full body is built at the start of
   the conversation (about a tenth of a second), including with seated NPCs, and you're
@@ -70,7 +70,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   own camera). Small speakers (robots) and quest scenes you take part in (someone walks
   up and starts talking, several people taking turns) keep the game's own camera.
 
-Differences from CCC, because of Starfield:
+### Differences from CCC, because of Starfield
 
 - Starfield's conversation lens is fixed and narrower (about 30 degrees) than the ones
   CCC uses, so its framings want the camera further back. Each preset lets the camera
@@ -81,7 +81,7 @@ Differences from CCC, because of Starfield:
   close-ups are chosen from the line's expression tag instead.
 - There's no in-game settings menu; everything is in the INI.
 
-Planned, roughly in order:
+### Planned, roughly in order
 
 - CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
   collision test.
