@@ -154,7 +154,7 @@ namespace CCC
 		int         reactionEvery{ 2 };       // NPC lines in a reply before a reaction may come
 		int         reactionChance{ 50 };     // percent
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
-		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Pay,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
+		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
 		int         cameraSway{ 40 };         // % of the heads' sway the camera's angle follows (0 = none, 100 = full)
 		bool        cameraMoves{ true };

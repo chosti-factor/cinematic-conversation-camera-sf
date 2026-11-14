@@ -397,6 +397,7 @@ namespace CCC::Hud
 			bool panel{ false };
 			bool success{ false };
 			bool fail{ false };
+			bool decided{ false };  // its success or failure animation played: the panel closing isn't another outcome
 		} g_persuasion;
 
 		// Option tags whose answer gets the beat ([Persuade] itself starts the mini-game, whose
@@ -455,7 +456,10 @@ namespace CCC::Hud
 				}
 			}
 			const char* what = nullptr;
-			if (g_persuasion.panel && !open) {
+			if (open && !g_persuasion.panel) {
+				g_persuasion.decided = false;
+			}
+			if (g_persuasion.panel && !open && !g_persuasion.decided) {
 				what = "persuasion panel closed";
 			} else if (success && !g_persuasion.success) {
 				what = "persuasion success animation";
@@ -474,7 +478,8 @@ namespace CCC::Hud
 					REX::INFO("HUD: {} - the NPC's answer gets the persuasion beat", what);
 				}
 			}
-			g_persuasion = { open, success, fail };
+			const bool decided = g_persuasion.decided || success || fail;
+			g_persuasion = { open, success, fail, open && decided };
 		}
 
 		void UpdateOptions(Value& a_top, float a_delta, bool a_dump, bool a_npcTalking)

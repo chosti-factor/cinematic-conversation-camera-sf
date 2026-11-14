@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.2 - unreleased
+
+### Fixed
+- Reaction shots never happened: the subtitle (used to skip short lines) isn't there yet
+  when a line starts, so every line looked empty. The decision now waits up to half a second
+  for it. The roll is also on the iReactionEvery-th line itself instead of the one after,
+  since Starfield's replies are mostly two or three lines.
+- Persuasion beat: the mini-game's panel closing after its success animation counted as a
+  second outcome; an outcome at the end of one conversation carried into the next.
+- "Pay" is no longer a beat tag by default: "[Pay 14000 Credits] You're hired." is how crew
+  are hired, not a skill check.
+
 ## 0.7.1 - 2026-11-14
 
 ### Added
