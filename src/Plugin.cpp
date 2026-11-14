@@ -3600,57 +3600,128 @@ namespace CCC
 			}
 		}
 
-		// The game's list of actors in high process: what's in it, once (0.7.6 test: it was
-		// always empty, so the layout this was written for may be off on 1.16.244).
-		void LogProcessListsOnce(RE::ProcessLists* a_lists)
+		// ---- Nearby actors ----------------------------------------------------------------------
+		// The game's list of actors in high process (ProcessLists): 0.7.6 found it always empty
+		// on 1.16.244 through CommonLibSF's layout (high actors at +58), so neither bystanders
+		// nor overheard lines ever saw anyone. The list is found here instead: of the
+		// array-shaped members of ProcessLists (count, capacity, pointer to 32-bit handles), the
+		// one whose handles turn into the most actors near you. Its position is logged, to be
+		// written in once confirmed; until it's found, the actors in your cell are used.
+		__declspec(noinline) RE::Actor* ResolveActorHandle(std::uint32_t a_handle)
 		{
-			static bool logged = false;
-			if (logged || !Settings::Get().debugLog) {
-				return;
-			}
-			logged = true;
-			std::array<std::uint64_t, 0x40> words{};
-			if (!SafeCopy(words.data(), a_lists, sizeof(words))) {
-				return;
-			}
-			std::string arrays;
-			for (std::size_t i = 0; i + 1 < words.size(); ++i) {
-				const auto ptr = words[i];
-				const auto capacity = static_cast<std::uint32_t>(words[i + 1]);
-				const auto size = static_cast<std::uint32_t>(words[i + 1] >> 32);
-				if (ptr > 0x10000 && ptr < 0x7FFFFFFFFFFF && size > 0 && size <= 4000 && capacity >= size && capacity <= 8000) {
-					arrays += std::format(" +{:X}: {} of {}", i * 8, size, capacity);
-				}
-			}
-			REX::INFO("Nearby actors: the game's list says {} actors in high process (+20: {}, +24: {}); array-like members:{}", a_lists->highActorHandles.size(),
-				static_cast<std::int32_t>(words[4]), static_cast<std::int32_t>(words[4] >> 32), arrays.empty() ? " none" : arrays);
+			RE::BSPointerHandle<RE::Actor> handle;
+			static_assert(sizeof(handle) == sizeof(a_handle));
+			std::memcpy(&handle, &a_handle, sizeof(a_handle));
+			return handle.get().get();  // the list keeps it alive
 		}
 
-		// Who's around: the game's list of active actors or, when that comes back empty (0.7.6
-		// test: always, so neither overheard lines nor bystanders were ever seen), the actors
-		// among the references of your cell.
+		bool SafeResolveActor(std::uint32_t a_handle, RE::Actor*& a_out)
+		{
+			__try {
+				a_out = ResolveActorHandle(a_handle);
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				a_out = nullptr;
+				return false;
+			}
+		}
+
+		// The actors behind an array of handles at a_base + a_offset (at most a_max of them).
+		int ReadActorArray(std::uintptr_t a_base, std::size_t a_offset, std::size_t a_max, std::vector<RE::Actor*>* a_out)
+		{
+			std::uint32_t  header[2]{};
+			std::uintptr_t data = 0;
+			if (!SafeCopy(header, reinterpret_cast<const void*>(a_base + a_offset), sizeof(header)) ||
+				!SafeCopy(&data, reinterpret_cast<const void*>(a_base + a_offset + 8), sizeof(data))) {
+				return -1;
+			}
+			const std::uint32_t size = header[0], capacity = header[1];
+			if (size == 0 || size > 4000 || capacity < size || capacity > 8000 || data < 0x10000 || data > 0x7FFFFFFFFFFF) {
+				return -1;
+			}
+			std::vector<std::uint32_t> handles((std::min<std::size_t>)(size, a_max));
+			if (!SafeCopy(handles.data(), reinterpret_cast<const void*>(data), handles.size() * sizeof(std::uint32_t))) {
+				return -1;
+			}
+			int actors = 0;
+			for (const auto h : handles) {
+				RE::Actor* actor = nullptr;
+				if (h == 0 || !SafeResolveActor(h, actor) || !actor) {
+					continue;
+				}
+				std::uint32_t type = 0, id = 0;
+				const char*   editorId = nullptr;
+				if (ReadFormInfo(reinterpret_cast<std::uintptr_t>(actor), type, id, editorId) && type == std::to_underlying(RE::FormType::kACHR)) {
+					++actors;
+					if (a_out) {
+						a_out->push_back(actor);
+					}
+				}
+			}
+			return actors;
+		}
+
+		std::optional<std::size_t> g_actorListOffset;
+
+		void FindActorList(RE::ProcessLists* a_lists, std::chrono::steady_clock::time_point a_now)
+		{
+			static auto next = a_now;
+			static int  tries = 0;
+			if (g_actorListOffset || a_now < next || tries >= 60) {
+				return;
+			}
+			next = a_now + 5s;  // nobody about yet: try again shortly (for five minutes)
+			++tries;
+			const auto  base = reinterpret_cast<std::uintptr_t>(a_lists);
+			std::string seen;
+			int         best = 0;
+			std::size_t bestOffset = 0;
+			for (std::size_t offset = 0x10; offset < 0x300; offset += 8) {
+				const int actors = ReadActorArray(base, offset, 256, nullptr);
+				if (actors < 0) {
+					continue;
+				}
+				std::uint32_t size = 0;
+				SafeCopy(&size, reinterpret_cast<const void*>(base + offset), sizeof(size));
+				seen += std::format(" +{:X}: {} entries, {} actors;", offset, size, actors);
+				if (actors > best) {
+					best = actors;
+					bestOffset = offset;
+				}
+			}
+			if (best > 0) {
+				g_actorListOffset = bestOffset;
+				REX::INFO("Nearby actors: found the game's actor list at ProcessLists +{:X} ({} actors; CommonLibSF has it at +58). Arrays seen:{}", bestOffset, best, seen);
+			} else if (Settings::Get().debugLog && (tries == 1 || tries % 12 == 0)) {
+				REX::INFO("Nearby actors: no actor list found in ProcessLists yet (try {}). Arrays seen:{}", tries, seen.empty() ? " none" : seen);
+			}
+		}
+
+		// Who's around: the game's actor list once found, or else the actors in your cell.
 		std::vector<RE::NiPointer<RE::Actor>> NearbyActors(RE::PlayerCharacter* a_player, const char*& a_source)
 		{
 			std::vector<RE::NiPointer<RE::Actor>> out;
 			a_source = "nothing";
 			constexpr std::uint64_t kProcessListsSingleton = 937584;
-			if (Hud::AddressKnown(kProcessListsSingleton)) {
+			constexpr std::uint64_t kGetSmartPointer = 35638;  // turns a handle into the actor
+			if (Hud::AddressKnown(kProcessListsSingleton) && Hud::AddressKnown(kGetSmartPointer)) {
 				if (auto* lists = RE::ProcessLists::GetSingleton()) {
-					LogProcessListsOnce(lists);
-					for (const auto& handle : lists->highActorHandles) {
-						if (auto actor = handle.get()) {
-							out.push_back(actor);
+					FindActorList(lists, std::chrono::steady_clock::now());
+					if (g_actorListOffset) {
+						std::vector<RE::Actor*> actors;
+						if (ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), *g_actorListOffset, 2000, &actors) > 0) {
+							for (auto* actor : actors) {
+								out.emplace_back(actor);
+							}
+							a_source = "the game's actor list";
+							return out;
 						}
-					}
-					if (!out.empty()) {
-						a_source = "the game's list";
-						return out;
 					}
 				}
 			}
-			auto*          cell = a_player ? a_player->parentCell : nullptr;
-			std::uint32_t  type = 0, id = 0;
-			const char*    editorId = nullptr;
+			auto*         cell = a_player ? a_player->parentCell : nullptr;
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
 			if (cell && ReadFormInfo(reinterpret_cast<std::uintptr_t>(cell), type, id, editorId) && type == std::to_underlying(RE::FormType::kCELL) && cell->IsAttached()) {
 				cell->ForEachReference([&](const RE::NiPointer<RE::TESObjectREFR>& a_ref) {
 					if (a_ref->IsActor()) {

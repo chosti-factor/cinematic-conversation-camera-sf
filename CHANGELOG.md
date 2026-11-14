@@ -9,8 +9,10 @@ test build; "diagnostic" items only add information to the log for testing.
 ### Fixed
 - Bystanders and overheard NPC lines: the game's list of active actors that both read was
   always empty on Starfield 1.16.244 (0.7.6 test: "0 actors nearby" all session), so neither
-  ever saw anyone; standing-still people weren't avoided after all. When the list is empty,
-  the actors in your cell are used instead. The log notes the list's layout once, to fix it.
+  ever saw anyone; standing-still people weren't avoided after all. The list is now found
+  where it really is: of ProcessLists' array-shaped members, the one whose entries turn into
+  the most actors (logged, to be written in once confirmed). Until it's found, the actors in
+  your cell are used.
 
 ### Diagnostic
 - The reaction count says why a line that could have been a reaction wasn't: an emotion
