@@ -279,6 +279,7 @@ namespace CCC
 		std::mt19937 g_reactionRng{ std::random_device{}() };
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
+		void                OnOptionChosen(const std::string& a_text);
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
@@ -620,6 +621,7 @@ namespace CCC
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 			if (Settings::Get().director) {
 				Director::SetObstacleTest(&TestShot);
+				Hud::SetChoiceListener(&OnOptionChosen);
 				Director::Reset();
 			}
 		}
@@ -2863,6 +2865,81 @@ namespace CCC
 			return ReadFormInfo(info, type, id, editorId) && type == std::to_underlying(RE::FormType::kINFO) ? info : 0;
 		}
 
+		// The expression tag on a dialogue record's first response ("none" if it has none).
+		std::string InfoEmotion(std::uintptr_t a_info)
+		{
+			std::uintptr_t response = 0, keyword = 0;
+			auto           ok = [](std::uintptr_t a_p) { return a_p > 0x10000 && a_p < 0x7FFFFFFFFFFF; };
+			if (!SafeCopy(&response, reinterpret_cast<const void*>(a_info + 0x70), sizeof(response)) || !ok(response) ||
+				!SafeCopy(&keyword, reinterpret_cast<const void*>(response + 0x18), sizeof(keyword)) || !ok(keyword)) {
+				return "none";
+			}
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (!ReadFormInfo(keyword, type, id, editorId) || type != std::to_underlying(RE::FormType::kKYWD) || !editorId) {
+				return "none";
+			}
+			std::string_view name{ editorId };
+			constexpr std::string_view prefix{ "AnimFaceArchetype" };
+			if (name.starts_with(prefix)) {
+				name.remove_prefix(prefix.size());
+			}
+			return std::string{ name };
+		}
+
+		// Diagnostic (0.7.3): where the game keeps the line you just chose. Your own voice data
+		// never shows it (0.7.2), so look through the dialogue menu's topic manager for
+		// dialogue records, directly or one pointer away, and log each with its tag.
+		void OnOptionChosen(const std::string& a_text)
+		{
+			if (!Settings::Get().debugLog) {
+				return;
+			}
+			static int calls = 0;
+			if (++calls > 12) {
+				return;
+			}
+			constexpr std::uint64_t kTopicManagerSingleton = 938421;
+			if (!Hud::AddressKnown(kTopicManagerSingleton)) {
+				REX::INFO("Your choice: topic manager not in the Address Library");
+				return;
+			}
+			std::uintptr_t manager = 0;
+			const auto     where = REL::ID(kTopicManagerSingleton).address();
+			if (!SafeCopy(&manager, reinterpret_cast<const void*>(where), sizeof(manager)) || manager < 0x10000 || manager > 0x7FFFFFFFFFFF) {
+				REX::INFO("Your choice: topic manager not there");
+				return;
+			}
+			auto infoAt = [](std::uintptr_t a_p, std::uint32_t& a_id) {
+				std::uint32_t type = 0;
+				const char*   editorId = nullptr;
+				return a_p > 0x10000 && a_p < 0x7FFFFFFFFFFF && ReadFormInfo(a_p, type, a_id, editorId) && type == std::to_underlying(RE::FormType::kINFO);
+			};
+			std::array<std::uintptr_t, 128> words{};
+			if (!SafeCopy(words.data(), reinterpret_cast<const void*>(manager), sizeof(words))) {
+				return;
+			}
+			std::string found;
+			for (std::size_t i = 0; i < words.size(); ++i) {
+				std::uint32_t id = 0;
+				if (infoAt(words[i], id)) {
+					found += std::format("; +{:X} INFO {:08X} {}", i * 8, id, InfoEmotion(words[i]));
+					continue;
+				}
+				if (words[i] > 0x10000 && words[i] < 0x7FFFFFFFFFFF) {
+					std::array<std::uintptr_t, 8> inner{};
+					if (SafeCopy(inner.data(), reinterpret_cast<const void*>(words[i]), sizeof(inner))) {
+						for (std::size_t k = 0; k < inner.size(); ++k) {
+							if (infoAt(inner[k], id)) {
+								found += std::format("; +{:X}->+{:X} INFO {:08X} {}", i * 8, k * 8, id, InfoEmotion(inner[k]));
+							}
+						}
+					}
+				}
+			}
+			REX::INFO("Your choice '{}': {}", a_text.substr(0, 60), found.empty() ? std::string{ "no dialogue records in the topic manager" } : found.substr(2));
+		}
+
 		std::string LineEmotion(RE::Actor* a_speaker)
 		{
 			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
@@ -3243,7 +3320,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.2 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.3 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

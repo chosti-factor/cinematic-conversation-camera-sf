@@ -14,4 +14,12 @@ namespace CCC::Hud
 	// A persuasion just ended (the persuasion panel closed, or its success or failure
 	// animation started), in steady_clock ticks; 0 = none yet. Safe from any thread.
 	[[nodiscard]] std::int64_t PersuasionOutcomeAt() noexcept;
+
+	// Called (main thread) when the player has just chosen a dialogue option, with its text.
+	using ChoiceListener = void (*)(const std::string& a_text);
+
+	// Whether the Address Library has an entry for this ID (a missing one would end the game
+	// with an error box when used).
+	[[nodiscard]] bool AddressKnown(std::uint64_t a_id);
+	void SetChoiceListener(ChoiceListener a_listener);
 }

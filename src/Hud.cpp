@@ -57,68 +57,95 @@ namespace CCC::Hud
 			return true;
 		}
 
-		bool g_broken = false;  // a Scaleform call faulted: everything here stays off this session
+		bool        g_broken = false;   // three Scaleform faults: everything here stays off this session
+		bool        g_fault = false;    // a call faulted this frame: stop touching the menus until the next one
+		const char* g_faultWhat = "";
+		int         g_faults = 0;
 
 		// ---- Fault-guarded Scaleform calls ------------------------------------------------
 		// No objects with destructors in these, so they can use structured exception handling.
 		bool SafeGetVariable(MovieRoot* a_root, Value* a_out, const char* a_path)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				return a_root->GetVariable(a_out, a_path);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "GetVariable";
 				return false;
 			}
 		}
 
 		bool SafeCreateObject(MovieRoot* a_root, Value* a_out, const char* a_class)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				a_root->CreateObject(a_out, a_class, nullptr, 0);
 				return a_out->IsObject();
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "CreateObject";
 				return false;
 			}
 		}
 
 		bool SafeCreateObjectArgs(MovieRoot* a_root, Value* a_out, const char* a_class, const Value* a_args, std::uint32_t a_count)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				a_root->CreateObject(a_out, a_class, a_args, a_count);
 				return a_out->IsObject();
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "CreateObject";
 				return false;
 			}
 		}
 
 		bool SafeGet(const Value* a_obj, const char* a_name, Value* a_out)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				return a_obj->IsObject() && a_obj->GetMember(a_name, a_out);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "GetMember";
 				return false;
 			}
 		}
 
 		bool SafeSet(Value* a_obj, const char* a_name, const Value* a_value)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				return a_obj->IsObject() && a_obj->SetMember(a_name, *a_value);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "SetMember";
 				return false;
 			}
 		}
 
 		bool SafeInvoke(Value* a_obj, const char* a_name, Value* a_result, const Value* a_args, std::size_t a_count)
 		{
+			if (g_fault) {
+				return false;
+			}
 			__try {
 				return a_obj->IsObject() && a_obj->Invoke(a_name, a_result, a_args, a_count);
 			} __except (EXCEPTION_EXECUTE_HANDLER) {
-				g_broken = true;
+				g_fault = true;
+				g_faultWhat = "Invoke";
 				return false;
 			}
 		}
@@ -391,6 +418,7 @@ namespace CCC::Hud
 		// panel closing or one of those, marks the outcome; the NPC's answer then gets the
 		// persuasion beat (CCC's "Hold On Their Answer").
 		std::atomic<std::int64_t> g_persuasionOutcomeAt{ 0 };
+		ChoiceListener            g_choiceListener = nullptr;
 
 		struct PersuasionWatch
 		{
@@ -459,12 +487,34 @@ namespace CCC::Hud
 			if (open && !g_persuasion.panel) {
 				g_persuasion.decided = false;
 			}
+			// Every round plays its own success or failure animation (0.7.2 log: four rounds,
+			// four beats). The last round is the one with no turns left; a win before that
+			// isn't recognised yet (the meter's reading is logged to find it).
+			std::string turns;
+			double      meterFrame = 0.0, meterFrames = 0.0;
+			if ((success && !g_persuasion.success) || (fail && !g_persuasion.fail)) {
+				Value data, textMc, field, meter;
+				if (Child(panel, "TurnsData_mc", data) && Child(data, "Text_mc", textMc) && Child(textMc, "text_tf", field)) {
+					turns = StringMember(field, "text");
+				}
+				if (Child(panel, "ScoreMeter_mc", meter)) {
+					meterFrame = Member(meter, "currentFrame", 0.0);
+					meterFrames = Member(meter, "totalFrames", 0.0);
+					static int meterDumps = 0;
+					if (meterDumps++ < 2) {
+						int count = 0;
+						DumpTree(meter, "DialogueMenu.Menu_mc.PersuasionData_mc.ScoreMeter_mc", 3, count);
+					}
+				}
+				REX::INFO("HUD: persuasion round {}: turns left '{}', meter frame {:.0f} of {:.0f}", success ? "won" : "lost", turns, meterFrame, meterFrames);
+			}
+			const bool lastTurn = !turns.empty() && turns.find_first_not_of("0 ") == std::string::npos;
 			if (g_persuasion.panel && !open && !g_persuasion.decided) {
 				what = "persuasion panel closed";
-			} else if (success && !g_persuasion.success) {
-				what = "persuasion success animation";
-			} else if (fail && !g_persuasion.fail) {
-				what = "persuasion failure animation";
+			} else if (success && !g_persuasion.success && lastTurn) {
+				what = "persuasion won on the last turn";
+			} else if (fail && !g_persuasion.fail && lastTurn) {
+				what = "persuasion lost (no turns left)";
 			}
 			if (open && !g_persuasion.panel) {
 				REX::INFO("HUD: persuasion panel open");
@@ -478,7 +528,7 @@ namespace CCC::Hud
 					REX::INFO("HUD: {} - the NPC's answer gets the persuasion beat", what);
 				}
 			}
-			const bool decided = g_persuasion.decided || success || fail;
+			const bool decided = g_persuasion.decided || ((success || fail) && lastTurn);
 			g_persuasion = { open, success, fail, open && decided };
 		}
 
@@ -538,6 +588,9 @@ namespace CCC::Hud
 				}
 				if (i == 0 && !now && g_options.wasVisible[0] && !g_options.highlighted.empty()) {
 					const auto& chosen = g_options.highlighted;
+					if (g_choiceListener) {
+						g_choiceListener(chosen);
+					}
 					if (chosen.starts_with('[')) {
 						const auto close = chosen.find(']');
 						const auto tag = chosen.substr(1, close == std::string::npos ? 0 : close - 1);
@@ -782,6 +835,16 @@ namespace CCC::Hud
 		}
 	}
 
+	bool AddressKnown(std::uint64_t a_id)
+	{
+		return IddbPeek::Has(a_id);
+	}
+
+	void SetChoiceListener(ChoiceListener a_listener)
+	{
+		g_choiceListener = a_listener;
+	}
+
 	std::int64_t PersuasionOutcomeAt() noexcept
 	{
 		return g_persuasionOutcomeAt.load(std::memory_order_acquire);
@@ -827,8 +890,16 @@ namespace CCC::Hud
 		} else if (!dialogueOpen) {
 			g_options.wasVisible[0] = g_options.wasVisible[1] = false;
 		}
-		if (g_broken) {
-			REX::WARN("HUD: a Scaleform call failed; letterbox and subtitle features are off for this session");
+		// A fault (0.7.2: once, as a conversation started, probably the menu being rebuilt)
+		// skips the rest of the frame; three in a session turn the features off.
+		if (g_fault) {
+			g_fault = false;
+			++g_faults;
+			REX::WARN("HUD: a Scaleform call ({}) failed ({} of 3){}", g_faultWhat, g_faults,
+				g_faults >= 3 ? "; letterbox and dialogue option features are off for this session" : "; trying again next frame");
+			if (g_faults >= 3) {
+				g_broken = true;
+			}
 		}
 	}
 }

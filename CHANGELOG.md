@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.3 - unreleased
+
+### Fixed
+- Persuasion beat on every round of the mini-game: each round plays its own success or
+  failure animation. Only the last round (no turns left) gets the beat now; an earlier win
+  isn't recognised yet, and the meter's reading is logged to find it.
+- One failed Scaleform call (as a conversation started, probably the menu being rebuilt)
+  turned the bars and the options handling off for the rest of the session. A failure now
+  skips that frame; only three in a session turn them off, and the log names the call.
+
+### Diagnostic
+- Your choice's dialogue record: your own voice data never showed your lines (0.7.2), so
+  when you choose an option the dialogue menu's topic manager is searched for dialogue
+  records and each is logged with its expression tag ("Your choice").
+
 ## 0.7.2 - 2026-11-14
 
 ### Diagnostic
