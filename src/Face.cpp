@@ -175,7 +175,7 @@ namespace CCC::Face
 			{ "introvert", "Concentrating" }, { "extrovert", "Happy" }, { "empath", "Concerned" }, { "wanted", "Suspicious" },
 			{ "kid stuff", "Friendly" }, { "street rat", "Smirk" }, { "uc native", "Confident" }, { "united colonies", "Confident" },
 			{ "freestar", "Confident" }, { "raised universal", "Thinking" }, { "raised enlightened", "Confident" },
-			{ "serpent", "Serious" }, { "hero worship", "Smirk" }, { "dream home", "Concerned" }, { "alien dna", "Confident" },
+			{ "serpent", "Serious" }, { "hero worship", "Puzzled" }, { "dream home", "Concerned" }, { "alien dna", "Confident" },
 			{ "spaced", "Thinking" }, { "taskmaster", "Stern" }, { "terra firma", "Relieved" },
 		};
 		for (const auto& [key, expression] : byTrait) {

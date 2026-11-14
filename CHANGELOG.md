@@ -13,6 +13,9 @@ test build; "diagnostic" items only add information to the log for testing.
   looks smug, Bounty Hunter suspicious, Diplomat friendly, Professor thoughtful... (all 20
   backgrounds: see the INI or `docs/EMOTIONS.md`). The background is read from your perks with the game's own
   check behind Papyrus' HasPerk (found in 1.16.244, Address Library ID 101224).
+- Reaction shots with seated people and merchants too: their conversations keep the plain
+  over-the-shoulder shot, and a reaction shows the plain shot of you that's already used
+  when you speak (or your emotion close-up). Their lines now count towards reactions.
 - Background and trait options: choosing an option tagged with a background ("[Space
   Scoundrel]") or a trait ("[Wanted]", "[Empath]") sets an expression for it, like the
   skill tags do: a background's own expression, and one per trait (see `docs/EMOTIONS.md`).

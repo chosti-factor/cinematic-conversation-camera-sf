@@ -1870,7 +1870,7 @@ namespace CCC
 						// characters or more becomes a reaction itself (a short one would be over
 						// before the cut settled).
 						g_state.lineCounted = 0;
-						if (fresh && s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
+						if (fresh && s.reactionShots && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat) {
 							const int  sentences = CountSentences(text);
 							const bool due = g_state.reactionLines >= s.reactionEvery;

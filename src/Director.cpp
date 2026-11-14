@@ -85,6 +85,7 @@ namespace CCC::Director
 			float                   heldFacePitch{ std::numeric_limits<float>::quiet_NaN() };
 			bool                    wasTalking{ false };
 			float                   limit{ std::numeric_limits<float>::infinity() };
+			bool                    playerClose{ false };  // holding your emotion close-up
 		} gp;
 
 		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
@@ -725,39 +726,64 @@ namespace CCC::Director
 		const auto& s = Settings::Get();
 		const bool  started = a_frame.npcTalking && !gp.wasTalking;
 		gp.wasTalking = a_frame.npcTalking;
-		if (!a_frame.npcTalking || !a_frame.npcTurn || !s.emotionCloseUps) {
-			if (gp.shot) {
-				REX::INFO("Director: emotion close-up over; back to the plain shot");
+		// Start a close-up over the plain shot: solve it once, hold its angle.
+		auto begin = [&](ShotType a_shot, const char* a_why, bool a_npcEmotion) {
+			const auto setup = IntenseSetup(a_shot);
+			const auto solved = Shots::Solve(a_shot, InputFor(a_frame, setup, 0.0f));
+			if (!solved.ok) {
+				return;
 			}
-			gp.shot.reset();
-			return std::nullopt;
-		}
-		if (started) {
-			gp.shot.reset();
-			if (a_frame.intenseLine || a_frame.persuasionBeat) {
-				if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
-					const auto setup = IntenseSetup(*shot);
-					const auto solved = Shots::Solve(*shot, InputFor(a_frame, setup, 0.0f));
-					if (solved.ok) {
-						const auto clear = ClearanceFor(*shot, a_frame, setup);
-						gp.shot = shot;
-						gp.cutAt = a_now;
-						++g.cuts;
-						g.why = a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up";
-						gp.heldAngle = solved.angle;
-						gp.heldLookSign = solved.lookSign;
-						gp.heldFacePitch = solved.faced ? solved.facePitch : std::numeric_limits<float>::quiet_NaN();
-						if (solved.faced && (std::abs(solved.faceYaw) >= 3.0f || std::abs(solved.facePitch) >= 3.0f)) {
-							REX::INFO("Face: {} turned {:+.0f} degrees toward where the face points, camera {} {:.0f} degrees", Shots::Key(*shot), solved.faceYaw,
-								solved.facePitch < 0.0f ? "lowered" : "raised", std::abs(solved.facePitch));
-						}
-						gp.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
-						NoteEmotionCut(*shot);
-						REX::INFO("Director: intense line -> {} over the plain shot ({:.1f} m away at {:.1f} degrees){}", Shots::Key(*shot), solved.distance, solved.angle,
-							std::isfinite(gp.limit) ? std::format("; obstacle {:.1f} m from them, camera pulled in to {:.1f} m", clear.blockedAt, gp.limit) : std::string{});
-					}
+			const auto clear = ClearanceFor(a_shot, a_frame, setup);
+			gp.shot = a_shot;
+			gp.cutAt = a_now;
+			++g.cuts;
+			g.why = a_why;
+			gp.heldAngle = solved.angle;
+			gp.heldLookSign = solved.lookSign;
+			gp.heldFacePitch = solved.faced ? solved.facePitch : std::numeric_limits<float>::quiet_NaN();
+			if (solved.faced && (std::abs(solved.faceYaw) >= 3.0f || std::abs(solved.facePitch) >= 3.0f)) {
+				REX::INFO("Face: {} turned {:+.0f} degrees toward where the face points, camera {} {:.0f} degrees", Shots::Key(a_shot), solved.faceYaw,
+					solved.facePitch < 0.0f ? "lowered" : "raised", std::abs(solved.facePitch));
+			}
+			gp.limit = clear.usable ? clear.limit : std::numeric_limits<float>::infinity();
+			if (a_npcEmotion) {
+				NoteEmotionCut(a_shot);
+			}
+			REX::INFO("Director: {} -> {} over the plain shot ({:.1f} m away at {:.1f} degrees){}", a_why, Shots::Key(a_shot), solved.distance, solved.angle,
+				std::isfinite(gp.limit) ? std::format("; obstacle {:.1f} m from them, camera pulled in to {:.1f} m", clear.blockedAt, gp.limit) : std::string{});
+		};
+		// Your emotion close-up, on a reaction (0.7.11: reactions with seated people and
+		// merchants too, shown on the plain shot of you otherwise).
+		const bool playerClose = a_frame.playerCloseUp && !a_frame.npcTurn && a_frame.npcTalking;
+		if (playerClose) {
+			if (!gp.playerClose) {
+				gp.playerClose = true;
+				gp.shot.reset();
+				if (const auto shot = PlayerCloseShot(a_frame)) {
+					begin(*shot, "reaction: your expression", false);
 				}
 				LogSkipped();
+			}
+		} else {
+			if (gp.playerClose) {
+				gp.playerClose = false;
+				gp.shot.reset();
+			}
+			if (!a_frame.npcTalking || !a_frame.npcTurn || !s.emotionCloseUps) {
+				if (gp.shot) {
+					REX::INFO("Director: emotion close-up over; back to the plain shot");
+				}
+				gp.shot.reset();
+				return std::nullopt;
+			}
+			if (started) {
+				gp.shot.reset();
+				if (a_frame.intenseLine || a_frame.persuasionBeat) {
+					if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
+						begin(*shot, a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up", true);
+					}
+					LogSkipped();
+				}
 			}
 		}
 		if (!gp.shot) {

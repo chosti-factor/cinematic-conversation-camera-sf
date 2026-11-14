@@ -172,10 +172,10 @@ expression (table below). Trait options:
 | Wanted | Suspicious |
 | Kid Stuff | Friendly |
 | Neon Street Rat | Smirk |
+| Hero Worshipped | Puzzled |
 | UC Native, Freestar Settler, Raised Enlightened, Alien DNA | Confident |
 | Raised Universal, Spaced | Thinking |
 | Serpent's Embrace | Serious |
-| Hero Worshipped | Smirk |
 | Dream Home | Concerned |
 | Taskmaster | Stern |
 | Terra Firma | Relieved |
