@@ -1345,8 +1345,8 @@ namespace CCC
 			bool         downHit = false, up2Hit = false;
 			RE::NiPoint3 downSafe{}, up2Safe{};
 			CastDetail(mid, { mid.x, mid.y, mid.z - 4.0f }, down, downHit, downSafe);
-			const RE::NiPoint3 above{ mid.x, mid.y, mid.z + 0.8f };
-			CastDetail(above, { mid.x, mid.y, mid.z + kSky }, up2, up2Hit, up2Safe);
+			const RE::NiPoint3 higher{ mid.x, mid.y, mid.z + 0.8f };
+			CastDetail(higher, { mid.x, mid.y, mid.z + kSky }, up2, up2Hit, up2Safe);
 			REX::INFO("Room: straight up from between you: hit {} at fraction {:.3f}, safe point {:.2f} m up; from 0.8 m higher: hit {} at {:.3f}, safe point {:.2f} m up; "
 					  "straight down: hit {} at {:.3f}, safe point {:.2f} m down (your feet {:.2f} m down)",
 				upHit, up, upSafe.z - mid.z, up2Hit, up2, up2Safe.z - mid.z, downHit, down, mid.z - downSafe.z, mid.z - a_ground);
