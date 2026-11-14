@@ -8,10 +8,12 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ### Added
 - Testing messages in the top bar: while a conversation is filmed, `bShowMessages`' line and
-  shot messages show as one line of white text in the top letterbox bar, in the dialogue
-  menu's own font, staying until the next one or `fMessageSeconds` (6) pass. The game's own
-  notifications went by too fast for a line and its shot together; outside conversations
-  (overheard NPC lines) they're still used.
+  shot messages show as one line of text in the top letterbox bar, staying until the next
+  one or `fMessageSeconds` (6) pass. They look like the game's own notifications (same font,
+  size, colour and effects, learned from the first message of the session, which also goes
+  out as a notification) and are drawn by the same HUD messages menu. The notifications went
+  by too fast for a line and its shot together; outside conversations (overheard NPC lines)
+  they're still used.
 
 ### Changed
 - Leaving a conversation in third person: the last shot is held until the game hands back

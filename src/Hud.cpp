@@ -741,70 +741,187 @@ namespace CCC::Hud
 
 		// ---- Testing messages in the top bar (0.7.6) --------------------------------------------
 		// bShowMessages' line and shot messages, while a conversation is filmed: one line of
-		// text in the top bar (or at the top of the screen without the bars), in the dialogue
-		// menu's own font, staying until the next replaces it or fMessageSeconds pass. The
-		// game's notifications go by too fast for a line and its shot together.
+		// text in the top bar (or at the top of the screen without the bars), staying until the
+		// next replaces it or fMessageSeconds pass. The game's notifications go by too fast for
+		// a line and its shot together. The text looks like those notifications: it's added to
+		// the same movie (the HUD messages menu, drawn over the dialogue menu and its bars), in
+		// the font, size, colour and effects of a notification found there. To find one, the
+		// first message of the session goes out as a notification as well; until it's found
+		// (or for 3 s, after which the subtitle's look is used), messages stay notifications.
 		constexpr const char* kMessageName = "cccMessage";
 
 		struct MessageState
 		{
-			std::string text;             // waiting to be shown
+			std::string text;  // waiting to be shown
 			bool        fresh{ false };
-			float       age{ 0.0f };      // seconds on screen
+			float       age{ 0.0f };  // seconds on screen
 			float       alpha{ 0.0f };
-			bool        available{ false };  // the dialogue menu is filmed: messages go here
-			std::string font;             // copied from the menu's own text
-			double      size{ 0.0 };
+			bool        available{ false };  // a conversation is filmed: messages can go to the bar
+			// The notifications' look.
+			enum class Look
+			{
+				kUnknown,
+				kProbing,
+				kKnown,
+				kNone  // no look found: notifications only
+			} look{ Look::kUnknown };
+			std::string probe;  // the notification being looked for
+			float       probeAge{ 0.0f };
+			std::string font;
+			double      size{ 20.0 };
+			std::uint32_t color{ 0xFFFFFF };
+			bool        bold{ false };
+			double      spacing{ 0.0 };
 			bool        embed{ true };
 			bool        logged{ false };
 		} g_msg;
 
-		// The font of the dialogue menu's own text: an option, or else the buttons' labels.
-		bool ReadMenuFont(Value& a_top)
+		std::string Lower(std::string a_text)
 		{
-			Value menu, list, holder, entry, textHolder, field;
-			bool  found = Child(a_top, "Menu_mc", menu) && Child(menu, "DialogueList_mc", list) && Child(list, "EntryHolder_mc", holder) &&
-			             Child(holder, "Entry0", entry) && Child(entry, "TextHolder_mc", textHolder) && Child(textHolder, "textField", field);
-			if (!found) {
-				Value bar, button, label, instance;
-				found = Child(a_top, "Menu_mc", menu) && Child(menu, "ButtonBar_mc", bar) && Child(bar, "CancelButton_mc", button) && Child(button, "Label_mc", label) &&
-				        Child(label, "LabelInstance_mc", instance) && Child(instance, "Label_tf", field);
+			for (auto& c : a_text) {
+				c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
 			}
-			Value format;
-			if (!found || !SafeInvoke(&field, "getTextFormat", &format, nullptr, 0) || !format.IsObject()) {
+			return a_text;
+		}
+
+		// A text field under a_obj whose text contains a_needle (lower case); its path in a_path.
+		bool FindTextField(const Value& a_obj, const std::string& a_needle, const std::string& a_path, int a_depth, int& a_visited, Value& a_out, std::string& a_found)
+		{
+			if (++a_visited > 800 || a_depth > 12) {
 				return false;
 			}
-			g_msg.font = StringMember(format, "font");
-			g_msg.size = Member(format, "size", 0.0);
-			Value embed;
-			g_msg.embed = SafeGet(&field, "embedFonts", &embed) && embed.IsBoolean() ? embed.GetBoolean() : true;
-			return !g_msg.font.empty();
+			const std::string text = StringMember(a_obj, "text");
+			if (!text.empty() && Lower(text).find(a_needle) != std::string::npos) {
+				Value probe;
+				if (SafeGet(&a_obj, "textWidth", &probe)) {
+					a_out = a_obj;
+					a_found = a_path;
+					return true;
+				}
+			}
+			const int children = static_cast<int>(Member(a_obj, "numChildren", 0.0));
+			for (int i = 0; i < children; ++i) {
+				Value index{ static_cast<std::int32_t>(i) };
+				Value child;
+				if (!SafeInvoke(const_cast<Value*>(&a_obj), "getChildAt", &child, &index, 1) || !child.IsDisplayObject()) {
+					continue;
+				}
+				const std::string name = StringMember(child, "name");
+				if (FindTextField(child, a_needle, a_path + "." + (name.empty() ? std::format("[{}]", i) : name), a_depth + 1, a_visited, a_out, a_found)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		bool ReadLook(Value& a_field, const char* a_where)
+		{
+			Value format;
+			if (!SafeInvoke(&a_field, "getTextFormat", &format, nullptr, 0) || !format.IsObject()) {
+				return false;
+			}
+			const auto font = StringMember(format, "font");
+			if (font.empty()) {
+				return false;
+			}
+			g_msg.font = font;
+			g_msg.size = Member(format, "size", g_msg.size);
+			g_msg.color = static_cast<std::uint32_t>(Member(format, "color", 0xFFFFFF));
+			g_msg.spacing = Member(format, "letterSpacing", 0.0);
+			Value bold, embed;
+			g_msg.bold = SafeGet(&format, "bold", &bold) && bold.IsBoolean() && bold.GetBoolean();
+			g_msg.embed = SafeGet(&a_field, "embedFonts", &embed) && embed.IsBoolean() ? embed.GetBoolean() : true;
+			g_msg.look = MessageState::Look::kKnown;
+			REX::INFO("HUD: testing messages take the look of {}: font '{}', size {:.0f}, colour {:06X}{}{}", a_where, g_msg.font, g_msg.size, g_msg.color,
+				g_msg.bold ? ", bold" : "", g_msg.spacing != 0.0 ? std::format(", letter spacing {:.1f}", g_msg.spacing) : std::string{});
+			return true;
+		}
+
+		// The effects (shadow, glow) of the notification text, copied onto ours.
+		void CopyFilters(Value& a_top, Value& a_field)
+		{
+			Value     source;
+			int       visited = 0;
+			std::string path;
+			if (g_msg.probe.empty() || !FindTextField(a_top, Lower(g_msg.probe.substr(0, 24)), "HUDMessagesMenu", 0, visited, source, path)) {
+				return;
+			}
+			Value filters;
+			if (SafeGet(&source, "filters", &filters) && filters.IsArray()) {
+				SafeSet(&a_field, "filters", &filters);
+			}
+		}
+
+		bool LocalPoint(MovieRoot* a_root, Value& a_obj, double a_gx, double a_gy, double& a_x, double& a_y)
+		{
+			const Value args[2]{ Value{ a_gx }, Value{ a_gy } };
+			Value       point, local;
+			if (!SafeCreateObjectArgs(a_root, &point, "flash.geom.Point", args, 2) || !SafeInvoke(&a_obj, "globalToLocal", &local, &point, 1) || !local.IsObject()) {
+				return false;
+			}
+			a_x = Member(local, "x", a_gx);
+			a_y = Member(local, "y", a_gy);
+			return true;
 		}
 
 		void UpdateMessage(bool a_filming, float a_delta)
 		{
 			const auto& s = Settings::Get();
 			g_msg.available = a_filming && !g_broken;
-			const auto ref = OpenMovie("DialogueMenu");
+			const auto ref = OpenMovie("HUDMessagesMenu");
 			if (!ref) {
 				return;
 			}
 			Value top;
-			if (!RootObject(ref->root, top, "DialogueMenu")) {
+			if (!RootObject(ref->root, top, "HUDMessagesMenu")) {
+				return;
+			}
+			// Learning the notifications' look from the one sent out as a probe.
+			if (g_msg.look == MessageState::Look::kProbing) {
+				g_msg.probeAge += a_delta;
+				static float sinceSearch = 1.0f;  // search every tenth of a second, not every frame
+				sinceSearch += a_delta;
+				if (sinceSearch < 0.1f && g_msg.probeAge <= 3.0f) {
+					return;
+				}
+				sinceSearch = 0.0f;
+				Value       field;
+				int         visited = 0;
+				std::string path;
+				// It may be drawn by the HUD menu rather than the HUD messages menu: look in both.
+				bool found = FindTextField(top, Lower(g_msg.probe.substr(0, 24)), "HUDMessagesMenu", 0, visited, field, path);
+				if (!found) {
+					if (const auto hud = OpenMovie("HUDMenu")) {
+						Value hudTop;
+						int   more = 0;
+						found = RootObject(hud->root, hudTop, "HUDMenu") && FindTextField(hudTop, Lower(g_msg.probe.substr(0, 24)), "HUDMenu", 0, more, field, path);
+						visited += more;
+					}
+				}
+				if (found) {
+					REX::INFO("HUD: the game's notification is {}", path);
+					if (!ReadLook(field, "the game's notifications")) {
+						g_msg.look = MessageState::Look::kNone;
+						REX::WARN("HUD: couldn't read the notification's font; testing messages stay notifications");
+					}
+				} else if (g_msg.probeAge > 3.0f) {
+					REX::WARN("HUD: couldn't find the notification '{}' ({} elements searched); using the subtitles' look", g_msg.probe.substr(0, 40), visited);
+					Value menu, group, holder, text;
+					if (!Child(top, "Menu_mc", menu) || !Child(menu, "BottomCenterGroup_mc", group) || !Child(group, "SubtitleText_mc", holder) ||
+						!Child(holder, "SubtitleText_tf", text) || !ReadLook(text, "the subtitles")) {
+						g_msg.look = MessageState::Look::kNone;
+						REX::WARN("HUD: couldn't read the subtitles' font either; testing messages stay notifications");
+					}
+					g_msg.probe.clear();
+				}
+				return;
+			}
+			if (g_msg.look != MessageState::Look::kKnown) {
 				return;
 			}
 			Value field;
-			bool  have = FindChild(top, kMessageName, field);
-			if (!have) {
+			if (!FindChild(top, kMessageName, field)) {
 				if (!a_filming || !g_msg.fresh) {
-					return;
-				}
-				if (g_msg.font.empty() && !ReadMenuFont(top)) {
-					if (!g_msg.logged) {
-						g_msg.logged = true;
-						REX::WARN("HUD: couldn't read the dialogue menu's font; testing messages use the game's notifications");
-					}
-					g_msg.available = false;
 					return;
 				}
 				if (!SafeCreateObject(ref->root, &field, "flash.text.TextField")) {
@@ -822,31 +939,31 @@ namespace CCC::Hud
 				SafeSet(&field, "wordWrap", &no);
 				SafeSet(&field, "embedFonts", &embed);
 				SafeSet(&field, "autoSize", &autoSize);
+				CopyFilters(top, field);
 				if (!SafeInvoke(&top, "addChild", nullptr, &field, 1)) {
 					g_msg.available = false;
 					return;
 				}
-				if (!g_msg.logged) {
-					g_msg.logged = true;
-					REX::INFO("HUD: testing messages shown in the top bar, font '{}' (the menu's own text is {:.0f} high)", g_msg.font, g_msg.size);
-				}
 			}
-			double width = 1920.0, height = 1080.0;
+			double width = 1920.0;
 			Value  stage;
 			if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
 				width = Member(stage, "stageWidth", width);
-				height = Member(stage, "stageHeight", height);
 			}
 			if (g_msg.fresh) {
 				g_msg.fresh = false;
 				g_msg.age = 0.0f;
-				// White, a little smaller than the options; shrunk to fit one line if it's long.
+				// The notifications' look; a smaller size only if it won't fit on one line.
 				const double maxWidth = width - 160.0;
-				for (double size = 22.0; size >= 14.0; size -= 2.0) {
-					const Value args[3]{ Value{ g_msg.font.c_str() }, Value{ size }, Value{ static_cast<std::uint32_t>(0xFFFFFF) } };
+				for (double size = g_msg.size; size >= (std::min)(g_msg.size, 14.0); size -= 2.0) {
+					const Value args[4]{ Value{ g_msg.font.c_str() }, Value{ size }, Value{ g_msg.color }, Value{ g_msg.bold } };
 					Value       format;
-					if (!SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 3)) {
+					if (!SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 4)) {
 						break;
+					}
+					if (g_msg.spacing != 0.0) {
+						const Value spacing{ g_msg.spacing };
+						SafeSet(&format, "letterSpacing", &spacing);
 					}
 					SafeSet(&field, "defaultTextFormat", &format);
 					const Value text{ g_msg.text.c_str() };
@@ -862,12 +979,15 @@ namespace CCC::Hud
 			const float target = a_filming && g_msg.age < seconds ? 1.0f : 0.0f;
 			const float step = a_delta / (target > g_msg.alpha ? 0.2f : 0.5f);
 			g_msg.alpha = g_msg.alpha < target ? (std::min)(target, g_msg.alpha + step) : (std::max)(target, g_msg.alpha - step);
-			// Centred in the top bar as it slides in, or near the top of the screen without it.
+			// Centred in the top bar as it slides in (screen position, in this movie's own
+			// coordinates), or near the top of the screen without the bars.
 			const double textHeight = Member(field, "textHeight", 24.0);
 			const double bar = s.letterbox ? g_bars.barHeight : 0.0;
 			const float  e = 1.0f - (1.0f - g_bars.ease) * (1.0f - g_bars.ease);
-			const double y = bar > textHeight + 8.0 ? (bar - textHeight) * 0.5 - 2.0 - bar * (1.0 - e) : 24.0;
-			const Value  vx{ 80.0 }, vy{ y }, va{ static_cast<double>(g_msg.alpha) }, vv{ g_msg.alpha > 0.001f };
+			const double gy = bar > textHeight + 8.0 ? (bar - textHeight) * 0.5 - 2.0 - bar * (1.0 - e) : 24.0;
+			double       x = 80.0, y = gy;
+			LocalPoint(ref->root, top, 80.0, gy, x, y);
+			const Value vx{ x }, vy{ y }, va{ static_cast<double>(g_msg.alpha) }, vv{ g_msg.alpha > 0.001f };
 			SafeSet(&field, "x", &vx);
 			SafeSet(&field, "y", &vy);
 			SafeSet(&field, "alpha", &va);
@@ -973,6 +1093,16 @@ namespace CCC::Hud
 	bool ShowMessage(const std::string& a_text)
 	{
 		if (!g_msg.available || g_broken) {
+			return false;
+		}
+		if (g_msg.look == MessageState::Look::kUnknown) {
+			// Send this one as a notification and learn its look from it.
+			g_msg.look = MessageState::Look::kProbing;
+			g_msg.probe = a_text;
+			g_msg.probeAge = 0.0f;
+			return false;
+		}
+		if (g_msg.look == MessageState::Look::kProbing) {
 			return false;
 		}
 		g_msg.text = a_text;
