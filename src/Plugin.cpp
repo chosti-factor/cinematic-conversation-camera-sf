@@ -3664,7 +3664,10 @@ namespace CCC
 		}
 
 		// Who's around: the game's actor list, or else the actors in your cell.
-		std::vector<RE::NiPointer<RE::Actor>> NearbyActors(RE::PlayerCharacter* a_player, const char*& a_source)
+		// a_allLists: also the game's other three lists (low, middle-high, middle-low process),
+		// for overheard lines: 0.7.7's test heard no crowd citizens talking, who may not be in
+		// the high-process list. a_counts: how many each list held.
+		std::vector<RE::NiPointer<RE::Actor>> NearbyActors(RE::PlayerCharacter* a_player, const char*& a_source, bool a_allLists = false, std::array<int, 4>* a_counts = nullptr)
 		{
 			std::vector<RE::NiPointer<RE::Actor>> out;
 			a_source = "nothing";
@@ -3673,11 +3676,25 @@ namespace CCC
 			if (Hud::AddressKnown(kProcessListsSingleton) && Hud::AddressKnown(kGetSmartPointer)) {
 				if (auto* lists = RE::ProcessLists::GetSingleton()) {
 					std::vector<RE::Actor*> actors;
-					if (ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), kHighActors, 2000, &actors) > 0) {
+					const int  high = ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), kHighActors, 2000, &actors);
+					if (a_counts) {
+						(*a_counts)[0] = (std::max)(high, 0);
+					}
+					if (a_allLists) {
+						for (std::size_t i = 1; i < 4; ++i) {
+							const int n = ReadActorArray(reinterpret_cast<std::uintptr_t>(lists), kHighActors + i * 0x10, 4000, &actors);
+							if (a_counts) {
+								(*a_counts)[i] = (std::max)(n, 0);
+							}
+						}
+						std::ranges::sort(actors);
+						actors.erase(std::unique(actors.begin(), actors.end()), actors.end());
+					}
+					if (!actors.empty()) {
 						for (auto* actor : actors) {
 							out.emplace_back(actor);
 						}
-						a_source = "the game's actor list";
+						a_source = a_allLists ? "the game's actor lists" : "the game's actor list";
 						return out;
 					}
 				}
@@ -3710,8 +3727,10 @@ namespace CCC
 			if (summary) {
 				nextSummary = a_now + 10s;
 			}
-			const char* source = nullptr;
-			const auto  nearby = NearbyActors(player, source);
+			const char*        source = nullptr;
+			std::array<int, 4> counts{ -1, -1, -1, -1 };
+			const auto         nearby = NearbyActors(player, source, true, &counts);
+			std::string        around;  // who's within 20 m (for the summary)
 			int         listed = 0, inRange = 0, talkingNow = 0, withLine = 0;
 			std::string talkers;
 			const auto playerFeet = player->GetPosition();
@@ -3731,6 +3750,10 @@ namespace CCC
 				if (t.name.empty()) {
 					const char* name = actor->GetDisplayFullName();
 					t.name = name && *name ? name : std::format("{:08X}", actor->formID);
+				}
+				if (summary && inRange <= 15) {
+					const bool high = actor->currentProcess && actor->currentProcess->high;
+					around += std::format("{}{}{}", around.empty() ? "" : ", ", t.name, high ? "" : " (not high process)");
 				}
 				const auto head = Camera::HeadPosition(actor.get());
 				t.feet = feet;
@@ -3779,8 +3802,11 @@ namespace CCC
 			}
 			std::erase_if(g_talkers, [&](const auto& a_entry) { return a_now - a_entry.second.seen > 30s; });
 			if (summary) {
-				REX::INFO("Overheard: {} actors in {}, {} within 20 m, {} with a dialogue record, {} talking now{}{}", listed, source, inRange, withLine, talkingNow,
-					talkers.empty() ? "" : ": ", talkers);
+				REX::INFO("Overheard: {} actors in {} (high {}, low {}, middle-high {}, middle-low {}), {} within 20 m, {} with a dialogue record, {} talking now{}{}", listed, source,
+					counts[0], counts[1], counts[2], counts[3], inRange, withLine, talkingNow, talkers.empty() ? "" : ": ", talkers);
+				if (!around.empty()) {
+					REX::INFO("Overheard: within 20 m: {}{}", around, inRange > 15 ? ", ..." : "");
+				}
 			}
 		}
 
@@ -4137,7 +4163,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.7 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.8 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

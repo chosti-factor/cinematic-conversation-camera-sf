@@ -4,7 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.7.7 - unreleased
+## 0.7.8 - unreleased
+
+### Diagnostic
+- Overheard lines: the game's other three actor lists (low, middle-high and middle-low
+  process) are listened to as well, and every 10 s the log lists who's within 20 m and
+  which list held how many. 0.7.7's test heard named NPCs but none of the crowd citizens
+  talking around you, who may not be in the high-process list.
+
+## 0.7.7 - 2026-11-14
 
 ### Fixed
 - Bystanders and overheard NPC lines: the game's list of active actors that both read was

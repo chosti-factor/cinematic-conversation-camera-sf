@@ -108,7 +108,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   the default amount of camera sway (`iCameraSway`); leaving a conversation in third
   person (the camera rests on the NPC's middle for a moment: frame their head, or go
   straight to the game's camera as in first person); large speakers such as Vasco, whose
-  bigger body can block you in over-the-shoulder shots.
+  bigger body can block you in over-the-shoulder shots; a seated NPC hidden behind your body in
+  the plain over-the-shoulder shot.
 - Public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
   replacer, a subtitle mod) and listing compatibility.
 
