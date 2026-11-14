@@ -12,6 +12,10 @@ test build; "diagnostic" items only add information to the log for testing.
   expression for the whole line (0.7.12 test: Sam Coe's awed answer met a questioning look
   throughout). The choice's expression now shows for 1.5 s, then your answer to the line.
 
+### Changed
+- Close-ups of you (`iPlayerCloseUpChance`) 50% of eligible lines instead of 20%: in testing
+  they hardly came up, since most expressive lines are the NPC's own emotion close-ups.
+
 ### Added
 - The conversation lens (`[Camera]` `fConversationLens`, 45 in the INI, 0 = the game's 30):
   Starfield films conversations through a 30 degree lens (`fDialogueCameraFailsafeFPFOV`),

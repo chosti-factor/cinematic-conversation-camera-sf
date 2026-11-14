@@ -210,7 +210,7 @@ without a skill tag), this chance of your background's expression instead.
 | Pilgrim | Relieved |
 | Cyberneticist, Xenobiologist | Concentrating |
 
-### Your emotion close-ups (`iPlayerCloseUpChance`, 20%)
+### Your emotion close-ups (`iPlayerCloseUpChance`, 50%)
 
 When your face answers a line with an expression (40 characters or longer, not an NPC
 emotion close-up), this chance the line is shown on you as a close-up, pushing in; an
