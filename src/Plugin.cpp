@@ -3278,11 +3278,21 @@ namespace CCC
 		{
 			// Your face for an option with a skill tag (0.8).
 			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
-				if (const auto expression = Face::ForChoice(a_text); !expression.empty()) {
+				auto        expression = Face::ForChoice(a_text);
+				std::string reason;
+				if (!expression.empty()) {
+					const auto close = a_text.find(']');
+					reason = close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "your choice" };
+				} else if (expression = Face::MaybeSignature(); !expression.empty()) {
+					// An option without a skill tag: now and then you say it in character.
+					std::string background;
+					(void)Face::Signature(&background);
+					reason = background;
+				}
+				if (!expression.empty()) {
 					Face::Set(expression, std::format("you chose '{}'", a_text.substr(0, 40)));
 					if (Settings::Get().showMessages && Face::Current() == expression) {
-						const auto close = a_text.find(']');
-						ShowHudMessage(std::format("You: {} ({})", expression, close != std::string::npos ? a_text.substr(0, close + 1) : std::string{ "your choice" }));
+						ShowHudMessage(std::format("You: {} ({})", expression, reason));
 					}
 				}
 			}
@@ -3485,7 +3495,17 @@ namespace CCC
 			// lines give your face back to the game.
 			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
 				const char* who = a_speaker->GetDisplayFullName();
-				Face::Set(Face::ListeningTo(emotion), std::format("listening to {}: {}", who ? who : "the speaker", emotion.empty() ? "no expression" : emotion));
+				auto expression = Face::ListeningTo(emotion);
+				auto why = std::format("listening to {}: {}", who ? who : "the speaker", emotion.empty() ? "no expression" : emotion);
+				if (expression.empty()) {
+					// A neutral moment: now and then your background shows (0.7.11).
+					std::string background;
+					if (expression = Face::MaybeSignature(); !expression.empty()) {
+						(void)Face::Signature(&background);
+						why += std::format("; your {} side", background);
+					}
+				}
+				Face::Set(expression, why);
 			}
 			g_playerFaceShown.store(Settings::Get().playerFace && !Face::Current().empty(), std::memory_order_release);
 			if (Settings::Get().showMessages) {

@@ -7,6 +7,12 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.7.11 - unreleased
 
 ### Added
+- Your background on your face (`[Face]` `iSignatureChance`, 30%): at moments your face would
+  otherwise be neutral (an NPC line without an expression, an option without a skill tag),
+  your background's expression shows instead now and then: Space Scoundrel smirks, Gangster
+  looks smug, Bounty Hunter suspicious, Diplomat friendly, Professor thoughtful... (all 20
+  backgrounds, see the INI). The background is read from your perks with the game's own
+  check behind Papyrus' HasPerk (found in 1.16.244, Address Library ID 101224).
 - Your emotion close-ups (`[Face]` `iPlayerCloseUpChance`, 20%): when your face answers an
   NPC's line with an expression, that line may be shown on you as a close-up, pushing in
   (an extreme close-up as often as the NPC's, `iExtremeCloseUpChance`). It counts as a

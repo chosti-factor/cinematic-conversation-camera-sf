@@ -17,6 +17,14 @@ namespace CCC::Face
 	// Sets your expression ("" puts the game's own back). a_why is for the log.
 	void Set(const std::string& a_expression, std::string_view a_why);
 
+	// Your background's signature expression ("" if none or unknown), a_background its name.
+	// Read once per conversation.
+	[[nodiscard]] std::string Signature(std::string* a_background = nullptr);
+
+	// With iSignatureChance percent: your signature expression, else "". For moments the
+	// face would otherwise go back to neutral.
+	[[nodiscard]] std::string MaybeSignature();
+
 	// The expression set now ("" = the game's own).
 	[[nodiscard]] const std::string& Current();
 

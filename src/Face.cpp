@@ -51,6 +51,56 @@ namespace CCC::Face
 			return true;
 		}
 
+		// Starfield 1.16.244: the actor's entry for a perk (rank at +8), or null; behind Papyrus'
+		// Actor.HasPerk (both natives call it). Address Library ID 101224 (RVA 0x1955080).
+		constexpr std::uint64_t kPerkRankEntry = 101224;
+		using PerkRankEntry_t = const std::uint8_t* (*)(RE::Actor*, RE::BGSPerk*);
+
+		bool HasPerkUnsafe(PerkRankEntry_t a_fn, RE::Actor* a_actor, RE::BGSPerk* a_perk, bool& a_has)
+		{
+			__try {
+				const auto* entry = a_fn(a_actor, a_perk);
+				a_has = entry && entry[8] != 0;
+				return true;
+			} __except (EXCEPTION_EXECUTE_HANDLER) {
+				return false;
+			}
+		}
+
+		// Backgrounds (perks in Starfield.esm) and the expression each wears now and then.
+		struct BackgroundFace
+		{
+			RE::TESFormID    id;
+			std::string_view name;
+			std::string_view expression;
+		};
+		constexpr std::array kBackgrounds{
+			BackgroundFace{ 0x22EC76, "Beast Hunter", "Serious" },
+			BackgroundFace{ 0x22EC81, "Bouncer", "Stern" },
+			BackgroundFace{ 0x22EC80, "Bounty Hunter", "Suspicious" },
+			BackgroundFace{ 0x22EC7F, "Chef", "Happy" },
+			BackgroundFace{ 0x22EC7E, "Combat Medic", "Concerned" },
+			BackgroundFace{ 0x22EC7D, "Cyber Runner", "Smirk" },
+			BackgroundFace{ 0x22EC7C, "Cyberneticist", "Concentrating" },
+			BackgroundFace{ 0x22EC7B, "Diplomat", "Friendly" },
+			BackgroundFace{ 0x22EC79, "Explorer", "Awed" },
+			BackgroundFace{ 0x22EC78, "Gangster", "Smug" },
+			BackgroundFace{ 0x22EC77, "Homesteader", "Friendly" },
+			BackgroundFace{ 0x22EC7A, "Industrialist", "Confident" },
+			BackgroundFace{ 0x22EC75, "Long Hauler", "Tired" },
+			BackgroundFace{ 0x22EC73, "Pilgrim", "Relieved" },
+			BackgroundFace{ 0x22EC72, "Professor", "Thinking" },
+			BackgroundFace{ 0x22EC74, "Ronin", "Stern" },
+			BackgroundFace{ 0x22EC71, "Sculptor", "Thinking" },
+			BackgroundFace{ 0x22EC70, "Soldier", "Serious" },
+			BackgroundFace{ 0x22EC6F, "Space Scoundrel", "Smirk" },
+			BackgroundFace{ 0x22EC6E, "Xenobiologist", "Puzzled" },
+		};
+
+		bool        g_signatureRead = false;
+		std::string g_signature;
+		std::string g_background;
+
 		std::string Lower(std::string_view a_text)
 		{
 			std::string out;
@@ -140,6 +190,52 @@ namespace CCC::Face
 		}
 	}
 
+	std::string Signature(std::string* a_background)
+	{
+		if (!g_signatureRead) {
+			g_signatureRead = true;
+			g_signature.clear();
+			g_background.clear();
+			auto*                   player = RE::PlayerCharacter::GetSingleton();
+			constexpr std::uint64_t kLookupByID = 47401;
+			if (player && Hud::AddressKnown(kPerkRankEntry) && Hud::AddressKnown(kLookupByID)) {
+				const auto fn = reinterpret_cast<PerkRankEntry_t>(REL::ID(kPerkRankEntry).address());
+				for (const auto& bg : kBackgrounds) {
+					auto* form = RE::TESForm::LookupByID(bg.id);
+					if (!form || form->GetFormType() != RE::FormType::kPERK) {
+						continue;
+					}
+					bool has = false;
+					if (!HasPerkUnsafe(fn, player, static_cast<RE::BGSPerk*>(form), has)) {
+						REX::WARN("Face: checking your background failed; no signature expression");
+						break;
+					}
+					if (has) {
+						g_background = bg.name;
+						g_signature = bg.expression;
+						break;
+					}
+				}
+			}
+			REX::INFO("Face: your background {}{}", g_background.empty() ? "isn't one of the 20 known" : g_background,
+				g_signature.empty() ? "" : std::format(", signature expression {}", g_signature));
+		}
+		if (a_background) {
+			*a_background = g_background;
+		}
+		return g_signature;
+	}
+
+	std::string MaybeSignature()
+	{
+		const auto signature = Signature();
+		if (signature.empty()) {
+			return {};
+		}
+		static std::mt19937 rng{ std::random_device{}() };
+		return std::uniform_int_distribution<int>{ 0, 99 }(rng) < Settings::Get().signatureChance ? signature : std::string{};
+	}
+
 	const std::string& Current()
 	{
 		return g_current;
@@ -147,6 +243,9 @@ namespace CCC::Face
 
 	void Update(bool a_filming)
 	{
+		if (!a_filming) {
+			g_signatureRead = false;  // read again next conversation (a new game, a new background)
+		}
 		if (!a_filming && !g_current.empty()) {
 			Set({}, "conversation over");
 			if (!g_current.empty()) {
