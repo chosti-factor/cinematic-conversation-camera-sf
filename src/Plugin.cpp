@@ -1868,9 +1868,11 @@ namespace CCC
 						g_state.lineCounted = 0;
 						if (fresh && s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat) {
-							const int sentences = CountSentences(text);
-							if (g_state.reactionLines >= s.reactionEvery && !g_state.lineIntense && text.size() >= 40 &&
-								std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
+							const int  sentences = CountSentences(text);
+							const bool due = g_state.reactionLines >= s.reactionEvery;
+							const bool rolled = due && !g_state.lineIntense && text.size() >= 40 &&
+							                    std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
+							if (rolled) {
 								REX::INFO("Reaction shot: '{}' shown on you listening ({} sentences heard since the last)", text.substr(0, 60), g_state.reactionLines);
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
@@ -1878,8 +1880,10 @@ namespace CCC
 								g_state.reactionLines += sentences;
 								g_state.lineCounted = sentences;
 								if (s.debugLog) {
-									REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines,
-										g_state.reactionLines >= s.reactionEvery ? " (the next line may be a reaction)" : "");
+									// Why this line wasn't a reaction, when one was due.
+									const char* why = !due ? "" : g_state.lineIntense ? "; not a reaction: an emotion close-up line" :
+									                  text.size() < 40 ? "; not a reaction: under 40 characters" : "; not a reaction: the chance roll said no";
+									REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines, why);
 								}
 							}
 						}
@@ -3596,11 +3600,73 @@ namespace CCC
 			}
 		}
 
+		// The game's list of actors in high process: what's in it, once (0.7.6 test: it was
+		// always empty, so the layout this was written for may be off on 1.16.244).
+		void LogProcessListsOnce(RE::ProcessLists* a_lists)
+		{
+			static bool logged = false;
+			if (logged || !Settings::Get().debugLog) {
+				return;
+			}
+			logged = true;
+			std::array<std::uint64_t, 0x40> words{};
+			if (!SafeCopy(words.data(), a_lists, sizeof(words))) {
+				return;
+			}
+			std::string arrays;
+			for (std::size_t i = 0; i + 1 < words.size(); ++i) {
+				const auto ptr = words[i];
+				const auto capacity = static_cast<std::uint32_t>(words[i + 1]);
+				const auto size = static_cast<std::uint32_t>(words[i + 1] >> 32);
+				if (ptr > 0x10000 && ptr < 0x7FFFFFFFFFFF && size > 0 && size <= 4000 && capacity >= size && capacity <= 8000) {
+					arrays += std::format(" +{:X}: {} of {}", i * 8, size, capacity);
+				}
+			}
+			REX::INFO("Nearby actors: the game's list says {} actors in high process (+20: {}, +24: {}); array-like members:{}", a_lists->highActorHandles.size(),
+				static_cast<std::int32_t>(words[4]), static_cast<std::int32_t>(words[4] >> 32), arrays.empty() ? " none" : arrays);
+		}
+
+		// Who's around: the game's list of active actors or, when that comes back empty (0.7.6
+		// test: always, so neither overheard lines nor bystanders were ever seen), the actors
+		// among the references of your cell.
+		std::vector<RE::NiPointer<RE::Actor>> NearbyActors(RE::PlayerCharacter* a_player, const char*& a_source)
+		{
+			std::vector<RE::NiPointer<RE::Actor>> out;
+			a_source = "nothing";
+			constexpr std::uint64_t kProcessListsSingleton = 937584;
+			if (Hud::AddressKnown(kProcessListsSingleton)) {
+				if (auto* lists = RE::ProcessLists::GetSingleton()) {
+					LogProcessListsOnce(lists);
+					for (const auto& handle : lists->highActorHandles) {
+						if (auto actor = handle.get()) {
+							out.push_back(actor);
+						}
+					}
+					if (!out.empty()) {
+						a_source = "the game's list";
+						return out;
+					}
+				}
+			}
+			auto*          cell = a_player ? a_player->parentCell : nullptr;
+			std::uint32_t  type = 0, id = 0;
+			const char*    editorId = nullptr;
+			if (cell && ReadFormInfo(reinterpret_cast<std::uintptr_t>(cell), type, id, editorId) && type == std::to_underlying(RE::FormType::kCELL) && cell->IsAttached()) {
+				cell->ForEachReference([&](const RE::NiPointer<RE::TESObjectREFR>& a_ref) {
+					if (a_ref->IsActor()) {
+						out.emplace_back(static_cast<RE::Actor*>(a_ref.get()));
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				a_source = "your cell";
+			}
+			return out;
+		}
+
 		void UpdateOverheard(std::chrono::steady_clock::time_point a_now)
 		{
 			const auto&             s = Settings::Get();
 			auto*                   player = RE::PlayerCharacter::GetSingleton();
-			constexpr std::uint64_t kProcessListsSingleton = 937584;
 			if (!(s.debugLog || s.showMessages) || !player) {
 				return;
 			}
@@ -3610,29 +3676,15 @@ namespace CCC
 			if (summary) {
 				nextSummary = a_now + 10s;
 			}
-			if (!Hud::AddressKnown(kProcessListsSingleton)) {
-				static bool warned = false;
-				if (!warned && s.debugLog) {
-					warned = true;
-					REX::WARN("Overheard: the game's list of nearby actors isn't in the Address Library; not listening");
-				}
-				return;
-			}
-			auto* lists = RE::ProcessLists::GetSingleton();
-			if (!lists) {
-				if (summary) {
-					REX::INFO("Overheard: no list of nearby actors yet");
-				}
-				return;
-			}
+			const char* source = nullptr;
+			const auto  nearby = NearbyActors(player, source);
 			int         listed = 0, inRange = 0, talkingNow = 0, withLine = 0;
 			std::string talkers;
 			const auto playerFeet = player->GetPosition();
 			const auto playerHeadAt = Camera::HeadPosition(player);
 			const auto playerHead = playerHeadAt ? *playerHeadAt : RE::NiPoint3{ playerFeet.x, playerFeet.y, playerFeet.z + 1.6f };
-			for (const auto& handle : lists->highActorHandles) {
+			for (const auto& actor : nearby) {
 				++listed;
-				const auto actor = handle.get();
 				if (!actor || actor.get() == player || actor->IsDead()) {
 					continue;
 				}
@@ -3693,7 +3745,7 @@ namespace CCC
 			}
 			std::erase_if(g_talkers, [&](const auto& a_entry) { return a_now - a_entry.second.seen > 30s; });
 			if (summary) {
-				REX::INFO("Overheard: {} actors nearby in the game's list, {} within 20 m, {} with a dialogue record, {} talking now{}{}", listed, inRange, withLine, talkingNow,
+				REX::INFO("Overheard: {} actors in {}, {} within 20 m, {} with a dialogue record, {} talking now{}{}", listed, source, inRange, withLine, talkingNow,
 					talkers.empty() ? "" : ": ", talkers);
 			}
 		}
@@ -3710,12 +3762,12 @@ namespace CCC
 			std::vector<Bystander>                          still;
 			const auto&                                     s = Settings::Get();
 			auto*                                           player = RE::PlayerCharacter::GetSingleton();
-			constexpr std::uint64_t                         kProcessListsSingleton = 937584;
-			if (s.avoidBystanders && g_state.active && !g_state.handedBack && player && Hud::AddressKnown(kProcessListsSingleton)) {
-				if (auto* lists = RE::ProcessLists::GetSingleton()) {
+			if (s.avoidBystanders && g_state.active && !g_state.handedBack && player) {
+				const char* source = nullptr;
+				const auto  nearby = NearbyActors(player, source);
+				{
 					const auto center = player->GetPosition();
-					for (const auto& handle : lists->highActorHandles) {
-						const auto actor = handle.get();
+					for (const auto& actor : nearby) {
 						if (!actor || actor.get() == player || actor->formID == g_state.speakerId) {
 							continue;
 						}
@@ -4051,7 +4103,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.6 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.7 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
