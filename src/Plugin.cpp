@@ -73,7 +73,8 @@ namespace CCC
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			std::string                           lastLineText{};
-			bool                                  playerWasTalking{ false };
+			std::uintptr_t                        playerLineInfo{ 0 };       // diagnostic: your last dialogue record
+			std::string                           playerLineText{};
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
 			std::optional<RE::NiPoint3>           slackNpcHead{};    // head point after the dead band
 			std::optional<RE::NiPoint3>           slackPlayerHead{};
@@ -848,6 +849,7 @@ namespace CCC
 
 		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
 		std::string LineEmotion(RE::Actor* a_speaker);
+		std::uintptr_t LineInfo(RE::Actor* a_speaker);
 
 		void LogHeadMotion(const char* a_why)
 		{
@@ -1587,20 +1589,30 @@ namespace CCC
 				}
 				g_state.speakerWasTalking = talkingNow;
 			}
-			// Diagnostic (0.7.1): do your own lines carry an expression tag too?
-			{
-				const bool playerTalking = player->IsTalking();
-				if (playerTalking && !g_state.playerWasTalking && s.debugLog) {
-					std::string text;
-					if (player->currentProcess && player->currentProcess->high) {
-						if (const char* raw = player->currentProcess->high->strVoiceSubtitle.c_str()) {
-							text = raw;
-						}
+			// Diagnostic: do your own lines carry an expression tag too? The game never reports
+			// the player as talking (0.7.1 waited for that and logged nothing), so watch the
+			// player's voice data instead: a new dialogue record or a new subtitle there is a
+			// new line of yours.
+			if (s.debugLog) {
+				const auto  info = LineInfo(player);
+				std::string text;
+				if (player->currentProcess && player->currentProcess->high) {
+					if (const char* raw = player->currentProcess->high->strVoiceSubtitle.c_str()) {
+						text = raw;
 					}
-					const auto emotion = LineEmotion(player);
-					REX::INFO("Your line emotion: {} for '{}'", emotion.empty() ? "unknown" : emotion, text.substr(0, 60));
 				}
-				g_state.playerWasTalking = playerTalking;
+				if ((info != 0 && info != g_state.playerLineInfo) || (!text.empty() && text != g_state.playerLineText)) {
+					std::uint32_t type = 0, id = 0;
+					const char*   editorId = nullptr;
+					if (info) {
+						ReadFormInfo(info, type, id, editorId);
+					}
+					const auto emotion = info ? LineEmotion(player) : std::string{ "no record" };
+					REX::INFO("Your line emotion: {} for '{}' (record {:08X}{}, talking {})", emotion.empty() ? "unknown" : emotion, text.substr(0, 60), id,
+						info == g_state.playerLineInfo ? ", same record" : "", player->IsTalking() ? "yes" : "no");
+					g_state.playerLineInfo = info;
+					g_state.playerLineText = text;
+				}
 			}
 			auto subject = ChooseSubject(speaker, now);
 			if (!g_state.bodyReady || now < g_state.bodyReadyAt) {
@@ -2834,6 +2846,23 @@ namespace CCC
 		// list at +0x70; the first response holds the expression keyword at +0x18, e.g.
 		// AnimFaceArchetypeFriendly. Found in 0.4.8-0.4.11. Every read is guarded and every
 		// pointer confirmed as a real game record before it's used.
+		// The dialogue record (INFO) the actor's voice data points at, or 0.
+		std::uintptr_t LineInfo(RE::Actor* a_speaker)
+		{
+			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
+				return 0;
+			}
+			const auto     base = reinterpret_cast<std::uintptr_t>(a_speaker->currentProcess->high);
+			std::uintptr_t holder = 0, info = 0;
+			if (!SafeCopy(&holder, reinterpret_cast<const void*>(base + 0x440), sizeof(holder)) || holder < 0x10000 || holder > 0x7FFFFFFFFFFF ||
+				!SafeCopy(&info, reinterpret_cast<const void*>(holder + 0x10), sizeof(info))) {
+				return 0;
+			}
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			return ReadFormInfo(info, type, id, editorId) && type == std::to_underlying(RE::FormType::kINFO) ? info : 0;
+		}
+
 		std::string LineEmotion(RE::Actor* a_speaker)
 		{
 			if (!a_speaker || !a_speaker->currentProcess || !a_speaker->currentProcess->high) {
