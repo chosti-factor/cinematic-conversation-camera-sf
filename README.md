@@ -90,7 +90,7 @@ Planned, roughly in order:
   xEdit). Your face shows the expression of each line (the game keeps it neutral), and
   reacts while listening; emotion close-ups of you on intense lines; CCC's line counting for
   your turns.
-- Filming NPC-to-NPC conversations, NPCs stepping away from work to talk.
+- Filming NPC-to-NPC conversations (two NPCs talking near you, filmed like your own).
 - Polish: emotion close-ups tuned from testing (which expressions push in, and how often;
   see [docs/EMOTIONS.md](docs/EMOTIONS.md)); talking to a seated person from the side
   (about 90 degrees) leaves you out of the picture; smoother conversation starts; quest
