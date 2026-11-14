@@ -86,10 +86,13 @@ Planned, roughly in order:
 - CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
   collision test.
 - Reaction shots and holding on the answer after a persuasion check (in testing, 0.7.1+).
-- Your character's lines: they carry the same expression tags as the NPCs' (checked in
-  xEdit). Your face shows the expression of each line (the game keeps it neutral), and
-  reacts while listening; emotion close-ups of you on intense lines; CCC's line counting for
-  your turns.
+- Your character's face (the game keeps it neutral, and your lines carry no expression
+  tags): first, prove an expression can be set on your face at all. Then, while you listen,
+  your face responds to the NPC's line (their tags are real data: mirrored or complemented);
+  while you speak, the option's skill tag ([Intimidate], [Persuade]...), background and trait
+  tags, and cautiously the text itself; your traits set a temperament over all of it
+  (Introvert subtler, Extrovert fuller, Empath mirrors more). Subtle by default, with a
+  strength setting.
 - Filming NPC-to-NPC conversations near you, filmed like your own: NPCs within 5 m of each
   other who've spoken recently form one scene, groups of three or more included; each line
   is shot on its speaker against whoever they're addressing, with occasional group shots;
