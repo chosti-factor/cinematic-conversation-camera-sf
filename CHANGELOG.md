@@ -4,7 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.0 - unreleased
+## 0.8.1 - unreleased
+
+### Added
+- A controller button for filming people talking near you: hold the right stick click for
+  half a second (`[Overhear]` `iListenButton`, `fListenHold`), so a tap still does what the
+  game uses it for. Read straight from XInput (Xbox controllers, and most others through
+  Steam Input). The prompt names both ("press N or hold the right stick to listen").
+
+## 0.8.0 - 2026-11-14
 
 ### Fixed
 - Your face for a choice and for the NPC's answer: your character isn't voiced, so the

@@ -19,6 +19,8 @@ namespace CCC
 		bool     filmConversations{ true }; // film people talking near you (the listen key)
 		int      listenKey{ 0x4E };          // virtual-key code, 0 = no prompt or key (N)
 		float    listenRange{ 12.0f };       // how far from you a conversation may be
+		int      listenButton{ 0x0080 };     // XInput button mask, held to listen (right stick click); 0 = none
+		float    listenHold{ 0.5f };         // seconds the button is held
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		bool     playerFace{ true };      // your character's expressions during conversations
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look

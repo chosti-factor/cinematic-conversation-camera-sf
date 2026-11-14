@@ -4034,12 +4034,50 @@ namespace CCC
 		struct FilmMain  // main thread only
 		{
 			bool                                  wasKeyDown{ false };
+			std::chrono::steady_clock::time_point buttonSince{};  // the controller button, held since
+			bool                                  buttonFired{ false };
 			RE::NiPoint3                          playerAt{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
 			std::chrono::steady_clock::time_point promptAt{};
 			std::uint32_t                         promptedPair{ 0 };
 		} g_filmMain;
+
+		// The controller's listen button (0.8.1): read straight from XInput (Xbox controllers,
+		// and most others through Steam Input), loaded when first needed. Held for fListenHold
+		// seconds, so a tap still does what the game uses the button for.
+		bool ControllerButtonHeld(int a_mask)
+		{
+			struct Pad
+			{
+				std::uint32_t packet;
+				std::uint16_t buttons;
+				std::uint8_t  leftTrigger, rightTrigger;
+				std::int16_t  lx, ly, rx, ry;
+			};
+			using GetState_t = DWORD(WINAPI*)(DWORD, Pad*);
+			static GetState_t getState = [] {
+				for (const auto* dll : { L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll" }) {
+					if (const HMODULE module = ::LoadLibraryW(dll)) {
+						if (const auto fn = reinterpret_cast<GetState_t>(::GetProcAddress(module, "XInputGetState"))) {
+							return fn;
+						}
+					}
+				}
+				REX::WARN("Filming people talking: no XInput; the controller's listen button is off");
+				return static_cast<GetState_t>(nullptr);
+			}();
+			if (!getState || a_mask == 0) {
+				return false;
+			}
+			for (DWORD pad = 0; pad < 4; ++pad) {
+				Pad state{};
+				if (getState(pad, &state) == ERROR_SUCCESS && (state.buttons & a_mask) == a_mask) {
+					return true;
+				}
+			}
+			return false;
+		}
 
 		bool GameHasFocus()
 		{
@@ -4056,6 +4094,27 @@ namespace CCC
 			char               buffer[64]{};
 			name = ::GetKeyNameTextA(static_cast<LONG>(scan << 16), buffer, sizeof(buffer)) > 0 ? buffer : std::format("key {}", a_key);
 			return name.c_str();
+		}
+
+		const char* ButtonName(int a_mask)
+		{
+			switch (a_mask) {
+			case 0x0001: return "D-pad up";
+			case 0x0002: return "D-pad down";
+			case 0x0004: return "D-pad left";
+			case 0x0008: return "D-pad right";
+			case 0x0010: return "Menu";
+			case 0x0020: return "View";
+			case 0x0040: return "the left stick";
+			case 0x0080: return "the right stick";
+			case 0x0100: return "LB";
+			case 0x0200: return "RB";
+			case 0x1000: return "A";
+			case 0x2000: return "B";
+			case 0x4000: return "X";
+			case 0x8000: return "Y";
+			default: return "the listen button";
+			}
 		}
 
 		void StopFilming(const char* a_why)
@@ -4109,10 +4168,21 @@ namespace CCC
 				std::scoped_lock lock{ g_film.lock };
 				filming = g_film.active;
 			}
-			// The listen key.
-			const bool keyDown = s.listenKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.listenKey) & 0x8000) != 0;
-			const bool pressed = keyDown && !g_filmMain.wasKeyDown;
+			// The listen key, or the controller's listen button held for fListenHold seconds.
+			const bool focus = GameHasFocus();
+			const bool keyDown = s.listenKey > 0 && focus && (::GetAsyncKeyState(s.listenKey) & 0x8000) != 0;
+			bool       pressed = keyDown && !g_filmMain.wasKeyDown;
 			g_filmMain.wasKeyDown = keyDown;
+			const bool buttonDown = s.listenButton > 0 && focus && ControllerButtonHeld(s.listenButton);
+			if (!buttonDown) {
+				g_filmMain.buttonSince = {};
+				g_filmMain.buttonFired = false;
+			} else if (g_filmMain.buttonSince == std::chrono::steady_clock::time_point{}) {
+				g_filmMain.buttonSince = a_now;
+			} else if (!g_filmMain.buttonFired && std::chrono::duration<float>(a_now - g_filmMain.buttonSince).count() >= s.listenHold) {
+				g_filmMain.buttonFired = true;
+				pressed = true;
+			}
 			if (filming) {
 				const auto feet = player->GetPosition();
 				const float moved = FlatDistance(feet, g_filmMain.playerAt);
@@ -4157,7 +4227,9 @@ namespace CCC
 			if (s.listenKey > 0 && (pair != g_filmMain.promptedPair || a_now - g_filmMain.promptAt > 60s)) {
 				g_filmMain.promptedPair = pair;
 				g_filmMain.promptAt = a_now;
-				ShowHudMessage(std::format("{} and {} are talking: press {} to listen", TalkerName(speaker), TalkerName(listener), KeyName(s.listenKey)));
+				const std::string how = s.listenButton > 0 ? std::format("press {} or hold {}", KeyName(s.listenKey), ButtonName(s.listenButton)) :
+				                                                std::format("press {}", KeyName(s.listenKey));
+				ShowHudMessage(std::format("{} and {} are talking: {} to listen", TalkerName(speaker), TalkerName(listener), how));
 			}
 		}
 
@@ -4614,7 +4686,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.8.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.8.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }
