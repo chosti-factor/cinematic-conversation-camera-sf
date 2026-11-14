@@ -13,6 +13,14 @@ test build; "diagnostic" items only add information to the log for testing.
   search) slides down with the bars until its text is centred in the bottom bar, and back when
   they go, since the same element shows ambient lines outside conversations.
 
+### Changed
+- The dialogue options fade over 0.6 s (was 0.35 s, too subtle to tell from a pop).
+
+### Diagnostic
+- The log says each time the game shows or hides the options, when they start fading out
+  for an NPC line, and warns once if the game resets their transparency (which would cancel
+  the fade).
+
 ## 0.6.4 - 2026-11-13
 
 ### Added
