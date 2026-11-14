@@ -31,7 +31,6 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **The 180-degree rule:** each conversation is staged from one side of the line between
   you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
   `bTrue180` films everything from that one side).
-
 - **Letterbox:** black bars slide in while the camera films a conversation, with
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
