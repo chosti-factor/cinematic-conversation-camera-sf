@@ -15,7 +15,9 @@ namespace CCC::Face
 		constexpr std::uint64_t kChangeAnimFaceArchetype = 100510;
 		using ChangeAnimFaceArchetype_t = void (*)(RE::Actor*, RE::BGSKeyword*);
 
-		std::string g_current;      // expression set now ("" = the game's own)
+		std::string g_current;      // expression set now ("" = the game's own); main thread
+		std::mutex  g_shownLock;    // a copy for other threads (the shot messages)
+		std::string g_shown;
 		bool        g_broken = false;
 
 		bool CallUnsafe(ChangeAnimFaceArchetype_t a_fn, RE::Actor* a_actor, RE::BGSKeyword* a_keyword)
@@ -239,6 +241,8 @@ namespace CCC::Face
 		if (Apply(keyword)) {
 			REX::INFO("Face: you look {} ({})", a_expression.empty() ? "as the game has you" : a_expression, a_why);
 			g_current = a_expression;
+			std::scoped_lock lock{ g_shownLock };
+			g_shown = a_expression;
 		}
 	}
 
@@ -288,6 +292,27 @@ namespace CCC::Face
 		return std::uniform_int_distribution<int>{ 0, 99 }(rng) < Settings::Get().signatureChance ? signature : std::string{};
 	}
 
+	std::string Shown()
+	{
+		std::scoped_lock lock{ g_shownLock };
+		return g_shown;
+	}
+
+	void OnReaction()
+	{
+		// A reaction shot on a line your face has no answer for (no expression on it): a
+		// listening look rather than a blank face (0.7.12 test). Your background's, else
+		// attentive.
+		if (!Settings::Get().playerFace || !g_current.empty() || g_listenPending) {
+			return;
+		}
+		auto expression = Signature();
+		if (expression.empty()) {
+			expression = "Concentrating";
+		}
+		Set(expression, "listening on a reaction shot");
+	}
+
 	const std::string& Current()
 	{
 		return g_current;
@@ -335,6 +360,8 @@ namespace CCC::Face
 			Set({}, "conversation over");
 			if (!g_current.empty()) {
 				g_current.clear();  // couldn't reset: don't keep trying
+				std::scoped_lock lock{ g_shownLock };
+				g_shown.clear();
 			}
 		}
 	}

@@ -11,6 +11,11 @@ test build; "diagnostic" items only add information to the log for testing.
   answer starts as you choose, and the choice (noticed a moment later) replaced the answer's
   expression for the whole line (0.7.12 test: Sam Coe's awed answer met a questioning look
   throughout). The choice's expression now shows for 1.5 s, then your answer to the line.
+- Reaction shots on a blank face: a line with no expression on it leaves your face to the
+  game, so a reaction shot on it showed you neutral (0.7.12 test). Your face now takes a
+  listening look for the reaction (your background's expression, or Concentrating), and the
+  shot message names your expression ("reaction: you listening, Suspicious", or "no
+  expression").
 
 ### Changed
 - Close-ups of you (`iPlayerCloseUpChance`) 50% of eligible lines instead of 20%: in testing

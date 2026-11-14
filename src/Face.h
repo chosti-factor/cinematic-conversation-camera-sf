@@ -32,6 +32,12 @@ namespace CCC::Face
 	// face would otherwise go back to neutral.
 	[[nodiscard]] std::string MaybeSignature();
 
+	// The expression shown now, from any thread (a copy).
+	[[nodiscard]] std::string Shown();
+
+	// Main thread: a reaction shot started; give a blank face a listening look.
+	void OnReaction();
+
 	// The expression set now ("" = the game's own).
 	[[nodiscard]] const std::string& Current();
 

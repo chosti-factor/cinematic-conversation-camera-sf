@@ -298,6 +298,7 @@ namespace CCC
 		void                FilmFrame();
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
+		std::atomic<bool>   g_reactionStarted{ false };  // a reaction shot began (worker -> main: give a blank face a look)
 		std::atomic<std::int64_t> g_faceLineAt{ 0 };    // when the main thread last set your face for a line (steady_clock ticks)
 		void                QueueHudMessage(std::string a_text);
 		void                ShowHudMessage(const std::string& a_text);
@@ -1931,6 +1932,7 @@ namespace CCC
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
+								g_reactionStarted.store(true, std::memory_order_release);
 							} else {
 								g_state.reactionLines += sentences;
 								g_state.lineCounted = sentences;
@@ -2355,7 +2357,10 @@ namespace CCC
 					g_state.msgCuts = cuts;
 					std::string why;
 					if (g_state.reactionActive && subject == Subject::kPlayer) {
-						why = g_state.reactionCloseUp ? "reaction: your expression" : "reaction: you listening";
+						// With your face's expression, so a blank one is plain to see (0.7.12 test).
+						const auto face = Face::Shown();
+						why = std::format("{}, {}", g_state.reactionCloseUp ? "reaction: your expression" : "reaction: you listening",
+							face.empty() ? std::string{ "no expression" } : face);
 					} else if (directed) {
 						why = Director::Why();
 					} else if (g_state.plainEyeLine) {
@@ -4422,6 +4427,9 @@ namespace CCC
 					}
 					FlushHudMessages(now);
 					Face::Update(g_state.active && !g_state.handedBack);
+					if (g_reactionStarted.exchange(false, std::memory_order_acq_rel) && g_state.active && !g_state.handedBack) {
+						Face::OnReaction();
+					}
 					// The conversation lens while this mod films (0.8).
 					// (Filming people talking near you uses the lens too, at least the game's 30.)
 					const bool filmingOthers = FilmingActive();

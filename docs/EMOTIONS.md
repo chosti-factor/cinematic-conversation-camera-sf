@@ -210,6 +210,12 @@ without a skill tag), this chance of your background's expression instead.
 | Pilgrim | Relieved |
 | Cyberneticist, Xenobiologist | Concentrating |
 
+### Reaction shots
+
+A reaction shot on a line your face has no answer for (no expression on it) gives your face
+a listening look for it: your background's expression, or Concentrating. The shot message
+names your expression.
+
 ### Your emotion close-ups (`iPlayerCloseUpChance`, 50%)
 
 When your face answers a line with an expression (40 characters or longer, not an NPC
