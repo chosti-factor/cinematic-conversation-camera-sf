@@ -4,7 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.6.1 - unreleased
+## 0.6.2 - unreleased
+
+### Changed
+- Emotion close-ups: Happy, Smirk, Puzzled, Suspicious, Relieved and Concentrating join the
+  expressions that push in (`sCloseUpEmotions`). About 19% of lines now trigger a close-up
+  (was 15%); see `docs/EMOTIONS.md`.
+
+## 0.6.1 - 2026-11-13
 
 ### Added
 - Close-ups that follow the face (CCC's `bFollowFace`): the camera turns toward where a
