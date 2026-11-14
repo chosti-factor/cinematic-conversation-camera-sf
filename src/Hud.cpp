@@ -388,13 +388,22 @@ namespace CCC::Hud
 		{
 			const auto& s = Settings::Get();
 			Value       menu;
+			static bool missingLogged = false;
 			if (!Child(a_top, "Menu_mc", menu)) {
+				if (!missingLogged) {
+					missingLogged = true;
+					REX::INFO("HUD: the dialogue menu has no Menu_mc (a UI mod's layout?); the options fade is off, the bars still work");
+				}
 				return;
 			}
 			const char* names[2]{ "DialogueList_mc", "PersuasionList_mc" };
 			for (int i = 0; i < 2; ++i) {
 				Value list;
 				if (!Child(menu, names[i], list)) {
+					if (i == 0 && !missingLogged) {
+						missingLogged = true;
+						REX::INFO("HUD: the dialogue menu has no Menu_mc.DialogueList_mc (a UI mod's layout?); the options fade is off, the bars still work");
+					}
 					continue;
 				}
 				Value      visible;
