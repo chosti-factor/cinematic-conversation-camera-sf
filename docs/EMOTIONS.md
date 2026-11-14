@@ -50,3 +50,64 @@ Notes:
   names; the game uses Irritated and Disgust).
 - Starfield has no emotion strength per line (Skyrim's writers set one, which CCC uses), so
   the tag is all there is to go on.
+
+## All the game's expressions
+
+The game's facial expressions (`AnimFaceArchetype*` keywords) that an actor's face can be set to,
+from the list in Player Camera During Dialogue by rrrafau, which applies them to the player.
+The same set tags NPC lines; several have never come up in testing (they may be rare in the
+game's dialogue, or used mainly by scenes). These are also the expressions available for your
+character's face (planned).
+
+| Expression | Seen in testing | On the close-up list |
+|---|---|---|
+| Neutral | yes |  |
+| Afraid | - |  |
+| Amused | yes |  |
+| Angry | - | ✱ |
+| Apologetic | yes | ✱ |
+| Awed | yes | ✱ |
+| Concentrating | yes | ✱ |
+| Concerned | yes | ✱ |
+| Confident | yes |  |
+| Confused | yes | ✱ |
+| Defiant | - | ✱ |
+| Depressed | - |  |
+| Disbelief | - | ✱ |
+| Disgust | yes | ✱ |
+| Dying | - |  |
+| EyesClosed | - |  |
+| Flirting | - | ✱ |
+| Friendly | yes |  |
+| Grateful | yes |  |
+| Happy | yes | ✱ |
+| Impressed | yes |  |
+| InPain | - |  |
+| Irritated | yes | ✱ |
+| Nervous | yes | ✱ |
+| Pleading | - | ✱ |
+| Puzzled | yes | ✱ |
+| Question | yes |  |
+| Rage | - |  |
+| Relieved | yes | ✱ |
+| Sarcastic | - | ✱ |
+| Serious | yes | ✱ |
+| Shocked | - |  |
+| SinisterSmile | yes |  |
+| Smirk | yes | ✱ |
+| Smug | - | ✱ |
+| Somber | yes | ✱ |
+| Stern | - | ✱ |
+| Surprised | yes | ✱ |
+| Suspicious | yes | ✱ |
+| Thinking | yes |  |
+| Tired | yes |  |
+| VeryAngry | - |  |
+| Worried | yes | ✱ |
+
+Notes:
+
+- 0.7.4 added Stern, Defiant, Smug, Sarcastic, Flirting, Pleading and Disbelief to the
+  close-up list.
+- Angry, Annoyed, Fearful, Scared, Disgusted and Sad on the list are guessed names that aren't
+  real expressions; the game's own are Afraid, VeryAngry, Rage, Depressed and Shocked.
