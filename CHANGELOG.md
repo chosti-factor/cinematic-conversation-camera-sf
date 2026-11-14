@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.6.4 - unreleased
+
+### Added
+- The dialogue options fade in when the game shows them, instead of appearing at once
+  (`[Interface]` `bFadeOptions`, `fOptionsFade`).
+
+### Diagnostic
+- The HUD search: 0.6.3's dump of the HUD stopped at 400 elements before reaching the
+  subtitles. The HUD and the HUD messages menu are now searched for anything named like a
+  subtitle, speaker or caption, and the option list is dumped once when it first appears.
+
 ## 0.6.3 - 2026-11-13
 
 ### Added
