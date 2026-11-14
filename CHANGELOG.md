@@ -4,7 +4,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## Unreleased (0.6.0)
+## 0.5.5 - 2026-11-13
 
 ### Added
 - Stardust preset (`sPreset=Stardust`), CCC SF's own: Standard's shoulders and close-ups
