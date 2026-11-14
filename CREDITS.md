@@ -33,7 +33,7 @@ These aren't part of this project's code, but nothing here would work without th
 
 | Source | What it gave |
 |---|---|
-| [Player Dialogue Camera](https://www.nexusmods.com/starfield/mods/5229) by jedijosh920 | The proof of concept: showed that Starfield's own dialogue camera can be taken over to show the player character in conversations, as in Fallout 4, which is what made a port of CCC look possible |
+| [Player Dialogue Camera](https://www.nexusmods.com/starfield/mods/5229) by jedijosh920 | The proof of concept: showed that Starfield's own dialogue camera can be taken over to show the player character in conversations, as in Fallout 4, which is what made a Starfield adaptation of CCC look possible |
 | Cinematic Conversation Camera | The whole design: shot vocabulary, director cutting rules (new angle after a few lines, short lines ignored, shortest hold), presets, camera moves, holding a shot's angle once cut, each person keeping their setup across shot/reverse, the 180-degree rule; the roadmap (letterbox, subtitles, reaction shots, NPC-to-NPC filming, stepping away from work) |
 | Player Camera During Dialogue | Taking over the dialogue camera; the first-person -> third-person -> dialogue camera cycle and timings for building the player's body (now the fallback); exception handling such as skipping while piloting a ship, and handing the camera back to the game during scripted scenes |
 | Cassiopeia Papyrus Extender | Building the player's full body with a direct 3D update request instead of switching cameras; the update flag meanings; the camera state list; finding a spoken line's dialogue record from its subtitle; the game's apply/remove functions for image-space modifiers (used in test builds 0.4.14-0.4.16, not in the mod) |
