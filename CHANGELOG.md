@@ -6,6 +6,11 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.7.2 - unreleased
 
+### Diagnostic
+- Your own lines' expression tags: the game never reports the player as talking, so 0.7.1's
+  check logged nothing. The player's voice data is now watched directly; each new line of
+  yours (a new dialogue record or subtitle) is logged with its tag ("Your line emotion").
+
 ### Changed
 - The dialogue options appear at once by default (`fOptionsFade=0`, was 0.6 s); any value up
   to 1.5 s fades them in.
