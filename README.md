@@ -5,10 +5,14 @@ film or TV series: shots and reverse shots that cut to whoever is talking, over-
 shoulder shots, close-ups and three-quarter angles, camera moves, and a cutting rhythm
 you can choose. Works whether you play in first or third person.
 
-This is a Starfield port of **Cinematic Conversation Camera** for Skyrim by
-**hashhbbrown** ([source](https://github.com/fatalCMD/ccc)). Taking over Starfield's
-dialogue camera builds on **Player Camera During Dialogue** by **rrrafau**
-([source](https://github.com/rrrafau1337/player-camera-during-dialogue)). Both are
+A Starfield adaptation of **Cinematic Conversation Camera** (CCC) for Skyrim by
+**hashhbbrown** ([source](https://github.com/fatalCMD/ccc)). CCC's shot library, director
+and presets are the heart of this mod; everything around them is rebuilt from the ground
+up for Starfield's engine, with Starfield-specific features of its own. Taking over
+Starfield's dialogue camera builds on **Player Camera During Dialogue** by **rrrafau**
+([source](https://github.com/rrrafau1337/player-camera-during-dialogue)), and
+**jedijosh920**'s [Player Dialogue Camera](https://www.nexusmods.com/starfield/mods/5229)
+first showed it could be done. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
@@ -16,41 +20,52 @@ this mod draws on.
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
-Working:
+### From CCC
 
-- **CCC's shot library and director:** all 39 camera setups with CCC's framing, three
-  presets (Standard, Close, Room) plus Stardust, CCC SF's own mix of Standard with
-  Room's moving wider shots, camera moves (push, pull, crane, tilt, drift, orbit,
+- **The shot library and director:** all 39 camera setups with CCC's framing, CCC's three
+  presets (Standard, Close, Room), camera moves (push, pull, crane, tilt, drift, orbit,
   slide), and CCC's cutting rules: each person keeps their angle across the
   back-and-forth and gets a new one after a few of their lines; short lines don't count.
-- **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
-  SpaceOpera.
+- **Close-ups that follow the face:** a close-up turns toward a face turned to its work
+  and drops to look up into a lowered one (`bFollowFace`).
+- **The 180-degree rule:** each conversation is staged from one side of the line between
+  you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
+  `bTrue180` films everything from that one side).
+
+### New in CCC SF
+
 - **Your character in shot from first person:** your full body is built at the start of
   the conversation (about a tenth of a second), including with seated NPCs, and you're
   back in first person when it ends.
 - **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera
   is at your eyes.
-- Clean exits in both perspectives (starts can still show a frame or two of the game's
-  own camera), seated characters, and small speakers (robots), which keep the game's
-  own camera. Quest scenes you take part in (someone walks up and starts talking,
-  several people taking turns) keep the game's own camera.
 - **Focus on the person in shot:** the game's conversation blur is refocused on every
   shot onto whoever is in it, so they're sharp and the background stays softly blurred,
   even on longer outdoor shots (`bFocusOnSubject`). Two focus styles (`sFocusStyle`):
   Cinematic (more background blur) and Wide (deeper sharp zone, softer background blur).
-- **Emotion close-ups:** lines the game tags with heightened or emotional expressions
-  (Irritated, Surprised, Somber, Nervous, Awed and others, `sCloseUpEmotions`) push in to a
-  close-up of the speaker, 40% of them extreme close-ups, as CCC does with lines Skyrim's
-  writers marked as intense. The expression of each line can be shown on screen while
-  testing (`bShowEmotions`).
-- **Seated people and merchants** get the plain over-the-shoulder shot instead of the
-  shot library, whose angles often put the chair, the shop counter or the clutter around
-  it in front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are
-  recognised by the game's vendor flag on their faction, wherever the shop is.
 - **Obstacle detection:** before each cut, the game's own camera collision test checks the
   line from the person in shot to the camera. A wall behind the camera pulls it in; a
-  ladder or pillar in front of the person skips the shot for another angle
-  (`bObstacleCheck`).
+  ladder or pillar in front of the person skips the shot for another angle; when nothing
+  is fully clear, the angle with the most room is used (`bObstacleCheck`).
+- **Emotion close-ups:** lines the game tags with heightened or emotional expressions
+  (Irritated, Surprised, Somber, Nervous, Awed and others, `sCloseUpEmotions`) push in to a
+  close-up of the speaker, 40% of them extreme close-ups. CCC does this with lines Skyrim's
+  writers marked as intense; Starfield has no such mark, so the expression decides. The
+  expression of each line can be shown on screen while testing (`bShowEmotions`).
+- **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
+  library, whose angles often put the chair, the shop counter or the clutter around it in
+  front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are recognised by
+  the game's vendor flag on their faction, wherever the shop is.
+- **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
+  SpaceOpera.
+- **Stardust preset:** Standard's shoulders and close-ups with Room's wider shots mixed in,
+  the wider ones moving (cranes, pull-outs, drifts).
+- **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
+  fully handheld (100) (`iCameraSway`, default 40).
+- **Per-preset camera distances**, matched to each preset's widest shot.
+- Clean exits in both perspectives (starts can still show a frame or two of the game's
+  own camera). Small speakers (robots) and quest scenes you take part in (someone walks
+  up and starts talking, several people taking turns) keep the game's own camera.
 
 Differences from CCC, because of Starfield:
 
@@ -65,10 +80,8 @@ Differences from CCC, because of Starfield:
 
 Planned, roughly in order:
 
-- Wall and obstacle detection, next steps: longer outdoor shots and CCC's room shots (Wide,
-  Master, Distant), measured with the same collision test. Blocked shots are already
-  skipped or pulled in (0.5.3).
-- Close-ups that follow the face, the 180-degree rule tuned for Starfield.
+- CCC's room shots (Wide, Master, Distant), measured with the obstacle detection's
+  collision test.
 - Black bars, fading the dialogue options during speech, subtitles in the bars.
 - Reaction shots, holding on the answer after a persuasion check, filming NPC-to-NPC
   conversations, NPCs stepping away from work to talk.
