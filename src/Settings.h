@@ -16,6 +16,8 @@ namespace CCC
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
 		bool     playerFace{ true };      // your character's expressions during conversations
+		int      playerCloseUpChance{ 20 };  // % of lines your face answers that become a close-up of you
+		int      closeUpDistance{ 115 };   // close-ups stand this % of CCC's distance back
 		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
 		bool     letterbox{ true };     // black bars while the camera films a conversation
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height

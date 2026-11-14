@@ -74,6 +74,7 @@ namespace CCC
 			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
+			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
@@ -290,6 +291,7 @@ namespace CCC
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
+		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		void                QueueHudMessage(std::string a_text);
 
 		// Bystanders (0.7.5): people standing still near the conversation, other than the two
@@ -1834,6 +1836,7 @@ namespace CCC
 					g_state.lineStart = now;
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;
+					g_state.reactionCloseUp = false;
 					g_state.reactionPending = true;
 				}
 				// Reaction shots (CCC): every iReactionEvery-th line of their reply (Starfield's
@@ -1873,10 +1876,16 @@ namespace CCC
 							const bool due = g_state.reactionLines >= s.reactionEvery;
 							const bool rolled = due && !g_state.lineIntense && text.size() >= 40 &&
 							                    std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
-							if (rolled) {
-								REX::INFO("Reaction shot: '{}' shown on you listening ({} sentences heard since the last)", text.substr(0, 60), g_state.reactionLines);
+							// Your emotion close-up (0.7.11): when your face answers the line with an
+							// expression, an iPlayerCloseUpChance chance the line is shown on you, close.
+							const bool closeUp = !rolled && s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) && !g_state.lineIntense &&
+							                     text.size() >= 40 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
+							if (rolled || closeUp) {
+								REX::INFO("Reaction shot: '{}' shown on you listening{} ({} sentences heard since the last)", text.substr(0, 60),
+									closeUp ? ", close (your expression)" : "", g_state.reactionLines);
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
+								g_state.reactionCloseUp = closeUp;
 							} else {
 								g_state.reactionLines += sentences;
 								g_state.lineCounted = sentences;
@@ -1902,12 +1911,14 @@ namespace CCC
 						g_state.beatConsumed = outcome;
 						g_state.lineBeat = true;
 						g_state.reactionActive = false;
+						g_state.reactionCloseUp = false;
 						REX::INFO("Persuasion beat: this answer is held on a close-up of the NPC");
 					}
 				}
 				if (!talkingNow && g_state.speakerWasTalking) {
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;
+					g_state.reactionCloseUp = false;
 					// A line you clicked past almost at once (on screen under half a second) wasn't
 					// really heard: it doesn't count. One you skip after that still does.
 					if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {
@@ -2125,6 +2136,7 @@ namespace CCC
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
 				frame.persuasionBeat = g_state.lineBeat;
+				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -2149,6 +2161,7 @@ namespace CCC
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
 				frame.persuasionBeat = g_state.lineBeat;
+				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -2291,7 +2304,7 @@ namespace CCC
 					g_state.msgCuts = cuts;
 					std::string why;
 					if (g_state.reactionActive && subject == Subject::kPlayer) {
-						why = "reaction: you listening";
+						why = g_state.reactionCloseUp ? "reaction: your expression" : "reaction: you listening";
 					} else if (directed) {
 						why = Director::Why();
 					} else if (g_state.plainEyeLine) {
@@ -3474,6 +3487,7 @@ namespace CCC
 				const char* who = a_speaker->GetDisplayFullName();
 				Face::Set(Face::ListeningTo(emotion), std::format("listening to {}: {}", who ? who : "the speaker", emotion.empty() ? "no expression" : emotion));
 			}
+			g_playerFaceShown.store(Settings::Get().playerFace && !Face::Current().empty(), std::memory_order_release);
 			if (Settings::Get().showMessages) {
 				static std::unordered_map<std::string, int> seen;
 				const auto  key = emotion.empty() ? std::string{ "unknown" } : emotion;

@@ -7,6 +7,13 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.7.11 - unreleased
 
 ### Added
+- Your emotion close-ups (`[Face]` `iPlayerCloseUpChance`, 20%): when your face answers an
+  NPC's line with an expression, that line may be shown on you as a close-up, pushing in
+  (an extreme close-up as often as the NPC's, `iExtremeCloseUpChance`). It counts as a
+  reaction shot; the message says "reaction: your expression". Close-ups of you were rare.
+- Close-up distance (`[Director]` `iCloseUpDistance`, 115%): close-ups and extreme close-ups
+  stand further back than CCC's framing; through Starfield's narrow lens they felt too
+  tight.
 - Your expression in the testing messages: a line's message ends with your face's answer
   ("Sarah Morgan: Worried (#2) | You: Concerned | Camera: CloseUp (...)"), and choosing a
   skill-tagged option shows "You: Confident ([Persuade])".

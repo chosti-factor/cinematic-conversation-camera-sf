@@ -304,6 +304,11 @@ namespace CCC::Shots
 			extent *= kHeadShare;
 		}
 		float distance = DistanceForFill(spec.fill, a_in.lensDegrees, a_in.aspect, extent);
+		// 0.7.11 test: close-ups felt too close through Starfield's narrow lens; they stand
+		// iCloseUpDistance percent of CCC's distance back.
+		if (FollowsFace(a_type)) {
+			distance *= std::clamp(a_in.closeUpScale, 0.8f, 1.5f);
+		}
 		result.wantedDistance = distance;
 
 		// Two people side by side need the frame wide enough for both; past the cap that

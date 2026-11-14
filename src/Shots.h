@@ -100,6 +100,7 @@ namespace CCC::Shots
 		RE::NiPoint3 playerHead{};
 		float        lensDegrees{ 29.6f };  // horizontal
 		float        aspect{ 1.7778f };
+		float        closeUpScale{ 1.0f };  // close singles this much further back (iCloseUpDistance)
 		float        maxDistance{ 3.0f };   // from the framed subject (or midpoint)
 		float        side{ 1.0f };          // which side of the eyeline (180-degree rule)
 		bool         true180{ false };

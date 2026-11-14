@@ -100,7 +100,7 @@ namespace CCC::Director
 		// deliberate move rather than the regular close-up of the rotation.
 		Setup IntenseSetup(ShotType a_type)
 		{
-			return a_type == ShotType::kExtremeClose ? Setup{ 1, Move::kZoomIn, 40, 9.0f } : Setup{ 1, Move::kPushIn, 40, 8.0f };
+			return a_type == ShotType::kExtremeClose || a_type == ShotType::kExtremeClosePlayer ? Setup{ 1, Move::kZoomIn, 40, 9.0f } : Setup{ 1, Move::kPushIn, 40, 8.0f };
 		}
 
 		struct PresetEntry
@@ -259,6 +259,7 @@ namespace CCC::Director
 			in.playerGround = a_frame.playerGround;
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
+			in.closeUpScale = static_cast<float>(s.closeUpDistance) / 100.0f;
 			in.npcFeet = a_frame.npcFeet;
 			in.playerFeet = a_frame.playerFeet;
 			in.npcSwayHead = a_frame.npcSwayHead;
@@ -390,6 +391,20 @@ namespace CCC::Director
 			}
 			if (Placeable(ShotType::kExtremeClose, a_frame)) {
 				return ShotType::kExtremeClose;
+			}
+			return std::nullopt;
+		}
+
+		// Your emotion close-up (0.7.11): a reaction shot on a line your face answers with an
+		// expression, as a close-up of you; extreme as often as the NPC's.
+		std::optional<ShotType> PlayerCloseShot(const Frame& a_frame)
+		{
+			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChance;
+			if (extreme && Placeable(ShotType::kExtremeClosePlayer, a_frame)) {
+				return ShotType::kExtremeClosePlayer;
+			}
+			if (Placeable(ShotType::kClosePlayer, a_frame)) {
+				return ShotType::kClosePlayer;
 			}
 			return std::nullopt;
 		}
@@ -637,6 +652,14 @@ namespace CCC::Director
 				}
 			}
 
+			if (a_frame.playerCloseUp && !a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
+				// Your emotion close-up: the reaction's cut is a close-up of you, pushing in. It
+				// doesn't become your usual angle.
+				if (const auto shot = PlayerCloseShot(a_frame)) {
+					Cut(*shot, a_frame, a_now, "reaction, your expression", false);
+					g.intenseSetup = IntenseSetup(*shot);
+				}
+			}
 			if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 				// The reverse: back to this person's own setup, unless they're due a new one.
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
