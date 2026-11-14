@@ -128,6 +128,14 @@ namespace CCC::Shots
 		float npcGround{ std::numeric_limits<float>::quiet_NaN() };
 		float playerGround{ std::numeric_limits<float>::quiet_NaN() };
 
+		// Where each person stands (their root, which idle animation doesn't move). The
+		// eyeline's direction is taken from these rather than from the heads: a camera 7 m
+		// out orbits with the eyeline, so a head swaying 5 cm swung it a quarter of a metre
+		// (0.6.0). CCC measures its eyeline between stable points for the same reason.
+		bool         feetValid{ false };
+		RE::NiPoint3 npcFeet{};
+		RE::NiPoint3 playerFeet{};
+
 		// 180-degree rule: never let an angle (after face turns and moves) cross the eyeline
 		// or come within a few degrees of it (CCC's bEnforceLine).
 		bool enforceLine{ true };

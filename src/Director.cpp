@@ -254,6 +254,9 @@ namespace CCC::Director
 			in.playerFacing = a_frame.playerFacing;
 			in.npcGround = a_frame.npcGround;
 			in.playerGround = a_frame.playerGround;
+			in.feetValid = a_frame.feetValid && Settings::Get().steadyEyeline;
+			in.npcFeet = a_frame.npcFeet;
+			in.playerFeet = a_frame.playerFeet;
 			in.progress = a_progress;
 			in.move = s.cameraMoves ? a_setup.move : Move::kLocked;
 			in.moveAmount = a_setup.amount;

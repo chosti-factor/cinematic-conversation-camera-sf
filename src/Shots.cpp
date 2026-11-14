@@ -269,6 +269,19 @@ namespace CCC::Shots
 		if (separation < 0.05f) {
 			return result;
 		}
+		// The eyeline's bearing from where the two stand, not from the swaying heads (its
+		// length and height difference still come from the heads).
+		if (a_in.feetValid) {
+			const auto& sf = spec.onNpc ? a_in.npcFeet : a_in.playerFeet;
+			const auto& of = spec.onNpc ? a_in.playerFeet : a_in.npcFeet;
+			const float fx = of.x - sf.x, fy = of.y - sf.y;
+			const float fl = std::sqrt(fx * fx + fy * fy);
+			const float hl = std::sqrt(toOther.x * toOther.x + toOther.y * toOther.y);
+			if (fl > 0.3f && hl > 0.05f) {
+				toOther.x = fx / fl * hl;
+				toOther.y = fy / fl * hl;
+			}
+		}
 		toOther = { toOther.x / separation, toOther.y / separation, toOther.z / separation };
 		const RE::NiPoint3 midpoint{ (a_in.npcHead.x + a_in.playerHead.x) * 0.5f, (a_in.npcHead.y + a_in.playerHead.y) * 0.5f,
 			(a_in.npcHead.z + a_in.playerHead.z) * 0.5f };

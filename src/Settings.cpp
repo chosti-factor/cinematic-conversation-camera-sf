@@ -156,6 +156,7 @@ namespace CCC
 			a_s.enforceLine = ReadInt(a_path, L"Director", L"bEnforceLine", a_s.enforceLine ? 1 : 0) != 0;
 			a_s.followFace = ReadInt(a_path, L"Director", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Camera", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
+			a_s.steadyEyeline = ReadInt(a_path, L"Camera", L"bSteadyEyeline", a_s.steadyEyeline ? 1 : 0) != 0;
 			a_s.emotionCloseUps = ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps ? 1 : 0) != 0;
 			a_s.closeUpEmotions = ReadString(a_path, L"Director", L"sCloseUpEmotions", a_s.closeUpEmotions);
 			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChance", a_s.extremeCloseUpChance), 0, 100);
