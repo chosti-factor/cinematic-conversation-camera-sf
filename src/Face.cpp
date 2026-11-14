@@ -3,6 +3,8 @@
 #include "Hud.h"
 #include "Settings.h"
 
+#include <random>
+
 namespace CCC::Face
 {
 	namespace
@@ -62,8 +64,19 @@ namespace CCC::Face
 	std::string ListeningTo(std::string_view a_npcTag)
 	{
 		// Subtle by default: mirrored where it's natural (a smile for a smile), otherwise a
-		// listener's response (concern for worry, attention for a question); angry lines get
-		// a guarded look rather than anger back. Untagged or neutral lines: your own face.
+		// listener's response (concern for worry, attention for a question). Angry lines get
+		// a guarded look or anger back, picked at random each line. Untagged or neutral
+		// lines: your own face.
+		static const std::unordered_map<std::string, std::vector<std::string>> angry{
+			{ "irritated", { "Serious", "Irritated" } },
+			{ "angry", { "Stern", "Irritated", "VeryAngry" } },
+			{ "veryangry", { "Stern", "Irritated", "VeryAngry" } },
+			{ "rage", { "Afraid", "VeryAngry", "Rage" } },
+		};
+		if (const auto it = angry.find(Lower(a_npcTag)); it != angry.end()) {
+			static std::mt19937 rng{ std::random_device{}() };
+			return it->second[std::uniform_int_distribution<std::size_t>{ 0, it->second.size() - 1 }(rng)];
+		}
 		static const std::unordered_map<std::string, std::string> responses{
 			{ "friendly", "Friendly" }, { "amused", "Amused" }, { "happy", "Happy" }, { "grateful", "Friendly" },
 			{ "impressed", "Happy" }, { "relieved", "Relieved" }, { "smirk", "Smirk" }, { "sarcastic", "Smirk" },
@@ -74,7 +87,6 @@ namespace CCC::Face
 			{ "apologetic", "Concerned" }, { "pleading", "Concerned" }, { "inpain", "Concerned" }, { "dying", "Somber" },
 			{ "somber", "Somber" }, { "depressed", "Somber" }, { "tired", "Concerned" },
 			{ "serious", "Serious" }, { "stern", "Serious" }, { "defiant", "Serious" }, { "suspicious", "Suspicious" },
-			{ "irritated", "Serious" }, { "angry", "Stern" }, { "veryangry", "Stern" }, { "rage", "Afraid" },
 			{ "surprised", "Surprised" }, { "shocked", "Surprised" }, { "disbelief", "Surprised" }, { "awed", "Awed" },
 			{ "disgust", "Disgust" },
 		};
