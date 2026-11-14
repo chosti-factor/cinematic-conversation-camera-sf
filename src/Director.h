@@ -14,6 +14,7 @@ namespace CCC::Director
 		bool         playerTalking{ false };
 		bool         nearSeated{ false };  // the person nearest the camera sits lower: no over-the-shoulders
 		bool         intenseLine{ false }; // the speaker's current line carries an expression from sCloseUpEmotions
+		bool         persuasionBeat{ false };  // the NPC's answer to a persuasion's outcome: held close-up
 		RE::NiPoint3 npcHead{};
 		RE::NiPoint3 playerHead{};
 		float        side{ 1.0f };          // which side of the eyeline the conversation is staged on

@@ -163,6 +163,11 @@ namespace CCC
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
 			a_s.enforceLine = ReadInt(a_path, L"Director", L"bEnforceLine", a_s.enforceLine ? 1 : 0) != 0;
 			a_s.followFace = ReadInt(a_path, L"Director", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
+			a_s.reactionShots = ReadInt(a_path, L"Director", L"bReactionShots", a_s.reactionShots ? 1 : 0) != 0;
+			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionEvery", a_s.reactionEvery), 1, 10);
+			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChance", a_s.reactionChance), 0, 100);
+			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeat", a_s.persuasionBeat ? 1 : 0) != 0;
+			a_s.beatTags = ReadString(a_path, L"Director", L"sBeatTags", a_s.beatTags);
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Camera", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
 			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), 0, 100);
 			a_s.emotionCloseUps = ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps ? 1 : 0) != 0;

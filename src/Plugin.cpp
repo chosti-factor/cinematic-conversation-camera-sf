@@ -15,6 +15,8 @@
 #include "Settings.h"
 #include "Visibility.h"
 
+#include <random>
+
 namespace CCC
 {
 	namespace
@@ -63,6 +65,13 @@ namespace CCC
 			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
 			bool                                  speakerWasTalking{ false };
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
+			std::chrono::steady_clock::time_point lineStart{};
+			bool                                  lineBeat{ false };         // this line answers a persuasion: held close-up
+			std::int64_t                          beatConsumed{ 0 };         // the persuasion outcome already used
+			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
+			bool                                  reactionOwed{ false };
+			bool                                  reactionActive{ false };   // this NPC line is shown on the player
+			bool                                  playerWasTalking{ false };
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
 			std::optional<RE::NiPoint3>           slackNpcHead{};    // head point after the dead band
 			std::optional<RE::NiPoint3>           slackPlayerHead{};
@@ -264,6 +273,7 @@ namespace CCC
 		// hook only records what it wants; the main-thread watchdog applies it.
 		bool g_wantRevealPlayer = false;
 		bool g_wantHidePlayer = false;
+		std::mt19937 g_reactionRng{ std::random_device{}() };
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
@@ -657,6 +667,9 @@ namespace CCC
 			// Shot/reverse-shot: the NPC holds the camera while talking; once they've been
 			// quiet briefly it's the player's turn, so cut to the player.
 			const bool talking = a_speaker->IsTalking();
+			if (talking && g_state.reactionActive) {
+				return Subject::kPlayer;  // a reaction shot: you, listening
+			}
 			if (talking) {
 				g_state.npcWasTalking = true;
 				if (!g_state.npcEverTalked) {
@@ -677,6 +690,9 @@ namespace CCC
 			if (g_state.subject == Subject::kNpc && a_now - g_state.npcQuietSince < kPlayerCutDelay) {
 				return Subject::kNpc;
 			}
+			// Their reply is over: reaction counts start again with the next one.
+			g_state.reactionLines = 0;
+			g_state.reactionOwed = false;
 			return g_state.subject == Subject::kNone ? Subject::kNpc : Subject::kPlayer;
 		}
 
@@ -1496,6 +1512,80 @@ namespace CCC
 				++g_repair.settleFrames;
 			}
 
+			// Each line the NPC starts (read once per line): its expression tag (emotion
+			// close-ups), whether it answers a persuasion's outcome or a skill check (the
+			// persuasion beat), and whether it's shown on you listening (a reaction shot).
+			{
+				const bool talkingNow = speaker->IsTalking();
+				if (talkingNow && !g_state.speakerWasTalking) {
+					g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
+					g_state.lineStart = now;
+					g_state.lineBeat = false;
+					g_state.reactionActive = false;
+					std::size_t length = 0;
+					std::string text;
+					if (auto* actor = static_cast<RE::Actor*>(speaker); actor->currentProcess && actor->currentProcess->high) {
+						if (const char* raw = actor->currentProcess->high->strVoiceSubtitle.c_str()) {
+							text = raw;
+							length = text.size();
+						}
+					}
+					// Reaction shots (CCC): after iReactionEvery of their lines in a reply, an
+					// iReactionChance chance that the next one is shown on you. Short lines
+					// (under 40 characters) neither count nor become reactions; an emotion
+					// close-up line keeps its close-up and the reaction waits for the next line.
+					if (s.reactionShots && s.director && !g_state.plainShots && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady) {
+						const bool eligible = length >= 40;
+						const bool takeable = !g_state.lineIntense;
+						if (eligible) {
+							if (g_state.reactionOwed) {
+								if (takeable) {
+									g_state.reactionOwed = false;
+									g_state.reactionActive = true;
+									g_state.reactionLines = 0;
+									REX::INFO("Reaction shot: '{}' shown on you listening", text.substr(0, 60));
+								}
+							} else if (++g_state.reactionLines >= s.reactionEvery) {
+								g_state.reactionLines = 0;
+								g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
+							}
+						}
+					}
+				}
+				// The persuasion beat: a persuasion's outcome or a chosen skill check ([Intimidate],
+				// [Manipulation]...) noticed by the HUD just before or as this line starts.
+				if (talkingNow && s.persuasionBeat && !g_state.lineBeat && now - g_state.lineStart < 1500ms) {
+					const auto outcome = Hud::PersuasionOutcomeAt();
+					const auto age = now.time_since_epoch().count() - outcome;
+					if (outcome != 0 && outcome != g_state.beatConsumed && age >= 0 &&
+						age < std::chrono::duration_cast<std::chrono::steady_clock::duration>(8s).count()) {
+						g_state.beatConsumed = outcome;
+						g_state.lineBeat = true;
+						g_state.reactionActive = false;
+						REX::INFO("Persuasion beat: this answer is held on a close-up of the NPC");
+					}
+				}
+				if (!talkingNow && g_state.speakerWasTalking) {
+					g_state.lineBeat = false;
+					g_state.reactionActive = false;
+				}
+				g_state.speakerWasTalking = talkingNow;
+			}
+			// Diagnostic (0.7.1): do your own lines carry an expression tag too?
+			{
+				const bool playerTalking = player->IsTalking();
+				if (playerTalking && !g_state.playerWasTalking && s.debugLog) {
+					std::string text;
+					if (player->currentProcess && player->currentProcess->high) {
+						if (const char* raw = player->currentProcess->high->strVoiceSubtitle.c_str()) {
+							text = raw;
+						}
+					}
+					const auto emotion = LineEmotion(player);
+					REX::INFO("Your line emotion: {} for '{}'", emotion.empty() ? "unknown" : emotion, text.substr(0, 60));
+				}
+				g_state.playerWasTalking = playerTalking;
+			}
 			auto subject = ChooseSubject(speaker, now);
 			if (!g_state.bodyReady || now < g_state.bodyReadyAt) {
 				subject = Subject::kNpc;  // don't show the player until their body is rebuilt
@@ -1665,15 +1755,6 @@ namespace CCC
 			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
-			// The expression tag of the line the speaker is starting (read once per line), for
-			// the emotion close-ups.
-			{
-				const bool talkingNow = speaker->IsTalking();
-				if (talkingNow && !g_state.speakerWasTalking) {
-					g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
-				}
-				g_state.speakerWasTalking = talkingNow;
-			}
 			std::optional<Camera::Pose> directed;
 			if (s.director && !waitingView && !pov && g_state.plainShots) {
 				// Plain shots (seated people, merchants): only the emotion close-ups, from in
@@ -1684,6 +1765,7 @@ namespace CCC
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
+				frame.persuasionBeat = g_state.lineBeat;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -1707,6 +1789,7 @@ namespace CCC
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
+				frame.persuasionBeat = g_state.lineBeat;
 				frame.npcHead = *npcHead;
 				frame.playerHead = *playerHead;
 				frame.side = g_state.side;
@@ -3115,7 +3198,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.7.0 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
+	REX::INFO("Cinematic Conversation Camera SF 0.7.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
 		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

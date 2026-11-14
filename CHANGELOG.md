@@ -4,6 +4,23 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.7.1 - unreleased
+
+### Added
+- Reaction shots (CCC's "Show You Listening", `bReactionShots`, `iReactionEvery`,
+  `iReactionChance`): now and then one of the NPC's lines is shown on you, listening, then the
+  camera cuts back. After every 2 of their lines in a reply, a 50% chance the next one is a
+  reaction. Short lines and emotion close-up lines are skipped.
+- Persuasion beat (CCC's "Hold On Their Answer", `bPersuasionBeat`): the NPC's answer is a
+  close-up of them, held for the whole line while the camera pushes in. For the persuasion
+  mini-game only the final answer (the panel closing or its success or failure animation);
+  also for options with a skill-check tag ([Intimidate], [Manipulation], [Pay 500 Credits]...,
+  `sBeatTags`), read from the option you chose.
+
+### Diagnostic
+- Your own lines' expression tags are logged ("Your line emotion"), to see whether player
+  dialogue carries them too. Persuasion panel, outcome and chosen tagged options are logged.
+
 ## 0.7.0 - 2026-11-14
 
 Milestone: the conversation's on-screen dressing from CCC is in place. Black bars slide in
