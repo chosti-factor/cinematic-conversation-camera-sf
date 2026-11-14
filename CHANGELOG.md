@@ -7,11 +7,11 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.6.5 - unreleased
 
 ### Added
-- Subtitles in the bars (CCC's option; `[Interface]` `bSubtitlesInBars`): while the bars are
-  in, the conversation's subtitle (the HUD messages menu's `SubtitleText_mc`, found by 0.6.4's
-  search) slides down with them until its text is centred in the bottom bar, and back when
-  they go, since the same element shows ambient lines outside conversations. Long subtitles
-  stay on screen.
+- Subtitles centred in the bottom bar, optional and off by default (`[Interface]`
+  `bSubtitlesInBars`): Starfield's own subtitle position already falls at the top edge of the
+  bar. When on, the subtitle (the HUD messages menu's `SubtitleText_mc`, found by 0.6.4's
+  search) slides down with the bars until its text is centred in the bottom bar, and back when
+  they go, since the same element shows ambient lines outside conversations.
 
 ## 0.6.4 - 2026-11-13
 
