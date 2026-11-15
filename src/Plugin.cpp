@@ -1417,8 +1417,10 @@ namespace CCC
 				const char* name;
 				float       fill;
 				float       rise;
+				float       angle;  // CCC's own, preferred where the room allows
 			};
-			constexpr std::array kShots{ RoomShot{ "Wide", 0.11f, 24.0f / 70.0f }, RoomShot{ "Master", 0.075f, 76.0f / 70.0f }, RoomShot{ "Distant", 0.09f, 28.0f / 70.0f } };
+			constexpr std::array kShots{ RoomShot{ "Wide", 0.11f, 24.0f / 70.0f, 0.0f }, RoomShot{ "Master", 0.075f, 76.0f / 70.0f, 24.0f },
+				RoomShot{ "Distant", 0.09f, 28.0f / 70.0f, 0.0f } };
 			const float lineSide = a_side < 0.0f ? -1.0f : 1.0f;
 			const float minShare = static_cast<float>(Settings::Get().roomShotMinRoom) / 100.0f;
 			g_state.roomAngle.fill(std::numeric_limits<float>::quiet_NaN());
@@ -1448,7 +1450,24 @@ namespace CCC
 						order.push_back(i);
 					}
 				}
-				std::ranges::sort(order, [&](int a, int b) { return room(a) > room(b); });
+				// Most room first (as far as the shot wants: past that, more doesn't help), then
+				// nearest CCC's own angle for the shot, then away from where the other room shots
+				// already stand (0.8.0 test: outdoors all three stood at the same place).
+				std::array<int, kBearings> used{};
+				for (std::size_t m = 0; m < n; ++m) {
+					if (!std::isnan(g_state.roomAngle[m])) {
+						for (int i = 0; i < kBearings; ++i) {
+							if (std::abs(angleOf(i) - g_state.roomAngle[m]) < 1.0f) {
+								++used[i];
+							}
+						}
+					}
+				}
+				const auto score = [&](int i) {
+					const float space = (std::min)(room(i), wanted);
+					return space - 0.02f * std::abs(angleOf(i) - shot.angle) - (used[i] > 0 ? 0.5f : 0.0f);
+				};
+				std::ranges::sort(order, [&](int a, int b) { return score(a) > score(b); });
 				float bestDistance = 0.0f;
 				int   bestBearing = -1;
 				bool  bestClear = false;
@@ -1463,7 +1482,7 @@ namespace CCC
 					const auto         toNpc = TestShot(a_npcHead, cam, a_playerHead, false);
 					const auto         toYou = TestShot(a_playerHead, cam, a_npcHead, false);
 					const bool         clear = toNpc.blockedAt < 0.0f && toYou.blockedAt < 0.0f;
-					if ((clear && !bestClear) || (clear == bestClear && d > bestDistance)) {
+					if ((clear && !bestClear) || (clear == bestClear && (bestBearing < 0 || score(i) > score(bestBearing)))) {
 						bestDistance = d;
 						bestBearing = i;
 						bestClear = clear;

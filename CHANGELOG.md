@@ -6,6 +6,14 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.8.1 - unreleased
 
+### Fixed
+- The conversation lens: the game hands its set-FOV the 29.6 degrees it draws, not the
+  setting's 30 (0.8.0 log), so the shots were framed for 44.4 degrees instead of the 45 set.
+- Room shots outdoors all stood at the same place (0.8.0 test: Wide, Master and Distant at
+  158 degrees off the line). Where the room allows, each now prefers CCC's own angle for
+  it (Wide and Distant on the line, Master 24 degrees off it) and keeps away from where
+  the others stand.
+
 ### Added
 - A controller button for filming people talking near you: hold the right stick click for
   half a second (`[Overhear]` `iListenButton`, `fListenHold`), so a tap still does what the

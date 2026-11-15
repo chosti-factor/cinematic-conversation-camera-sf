@@ -19,17 +19,13 @@ namespace CCC::Director
 		// Starfield's dialogue camera lens (horizontal degrees), measured in 0.3.28.
 		constexpr float kLens = 29.58f;  // the game's 30 degree setting, as drawn
 
-		// The lens the shots are framed for: the game's, or fConversationLens (0.8), scaled the
-		// way the game turns its 30 degrees into the 29.58 drawn.
+		// The lens the shots are framed for: the game's, or fConversationLens (0.8). The 0.8.0
+		// log showed the game hands its set-FOV the 29.6 degrees drawn (not the setting's 30),
+		// so the lens set there is the lens drawn.
 		float Lens()
 		{
 			const float wanted = Settings::Get().conversationLens;
-			if (wanted < 10.0f) {
-				return kLens;
-			}
-			constexpr float kDeg = 3.14159265f / 180.0f;
-			const float     scale = std::tan(kLens * 0.5f * kDeg) / std::tan(15.0f * kDeg);
-			return 2.0f * std::atan(std::tan(wanted * 0.5f * kDeg) * scale) / kDeg;
+			return wanted < 10.0f ? kLens : wanted;
 		}
 
 		struct Setup
