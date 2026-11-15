@@ -756,7 +756,8 @@ namespace CCC::Director
 			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
-			s.closeUpEmotions);
+			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
+				s.closeUpChanceStrong, s.closeUpEmotionsStrong));
 		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
 			s.obstacleCheck && !g_obstacleTest ? ", but the game's collision check isn't available" : "");
 		REX::INFO("Settings in effect: close-ups follow the face {}, 180-degree rule {}, never across the eyeline {}, camera sway {}%, head dead band {:.2f} m",

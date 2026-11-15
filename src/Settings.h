@@ -192,8 +192,13 @@ namespace CCC
 		bool        emotionCloseUps{ true };
 		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
 		int         extremeCloseUpChancePlayer{ 40 };  // % of close-ups of you that are extreme (0.8.3)
-		std::string closeUpEmotions{ "Afraid,Amused,Angry,Apologetic,Awed,Concentrating,Concerned,Confident,Confused,Defiant,Depressed,Disbelief,Disgust,Dying,EyesClosed,Flirting,Grateful,Happy,Impressed,InPain,Irritated,Nervous,Pleading,Puzzled,Question,Rage,Relieved,Sarcastic,Serious,Shocked,SinisterSmile,Smirk,Smug,Somber,Stern,Surprised,Suspicious,Thinking,Tired,VeryAngry,Worried" };  // 0.8.3: every expression but Neutral and Friendly
-		int         closeUpChance{ 50 };          // % of those lines that get the close-up (0.8.3)
+		// Emotion close-ups by tier (0.8.6): each list with its own chance (%).
+		std::string closeUpEmotionsMild{ "Amused,Confident,Thinking,Grateful,Question,Impressed,Tired,Concentrating,Relieved" };
+		std::string closeUpEmotionsMedium{ "Concerned,Serious,Smirk,Happy,Confused,Puzzled,Apologetic,Awed" };
+		std::string closeUpEmotionsStrong{ "VeryAngry,Rage,Angry,Irritated,Afraid,Shocked,Surprised,Disgust,Somber,Depressed,Worried,Nervous,Pleading,Disbelief,Defiant,Stern,Suspicious,Smug,Sarcastic,Flirting,SinisterSmile,InPain,Dying,EyesClosed" };
+		int         closeUpChanceMild{ 30 };
+		int         closeUpChanceMedium{ 50 };
+		int         closeUpChanceStrong{ 100 };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
 		bool        plainShotsSeated{ true };

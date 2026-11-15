@@ -214,9 +214,13 @@ namespace CCC
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Camera", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
 			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), 0, 100);
 			a_s.emotionCloseUps = ReadInt(a_path, L"Director", L"bEmotionCloseUpsNpc", ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps ? 1 : 0)) != 0;
-			a_s.closeUpEmotions = ReadString(a_path, L"Director", L"sCloseUpEmotionsNpc", ReadString(a_path, L"Director", L"sCloseUpEmotions", a_s.closeUpEmotions));
+			a_s.closeUpEmotionsMild = ReadString(a_path, L"Director", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);
+			a_s.closeUpEmotionsMedium = ReadString(a_path, L"Director", L"sCloseUpEmotionsMediumNpc", a_s.closeUpEmotionsMedium);
+			a_s.closeUpEmotionsStrong = ReadString(a_path, L"Director", L"sCloseUpEmotionsStrongNpc", a_s.closeUpEmotionsStrong);
 			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChanceNpc", ReadInt(a_path, L"Director", L"iExtremeCloseUpChance", a_s.extremeCloseUpChance)), 0, 100);
-			a_s.closeUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceNpc", ReadInt(a_path, L"Director", L"iCloseUpChance", a_s.closeUpChance)), 0, 100);
+			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
+			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
+			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
 			a_s.extremeCloseUpChancePlayer = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChancePlayer", ReadInt(a_path, L"Director", L"iExtremeCloseUpChance", a_s.extremeCloseUpChancePlayer)), 0, 100);
 			a_s.plainShotsSeated = ReadInt(a_path, L"Director", L"bPlainShotsSeatedNpc", ReadInt(a_path, L"Director", L"bPlainShotsSeated", a_s.plainShotsSeated ? 1 : 0)) != 0;
 			a_s.plainShotsMerchants = ReadInt(a_path, L"Director", L"bPlainShotsMerchantsNpc", ReadInt(a_path, L"Director", L"bPlainShotsMerchants", a_s.plainShotsMerchants ? 1 : 0)) != 0;

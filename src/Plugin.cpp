@@ -947,10 +947,12 @@ namespace CCC
 		}
 
 		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
-		bool IsCloseUpEmotion(std::string_view a_emotion)
+		// Which emotion close-up tier a line's expression is in (0.8.6): 0 none, 1 mild, 2 medium,
+		// 3 strong; with the chance for it.
+		int CloseUpTier(std::string_view a_emotion, int* a_chance = nullptr)
 		{
 			if (a_emotion.empty() || a_emotion == "none") {
-				return false;
+				return 0;
 			}
 			auto lower = [](std::string_view a_text) {
 				std::string out;
@@ -961,20 +963,34 @@ namespace CCC
 				}
 				return out;
 			};
-			const auto        wanted = lower(a_emotion);
-			const std::string list = lower(Settings::Get().closeUpEmotions);
-			std::size_t       start = 0;
-			while (start <= list.size()) {
-				const auto end = list.find(',', start);
-				if (list.substr(start, end == std::string::npos ? std::string::npos : end - start) == wanted) {
-					return true;
+			const auto wanted = lower(a_emotion);
+			const auto inList = [&](const std::string& a_list) {
+				const std::string list = lower(a_list);
+				std::size_t       start = 0;
+				while (start <= list.size()) {
+					const auto end = list.find(',', start);
+					if (list.substr(start, end == std::string::npos ? std::string::npos : end - start) == wanted) {
+						return true;
+					}
+					if (end == std::string::npos) {
+						break;
+					}
+					start = end + 1;
 				}
-				if (end == std::string::npos) {
-					break;
+				return false;
+			};
+			const auto& s = Settings::Get();
+			const std::array<std::pair<const std::string*, int>, 3> tiers{ std::pair{ &s.closeUpEmotionsStrong, s.closeUpChanceStrong },
+				std::pair{ &s.closeUpEmotionsMedium, s.closeUpChanceMedium }, std::pair{ &s.closeUpEmotionsMild, s.closeUpChanceMild } };
+			for (int i = 0; i < 3; ++i) {
+				if (inList(*tiers[i].first)) {
+					if (a_chance) {
+						*a_chance = tiers[i].second;
+					}
+					return 3 - i;
 				}
-				start = end + 1;
 			}
-			return false;
+			return 0;
 		}
 
 		RE::BGSScene* CurrentSceneUnsafe(RE::TESObjectREFR* a_ref)
@@ -1975,13 +1991,15 @@ namespace CCC
 					// that rolls no is an ordinary line (it can be a reaction).
 					{
 						const auto emotion = LineEmotion(static_cast<RE::Actor*>(speaker));
-						const bool listed = s.emotionCloseUps && IsCloseUpEmotion(emotion);
-						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.closeUpChance;
+						int        chance = 0;
+						const int  tier = s.emotionCloseUps ? CloseUpTier(emotion, &chance) : 0;
+						const bool listed = tier > 0;
+						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < chance;
 						g_state.lineIntense = rolled;
 						// Extreme or not decided here (0.8.3), so a reaction knows not to interrupt it.
 						g_state.lineExtreme = rolled && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
 						if (listed && !rolled && s.debugLog) {
-							REX::INFO("Emotion close-up: '{}' line, the {}% roll said no", emotion, s.closeUpChance);
+							REX::INFO("Emotion close-up: '{}' line ({}), the {}% roll said no", emotion, tier == 3 ? "strong" : tier == 2 ? "medium" : "mild", chance);
 						}
 					}
 					g_state.lineStart = now;
@@ -3732,7 +3750,7 @@ namespace CCC
 			}
 			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
 			const auto  emotion = LineEmotion(a_speaker);
-			const bool  closeUp = Settings::Get().emotionCloseUps && IsCloseUpEmotion(emotion);
+			const bool  closeUp = Settings::Get().emotionCloseUps && CloseUpTier(emotion) > 0;
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
 			// Your face answers the line (0.8): mirrored or a listener's response; untagged
 			// lines give your face back to the game.

@@ -2,7 +2,7 @@
 
 Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups
-(`sCloseUpEmotionsNpc`). This is a running tally from the test logs, to choose which
+(`sCloseUpEmotions...Npc` tiers). This is a running tally from the test logs, to choose which
 tags push in. ✱ = on the close-up list at the time of writing (0.8.3: every expression but
 Neutral and Friendly, see the notes below the second table).
 
@@ -115,6 +115,11 @@ Notes:
   From the tally at the top, that's about half of all NPC lines tagged for it (no tag, 24%,
   and Friendly, 24%, are the rest), so about a quarter of all lines get an emotion
   close-up. A reaction shot of you can interrupt one after its minimum time on screen.
+- 0.8.6: three tiers with their own chances. Mild, 30% (Amused, Confident, Thinking,
+  Grateful, Question, Impressed, Tired, Concentrating, Relieved: about 31% of lines in the
+  tally); medium, 50% (Concerned, Serious, Smirk, Happy, Confused, Puzzled, Apologetic,
+  Awed: about 14%); strong, 100% (the rest but Neutral and Friendly: about 5%). About 21%
+  of all lines get an emotion close-up, most of them on lines with real feeling.
 
 ## Your character's face
 

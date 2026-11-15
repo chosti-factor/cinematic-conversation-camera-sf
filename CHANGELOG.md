@@ -14,6 +14,13 @@ test build; "diagnostic" items only add information to the log for testing.
   NPC's first line now, and are hidden while they speak after that, as before.
 
 ### Changed
+- Emotion close-ups come in three tiers, each with its own chance: mild expressions
+  (Amused, Confident, Thinking, Grateful, Question, Impressed, Tired, Concentrating,
+  Relieved) 30%, medium (Concerned, Serious, Smirk, Happy, Confused, Puzzled, Apologetic,
+  Awed) 50%, strong (the rest but Neutral and Friendly) 100%: `sCloseUpEmotionsMildNpc`,
+  `iCloseUpChanceMildNpc`, and the same for Medium and Strong. About one NPC line in five
+  (was one in four at 50% for all), with the strong ones always. `sCloseUpEmotionsNpc` and
+  `iCloseUpChanceNpc` are gone.
 - Filming people talking is only offered, or started on its own, for conversations: the
   game's scenes of people talking (in the 0.8.5 log every real NPC conversation was one,
   and every bark or one-liner, like "Need something?", wasn't). The listen key still films

@@ -10,9 +10,12 @@ stretches, cutting only at the edges of their lines.
 
 ## On each NPC line
 
-1. **Emotion line?** When the line starts, its expression tag is read. If it's on
-   `sCloseUpEmotionsNpc` (every expression but Neutral and Friendly), a roll of
-   `iCloseUpChanceNpc` (50%) makes it an emotion line, and a roll of
+1. **Emotion line?** When the line starts, its expression tag is read. If it's on one of
+   the three tiers, a roll of the tier's chance makes it an emotion line: mild
+   (`sCloseUpEmotionsMildNpc`: Amused, Confident, Thinking, Grateful, Question, Impressed,
+   Tired, Concentrating, Relieved) 30%, medium (`...MediumNpc`: Concerned, Serious, Smirk,
+   Happy, Confused, Puzzled, Apologetic, Awed) 50%, strong (`...StrongNpc`: all the rest
+   but Neutral and Friendly) 100%; and a roll of
    `iExtremeCloseUpChanceNpc` (40%) makes it an extreme one. The camera cuts to a close-up
    (or extreme close-up) of them, pushing in slowly. If it's already on their close-up, it
    stays.

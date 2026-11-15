@@ -68,9 +68,11 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   line from the person in shot to the camera. A wall behind the camera pulls it in; a
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
-- **Emotion close-ups:** lines the game tags with an expression (every one but Neutral and
-  Friendly, `sCloseUpEmotionsNpc`) push in to a close-up of the speaker half the time
-  (`iCloseUpChanceNpc`), 40% of them extreme close-ups. CCC does this with lines Skyrim's
+- **Emotion close-ups:** lines the game tags with an expression push in to a close-up of
+  the speaker, 40% of them extreme close-ups. The expressions come in three tiers with
+  their own chances: mild (Amused, Confident, Thinking...) 30%, medium (Concerned, Serious,
+  Smirk...) 50%, strong (Angry, Afraid, Shocked, Somber...) always; Neutral and Friendly
+  never (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`). About one line in five. CCC does this with lines Skyrim's
   writers marked as intense; Starfield has no such mark, so the expression decides. The
   expression of each line can be shown on screen while testing (`bShowMessages`).
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
