@@ -15,7 +15,7 @@ Last updated: 0.8.3 (2026-11-15).
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | From | CCC | CCC | CCC | CCC SF, mirrors Standard | CCC SF, mirrors Close | CCC SF, mirrors Room | CCC SF |
 | The look | Shoulders, close-ups, three-quarters and mediums on both sides | Shoulders, tight close-ups and extreme close-ups | Wide and full-figure shots | Standard, plus a few of Room's wider shots | Close, plus the reverse shoulder and three-quarter singles | Room, plus close-ups and a shoulder now and then | Every shot: the everyday ones most often, CCC's rarer angles now and then |
-| Feels like | A TV drama: classic shot / reverse shot | A film-noir confrontation | A classic western or a stage play | A sci-fi streaming series | An intimate character drama | A space-opera epic | A documentary or a music video |
+| Feels like | A TV drama: classic shot / reverse shot | A film-noir conversation | A classic western or a stage play | A sci-fi streaming series | An intimate character drama | A space-opera epic | A documentary or a music video |
 | Camera movement | Mostly locked off; close-ups push in; the two-shot drifts | Pushes and zooms on every close-up | Cranes, pull-outs and drifts on almost everything | Standard's; the wider shots move | Close's pushes and zooms; the three-quarters drift | Room's moves; close-ups push in | A bit of everything: pushes, tilts, cranes, drifts |
 | Faces (close-ups and closer) | 26% | 67% | none | 21% | 49% | 12% | 21% |
 | Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 19% | 5% (Distant) | 58% | 19% |

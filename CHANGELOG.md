@@ -37,7 +37,7 @@ test build; "diagnostic" items only add information to the log for testing.
 - The listen prompt's fonts are assigned rather than learned: the words in the bold main
   font, light (the game's own prompt words are dark on a panel this prompt doesn't have),
   the button as its icon.
-- README: Close "feels like" a film-noir confrontation.
+- README: Close "feels like" a film-noir conversation.
 
 ## 0.8.4 - 2026-11-15
 
