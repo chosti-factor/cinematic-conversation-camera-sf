@@ -63,7 +63,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
 - **Emotion close-ups:** lines the game tags with an expression (every one but Neutral and
-  Friendly, `sCloseUpEmotions`) push in to a close-up of the speaker 67% of the time
+  Friendly, `sCloseUpEmotions`) push in to a close-up of the speaker half the time
   (`iCloseUpChance`), 40% of them extreme close-ups. CCC does this with lines Skyrim's
   writers marked as intense; Starfield has no such mark, so the expression decides. The
   expression of each line can be shown on screen while testing (`bShowMessages`).

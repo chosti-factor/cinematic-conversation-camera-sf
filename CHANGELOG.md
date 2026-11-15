@@ -18,9 +18,13 @@ test build; "diagnostic" items only add information to the log for testing.
   closer to Starfield's own look. 0 is still the game's 30, and 20-70 your own for every
   preset.
 - Emotion close-ups: every expression but Neutral and Friendly is now on the list
-  (`sCloseUpEmotions`, was 29 of them), with a chance (`iCloseUpChance`, 67%). A listed
-  line that rolls no is an ordinary line and can be a reaction shot. About a third of NPC
-  lines get an emotion close-up (estimate from the expression tally in docs/EMOTIONS.md).
+  (`sCloseUpEmotions`, was 29 of them), with a chance (`iCloseUpChance`, 50%). A listed
+  line that rolls no is an ordinary line. About a quarter of NPC lines get an emotion
+  close-up (estimate from the expression tally in docs/EMOTIONS.md).
+- A reaction shot can interrupt an emotion close-up: their close-up first, for its minimum
+  time on screen (`fShortestHold`, 2 s), then you for `fReactionSeconds`, then back to the
+  same close-up, pushing in. Only on lines long enough for all three (judged from the
+  subtitle's length). Before, an emotion close-up line was never a reaction.
 - Stardust is closer to Standard: exactly Standard's shots, weights and moves, with a few of
   Room's wider shots added (about a fifth, was 40%).
 - Filming people talking near you:

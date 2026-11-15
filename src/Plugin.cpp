@@ -75,6 +75,7 @@ namespace CCC
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			std::chrono::steady_clock::time_point reactionUntil{};           // back to the speaker then (0.8.1)
+			std::chrono::steady_clock::time_point reactionFrom{};            // on you from then (0.8.3: after an emotion close-up's minimum)
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
@@ -710,7 +711,7 @@ namespace CCC
 				g_state.reactionActive = false;  // the reaction's done: back to the speaker
 				g_state.reactionCloseUp = false;
 			}
-			if (talking && g_state.reactionActive) {
+			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
 				return Subject::kPlayer;  // a reaction shot: you, listening
 			}
 			if (talking) {
@@ -1933,8 +1934,8 @@ namespace CCC
 				// Reaction shots (CCC): every iReactionEvery-th line of their reply (Starfield's
 				// replies are mostly two or three lines, so the roll is on that line itself rather
 				// than CCC's next one), an iReactionChance chance it's shown on you. Short lines
-				// (under 40 characters) neither count nor become reactions; an emotion close-up line
-				// keeps its close-up and the reaction waits for the next line. The subtitle text is
+				// (under 40 characters) don't become reactions; an emotion close-up line gets its
+				// close-up first and the reaction after it (0.8.3). The subtitle text is
 				// only there a moment after the line starts (0.7.1 never saw it at the start), so
 				// this waits up to half a second for it to change.
 				if (talkingNow && g_state.reactionPending) {
@@ -1969,15 +1970,22 @@ namespace CCC
 							!g_state.lineBeat) {
 							const int  sentences = CountSentences(text);
 							const bool due = g_state.reactionLines >= s.reactionEvery;
-							const bool rolled = due && !g_state.lineIntense && text.size() >= 40 &&
+							const float lineSeconds = static_cast<float>(text.size()) / 14.0f;  // guessed from the subtitle
+							// 0.8.3: an emotion close-up line can have a reaction too, once the
+							// close-up has had its minimum time on screen (fShortestHold): then you
+							// for fReactionSeconds, and back to their close-up. Only on a line long
+							// enough for all three (with 1.5 s of the close-up after).
+							const float closeFirst = s.shortestHold;
+							const bool  fits = !g_state.lineIntense || (s.reactionSeconds > 0.0f && lineSeconds >= closeFirst + s.reactionSeconds + 1.5f);
+							const bool rolled = due && fits && text.size() >= 40 &&
 							                    std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
 							// Your emotion close-up (0.7.11): when your face answers the line with an
 							// expression, an iPlayerCloseUpChance chance the line is shown on you, close.
-							const bool closeUp = !rolled && s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) && !g_state.lineIntense &&
+							const bool closeUp = !rolled && fits && s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) &&
 							                     text.size() >= 40 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
 							if (rolled || closeUp) {
-								REX::INFO("Reaction shot: '{}' shown on you listening{} ({} sentences heard since the last)", text.substr(0, 60),
-									closeUp ? ", close (your expression)" : "", g_state.reactionLines);
+								REX::INFO("Reaction shot: '{}' shown on you listening{}{} ({} sentences heard since the last)", text.substr(0, 60),
+									closeUp ? ", close (your expression)" : "", g_state.lineIntense ? ", after their emotion close-up" : "", g_state.reactionLines);
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
@@ -1986,17 +1994,23 @@ namespace CCC
 								// subtitle (about 14 characters a second); when less than 1.5 s of it
 								// would be left, it stays on you to the end rather than flick back.
 								const float hold = s.reactionSeconds;
-								const float lineSeconds = static_cast<float>(text.size()) / 14.0f;
-								g_state.reactionUntil = hold <= 0.0f || lineSeconds - hold < 1.5f ?
-								                            std::chrono::steady_clock::time_point::max() :
-								                            now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(hold));
+								const auto  secs = [](float a_seconds) {
+									return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
+								};
+								if (g_state.lineIntense) {
+									g_state.reactionFrom = (std::max)(now, g_state.lineStart + secs(closeFirst));
+									g_state.reactionUntil = g_state.reactionFrom + secs(hold);
+								} else {
+									g_state.reactionFrom = now;
+									g_state.reactionUntil = hold <= 0.0f || lineSeconds - hold < 1.5f ? std::chrono::steady_clock::time_point::max() : now + secs(hold);
+								}
 								g_reactionStarted.store(true, std::memory_order_release);
 							} else {
 								g_state.reactionLines += sentences;
 								g_state.lineCounted = sentences;
 								if (s.debugLog) {
 									// Why this line wasn't a reaction, when one was due.
-									const char* why = !due ? "" : g_state.lineIntense ? "; not a reaction: an emotion close-up line" :
+									const char* why = !due ? "" : !fits ? "; not a reaction: an emotion close-up line too short to cut away and back" :
 									                  text.size() < 40 ? "; not a reaction: under 40 characters" : "; not a reaction: the chance roll said no";
 									REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines, why);
 								}

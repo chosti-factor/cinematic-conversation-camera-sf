@@ -71,6 +71,7 @@ namespace CCC::Director
 			std::mt19937              rng{ std::random_device{}() };
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
+			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
 			bool                      playerCloseDone{ false }; // this reaction's close-up of you is done
 			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
 			float                     limit{ std::numeric_limits<float>::infinity() };  // obstacle: camera at most this far from the subject
@@ -98,6 +99,7 @@ namespace CCC::Director
 			bool                    wasTalking{ false };
 			float                   limit{ std::numeric_limits<float>::infinity() };
 			bool                    playerClose{ false };  // holding your emotion close-up
+			bool                    intenseShown{ false };  // this line's emotion close-up was shown (to come back to after a reaction)
 		} gp;
 
 		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
@@ -719,6 +721,7 @@ namespace CCC::Director
 		// Emotion close-ups: a line tagged with one of the chosen expressions starts.
 		if (npcStarted) {
 			g.intensePending = a_frame.intenseLine && s.emotionCloseUps;
+			g.intenseShot.reset();
 		}
 		if (!a_frame.npcTalking) {
 			g.intensePending = false;
@@ -765,7 +768,16 @@ namespace CCC::Director
 					g.intenseSetup = IntenseSetup(*shot);
 					NoteEmotionCut(*shot);
 					g.intensePending = false;
+					g.intenseShot = shot;
 				}
+			}
+			// Back from a reaction that interrupted this line's emotion close-up (0.8.3): the
+			// same close-up again, pushing in.
+			if (a_frame.npcTurn && a_frame.intenseLine && a_frame.npcTalking && g.intenseShot && g.current && !g.currentNpcSide &&
+				Placeable(*g.intenseShot, a_frame)) {
+				const auto shot = *g.intenseShot;
+				Cut(shot, a_frame, a_now, "back from the reaction, intense line", false);
+				g.intenseSetup = IntenseSetup(shot);
 			}
 
 			// Your emotion close-up: the reaction's cut is a close-up of you, pushing in, once per
@@ -803,6 +815,7 @@ namespace CCC::Director
 					Cut(*shot, a_frame, a_now, "intense line", true);
 					g.intenseSetup = IntenseSetup(*shot);
 					NoteEmotionCut(*shot);
+					g.intenseShot = shot;
 				}
 				g.intensePending = false;
 			} else if (g.intensePending && alreadyClose) {
@@ -900,12 +913,21 @@ namespace CCC::Director
 			}
 			if (started) {
 				gp.shot.reset();
+				gp.intenseShown = false;
 				if (a_frame.intenseLine || a_frame.persuasionBeat) {
 					if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
 						begin(*shot, a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up", true);
+						gp.intenseShown = a_frame.intenseLine;
 					}
 					LogSkipped();
 				}
+			} else if (!gp.shot && gp.intenseShown && a_frame.intenseLine) {
+				// Back from a reaction that interrupted the emotion close-up (0.8.3).
+				if (const auto shot = IntenseShot(a_frame)) {
+					begin(*shot, "emotion close-up, back from the reaction", false);
+				}
+				gp.intenseShown = false;
+				LogSkipped();
 			}
 		}
 		if (!gp.shot) {

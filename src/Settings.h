@@ -185,7 +185,7 @@ namespace CCC
 		bool        emotionCloseUps{ true };
 		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
 		std::string closeUpEmotions{ "Afraid,Amused,Angry,Apologetic,Awed,Concentrating,Concerned,Confident,Confused,Defiant,Depressed,Disbelief,Disgust,Dying,EyesClosed,Flirting,Grateful,Happy,Impressed,InPain,Irritated,Nervous,Pleading,Puzzled,Question,Rage,Relieved,Sarcastic,Serious,Shocked,SinisterSmile,Smirk,Smug,Somber,Stern,Surprised,Suspicious,Thinking,Tired,VeryAngry,Worried" };  // 0.8.3: every expression but Neutral and Friendly
-		int         closeUpChance{ 67 };          // % of those lines that get the close-up (0.8.3)
+		int         closeUpChance{ 50 };          // % of those lines that get the close-up (0.8.3)
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
 		bool        plainShotsSeated{ true };

@@ -111,9 +111,10 @@ Notes:
 - 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
   Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
 - 0.8.3: every expression but Neutral and Friendly is on the list (the ✱ column above is
-  from before), and a listed line gets its close-up 67% of the time (`iCloseUpChance`).
+  from before), and a listed line gets its close-up 50% of the time (`iCloseUpChance`).
   From the tally at the top, that's about half of all NPC lines tagged for it (no tag, 24%,
-  and Friendly, 24%, are the rest), so about a third of all lines get an emotion close-up.
+  and Friendly, 24%, are the rest), so about a quarter of all lines get an emotion
+  close-up. A reaction shot of you can interrupt one after its minimum time on screen.
 
 ## Your character's face
 
