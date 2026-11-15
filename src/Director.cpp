@@ -22,10 +22,33 @@ namespace CCC::Director
 		// The lens the shots are framed for: the game's, or fConversationLens (0.8). The 0.8.0
 		// log showed the game hands its set-FOV the 29.6 degrees drawn (not the setting's 30),
 		// so the lens set there is the lens drawn.
+		float PresetLens();
+
+		// The lens a shot without its own is framed for: the preset's, or the game's.
 		float Lens()
 		{
-			const float wanted = WantedLens();
+			const float wanted = PresetLens();
 			return wanted < 10.0f ? kLens : wanted;
+		}
+
+		// 0.8.12, CCC's lens per angle. CCC's lenses are Skyrim's field of view, which (like
+		// Bethesda's other engines of its time) is measured across a 4:3 frame: a 16:9 screen
+		// shows more. Starfield's is measured across the frame as it is. The same picture on a
+		// 16:9 screen: 2 atan(tan(F/2) x 4/3). The lens key (testing) switches between this,
+		// the numbers as written, and one lens for everything, to compare by eye.
+		std::atomic<int>   g_lensMode{ 0 };        // 0 converted, 1 as written, 2 the preset's one lens
+		std::atomic<float> g_shotLens{ 0.0f };     // the lens of the shot on screen (0 = the preset's)
+
+		float SkyrimLens(float a_skyrim)
+		{
+			if (a_skyrim < 10.0f) {
+				return 0.0f;
+			}
+			if (g_lensMode.load(std::memory_order_relaxed) == 1) {
+				return a_skyrim;
+			}
+			constexpr float kDeg = 3.14159265f / 180.0f;
+			return 2.0f * std::atan(std::tan(a_skyrim * 0.5f * kDeg) * (4.0f / 3.0f)) / kDeg;
 		}
 
 		struct Setup
@@ -34,6 +57,7 @@ namespace CCC::Director
 			Move  move{ Move::kLocked };
 			int   amount{ 0 };   // 0-100
 			float seconds{ 4.2f };
+			float lens{ 0.0f };  // this angle's lens, Starfield degrees (0.8.12, as CCC 1.3+); 0 = the preset's
 		};
 
 		struct Line
@@ -124,7 +148,9 @@ namespace CCC::Director
 		// deliberate move rather than the regular close-up of the rotation.
 		Setup IntenseSetup(ShotType a_type)
 		{
-			return a_type == ShotType::kExtremeClose || a_type == ShotType::kExtremeClosePlayer ? Setup{ 1, Move::kZoomIn, 40, 9.0f } : Setup{ 1, Move::kPushIn, 40, 8.0f };
+			auto setup = a_type == ShotType::kExtremeClose || a_type == ShotType::kExtremeClosePlayer ? Setup{ 1, Move::kZoomIn, 40, 9.0f } : Setup{ 1, Move::kPushIn, 40, 8.0f };
+			setup.lens = g.setups[static_cast<std::size_t>(a_type)].lens;  // (the angle's own lens)
+			return setup;
 		}
 
 		struct PresetEntry
@@ -134,6 +160,7 @@ namespace CCC::Director
 			Move     move;
 			int      amount;
 			float    seconds;
+			float    lens{ 0.0f };  // CCC's lens for the angle, in Skyrim degrees (0 = the preset's own); converted when loaded
 		};
 
 		// The three built-in looks (CCC's Presets.cpp). Zoom moves stay listed as zooms;
@@ -284,7 +311,7 @@ namespace CCC::Director
 				setup = Setup{};
 			}
 			for (const auto& e : a_entries) {
-				g.setups[static_cast<std::size_t>(e.type)] = Setup{ e.weight, e.move, e.amount, e.seconds };
+				g.setups[static_cast<std::size_t>(e.type)] = Setup{ e.weight, e.move, e.amount, e.seconds, SkyrimLens(e.lens) };
 			}
 		}
 
@@ -347,7 +374,7 @@ namespace CCC::Director
 			Shots::Input in;
 			in.npcHead = a_frame.npcHead;
 			in.playerHead = a_frame.playerHead;
-			in.lensDegrees = Lens();
+			in.lensDegrees = a_setup.lens >= 10.0f && Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2 ? a_setup.lens : Lens();
 			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
 			in.side = a_frame.side;
@@ -361,7 +388,9 @@ namespace CCC::Director
 			in.playerGround = a_frame.playerGround;
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
-			in.closeUpScale = static_cast<float>(s.closeUpDistance) / 100.0f;
+			// The preset's own (0.8.12): CCC's presets at CCC's distance, CCC SF's 15% further back
+			// (their flatter, narrower lens); or yours.
+			in.closeUpScale = static_cast<float>(s.closeUpDistance > 0 ? s.closeUpDistance : PresetLens() < 40.0f ? 115 : 100) / 100.0f;
 			in.roomAngle = a_frame.roomAngle;
 			in.roomDistance = a_frame.roomDistance;
 			in.roomRise = a_frame.roomRise;
@@ -598,6 +627,7 @@ namespace CCC::Director
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
 			g.extremeLineOver = false;
+			g_shotLens.store(g.setups[static_cast<std::size_t>(a_type)].lens, std::memory_order_relaxed);
 			g.current = a_type;
 			++g.cuts;
 			g.why = a_why;
@@ -750,6 +780,7 @@ namespace CCC::Director
 		g.intensePending = false;
 		g.intenseSetup.reset();
 		g.extremeLineOver = false;
+		g_shotLens.store(0.0f, std::memory_order_relaxed);
 		g.inReaction = false;
 		g.reactionReturn.reset();
 		g.reactionReturnSetup.reset();
@@ -1117,19 +1148,42 @@ namespace CCC::Director
 		return pose;
 	}
 
+	namespace
+	{
+		// fConversationLens, or the preset's one lens (CCC's presets 45 degrees, CCC SF's 37.5,
+		// 0.8.3); below 10 = the game's own.
+		float PresetLens()
+		{
+			const auto& s = Settings::Get();
+			if (s.conversationLens >= 10.0f) {
+				return s.conversationLens;  // your own
+			}
+			if (s.conversationLens >= 0.0f) {
+				return 0.0f;  // the game's
+			}
+			std::string preset{ s.preset };
+			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
+		}
+	}
+
 	float WantedLens()
 	{
-		const auto& s = Settings::Get();
-		if (s.conversationLens >= 10.0f) {
-			return s.conversationLens;  // your own
+		// The shot's own (0.8.12, CCC's lens per angle), unless your own lens is set or the
+		// lens key asked for one lens.
+		if (const float shot = g_shotLens.load(std::memory_order_relaxed);
+			shot >= 10.0f && Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2) {
+			return shot;
 		}
-		if (s.conversationLens >= 0.0f) {
-			return 0.0f;  // the game's
-		}
-		// The preset's own (0.8.3): CCC's presets 45 degrees, CCC SF's 37.5.
-		std::string preset{ s.preset };
-		std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-		return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
+		return PresetLens();
+	}
+
+	const char* NextLensMode()
+	{
+		const int mode = (g_lensMode.load(std::memory_order_relaxed) + 1) % 3;
+		g_lensMode.store(mode, std::memory_order_relaxed);
+		g_presetSwitch.store(true);  // the angles' lenses are loaded again, converted or not
+		return mode == 0 ? "CCC, converted from 4:3" : mode == 1 ? "CCC, as written" : "one lens for all";
 	}
 
 	float RoomShotLimit(bool a_interior)

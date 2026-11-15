@@ -80,6 +80,10 @@ namespace CCC::Director
 	// presets 45, CCC SF's 37.5); below 10 = the game's own.
 	[[nodiscard]] float WantedLens();
 
+	// The lens key (testing, 0.8.12): the angles' lenses converted from Skyrim's 4:3 measure
+	// (the default), as written, or the preset's one lens for every angle. Returns its name.
+	const char* NextLensMode();
+
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.
 	[[nodiscard]] float RoomShotLimit(bool a_interior);

@@ -305,6 +305,7 @@ namespace CCC
 		void                OnOptionChosen(const std::string& a_text);
 		void                FilmFrame();
 		void                FocusOnShot(float a_distance);
+		void                LensNow();
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		std::atomic<int>    g_lineSerial{ 0 };          // counts their lines, parts included (0.8.3)
@@ -2415,6 +2416,7 @@ namespace CCC
 				frame.npcSwayHead = npcSwayHead;
 				frame.playerSwayHead = playerSwayHead;
 				directed = Director::Update(frame, now);
+				LensNow();  // a cut's lens on the cut's own frame (0.8.12: each angle has its own)
 			}
 			// The plain shots stage on the same side of the line as the shot library: over your
 			// right shoulder on the right side; your own shots over their matching shoulder, or
@@ -2912,6 +2914,16 @@ namespace CCC
 		std::atomic<bool>  g_lensActive{ false };  // set on the main thread
 		std::atomic<float> g_lensWanted{ 0.0f };
 		std::atomic<int>   g_lensCalls{ 0 };
+
+		// The lens wanted, set from the camera thread right after the director's choice (the
+		// main thread keeps it current too).
+		void LensNow()
+		{
+			const float lens = Director::WantedLens();
+			if (lens >= 10.0f) {
+				g_lensWanted.store(lens, std::memory_order_relaxed);
+			}
+		}
 
 		float LensFor(float a_fov)
 		{
@@ -4417,8 +4429,18 @@ namespace CCC
 				REX::INFO("Preset key: now {} (until the game is restarted; sPreset in the INI sets the one it starts with)", kOrder[next]);
 			}
 			wasDown = down;
+			// The lens key (testing, 0.8.12), during a conversation only.
+			static bool lensWasDown = false;
+			const bool  lensDown = s.lensKey > 0 && g_state.active && GameHasFocus() && (::GetAsyncKeyState(s.lensKey) & 0x8000) != 0;
+			static const char* lensMode = "CCC, converted from 4:3";
+			if (lensDown && !lensWasDown) {
+				lensMode = Director::NextLensMode();
+				REX::INFO("Lens key: {}", lensMode);
+			}
+			lensWasDown = lensDown;
 			if (s.showMessages) {
-				std::string label = std::format("PRESET: {}", Settings::Get().preset);
+				const float lens = Director::WantedLens();
+				std::string label = std::format("PRESET: {}   LENS: {} ({})", Settings::Get().preset, lens >= 10.0f ? std::format("{:.0f}", lens) : std::string{ "GAME'S" }, lensMode);
 				std::ranges::transform(label, label.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 				Hud::SetPresetLabel(label);
 			}

@@ -147,6 +147,7 @@ namespace CCC
 				const std::int32_t fallback = legacy >= 0 ? legacy : (a_s.showMessages ? 1 : 0);
 				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
 				a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
+				a_s.lensKey = std::clamp(ReadInt(a_path, L"Debug", L"iLensKey", a_s.lensKey), 0, 0xFE);
 			}
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
 			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", ReadInt(a_path, L"Overhear", L"bFilmConversations", a_s.filmConversations ? 1 : 0)) != 0;
@@ -171,7 +172,8 @@ namespace CCC
 			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
 			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
 			a_s.playerCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChancePlayer", ReadInt(a_path, L"Face", L"iPlayerCloseUpChance", a_s.playerCloseUpChance)), 0, 100);
-			a_s.closeUpDistance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpDistance", a_s.closeUpDistance), 80, 150);
+			a_s.closeUpDistance = ReadInt(a_path, L"Director", L"iCloseUpDistance", a_s.closeUpDistance);
+			a_s.closeUpDistance = a_s.closeUpDistance < 0 ? -1 : std::clamp(a_s.closeUpDistance, 80, 150);
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
