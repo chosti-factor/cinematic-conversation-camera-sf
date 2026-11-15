@@ -175,9 +175,12 @@ namespace CCC
 		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
 		float       bystanderStill{ 1.5f };   // seconds without moving before a bystander counts
-		int         reactionChance{ 50 };     // percent
+		int         reactionChance{ 100 };    // percent, once due (0.8.5: was 50, rolled on a sentence count)
 		float       reactionSeconds{ 2.5f };  // on you, then back to the speaker; 0 = the whole line (0.8.1)
-		float       reactionMinSeconds{ 2.0f };  // never less on you, from the cut (0.8.3)
+		float       reactionMinSeconds{ 2.0f };  // (0.8.3; unused since 0.8.5: reactions last their line)
+		float       reactionAfterSeconds{ 7.0f };  // their talking without a cut to you before a reaction is due (0.8.5)
+		float       reactionLineMin{ 2.5f };     // the line a reaction takes: at least ... seconds
+		float       reactionLineMax{ 7.0f };     // ... and at most
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
 		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)

@@ -34,12 +34,11 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
-- **Reaction shots:** now and then one of their lines is shown on you, as in CCC: counted in
-  sentences, one roll when the count is reached, the next line that can take it shown on
-  you (`iReactionSentencesPlayer`, `iReactionChancePlayer`), with seated people and
-  merchants too. A reaction is you listening, or a close-up of your expression
-  (`iCloseUpChancePlayer`); it stays on you a couple of seconds from the cut, never less
-  than 2, then cuts back (`fReactionSecondsPlayer`, `fReactionMinSecondsPlayer`). Details:
+- **Reaction shots:** to break the monotony of a long stretch, after 7 s of their talking
+  without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
+  its end (`fReactionAfterSecondsPlayer`); on a regular emotion close-up, after its first
+  2 s. With seated people and merchants too. A reaction
+  is you listening, or a close-up of your expression (`iCloseUpChancePlayer`). Details:
   [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   reply is a close-up, pushing in (`bPersuasionBeatNpc`).

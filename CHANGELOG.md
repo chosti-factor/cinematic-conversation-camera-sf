@@ -19,6 +19,17 @@ test build; "diagnostic" items only add information to the log for testing.
 - Filming people talking ends sooner after the conversation: 0.5 s after the last word
   (`fFilmEndSecondsNpc`), up to 4 s while they're still in one of the game's scenes
   (`fFilmEndSecondsSceneNpc`; was 3 and 10).
+- Reaction shots reworked to break the monotony of long stretches (0.8.4 test: some were
+  too abrupt): after `fReactionAfterSecondsPlayer` (7 s) of their talking without a cut to
+  you, the next line of theirs that suits it (2.5 to 7 s, not an emotion close-up) is shown
+  on you from its start to its end, and again after every 7 s in a long speech. Short
+  exchanges never get one. The cuts fall at the edges of their lines, never in the middle.
+  The sentence count, `iReactionSentencesPlayer`, `fReactionSecondsPlayer` and
+  `fReactionMinSecondsPlayer` are gone. A regular emotion close-up line can still take
+  one: their close-up first for 2 s, then you to the end of the line (no cut back to them
+  mid-line any more); never an extreme close-up.
+  `iReactionChancePlayer` is now the chance once due (100). New:
+  `fReactionLineMinSecondsPlayer`, `fReactionLineMaxSecondsPlayer`.
 - The listen prompt's fonts are assigned rather than learned: the words in the bold main
   font, light (the game's own prompt words are dark on a panel this prompt doesn't have),
   the button as its icon.

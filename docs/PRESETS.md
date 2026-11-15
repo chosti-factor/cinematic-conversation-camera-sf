@@ -82,7 +82,7 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
   shot is left out until room measurement can place it.
 - **The same in every preset:** emotion close-ups on lines with an expression (every one but
   Neutral and Friendly, half the time: `bEmotionCloseUpsNpc`, `iCloseUpChanceNpc`),
-  reaction shots of you listening (`iReactionSentencesPlayer`, `iReactionChancePlayer`, `fReactionSecondsPlayer`),
+  reaction shots of you listening in long stretches (`fReactionAfterSecondsPlayer`),
   close-ups of your expressions (`iCloseUpChancePlayer`), holding on the answer after a
   persuasion (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people
   and merchants.
