@@ -18,6 +18,10 @@ test build; "diagnostic" items only add information to the log for testing.
     them apart.
   - 0 or 1 still sets either for every preset.
 
+### Fixed
+- The lens key changed the lens only at the next cut (0.8.12 test): the shot on screen kept
+  the lens its cut had worked out. It changes at once now.
+
 ## 0.8.12 - 2026-11-15
 
 ### Changed

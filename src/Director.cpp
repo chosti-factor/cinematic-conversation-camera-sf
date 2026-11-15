@@ -39,7 +39,7 @@ namespace CCC::Director
 		// numbers put it, seen through the wider lens. The lens key (testing) switches between
 		// that, CCC's numbers as written, and one lens for everything, to compare by eye.
 		std::atomic<int>   g_lensMode{ 0 };        // 0 as Skyrim shows it, 1 as written, 2 the preset's one lens
-		std::atomic<float> g_shotLens{ 0.0f };     // the lens drawn for the shot on screen (0 = the preset's)
+		std::atomic<float> g_shotLens{ 0.0f };     // the shot on screen's own lens, CCC's number (0 = the preset's)
 
 		bool OwnLenses()
 		{
@@ -652,7 +652,7 @@ namespace CCC::Director
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
 			g.extremeLineOver = false;
-			g_shotLens.store(DrawnLens(g.setups[static_cast<std::size_t>(a_type)].lens), std::memory_order_relaxed);
+			g_shotLens.store(g.setups[static_cast<std::size_t>(a_type)].lens, std::memory_order_relaxed);
 			g.current = a_type;
 			++g.cuts;
 			g.why = a_why;
@@ -1220,7 +1220,9 @@ namespace CCC::Director
 	{
 		// The shot's own (0.8.12, CCC's lens per angle), unless your own lens is set or the
 		// lens key asked for one lens.
-		if (const float shot = g_shotLens.load(std::memory_order_relaxed); shot >= 10.0f && OwnLenses()) {
+		// (Worked out each time from CCC's number, so the lens key takes effect at once: 0.8.12
+		// kept the lens the last cut had worked out until the next cut.)
+		if (const float shot = DrawnLens(g_shotLens.load(std::memory_order_relaxed)); shot >= 10.0f) {
 			return shot;
 		}
 		return PresetLens();
