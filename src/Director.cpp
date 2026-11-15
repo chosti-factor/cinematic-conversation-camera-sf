@@ -443,6 +443,11 @@ namespace CCC::Director
 			if (a_frame.nearSeated && Shots::OverShoulder(a_type)) {
 				return false;  // the camera would stand in the seat's back
 			}
+			// A reaction shows you (0.8.3, as CCC): your regular shots, never the room, the
+			// two-shot or the profile of you both.
+			if (a_frame.reaction && Shots::Neutral(a_type)) {
+				return false;
+			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
 			// A framing that wants the camera far beyond the cap would become a different
 			// shot entirely (a full figure turned into a close-up); leave it out.
@@ -475,10 +480,11 @@ namespace CCC::Director
 			}
 		}
 
-		// The close-up for an intense line: a third of the time the extreme close-up.
+		// The close-up for an intense line: the extreme close-up when the line was rolled one
+		// (iExtremeCloseUpChanceNpc, decided with the line since 0.8.3).
 		std::optional<ShotType> IntenseShot(const Frame& a_frame)
 		{
-			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChance;
+			const bool extreme = a_frame.intenseExtreme;
 			if (extreme && Placeable(ShotType::kExtremeClose, a_frame)) {
 				return ShotType::kExtremeClose;
 			}
@@ -495,7 +501,7 @@ namespace CCC::Director
 		// expression, as a close-up of you; extreme as often as the NPC's.
 		std::optional<ShotType> PlayerCloseShot(const Frame& a_frame)
 		{
-			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChance;
+			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer;
 			if (extreme && Placeable(ShotType::kExtremeClosePlayer, a_frame)) {
 				return ShotType::kExtremeClosePlayer;
 			}

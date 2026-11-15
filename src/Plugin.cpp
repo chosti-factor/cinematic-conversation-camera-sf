@@ -81,6 +81,10 @@ namespace CCC
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
+			int                                   lineCountBefore{ 0 };      // the count before this line rolled (to undo a quick skip)
+			bool                                  lineOwedRoll{ false };     // this line made the reaction roll
+			bool                                  reactionOwed{ false };     // the roll said yes: the next line that can take it (0.8.3, as CCC)
+			bool                                  lineExtreme{ false };      // this emotion line's close-up is an extreme one (0.8.3)
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
 			int                                   msgSubject{ -1 };
 			std::uint32_t                         msgCuts{ 0 };
@@ -1928,6 +1932,8 @@ namespace CCC
 						const bool listed = s.emotionCloseUps && IsCloseUpEmotion(emotion);
 						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.closeUpChance;
 						g_state.lineIntense = rolled;
+						// Extreme or not decided here (0.8.3), so a reaction knows not to interrupt it.
+						g_state.lineExtreme = rolled && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
 						if (listed && !rolled && s.debugLog) {
 							REX::INFO("Emotion close-up: '{}' line, the {}% roll said no", emotion, s.closeUpChance);
 						}
@@ -1978,37 +1984,40 @@ namespace CCC
 						// characters or more becomes a reaction itself (a short one would be over
 						// before the cut settled).
 						g_state.lineCounted = 0;
+						g_state.lineOwedRoll = false;
 						if (fresh && s.reactionShots && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat) {
-							const int  sentences = CountSentences(text);
-							const bool due = g_state.reactionLines >= s.reactionEvery;
+							// 0.8.3, as CCC: lines of 40 characters or more count their sentences;
+							// when the count reaches iReactionSentencesPlayer, one roll of
+							// iReactionChancePlayer; a hit owes a reaction to the next line that can
+							// take it (a miss starts the count again). Short lines neither count nor
+							// take it. A close-up of you is a kind of reaction: when one is taken and
+							// your face shows an expression, iCloseUpChancePlayer of the time it's a
+							// close-up of you instead of the preset's angle of you listening.
+							const int   sentences = CountSentences(text);
+							const bool  eligible = text.size() >= 40;
 							const float lineSeconds = static_cast<float>(text.size()) / 14.0f;  // guessed from the subtitle
-							// 0.8.3: an emotion close-up line can have a reaction too, once the
-							// close-up has had its minimum time on screen (fShortestHold): then you
-							// for fReactionSeconds, and back to their close-up. Only on a line long
-							// enough for all three (with 1.5 s of the close-up after).
+							// An emotion close-up line can take it once their close-up has had its
+							// minimum time on screen (fShortestHold), then you, then back to the
+							// close-up; only on a line long enough for all three (1.5 s of the
+							// close-up after), and never on an extreme close-up (the strongest beat).
 							const float closeFirst = s.shortestHold;
-							const bool  fits = !g_state.lineIntense ||
-							                  (s.reactionSeconds > 0.0f && lineSeconds >= closeFirst + (std::max)(s.reactionSeconds, s.reactionMinSeconds) + 1.5f);
-							const bool rolled = due && fits && text.size() >= 40 &&
-							                    std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
-							// Your emotion close-up (0.7.11): when your face answers the line with an
-							// expression, an iPlayerCloseUpChance chance the line is shown on you, close.
-							const bool closeUp = !rolled && fits && s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) &&
-							                     text.size() >= 40 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
-							if (rolled || closeUp) {
-								REX::INFO("Reaction shot: '{}' shown on you listening{}{} ({} sentences heard since the last)", text.substr(0, 60),
-									closeUp ? ", close (your expression)" : "", g_state.lineIntense ? ", after their emotion close-up" : "", g_state.reactionLines);
+							const float hold = (std::max)(s.reactionSeconds, s.reactionMinSeconds);
+							const bool  takeable = !g_state.lineIntense || (!g_state.lineExtreme && s.reactionSeconds > 0.0f && lineSeconds >= closeFirst + hold + 1.5f);
+							const char* why = "";
+							if (eligible && g_state.reactionOwed && takeable) {
+								g_state.reactionOwed = false;
+								const bool closeUp = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) &&
+								                     std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
+								REX::INFO("Reaction shot: '{}' shown on you {}{}", text.substr(0, 60), closeUp ? "close (your expression)" : "listening",
+									g_state.lineIntense ? ", after their emotion close-up" : "");
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
-								// A couple of seconds on you, then back to the speaker (0.8.1: a whole
-								// line on you felt long). The line's length is guessed from its
-								// subtitle (about 14 characters a second); when less than 1.5 s of it
-								// would be left, it stays on you to the end rather than flick back.
-								// 0.8.3: counted from the cut to you, at least fReactionMinSeconds.
-								const float hold = (std::max)(s.reactionSeconds, s.reactionMinSeconds);
-								const auto  secs = [](float a_seconds) {
+								// A couple of seconds on you from the cut, then back to the speaker
+								// (0.8.1: a whole line on you felt long); when less than 1.5 s of the
+								// line would be left, it stays on you to the end rather than flick back.
+								const auto secs = [](float a_seconds) {
 									return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
 								};
 								const float left = lineSeconds - std::chrono::duration<float>(now - g_state.lineStart).count();
@@ -2022,15 +2031,23 @@ namespace CCC
 									g_state.reactionHold = s.reactionSeconds <= 0.0f || left - hold < 1.5f ? -1.0f : hold;
 								}
 								g_reactionStarted.store(true, std::memory_order_release);
-							} else {
+							} else if (eligible && !g_state.reactionOwed) {
 								g_state.reactionLines += sentences;
 								g_state.lineCounted = sentences;
-								if (s.debugLog) {
-									// Why this line wasn't a reaction, when one was due.
-									const char* why = !due ? "" : !fits ? "; not a reaction: an emotion close-up line too short to cut away and back" :
-									                  text.size() < 40 ? "; not a reaction: under 40 characters" : "; not a reaction: the chance roll said no";
-									REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines, why);
+								if (g_state.reactionLines >= s.reactionEvery) {
+									g_state.lineCountBefore = g_state.reactionLines - sentences;
+									g_state.lineOwedRoll = true;
+									g_state.reactionLines = 0;
+									g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
+									why = g_state.reactionOwed ? "; the roll said yes: the next line that can take it is shown on you" : "; the roll said no: counting again";
 								}
+							} else {
+								why = !eligible ? "; under 40 characters: not counted" :
+								      g_state.lineExtreme ? "; owed, but not on an extreme close-up: waiting for the next line" :
+								                            "; owed, but this emotion close-up line is too short to cut away and back: waiting";
+							}
+							if (s.debugLog && !g_state.reactionActive) {
+								REX::INFO("Reaction count: {} sentence{} in this line, {} heard{}", sentences, sentences == 1 ? "" : "s", g_state.reactionLines, why);
 							}
 						}
 					}
@@ -2053,6 +2070,15 @@ namespace CCC
 				}
 				if (!talkingNow && g_state.speakerWasTalking) {
 					g_state.lineBeat = false;
+					// How long the line really lasted, to check the 14-characters-a-second guess
+					// reactions are planned with (0.8.3).
+					if (s.debugLog && !g_state.lastLineText.empty()) {
+						const float lasted = std::chrono::duration<float>(now - g_state.lineStart).count();
+						if (lasted > 0.3f) {
+							REX::INFO("Line length: {} characters, {:.1f} s ({:.1f} characters a second; the guess is 14)", g_state.lastLineText.size(), lasted,
+								static_cast<float>(g_state.lastLineText.size()) / lasted);
+						}
+					}
 					// 0.8.3: a reaction that hasn't had fReactionMinSeconds on you yet carries into
 					// their next line until it has (a short line followed at once by another cut
 					// back to them too soon).
@@ -2069,7 +2095,14 @@ namespace CCC
 					// A line you clicked past almost at once (on screen under half a second) wasn't
 					// really heard: it doesn't count. One you skip after that still does.
 					if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {
-						g_state.reactionLines = (std::max)(0, g_state.reactionLines - g_state.lineCounted);
+						// Undo the roll this line made, too (0.8.3).
+						if (g_state.lineOwedRoll) {
+							g_state.reactionOwed = false;
+							g_state.reactionLines = g_state.lineCountBefore;
+							g_state.lineOwedRoll = false;
+						} else {
+							g_state.reactionLines = (std::max)(0, g_state.reactionLines - g_state.lineCounted);
+						}
 						if (s.debugLog) {
 							REX::INFO("Reaction count: line skipped within half a second, not counted ({} heard)", g_state.reactionLines);
 						}
@@ -2282,6 +2315,8 @@ namespace CCC
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
+				frame.intenseExtreme = g_state.lineExtreme;
+				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.roomAngle = g_state.roomAngle;
@@ -2310,6 +2345,8 @@ namespace CCC
 				frame.playerTalking = player->IsTalking();
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
+				frame.intenseExtreme = g_state.lineExtreme;
+				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.roomAngle = g_state.roomAngle;

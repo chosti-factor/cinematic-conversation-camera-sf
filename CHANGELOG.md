@@ -25,6 +25,32 @@ test build; "diagnostic" items only add information to the log for testing.
   decided (up to 0.8 s earlier: 0.8.2 test, some felt too short), and is never less than
   `fReactionMinSeconds` (2 s). A reaction on a short line followed at once by another
   carries into it until then.
+- Reaction shots work as in CCC (0.8.2 review): lines of 40 characters or more count their
+  sentences; when the count is reached, one roll; a yes owes a reaction to the next line
+  that can take it, a no starts the count again (was a roll on every line once due, so
+  reactions could come back to back). Short lines no longer count. A quick skip takes the
+  roll back too.
+- Close-ups of you are a kind of reaction now, not an extra roll on every line: when a
+  reaction is taken and your face shows an expression, `iCloseUpChancePlayer` (50%) of the
+  time it's a close-up of you (`iExtremeCloseUpChancePlayer`, 40%, extreme). Before, any
+  long line with an expression on your face had its own 50% chance, so the camera was on
+  you very often.
+- A reaction never interrupts an extreme close-up (the strongest beat); whether an emotion
+  close-up is extreme is now decided with the line.
+- A listening reaction uses your regular shots only, never the room, the two-shot or the
+  profile of you both (as CCC).
+- The log notes each line's real length against the 14-characters-a-second guess used to
+  plan reactions ("Line length: ...").
+- INI keys renamed to say whose shot they're about (old names still read):
+  `bReactionShots` -> `bReactionShotsPlayer`, `iReactionEvery` ->
+  `iReactionSentencesPlayer`, `iReactionChance` -> `iReactionChancePlayer`,
+  `fReactionSeconds` -> `fReactionSecondsPlayer`, `fReactionMinSeconds` ->
+  `fReactionMinSecondsPlayer`, `[Face] iPlayerCloseUpChance` -> `[Director]
+  iCloseUpChancePlayer`, new `iExtremeCloseUpChancePlayer`, `bEmotionCloseUps` ->
+  `bEmotionCloseUpsNpc`, `sCloseUpEmotions` -> `sCloseUpEmotionsNpc`, `iCloseUpChance` ->
+  `iCloseUpChanceNpc`, `iExtremeCloseUpChance` -> `iExtremeCloseUpChanceNpc`,
+  `bPersuasionBeat` -> `bPersuasionBeatNpc`, `iSignatureChance` -> `iSignatureChancePlayer`,
+  `iQuestionChance` -> `iQuestionChancePlayer`.
 - docs/REACTIONS.md: the steps, rules and chances for emotion close-ups, reaction shots and
   close-ups of you.
 - A reaction shot can interrupt an emotion close-up: their close-up first, for its minimum

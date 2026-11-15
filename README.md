@@ -34,13 +34,15 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
-- **Reaction shots:** now and then a line is shown on you listening (counted in sentences;
-  `iReactionEvery`, `iReactionChance`), with seated people and merchants too. A reaction
-  stays on you a couple of seconds from the cut, never less than 2, then cuts back to the
-  speaker (`fReactionSeconds`, `fReactionMinSeconds`). Details:
+- **Reaction shots:** now and then one of their lines is shown on you, as in CCC: counted in
+  sentences, one roll when the count is reached, the next line that can take it shown on
+  you (`iReactionSentencesPlayer`, `iReactionChancePlayer`), with seated people and
+  merchants too. A reaction is you listening, or a close-up of your expression
+  (`iCloseUpChancePlayer`); it stays on you a couple of seconds from the cut, never less
+  than 2, then cuts back (`fReactionSecondsPlayer`, `fReactionMinSecondsPlayer`). Details:
   [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
-  reply is a close-up, pushing in (`bPersuasionBeat`).
+  reply is a close-up, pushing in (`bPersuasionBeatNpc`).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
   space for them, measured with the game's collision check, on the conversation's side of
   the line and with both faces in view (`iRoomShotMinRoom`). In CCC's presets as far back
@@ -65,8 +67,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
 - **Emotion close-ups:** lines the game tags with an expression (every one but Neutral and
-  Friendly, `sCloseUpEmotions`) push in to a close-up of the speaker half the time
-  (`iCloseUpChance`), 40% of them extreme close-ups. CCC does this with lines Skyrim's
+  Friendly, `sCloseUpEmotionsNpc`) push in to a close-up of the speaker half the time
+  (`iCloseUpChanceNpc`), 40% of them extreme close-ups. CCC does this with lines Skyrim's
   writers marked as intense; Starfield has no such mark, so the expression decides. The
   expression of each line can be shown on screen while testing (`bShowMessages`).
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot

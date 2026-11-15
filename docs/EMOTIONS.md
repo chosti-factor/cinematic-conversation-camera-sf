@@ -2,7 +2,7 @@
 
 Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups
-(`sCloseUpEmotions`). This is a running tally from the test logs, to choose which
+(`sCloseUpEmotionsNpc`). This is a running tally from the test logs, to choose which
 tags push in. ✱ = on the close-up list at the time of writing (0.8.3: every expression but
 Neutral and Friendly, see the notes below the second table).
 
@@ -111,7 +111,7 @@ Notes:
 - 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
   Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
 - 0.8.3: every expression but Neutral and Friendly is on the list (the ✱ column above is
-  from before), and a listed line gets its close-up 50% of the time (`iCloseUpChance`).
+  from before), and a listed line gets its close-up 50% of the time (`iCloseUpChanceNpc`).
   From the tally at the top, that's about half of all NPC lines tagged for it (no tag, 24%,
   and Friendly, 24%, are the rest), so about a quarter of all lines get an emotion
   close-up. A reaction shot of you can interrupt one after its minimum time on screen.
@@ -170,7 +170,7 @@ Neutral) leave your face to the game, or show your background now and then (belo
 | Astrophysics, Geology, Botany, Zoology, Xenosociology, Research, Surveying, Scanning | Thinking |
 | Chemistry, Security, Engineering, Robotics, Piloting, Starship, Outpost, Weapon, Spacesuit | Concentrating |
 
-An option without a tag that asks a question ("...?"): Question, `iQuestionChance` (40%)
+An option without a tag that asks a question ("...?"): Question, `iQuestionChancePlayer` (40%)
 of the time; otherwise your background may show (below).
 
 ### Choosing a background or trait option
@@ -194,7 +194,7 @@ expression (table below). Trait options:
 | Taskmaster | Stern |
 | Terra Firma | Relieved |
 
-### Your background (`iSignatureChance`, 30%)
+### Your background (`iSignatureChancePlayer`, 30%)
 
 At moments your face would otherwise be neutral (an NPC line with no expression, an option
 without a skill tag), this chance of your background's expression instead.
@@ -222,8 +222,9 @@ A reaction shot on a line your face has no answer for (no expression on it) give
 a listening look for it: your background's expression, or Concentrating. The shot message
 names your expression.
 
-### Your emotion close-ups (`iPlayerCloseUpChance`, 50%)
+### Your emotion close-ups (`iCloseUpChancePlayer`, 50%)
 
-When your face answers a line with an expression (40 characters or longer, not an NPC
-emotion close-up), this chance the line is shown on you as a close-up, pushing in; an
-extreme close-up as often as `iExtremeCloseUpChance`. Counts as a reaction shot.
+A kind of reaction shot (0.8.3): when a line is shown on you as a reaction and your face
+answers it with an expression, this chance it's a close-up of you, pushing in, rather than
+the preset's angle of you listening; `iExtremeCloseUpChancePlayer` (40%) of those are extreme
+close-ups. How often reactions come: docs/REACTIONS.md.

@@ -80,10 +80,10 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
   variants) come from CCC's library but no other preset uses them yet. The ground-level
   shot is left out until room measurement can place it.
 - **The same in every preset:** emotion close-ups on lines with an expression (every one but
-  Neutral and Friendly, half the time: `bEmotionCloseUps`, `iCloseUpChance`),
-  reaction shots of you listening (`iReactionEvery`, `iReactionChance`, `fReactionSeconds`),
-  close-ups of your expressions (`iPlayerCloseUpChance`), holding on the answer after a
-  persuasion (`bPersuasionBeat`), and the plain over-the-shoulder shots for seated people
+  Neutral and Friendly, half the time: `bEmotionCloseUpsNpc`, `iCloseUpChanceNpc`),
+  reaction shots of you listening (`iReactionSentencesPlayer`, `iReactionChancePlayer`, `fReactionSecondsPlayer`),
+  close-ups of your expressions (`iCloseUpChancePlayer`), holding on the answer after a
+  persuasion (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people
   and merchants.
 - **Zooms are pushes.** Starfield's lens doesn't change during a shot, so a zoom in is done
   as a push in and a zoom out as a pull out.

@@ -13,7 +13,9 @@ namespace CCC::Director
 		bool         npcTalking{ false };
 		bool         playerTalking{ false };
 		bool         nearSeated{ false };  // the person nearest the camera sits lower: no over-the-shoulders
-		bool         intenseLine{ false }; // the speaker's current line carries an expression from sCloseUpEmotions
+		bool         intenseLine{ false }; // the speaker's current line gets an emotion close-up
+		bool         intenseExtreme{ false };  // ... an extreme one (decided with the line, 0.8.3)
+		bool         reaction{ false };    // a reaction shot of you: your regular shots only, never the room (0.8.3, as CCC)
 		bool         persuasionBeat{ false };  // the NPC's answer to a persuasion's outcome: held close-up
 		bool         playerCloseUp{ false };   // this reaction is your emotion close-up
 		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
