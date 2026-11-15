@@ -72,6 +72,7 @@ namespace CCC::Director
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
+			int                       npcSerial{ 0 };           // the last line counter seen (0.8.3)
 			bool                      playerCloseDone{ false }; // this reaction's close-up of you is done
 			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
 			float                     limit{ std::numeric_limits<float>::infinity() };  // obstacle: camera at most this far from the subject
@@ -100,6 +101,8 @@ namespace CCC::Director
 			float                   limit{ std::numeric_limits<float>::infinity() };
 			bool                    playerClose{ false };  // holding your emotion close-up
 			bool                    intenseShown{ false };  // this line's emotion close-up was shown (to come back to after a reaction)
+			int                     serial{ 0 };            // the last line counter seen (0.8.3)
+			clock::time_point       lineAt{};               // when their current line started
 		} gp;
 
 		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
@@ -763,7 +766,19 @@ namespace CCC::Director
 	{
 		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
-		const bool  npcStarted = TrackLine(g.npcLine, g.npc, a_frame.npcTalking, a_now);
+		bool        npcStarted = TrackLine(g.npcLine, g.npc, a_frame.npcTalking, a_now);
+		// A new line of theirs that follows the last without a pause (0.8.3): it ends the
+		// last one and starts. Not within half a second of a start (the counter catching up).
+		if (!npcStarted && a_frame.npcTalking && a_frame.npcLineSerial != g.npcSerial &&
+			std::chrono::duration<float>(a_now - g.npcLine.start).count() > 0.5f) {
+			const float seconds = std::chrono::duration<float>(a_now - g.npcLine.start).count();
+			if (seconds >= s.shortLineSeconds && ++g.npc.lines >= g.npc.linesTarget) {
+				g.npc.changeDue = true;
+			}
+			g.npcLine.start = a_now;
+			npcStarted = true;
+		}
+		g.npcSerial = a_frame.npcLineSerial;
 		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now);
 		const bool  lineStarted = a_frame.npcTurn ? npcStarted : playerStarted;
 		const float held = std::chrono::duration<float>(a_now - g.cutAt).count();
@@ -911,7 +926,15 @@ namespace CCC::Director
 	{
 		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
-		const bool  started = a_frame.npcTalking && !gp.wasTalking;
+		bool        started = a_frame.npcTalking && !gp.wasTalking;
+		// A new line that follows the last without a pause (0.8.3).
+		if (!started && a_frame.npcTalking && a_frame.npcLineSerial != gp.serial && a_now - gp.lineAt > std::chrono::milliseconds(500)) {
+			started = true;
+		}
+		if (started) {
+			gp.lineAt = a_now;
+		}
+		gp.serial = a_frame.npcLineSerial;
 		gp.wasTalking = a_frame.npcTalking;
 		// Start a close-up over the plain shot: solve it once, hold its angle.
 		auto begin = [&](ShotType a_shot, const char* a_why, bool a_npcEmotion) {

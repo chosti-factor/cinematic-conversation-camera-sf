@@ -305,6 +305,7 @@ namespace CCC
 		void                FilmFrame();
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
+		std::atomic<int>    g_lineSerial{ 0 };          // counts their lines, parts included (0.8.3)
 		std::atomic<bool>   g_remeasureRoom{ false };    // the preset key changed the preset: measure the room again (0.8.3)
 		std::atomic<bool>   g_reactionStarted{ false };  // a reaction shot began (worker -> main: give a blank face a look)
 		std::atomic<std::int64_t> g_faceLineAt{ 0 };    // when the main thread last set your face for a line (steady_clock ticks)
@@ -1923,7 +1924,67 @@ namespace CCC
 			// persuasion beat), and whether it's shown on you listening (a reaction shot).
 			{
 				const bool talkingNow = speaker->IsTalking();
-				if (talkingNow && !g_state.speakerWasTalking) {
+				// The end of one of their lines (or of a part of it: below).
+				const auto endLine = [&]() {
+						g_state.lineBeat = false;
+						// How long the line really lasted, to check the 14-characters-a-second guess
+						// reactions are planned with (0.8.3).
+						if (s.debugLog && !g_state.lastLineText.empty()) {
+							const float lasted = std::chrono::duration<float>(now - g_state.lineStart).count();
+							if (lasted > 0.3f) {
+								REX::INFO("Line length: {} characters, {:.1f} s ({:.1f} characters a second; the guess is 14)", g_state.lastLineText.size(), lasted,
+									static_cast<float>(g_state.lastLineText.size()) / lasted);
+							}
+						}
+						// 0.8.3: a reaction that hasn't had fReactionMinSeconds on you yet carries into
+						// their next line until it has (a short line followed at once by another cut
+						// back to them too soon).
+						const bool onYou = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
+						const float on = onYou ? std::chrono::duration<float>(now - g_state.reactionOnAt).count() : 0.0f;
+						if (onYou && on < s.reactionMinSeconds) {
+							g_state.reactionHold = s.reactionMinSeconds;
+							g_state.reactionCarried = true;
+						} else {
+							g_state.reactionActive = false;
+							g_state.reactionCloseUp = false;
+							g_state.reactionCarried = false;
+						}
+						// A line you clicked past almost at once (on screen under half a second) wasn't
+						// really heard: it doesn't count. One you skip after that still does.
+						if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {
+							// Undo the roll this line made, too (0.8.3).
+							if (g_state.lineOwedRoll) {
+								g_state.reactionOwed = false;
+								g_state.reactionLines = g_state.lineCountBefore;
+								g_state.lineOwedRoll = false;
+							} else {
+								g_state.reactionLines = (std::max)(0, g_state.reactionLines - g_state.lineCounted);
+							}
+							if (s.debugLog) {
+								REX::INFO("Reaction count: line skipped within half a second, not counted ({} heard)", g_state.reactionLines);
+							}
+						}
+						g_state.lineCounted = 0;
+				
+				};
+				// 0.8.3 test: several of their lines can play back to back without the game ever
+				// reporting a pause (one record, several responses: 74 characters "lasting" 38 s).
+				// A new subtitle while they keep talking is a new line too.
+				bool newPart = false;
+				if (talkingNow && g_state.speakerWasTalking && !g_state.reactionPending && now - g_state.lineStart > 800ms && !g_state.lastLineText.empty()) {
+					if (auto* actor = static_cast<RE::Actor*>(speaker); actor->currentProcess && actor->currentProcess->high) {
+						const char* raw = actor->currentProcess->high->strVoiceSubtitle.c_str();
+						newPart = raw && *raw && g_state.lastLineText != raw;
+					}
+					if (newPart) {
+						if (s.debugLog) {
+							REX::INFO("Line: a new line while they keep talking (a new subtitle)");
+						}
+						endLine();
+					}
+				}
+				if (talkingNow && (!g_state.speakerWasTalking || newPart)) {
+					g_lineSerial.fetch_add(1, std::memory_order_acq_rel);
 					// An emotion close-up: a line tagged with one of sCloseUpEmotions, iCloseUpChance
 					// of the time (0.8.3: every expression but Neutral and Friendly, at 67%). A line
 					// that rolls no is an ordinary line (it can be a reaction).
@@ -2069,45 +2130,7 @@ namespace CCC
 					}
 				}
 				if (!talkingNow && g_state.speakerWasTalking) {
-					g_state.lineBeat = false;
-					// How long the line really lasted, to check the 14-characters-a-second guess
-					// reactions are planned with (0.8.3).
-					if (s.debugLog && !g_state.lastLineText.empty()) {
-						const float lasted = std::chrono::duration<float>(now - g_state.lineStart).count();
-						if (lasted > 0.3f) {
-							REX::INFO("Line length: {} characters, {:.1f} s ({:.1f} characters a second; the guess is 14)", g_state.lastLineText.size(), lasted,
-								static_cast<float>(g_state.lastLineText.size()) / lasted);
-						}
-					}
-					// 0.8.3: a reaction that hasn't had fReactionMinSeconds on you yet carries into
-					// their next line until it has (a short line followed at once by another cut
-					// back to them too soon).
-					const bool onYou = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
-					const float on = onYou ? std::chrono::duration<float>(now - g_state.reactionOnAt).count() : 0.0f;
-					if (onYou && on < s.reactionMinSeconds) {
-						g_state.reactionHold = s.reactionMinSeconds;
-						g_state.reactionCarried = true;
-					} else {
-						g_state.reactionActive = false;
-						g_state.reactionCloseUp = false;
-						g_state.reactionCarried = false;
-					}
-					// A line you clicked past almost at once (on screen under half a second) wasn't
-					// really heard: it doesn't count. One you skip after that still does.
-					if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {
-						// Undo the roll this line made, too (0.8.3).
-						if (g_state.lineOwedRoll) {
-							g_state.reactionOwed = false;
-							g_state.reactionLines = g_state.lineCountBefore;
-							g_state.lineOwedRoll = false;
-						} else {
-							g_state.reactionLines = (std::max)(0, g_state.reactionLines - g_state.lineCounted);
-						}
-						if (s.debugLog) {
-							REX::INFO("Reaction count: line skipped within half a second, not counted ({} heard)", g_state.reactionLines);
-						}
-					}
-					g_state.lineCounted = 0;
+					endLine();
 				}
 				g_state.speakerWasTalking = talkingNow;
 			}
@@ -2316,6 +2339,7 @@ namespace CCC
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
 				frame.intenseExtreme = g_state.lineExtreme;
+				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
@@ -2346,6 +2370,7 @@ namespace CCC
 				frame.nearSeated = nearSeated;
 				frame.intenseLine = g_state.lineIntense;
 				frame.intenseExtreme = g_state.lineExtreme;
+				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
@@ -4827,9 +4852,18 @@ namespace CCC
 					static bool wasTalking = false;
 					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showMessages || Settings::Get().playerFace) ? Speaker() : nullptr;
 					const bool  talking = speaker && speaker->IsTalking();
-					if (talking && !wasTalking) {
+					// A new part of their line while they keep talking (0.8.3): its record too.
+					// Not within half a second of the last, where the counter merely caught up with
+					// the line's start.
+					static int  lastSerial = 0;
+					static auto lastLogged = std::chrono::steady_clock::time_point{};
+					const int   serial = g_lineSerial.load(std::memory_order_acquire);
+					const auto  tick = std::chrono::steady_clock::now();
+					if (talking && (!wasTalking || (serial != lastSerial && tick - lastLogged > 500ms))) {
 						LogLineRecord(static_cast<RE::Actor*>(speaker));
+						lastLogged = tick;
 					}
+					lastSerial = serial;
 					FlushHudMessages(now);
 					Face::Update(g_state.active && !g_state.handedBack);
 					if (g_reactionStarted.exchange(false, std::memory_order_acq_rel) && g_state.active && !g_state.handedBack) {

@@ -4,7 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.3 - unreleased
+## 0.8.4 - unreleased
+
+### Fixed
+- The listen prompt took the look of the interaction prompt's button icon
+  ('$Controller_Buttons_inverted', size 42: 0.8.3 log) instead of its words. The icon's
+  font is skipped now.
+- Lines that follow each other without a pause (one dialogue record with several
+  responses) were taken as one long line: 74 characters "lasted" 38 s in the 0.8.3 log.
+  A new subtitle while they keep talking now starts a new line, for emotion close-ups,
+  reactions, your face and the camera's line count alike. This also makes the
+  line-length log (and the 14-characters-a-second guess it checks) meaningful: single
+  lines ran 13-17 characters a second.
+
+## 0.8.3 - 2026-11-15
 
 ### Added
 - The preset key (`[Debug] iPresetKey`, U): switches to the next preset on the fly, also

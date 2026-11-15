@@ -1164,7 +1164,12 @@ namespace CCC::Hud
 					}
 					const auto   font = StringMember(format, "font");
 					const double size = Member(format, "size", 0.0);
-					if (font.empty() || size <= best) {
+					// Not the button glyph (0.8.3 test: '$Controller_Buttons_inverted', 42, the
+					// largest text in the widget, is the key icon, not words).
+					const auto lowerFont = Lower(font);
+					const auto text = StringMember(field, "text");
+					if (font.empty() || size <= best || lowerFont.find("button") != std::string::npos || lowerFont.find("controller") != std::string::npos ||
+						text.size() < 3) {
 						continue;
 					}
 					best = size;

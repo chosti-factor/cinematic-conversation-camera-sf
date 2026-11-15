@@ -16,6 +16,7 @@ namespace CCC::Director
 		bool         intenseLine{ false }; // the speaker's current line gets an emotion close-up
 		bool         intenseExtreme{ false };  // ... an extreme one (decided with the line, 0.8.3)
 		bool         reaction{ false };    // a reaction shot of you: your regular shots only, never the room (0.8.3, as CCC)
+		int          npcLineSerial{ 0 };   // counts their lines, including ones that follow without a pause (0.8.3)
 		bool         persuasionBeat{ false };  // the NPC's answer to a persuasion's outcome: held close-up
 		bool         playerCloseUp{ false };   // this reaction is your emotion close-up
 		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
