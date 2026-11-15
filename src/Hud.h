@@ -35,4 +35,8 @@ namespace CCC::Hud
 	// Hide the game's interaction prompt and name tags (RolloverWidget_mc) while this mod
 	// films people talking; put back when false. Main thread.
 	void SetHideRollover(bool a_hide);
+
+	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
+	// a conversation is filmed, e.g. "PRESET: STARDUST". Main thread.
+	void SetPresetLabel(const std::string& a_text);
 }

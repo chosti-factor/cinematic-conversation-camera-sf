@@ -626,57 +626,101 @@ namespace CCC::Director
 		g_obstacleTest = a_test;
 	}
 
+	namespace
+	{
+		// The preset's shots, distance caps and room shot limits (from Reset, and from the
+		// preset key mid-conversation, 0.8.3). Returns its name, lower case.
+		std::string ApplyPreset(float& presetIndoor, float& presetOutdoor)
+		{
+			const auto& s = Settings::Get();
+			std::string preset{ s.preset };
+			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			// Each preset's own camera distance caps (indoors, outdoors): as far as its widest
+			// shot wants at Starfield's lens, now that obstacle detection keeps the camera out of
+			// walls (Close: the over-the-shoulder, 4.8 m; Standard: the profile, 6.8 m, and
+			// outdoors the two-shot, 10.2 m; Room: the long shots, 12.7 m).
+			presetIndoor = 7.0f;
+			presetOutdoor = 10.5f;
+			// Room shots' own limits: CCC's presets none (as far as CCC's framing wants), CCC
+			// SF's 9 m indoors and 12 m outdoors.
+			g.roomIndoor = g.roomOutdoor = 0.0f;
+			if (preset == "close") {
+				LoadPreset(kClose);
+				presetIndoor = presetOutdoor = 5.0f;
+			} else if (preset == "room") {
+				LoadPreset(kRoom);
+				presetIndoor = 7.0f;
+				presetOutdoor = 13.0f;
+			} else if (preset == "stardust") {
+				LoadPreset(kStardust);
+				presetIndoor = 7.0f;
+				presetOutdoor = 13.0f;
+				g.roomIndoor = 9.0f;
+				g.roomOutdoor = 12.0f;
+			} else if (preset == "starborn") {
+				LoadPreset(kStarborn);
+				presetIndoor = presetOutdoor = 5.0f;
+				g.roomIndoor = 9.0f;
+				g.roomOutdoor = 12.0f;
+			} else if (preset == "nebula") {
+				LoadPreset(kNebula);
+				presetIndoor = 7.0f;
+				presetOutdoor = 13.0f;
+				g.roomIndoor = 9.0f;
+				g.roomOutdoor = 12.0f;
+			} else if (preset == "constellation") {
+				LoadPreset(kConstellation);
+				presetIndoor = 7.0f;
+				presetOutdoor = 13.0f;
+				g.roomIndoor = 9.0f;
+				g.roomOutdoor = 12.0f;
+			} else {
+				if (preset != "standard") {
+					REX::WARN("Director: unknown preset '{}', using Standard", s.preset);
+				}
+				LoadPreset(kStandard);
+				preset = "standard";
+			}
+			ApplyOverrides();
+			return preset;
+		}
+
+		std::atomic<bool> g_presetSwitch{ false };
+
+		// On the Director's own thread: the preset key was pressed during a conversation.
+		void SwitchPresetNow(const Frame& a_frame)
+		{
+			if (!g_presetSwitch.exchange(false)) {
+				return;
+			}
+			const auto& s = Settings::Get();
+			float       indoor = 0.0f, outdoor = 0.0f;
+			const auto  preset = ApplyPreset(indoor, outdoor);
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			const bool  interior = player && player->parentCell && player->parentCell->IsInterior();
+			const float playerCap = interior ? s.maxCameraDistance : s.maxCameraDistanceExterior;
+			g.maxDistance = playerCap > 0.0f ? playerCap : interior ? indoor : outdoor;
+			// New angles from the new preset on the next line of each.
+			g.npc.shot.reset();
+			g.player.shot.reset();
+			g.npc.changeDue = true;
+			g.player.changeDue = true;
+			REX::INFO("Director: preset switched to {} (camera at most {:.1f} m from the subject)", preset, g.maxDistance);
+			(void)a_frame;
+		}
+	}
+
+	void SwitchPreset()
+	{
+		g_presetSwitch.store(true);
+	}
+
 	void Reset()
 	{
 		const auto& s = Settings::Get();
-		std::string preset{ s.preset };
-		std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-		// Each preset's own camera distance caps (indoors, outdoors): as far as its widest
-		// shot wants at Starfield's lens, now that obstacle detection keeps the camera out of
-		// walls (Close: the over-the-shoulder, 4.8 m; Standard: the profile, 6.8 m, and
-		// outdoors the two-shot, 10.2 m; Room: the long shots, 12.7 m).
-		float presetIndoor = 7.0f, presetOutdoor = 10.5f;
-		// Room shots' own limits: CCC's presets none (as far as CCC's framing wants), CCC
-		// SF's 9 m indoors and 12 m outdoors.
-		g.roomIndoor = g.roomOutdoor = 0.0f;
-		if (preset == "close") {
-			LoadPreset(kClose);
-			presetIndoor = presetOutdoor = 5.0f;
-		} else if (preset == "room") {
-			LoadPreset(kRoom);
-			presetIndoor = 7.0f;
-			presetOutdoor = 13.0f;
-		} else if (preset == "stardust") {
-			LoadPreset(kStardust);
-			presetIndoor = 7.0f;
-			presetOutdoor = 13.0f;
-			g.roomIndoor = 9.0f;
-			g.roomOutdoor = 12.0f;
-		} else if (preset == "starborn") {
-			LoadPreset(kStarborn);
-			presetIndoor = presetOutdoor = 5.0f;
-			g.roomIndoor = 9.0f;
-			g.roomOutdoor = 12.0f;
-		} else if (preset == "nebula") {
-			LoadPreset(kNebula);
-			presetIndoor = 7.0f;
-			presetOutdoor = 13.0f;
-			g.roomIndoor = 9.0f;
-			g.roomOutdoor = 12.0f;
-		} else if (preset == "constellation") {
-			LoadPreset(kConstellation);
-			presetIndoor = 7.0f;
-			presetOutdoor = 13.0f;
-			g.roomIndoor = 9.0f;
-			g.roomOutdoor = 12.0f;
-		} else {
-			if (preset != "standard") {
-				REX::WARN("Director: unknown preset '{}', using Standard", s.preset);
-			}
-			LoadPreset(kStandard);
-			preset = "standard";
-		}
-		ApplyOverrides();
+		float       presetIndoor = 7.0f, presetOutdoor = 10.5f;
+		const auto  preset = ApplyPreset(presetIndoor, presetOutdoor);
+		g_presetSwitch.store(false);
 		g.current.reset();
 		g.npc = Side{};
 		g.player = Side{};
@@ -717,6 +761,7 @@ namespace CCC::Director
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
 	{
+		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
 		const bool  npcStarted = TrackLine(g.npcLine, g.npc, a_frame.npcTalking, a_now);
 		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now);
@@ -864,6 +909,7 @@ namespace CCC::Director
 
 	std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, clock::time_point a_now)
 	{
+		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
 		const bool  started = a_frame.npcTalking && !gp.wasTalking;
 		gp.wasTalking = a_frame.npcTalking;

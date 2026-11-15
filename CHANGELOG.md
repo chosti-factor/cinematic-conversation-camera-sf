@@ -7,6 +7,12 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.8.3 - unreleased
 
 ### Added
+- The preset key (`[Debug] iPresetKey`, U): switches to the next preset on the fly, also
+  mid-conversation (the next lines of each take angles from the new one, and the room is
+  measured again for its room shot limits), until the game is restarted. U because
+  Starfield doesn't use it (P is its Skills key).
+- With the testing messages, the preset in use stays on screen in the bottom bar's
+  right-hand side while a conversation is filmed ("PRESET: STARDUST").
 - Nebula preset, CCC SF's own: every shot in the library. The everyday ones come up most
   often, and CCC's rarer angles now and then: low, high and dirty singles, profiles and the
   shoulder variants. No preset used those before. The ground-level shot waits for room
@@ -50,7 +56,15 @@ test build; "diagnostic" items only add information to the log for testing.
   `bEmotionCloseUpsNpc`, `sCloseUpEmotions` -> `sCloseUpEmotionsNpc`, `iCloseUpChance` ->
   `iCloseUpChanceNpc`, `iExtremeCloseUpChance` -> `iExtremeCloseUpChanceNpc`,
   `bPersuasionBeat` -> `bPersuasionBeatNpc`, `iSignatureChance` -> `iSignatureChancePlayer`,
-  `iQuestionChance` -> `iQuestionChancePlayer`.
+  `iQuestionChance` -> `iQuestionChancePlayer`, `bPlayerFace` -> `bFacePlayer`,
+  `bAvoidBystanders` -> `bAvoidBystandersNpc`, `fBystanderStill` -> `fBystanderStillNpc`,
+  `bPlainShotsSeated` -> `bPlainShotsSeatedNpc`, `bPlainShotsMerchants` ->
+  `bPlainShotsMerchantsNpc`, `fMinSpeakerHeight` -> `fMinSpeakerHeightNpc`, `fVendorSide`
+  -> `fVendorSideNpc`, `fVendorHeight` -> `fVendorHeightNpc`, `bFixFirstPersonBody` ->
+  `bFixFirstPersonBodyPlayer`, `iBodyRebuildMethod` -> `iBodyRebuildMethodPlayer`,
+  `iBodyUpdateFlags` -> `iBodyUpdateFlagsPlayer`, `bFilmConversations` ->
+  `bFilmConversationsNpc`. The rule, in the INI's header: Npc = about the people you talk to
+  or overhear, Player = about you, no ending = the camera or both of you.
 - docs/REACTIONS.md: the steps, rules and chances for emotion close-ups, reaction shots and
   close-ups of you.
 - A reaction shot can interrupt an emotion close-up: their close-up first, for its minimum

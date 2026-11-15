@@ -15,6 +15,7 @@ namespace CCC
 		bool     debugLog{ true };
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
+		int      presetKey{ 0x55 };       // switches presets on the fly (U; 0 = none), 0.8.3
 		float    conversationLens{ -1.0f };  // the conversation lens, degrees (0 = the game's 30, -1 = the preset's own)
 		bool     filmConversations{ true }; // film people talking near you (the listen key)
 		int      listenKey{ 0x4E };          // virtual-key code, 0 = no prompt or key (N)
@@ -210,5 +211,8 @@ namespace CCC
 
 		static Settings& Get();
 		void             Load();
+		// The preset switched to with the preset key: kept over sPreset until the game is
+		// restarted ("" = sPreset). Main thread.
+		static void SetPresetOverride(const std::string& a_preset);
 	};
 }

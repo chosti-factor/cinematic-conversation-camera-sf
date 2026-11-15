@@ -73,7 +73,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   expression of each line can be shown on screen while testing (`bShowMessages`).
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
   library, whose angles often put the chair, the shop counter or the clutter around it in
-  front of them (`bPlainShotsSeated`, `bPlainShotsMerchants`). Merchants are recognised by
+  front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are recognised by
   the game's vendor flag on their faction, wherever the shop is.
 - **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
   SpaceOpera.
@@ -99,7 +99,10 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
 - **Testing messages:** each line's expression, your face's answer and the shot used, with
-  why, in the top bar while a conversation is filmed (`bShowMessages`, `fMessageSeconds`).
+  why, in the top bar while a conversation is filmed, and the preset in use in the bottom
+  bar (`bShowMessages`, `fMessageSeconds`).
+- **Preset key:** U switches to the next preset on the fly, even mid-conversation
+  (`iPresetKey`).
 - Clean exits in both perspectives (starts can still show a frame or two of the game's
   own camera). Small speakers (robots) and quest scenes you take part in (someone walks
   up and starts talking, several people taking turns) keep the game's own camera.
@@ -203,7 +206,7 @@ apply without restarting the game.
 | `[Interface]` | Letterbox, subtitles in the bars, dialogue options while the NPC speaks |
 | `[Overhear]` | Filming people talking near you: on/off, the listen key, how far |
 | `[Face]` | Your character's face: on/off, background expressions, questions, close-ups of you |
-| `[Debug]` | Testing messages, hook and camera-target switches for troubleshooting |
+| `[Debug]` | Testing messages, the preset key, hook and camera-target switches for troubleshooting |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
 Each setting is explained in the INI itself.

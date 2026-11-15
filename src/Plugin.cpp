@@ -306,6 +306,7 @@ namespace CCC
 		void                FilmFrame();
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
+		std::atomic<bool>   g_remeasureRoom{ false };    // the preset key changed the preset: measure the room again (0.8.3)
 		std::atomic<bool>   g_reactionStarted{ false };  // a reaction shot began (worker -> main: give a blank face a look)
 		std::atomic<std::int64_t> g_faceLineAt{ 0 };    // when the main thread last set your face for a line (steady_clock ticks)
 		void                QueueHudMessage(std::string a_text);
@@ -2517,7 +2518,8 @@ namespace CCC
 			if (s.obstacleCheck && s.director && !waitingView && !pov) {
 				const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
 				const auto         now = std::chrono::steady_clock::now();
-				if (!g_state.roomMeasured || g_state.roomSide != g_state.side || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
+				const bool again = g_remeasureRoom.exchange(false);  // the preset changed: its room shot limits too
+				if (again || !g_state.roomMeasured || g_state.roomSide != g_state.side || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
 					g_state.roomSide = g_state.side;
 					g_state.roomMeasured = true;
 					g_state.roomAt = mid;
@@ -4273,6 +4275,45 @@ namespace CCC
 			return window && pid == ::GetCurrentProcessId();
 		}
 
+		// ---- The preset key (0.8.3) ------------------------------------------------------
+		void UpdatePresetKey()
+		{
+			const auto&  s = Settings::Get();
+			static bool  wasDown = false;
+			bool         down = false;
+			if (s.presetKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.presetKey) & 0x8000) != 0) {
+				// Not while typing in the console.
+				static const RE::BSFixedString console{ "Console" };
+				auto*                          ui = RE::UI::GetSingleton();
+				down = !(ui && ui->IsMenuOpen(console));
+			}
+			if (down && !wasDown) {
+				constexpr std::array<const char*, 7> kOrder{ "Standard", "Close", "Room", "Stardust", "Starborn", "Constellation", "Nebula" };
+				std::string current{ s.preset };
+				std::ranges::transform(current, current.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				std::size_t next = 0;
+				for (std::size_t i = 0; i < kOrder.size(); ++i) {
+					std::string name{ kOrder[i] };
+					std::ranges::transform(name, name.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (name == current) {
+						next = (i + 1) % kOrder.size();
+						break;
+					}
+				}
+				Settings::SetPresetOverride(kOrder[next]);
+				Director::SwitchPreset();
+				g_remeasureRoom.store(true);
+				REX::INFO("Preset key: now {} (until the game is restarted; sPreset in the INI sets the one it starts with)", kOrder[next]);
+			}
+			wasDown = down;
+			if (s.showMessages) {
+				std::string label = std::format("PRESET: {}", Settings::Get().preset);
+				std::ranges::transform(label, label.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+				Hud::SetPresetLabel(label);
+			}
+		}
+
+
 		const char* KeyName(int a_key)
 		{
 			static std::string name;
@@ -4727,6 +4768,9 @@ namespace CCC
 					}
 					UpdateFilming(now);  // every tick, for the listen key
 				}
+				// The preset key (0.8.3): the next preset, on the fly; and the preset on screen
+				// with the testing messages.
+				UpdatePresetKey();
 
 				// Letterbox, subtitles and dialogue options (0.6.3).
 				{

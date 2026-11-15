@@ -71,6 +71,10 @@ namespace CCC::Director
 	// The lens the shots are framed for, degrees (horizontal, as drawn).
 	[[nodiscard]] float LensDegrees();
 
+	// The preset key was pressed (any thread): the Director takes the new preset
+	// (Settings::preset) on its next frame, mid-conversation (0.8.3).
+	void SwitchPreset();
+
 	// The conversation lens wanted, degrees: fConversationLens, or the preset's own (CCC's
 	// presets 45, CCC SF's 37.5); below 10 = the game's own.
 	[[nodiscard]] float WantedLens();

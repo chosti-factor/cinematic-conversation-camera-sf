@@ -994,6 +994,93 @@ namespace CCC::Hud
 			SafeSet(&field, "visible", &vv);
 		}
 
+		// ---- The preset on screen (0.8.3, testing messages) ------------------------------
+		// "PRESET: STARDUST", in the bottom bar's right-hand side, for as long as a
+		// conversation is filmed, in the notifications' look.
+		constexpr const char* kPresetName = "cccPreset";
+
+		struct PresetLabelState
+		{
+			std::string text;   // wanted
+			std::string shown;  // in the field
+			bool        created{ false };
+		} g_presetLabel;
+
+		void UpdatePresetLabel(bool a_show)
+		{
+			if (!a_show && !g_presetLabel.created) {
+				return;
+			}
+			const auto ref = OpenMovie("HUDMessagesMenu");
+			if (!ref) {
+				return;
+			}
+			Value top;
+			if (!RootObject(ref->root, top, "HUDMessagesMenu")) {
+				return;
+			}
+			Value field;
+			if (!FindChild(top, kPresetName, field)) {
+				if (!a_show || g_msg.look != MessageState::Look::kKnown) {
+					g_presetLabel.created = false;
+					return;
+				}
+				if (!SafeCreateObject(ref->root, &field, "flash.text.TextField")) {
+					return;
+				}
+				const Value no{ false };
+				const Value name{ kPresetName };
+				const Value embed{ g_msg.embed };
+				const Value autoSize{ "left" };
+				SafeSet(&field, "name", &name);
+				SafeSet(&field, "selectable", &no);
+				SafeSet(&field, "mouseEnabled", &no);
+				SafeSet(&field, "multiline", &no);
+				SafeSet(&field, "wordWrap", &no);
+				SafeSet(&field, "embedFonts", &embed);
+				SafeSet(&field, "autoSize", &autoSize);
+				CopyFilters(top, field);
+				if (!SafeInvoke(&top, "addChild", nullptr, &field, 1)) {
+					return;
+				}
+				g_presetLabel.created = true;
+				g_presetLabel.shown.clear();
+			}
+			if (a_show && g_presetLabel.text != g_presetLabel.shown) {
+				const Value args[4]{ Value{ g_msg.font.c_str() }, Value{ (std::max)(12.0, g_msg.size - 2.0) }, Value{ g_msg.color }, Value{ g_msg.bold } };
+				Value       format;
+				if (SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 4)) {
+					SafeSet(&field, "defaultTextFormat", &format);
+					const Value text{ g_presetLabel.text.c_str() };
+					SafeSet(&field, "text", &text);
+					SafeInvoke(&field, "setTextFormat", nullptr, &format, 1);
+					g_presetLabel.shown = g_presetLabel.text;
+				}
+			}
+			double width = 1920.0, height = 1080.0;
+			Value  stage;
+			if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
+				width = Member(stage, "stageWidth", width);
+				height = Member(stage, "stageHeight", height);
+			}
+			// Centred in the bottom bar as it slides in, at the right; near the bottom right
+			// without the bars.
+			const double textHeight = Member(field, "textHeight", 20.0);
+			const double textWidth = Member(field, "textWidth", 200.0);
+			const double bar = Settings::Get().letterbox ? g_bars.barHeight : 0.0;
+			const float  e = 1.0f - (1.0f - g_bars.ease) * (1.0f - g_bars.ease);
+			const double gy = bar > textHeight + 8.0 ? height - bar * e + (bar - textHeight) * 0.5 : height - textHeight - 24.0;
+			const double gx = width - 80.0 - textWidth;
+			double       x = gx, y = gy;
+			LocalPoint(ref->root, top, gx, gy, x, y);
+			const float alpha = a_show ? (bar > 0.0 ? g_bars.ease : 1.0f) : 0.0f;
+			const Value vx{ x }, vy{ y }, va{ static_cast<double>(alpha) }, vv{ alpha > 0.001f };
+			SafeSet(&field, "x", &vx);
+			SafeSet(&field, "y", &vy);
+			SafeSet(&field, "alpha", &va);
+			SafeSet(&field, "visible", &vv);
+		}
+
 		// ---- The listen prompt (0.8.2) -----------------------------------------------------
 		// "Listen in on nearby conversation. Press N": on screen below the crosshair, where
 		// the game's own prompts sit, in the notifications' look (not a testing message).
@@ -1333,6 +1420,11 @@ namespace CCC::Hud
 		g_rollover.hide = a_hide;
 	}
 
+	void SetPresetLabel(const std::string& a_text)
+	{
+		g_presetLabel.text = a_text;
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
@@ -1366,8 +1458,10 @@ namespace CCC::Hud
 		}
 		if (s.showMessages && !g_broken) {
 			UpdateMessage(a_filming && dialogueOpen, a_delta);
+			UpdatePresetLabel(a_filming && dialogueOpen && !g_presetLabel.text.empty());
 		} else {
 			g_msg.available = false;
+			UpdatePresetLabel(false);
 		}
 		if (s.letterbox && !g_broken) {
 			UpdateLetterbox(a_filming && dialogueOpen, a_delta);
