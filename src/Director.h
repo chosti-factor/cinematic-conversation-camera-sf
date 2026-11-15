@@ -69,6 +69,10 @@ namespace CCC::Director
 	// The lens the shots are framed for, degrees (horizontal, as drawn).
 	[[nodiscard]] float LensDegrees();
 
+	// The conversation lens wanted, degrees: fConversationLens, or the preset's own (CCC's
+	// presets 45, CCC SF's 37.5); below 10 = the game's own.
+	[[nodiscard]] float WantedLens();
+
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.
 	[[nodiscard]] float RoomShotLimit(bool a_interior);

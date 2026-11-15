@@ -6,7 +6,19 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.8.3 - unreleased
 
+### Added
+- Nebula preset, CCC SF's own: every shot in the library. The everyday ones come up most
+  often, and CCC's rarer angles now and then: low, high and dirty singles, profiles and the
+  shoulder variants. No preset used those before. The ground-level shot waits for room
+  measurement.
+
 ### Changed
+- Each preset has its own lens (`fConversationLens=-1`, the new default): 45 degrees for
+  CCC's presets, 37.5 for CCC SF's (Stardust, Starborn, Constellation, Nebula), a little
+  closer to Starfield's own look. 0 is still the game's 30, and 20-70 your own for every
+  preset.
+- Stardust is closer to Standard: exactly Standard's shots, weights and moves, with a few of
+  Room's wider shots added (about a fifth, was 40%).
 - Filming people talking near you:
   - Each line's shot is chosen from the ones the obstacle check finds clear (walls, things,
     and people standing still, now watched while filming too), so wide shots stay where

@@ -15,7 +15,7 @@ namespace CCC
 		bool     debugLog{ true };
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
-		float    conversationLens{ 0.0f };  // the conversation lens, degrees (0 = the game's 30)
+		float    conversationLens{ -1.0f };  // the conversation lens, degrees (0 = the game's 30, -1 = the preset's own)
 		bool     filmConversations{ true }; // film people talking near you (the listen key)
 		int      listenKey{ 0x4E };          // virtual-key code, 0 = no prompt or key (N)
 		float    listenRange{ 12.0f };       // how far from you a conversation may be

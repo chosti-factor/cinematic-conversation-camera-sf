@@ -73,14 +73,14 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   the game's vendor flag on their faction, wherever the shop is.
 - **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
   SpaceOpera.
-- **Three more presets,** each mirroring one of CCC's with a Starfield flavour: Stardust,
-  Starborn and Constellation (see Presets below).
+- **Four more presets** with a Starfield flavour: Stardust, Starborn and Constellation, each
+  mirroring one of CCC's, and Nebula with every shot in the library (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
 - **A wider conversation lens:** Starfield films conversations through a narrow 30 degree
-  lens; the mod widens it while it films (`fConversationLens`, 45 by default; 0 keeps the
-  game's), so CCC's framings fit from closer. The hybrid of a wider lens and a somewhat
+  lens; the mod widens it while it films (`fConversationLens`: 45 degrees in CCC's presets, 37.5
+  in CCC SF's; 0 keeps the game's), so CCC's framings fit from closer. The hybrid of a wider lens and a somewhat
   longer camera distance is the approach for now (see the plan).
 - **Your character's face:** the game keeps it neutral and your lines carry no expression
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
@@ -102,26 +102,28 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ### Presets
 
-Choose one with `sPreset`. CCC's three are as faithful to CCC as Starfield allows; CCC SF's
-three each mirror one of them with a Starfield flavour: room shots kept closer, and a few
-shots from the other presets mixed in, moving.
+Choose one with `sPreset`. CCC's three are as faithful to CCC as Starfield allows. CCC SF's
+four have a Starfield flavour: a 37.5 degree lens (CCC's use 45), room shots kept closer,
+and shots from the other presets mixed in, moving; three of them mirror one of CCC's, and
+Nebula uses every shot in the library.
 
 | Preset | From | The look | Room shots go back |
 | --- | --- | --- | --- |
 | Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | (none) |
 | Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | As far as CCC's framing wants (12-18 m) |
-| Stardust | CCC SF (Standard) | Standard with Room's wider shots mixed in, about 60/40 | Up to 9 m indoors, 12 m outdoors |
+| Stardust | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | Up to 9 m indoors, 12 m outdoors |
 | Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | Distant only, up to 9 m indoors, 12 m outdoors |
 | Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | Up to 9 m indoors, 12 m outdoors |
+| Nebula | CCC SF | Every shot in the library: the everyday ones most often, CCC's rarer angles (low, high, dirty, profiles, shoulder variants) now and then | Up to 9 m indoors, 12 m outdoors |
 
-All six use the same 45 degree conversation lens (`fConversationLens`). Every preset's shots, shares and moves: [docs/PRESETS.md](docs/PRESETS.md).
+`fConversationLens` sets one lens for every preset instead. Every preset's shots, shares and moves: [docs/PRESETS.md](docs/PRESETS.md).
 
 ### Differences from CCC, because of Starfield
 
 - Starfield's conversation lens is narrower (30 degrees) than the ones CCC was made for,
   so its framings want the camera further back. The mod takes a hybrid approach: it widens
-  the lens (45 degrees by default) and lets the camera stand somewhat further back; each preset lets the camera go as far as its widest shot needs (Standard: 7 m
+  the lens (45 degrees in CCC's presets, 37.5 in CCC SF's) and lets the camera stand somewhat further back; each preset lets the camera go as far as its widest shot needs (Standard: 7 m
   indoors, 10.5 m outdoors), and obstacle detection pulls it in or picks another angle
   where walls are closer.
 - Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
@@ -143,7 +145,7 @@ All six use the same 45 degree conversation lens (`fConversationLens`). Every pr
     narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
     Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
     (CCC's own distances with a lens as wide as CCC's), or a hybrid (a moderately wider lens
-    with somewhat longer distances). Hybrid chosen for now (0.8.1: 45 degrees); revisit the
+    with somewhat longer distances). Hybrid chosen for now (45 degrees for CCC's presets, 37.5 for CCC SF's, 0.8.3); revisit the
     lens and distances at polish, perhaps per preset, and indoors versus outdoors (room
     shots already have their own caps, `fRoomShotMaxIndoors` and `fRoomShotMaxOutdoors`).
   - Emotion close-ups tuned from testing (which expressions push in, and how often; see

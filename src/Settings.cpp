@@ -160,7 +160,7 @@ namespace CCC
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
 			a_s.conversationLens = ReadFloat(a_path, L"Camera", L"fConversationLens", a_s.conversationLens);
-			a_s.conversationLens = a_s.conversationLens < 10.0f ? 0.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
+			a_s.conversationLens = a_s.conversationLens < 0.0f ? -1.0f : a_s.conversationLens < 10.0f ? 0.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bPlayerFace", a_s.playerFace ? 1 : 0) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChance", a_s.questionFaceChance), 0, 100);
 			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChance", a_s.signatureChance), 0, 100);

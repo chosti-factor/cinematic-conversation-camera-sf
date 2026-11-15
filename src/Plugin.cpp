@@ -4363,7 +4363,7 @@ namespace CCC
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !pressed;
-				g_lensWanted.store(s.conversationLens >= 10.0f ? s.conversationLens : 30.0f, std::memory_order_relaxed);
+				g_lensWanted.store(Director::WantedLens() >= 10.0f ? Director::WantedLens() : 30.0f, std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
 					pressed ? "" : sitting ? " (on its own: you're sitting)" : " (on its own: you've stood still nearby)");
@@ -4705,7 +4705,7 @@ namespace CCC
 					// The conversation lens while this mod films (0.8).
 					// (Filming people talking near you uses the lens too, at least the game's 30.)
 					const bool filmingOthers = FilmingActive();
-					const float lens = Settings::Get().conversationLens;
+					const float lens = Director::WantedLens();
 					g_lensWanted.store(filmingOthers && lens < 10.0f ? 30.0f : lens, std::memory_order_relaxed);
 					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
