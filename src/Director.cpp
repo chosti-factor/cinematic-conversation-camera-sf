@@ -64,6 +64,8 @@ namespace CCC::Director
 			float                     heldLookSign{ 0.0f };
 			float                     heldFacePitch{ std::numeric_limits<float>::quiet_NaN() };
 			float                     maxDistance{ 3.0f };
+			float                     roomIndoor{ 0.0f };   // the preset's room shot limits (0 = none)
+			float                     roomOutdoor{ 0.0f };
 			Line                      npcLine;
 			Line                      playerLine;
 			std::mt19937              rng{ std::random_device{}() };
@@ -162,10 +164,14 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 18, 4.2f },
 		};
 
-		// Stardust (CCC SF's own): Standard's faces and shoulders, locked off as in Standard,
-		// with Room's wider shots and their cranes, pull-outs and drifts mixed in. Standard's
-		// shots carry 60% of the weight, the wider ones 40% (Master, Wide and Distant wait
-		// for room measurement, so for now the wider shots come up about 29% of the time).
+		// CCC SF's own presets (0.8.1): each mirrors one of CCC's, with a Starfield flavour:
+		// room shots no further back than 9 m indoors and 12 m outdoors (CCC's own presets
+		// go as far as CCC's framing wants, 12 to 18 m at the 45 degree lens), and a few of
+		// the other presets' shots mixed in, moving.
+		//
+		// Stardust (mirrors Standard): Standard's faces and shoulders, locked off as in
+		// Standard, with Room's wider shots and their cranes, pull-outs and drifts mixed in.
+		// Standard's shots carry 60% of the weight, the wider ones 40%.
 		constexpr std::array kStardust{
 			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f },
 			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f },
@@ -184,6 +190,40 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kMaster, 60, Move::kCraneUp, 40, 9.0f },
 			PresetEntry{ ShotType::kWide, 55, Move::kPullOut, 16, 8.0f },
 			PresetEntry{ ShotType::kDistant, 35, Move::kPullOut, 30, 8.0f },
+		};
+		// Starborn (mirrors Close): Close's shoulders, close-ups and extreme close-ups with
+		// their pushes and zooms, plus the reverse shoulder and three-quarter singles drifting
+		// slowly, so the faces get a moment of breathing room, and a capped Distant.
+		constexpr std::array kStarborn{
+			PresetEntry{ ShotType::kOverPlayerShoulder, 34, Move::kLocked, 0, 4.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 22, Move::kLocked, 0, 4.0f },
+			PresetEntry{ ShotType::kCloseUp, 36, Move::kPushIn, 40, 8.0f },
+			PresetEntry{ ShotType::kExtremeClose, 12, Move::kZoomIn, 40, 9.0f },
+			PresetEntry{ ShotType::kClosePlayer, 30, Move::kZoomOut, 20, 5.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 12, Move::kPushIn, 75, 7.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 14, Move::kDrift, 10, 5.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 14, Move::kDrift, 10, 5.0f },
+			PresetEntry{ ShotType::kDistant, 10, Move::kPullOut, 30, 8.0f },
+		};
+		// Constellation (mirrors Room): Room's wide and full-figure shots with their moves,
+		// plus close-ups and shoulders now and then (about a fifth of the weight), so faces
+		// and your character's expressions still get seen.
+		constexpr std::array kConstellation{
+			PresetEntry{ ShotType::kMaster, 85, Move::kCraneUp, 40, 9.0f },
+			PresetEntry{ ShotType::kWide, 80, Move::kPullOut, 16, 8.0f },
+			PresetEntry{ ShotType::kLongNpc, 70, Move::kCraneUp, 25, 7.0f },
+			PresetEntry{ ShotType::kLongPlayer, 70, Move::kCraneUp, 25, 7.0f },
+			PresetEntry{ ShotType::kDistant, 55, Move::kPullOut, 30, 8.0f },
+			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 12, 8.0f },
+			PresetEntry{ ShotType::kOverhead, 40, Move::kCraneDown, 22, 4.2f },
+			PresetEntry{ ShotType::kPlayerOverhead, 40, Move::kCraneDown, 22, 4.2f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 22, 4.2f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 22, 4.2f },
+			PresetEntry{ ShotType::kMediumNpc, 35, Move::kDrift, 18, 4.2f },
+			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 18, 4.2f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 40, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kCloseUp, 45, Move::kPushIn, 14, 5.0f },
+			PresetEntry{ ShotType::kClosePlayer, 45, Move::kPushIn, 14, 5.0f },
 		};
 
 		template <std::size_t N>
@@ -548,6 +588,9 @@ namespace CCC::Director
 		// walls (Close: the over-the-shoulder, 4.8 m; Standard: the profile, 6.8 m, and
 		// outdoors the two-shot, 10.2 m; Room: the long shots, 12.7 m).
 		float presetIndoor = 7.0f, presetOutdoor = 10.5f;
+		// Room shots' own limits: CCC's presets none (as far as CCC's framing wants), CCC
+		// SF's 9 m indoors and 12 m outdoors.
+		g.roomIndoor = g.roomOutdoor = 0.0f;
 		if (preset == "close") {
 			LoadPreset(kClose);
 			presetIndoor = presetOutdoor = 5.0f;
@@ -559,6 +602,19 @@ namespace CCC::Director
 			LoadPreset(kStardust);
 			presetIndoor = 7.0f;
 			presetOutdoor = 13.0f;
+			g.roomIndoor = 9.0f;
+			g.roomOutdoor = 12.0f;
+		} else if (preset == "starborn") {
+			LoadPreset(kStarborn);
+			presetIndoor = presetOutdoor = 5.0f;
+			g.roomIndoor = 9.0f;
+			g.roomOutdoor = 12.0f;
+		} else if (preset == "constellation") {
+			LoadPreset(kConstellation);
+			presetIndoor = 7.0f;
+			presetOutdoor = 13.0f;
+			g.roomIndoor = 9.0f;
+			g.roomOutdoor = 12.0f;
 		} else {
 			if (preset != "standard") {
 				REX::WARN("Director: unknown preset '{}', using Standard", s.preset);
@@ -822,6 +878,13 @@ namespace CCC::Director
 		auto pose = solved.pose;
 		Camera::PullIn(pose, SubjectHead(*gp.shot, a_frame), gp.limit);
 		return pose;
+	}
+
+	float RoomShotLimit(bool a_interior)
+	{
+		const auto& s = Settings::Get();
+		const float own = a_interior ? s.roomShotMaxIndoors : s.roomShotMaxOutdoors;
+		return own >= 0.0f ? own : a_interior ? g.roomIndoor : g.roomOutdoor;
 	}
 
 	float LensDegrees()

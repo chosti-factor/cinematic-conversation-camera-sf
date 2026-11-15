@@ -39,11 +39,11 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   stays on you a couple of seconds, then cuts back to the speaker (`fReactionSeconds`).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   reply is a close-up, pushing in (`bPersuasionBeat`).
-- **Room shots** (Wide, Master, Distant, in the Room and Stardust presets): placed where
-  the room around the two of you has space for them, measured with the game's collision
-  check, on the conversation's side of the line and with both faces in view
-  (`iRoomShotMinRoom`); up to 9 m back indoors and 12 m outdoors (`fRoomShotMaxIndoors`,
-  `fRoomShotMaxOutdoors`).
+- **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
+  space for them, measured with the game's collision check, on the conversation's side of
+  the line and with both faces in view (`iRoomShotMinRoom`). In CCC's presets as far back
+  as CCC's framing wants; in CCC SF's up to 9 m indoors and 12 m outdoors
+  (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` to set your own).
 
 ### New or distinct in CCC SF
 
@@ -72,8 +72,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   the game's vendor flag on their faction, wherever the shop is.
 - **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
   SpaceOpera.
-- **Stardust preset:** Standard's shoulders and close-ups with Room's wider shots mixed in,
-  the wider ones moving (cranes, pull-outs, drifts).
+- **Three more presets,** each mirroring one of CCC's with a Starfield flavour: Stardust,
+  Starborn and Constellation (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
@@ -97,6 +97,23 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - Clean exits in both perspectives (starts can still show a frame or two of the game's
   own camera). Small speakers (robots) and quest scenes you take part in (someone walks
   up and starts talking, several people taking turns) keep the game's own camera.
+
+### Presets
+
+Choose one with `sPreset`. CCC's three are as faithful to CCC as Starfield allows; CCC SF's
+three each mirror one of them with a Starfield flavour: room shots kept closer, and a few
+shots from the other presets mixed in, moving.
+
+| Preset | From | The look | Room shots go back |
+| --- | --- | --- | --- |
+| Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | (none) |
+| Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | Distant only, as far as CCC's framing wants |
+| Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | As far as CCC's framing wants (12-18 m) |
+| Stardust | CCC SF (Standard) | Standard with Room's wider shots mixed in, about 60/40 | Up to 9 m indoors, 12 m outdoors |
+| Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | Distant only, up to 9 m indoors, 12 m outdoors |
+| Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | Up to 9 m indoors, 12 m outdoors |
+
+All six use the same 45 degree conversation lens (`fConversationLens`).
 
 ### Differences from CCC, because of Starfield
 

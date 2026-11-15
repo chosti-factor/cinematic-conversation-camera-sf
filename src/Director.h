@@ -69,6 +69,10 @@ namespace CCC::Director
 	// The lens the shots are framed for, degrees (horizontal, as drawn).
 	[[nodiscard]] float LensDegrees();
 
+	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
+	// fRoomShotMaxIndoors/Outdoors, or the preset's own.
+	[[nodiscard]] float RoomShotLimit(bool a_interior);
+
 	// The setup on screen, for the log.
 	[[nodiscard]] const char* Current();
 

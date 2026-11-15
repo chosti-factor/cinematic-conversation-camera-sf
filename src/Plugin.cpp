@@ -1432,11 +1432,12 @@ namespace CCC
 			g_state.roomDistance.fill(0.0f);
 			g_state.roomRise = roofed ? (std::max)(0.2f, ceiling - (mid.z - a_ground) - 0.4f) : 10.0f;
 			std::string summary;
-			// No further back than fRoomShotMaxIndoors / fRoomShotMaxOutdoors (0.8.1: the 15 to
-			// 18 m of CCC's framing at this lens felt too far away; 0 = no limit).
+			// No further back than the preset allows (0.8.1: CCC's presets as far as CCC's
+			// framing wants, 12 to 18 m at this lens; CCC SF's 9 m indoors, 12 m outdoors), or
+			// fRoomShotMaxIndoors / fRoomShotMaxOutdoors.
 			auto*       roomPlayer = RE::PlayerCharacter::GetSingleton();
 			const bool  interior = roomPlayer && roomPlayer->parentCell && roomPlayer->parentCell->IsInterior();
-			const float roomCap = interior ? Settings::Get().roomShotMaxIndoors : Settings::Get().roomShotMaxOutdoors;
+			const float roomCap = Director::RoomShotLimit(interior);
 			for (std::size_t n = 0; n < kShots.size(); ++n) {
 				const auto& shot = kShots[n];
 				const float wanted = roomCap > 0.0f ? (std::min)(wants(shot.fill), roomCap) : wants(shot.fill);

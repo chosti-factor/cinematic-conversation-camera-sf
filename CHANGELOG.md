@@ -20,9 +20,11 @@ test build; "diagnostic" items only add information to the log for testing.
   they last spoke, not from when the line began.
 
 ### Changed
-- Room shots stand no further back than 9 m indoors and 12 m outdoors
-  (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors`; 0 = as far as CCC's framing wants, 12 to
-  18 m at 45 degrees). 0.8.0 test: beautiful, but some felt too far away.
+- CCC's presets (Standard, Close, Room) stay as faithful to CCC as possible: Room's room
+  shots go as far back as CCC's framing wants (12 to 18 m at 45 degrees). CCC SF's presets
+  keep them to 9 m indoors and 12 m outdoors (0.8.0 test: beautiful, but some felt too far
+  away). `fRoomShotMaxIndoors` and `fRoomShotMaxOutdoors` set your own limit (-1 = the
+  preset's own, 0 = as far as CCC's framing wants).
 - The README records the hybrid approach (a wider lens and somewhat longer distances) as
   the one for now.
 - Reaction shots stay on you about 2.5 seconds, then cut back to the speaker, instead of
@@ -30,6 +32,11 @@ test build; "diagnostic" items only add information to the log for testing.
   1.5 seconds left stays on you to the end.
 
 ### Added
+- Two presets, CCC SF's own, each mirroring one of CCC's with a Starfield flavour:
+  Starborn (Close, plus the reverse shoulder and drifting three-quarter singles) and
+  Constellation (Room, plus close-ups and shoulders now and then). With Stardust (Standard
+  with Room's wider shots), each of CCC's presets now has a CCC SF counterpart.
+- A presets table in the README.
 - A controller button for filming people talking near you: hold the right stick click for
   half a second (`[Overhear]` `iListenButton`, `fListenHold`), so a tap still does what the
   game uses it for. Read straight from XInput (Xbox controllers, and most others through
