@@ -10,8 +10,13 @@ test build; "diagnostic" items only add information to the log for testing.
 - Pressing A or clicking to skip a companion's greeting chose your first option instead
   (Sam and Vasco: "Let's trade gear", into their inventory; 0.8.4 and 0.8.5 tests). The
   game shows the options during greetings, where A chooses rather than skips, and this mod
-  hid them while the NPC spoke, so they were chosen unseen. `bHideOptionsWhileSpeaking` is
-  now off by default: the options show as in the game.
+  hid them while the NPC spoke, so they were chosen unseen. They stay visible during the
+  NPC's first line now, and are hidden while they speak after that, as before.
+
+### Changed
+- Filming people talking doesn't start on its own for one-liners any more: only once it's
+  a real exchange (the one addressed answers, or the speaker goes on to a second line
+  within 20 s). The listen key still films any conversation.
 - A reaction could cut away from an emotion close-up 0.4 s after it began, when the 7 s on
   them were reached just then (0.8.5 log, Sam Coe, three times). Within the close-up's
   minimum time on screen (`fShortestHold`, 2 s) the reaction waits for the next line.

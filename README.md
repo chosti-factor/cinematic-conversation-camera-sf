@@ -32,8 +32,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
   `bTrue180` films everything from that one side).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
-  Starfield's subtitle sitting in the bottom bar (`[Interface]`; hiding the dialogue options
-  while the NPC speaks is optional, `bHideOptionsWhileSpeaking`).
+  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
+  NPC speaks (except during their first line, the greeting, where the game lets A choose
+  one) and fade in when the line ends (`[Interface]`).
 - **Reaction shots:** to break the monotony of a long stretch, after 7 s of their talking
   without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
   its end (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the 7 s, and

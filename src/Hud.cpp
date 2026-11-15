@@ -532,6 +532,8 @@ namespace CCC::Hud
 			g_persuasion = { open, success, fail, open && decided };
 		}
 
+		bool g_firstLine = false;  // the NPC is speaking the conversation's first line (0.8.6)
+
 		void UpdateOptions(Value& a_top, float a_delta, bool a_dump, bool a_npcTalking)
 		{
 			const auto& s = Settings::Get();
@@ -620,7 +622,9 @@ namespace CCC::Hud
 				if (!now) {
 					continue;
 				}
-				const float target = s.hideOptionsWhileSpeaking && a_npcTalking ? 0.0f : 1.0f;
+				// Not during their first line (0.8.6): the game shows the options during greetings,
+				// where A chooses one rather than skipping the line; hidden, they were chosen unseen.
+				const float target = s.hideOptionsWhileSpeaking && a_npcTalking && !g_firstLine ? 0.0f : 1.0f;
 				const float before = g_options.alpha[i];
 				const float step = s.fadeOptions ? a_delta / (std::max)(s.optionsFade, 0.01f) : 1.0f;
 				g_options.alpha[i] = before < target ? (std::min)(target, before + step) : (std::max)(target, before - step);
@@ -1449,6 +1453,11 @@ namespace CCC::Hud
 	std::int64_t PersuasionOutcomeAt() noexcept
 	{
 		return g_persuasionOutcomeAt.load(std::memory_order_acquire);
+	}
+
+	void SetFirstLine(bool a_first)
+	{
+		g_firstLine = a_first;
 	}
 
 	void SetPrompt(const std::string& a_text)

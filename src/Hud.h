@@ -11,6 +11,10 @@ namespace CCC::Hud
 	// a_npcTalking: the NPC is speaking a line (the dialogue options fade out meanwhile).
 	void Update(bool a_filming, bool a_npcTalking, float a_delta);
 
+	// The NPC is speaking the conversation's first line (the greeting, when the game shows
+	// the options at once and A chooses one): the options stay visible then (0.8.6).
+	void SetFirstLine(bool a_first);
+
 	// A persuasion just ended (the persuasion panel closed, or its success or failure
 	// animation started), in steady_clock ticks; 0 = none yet. Safe from any thread.
 	[[nodiscard]] std::int64_t PersuasionOutcomeAt() noexcept;

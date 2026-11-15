@@ -80,6 +80,7 @@ namespace CCC
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			float                                 monoSeconds{ 0.0f };       // their talking since the camera last showed you (0.8.5)
+			int                                   npcLinesStarted{ 0 };      // their lines so far in this conversation (0.8.6)
 			bool                                  lineExtreme{ false };      // this emotion line's close-up is an extreme one (0.8.3)
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
 			int                                   msgSubject{ -1 };
@@ -1968,6 +1969,7 @@ namespace CCC
 				}
 				if (talkingNow && (!g_state.speakerWasTalking || newPart)) {
 					g_lineSerial.fetch_add(1, std::memory_order_acq_rel);
+					++g_state.npcLinesStarted;
 					// An emotion close-up: a line tagged with one of sCloseUpEmotions, iCloseUpChance
 					// of the time (0.8.3: every expression but Neutral and Friendly, at 67%). A line
 					// that rolls no is an ordinary line (it can be a reaction).
@@ -3782,6 +3784,7 @@ namespace CCC
 			std::chrono::steady_clock::time_point lineStart{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::chrono::steady_clock::time_point lastHeard{};  // last seen talking (0.8.1)
+			std::chrono::steady_clock::time_point prevLine{};   // the line before the last (0.8.6)
 			std::chrono::steady_clock::time_point seen{};
 			std::uint32_t                         addressed = 0;   // formID; 0x14 = you
 			std::uint32_t                         lines = 0;
@@ -4117,6 +4120,7 @@ namespace CCC
 				if (!ours && !t.pending && ((talking && !t.talking) || newInfo || newSubtitle)) {
 					t.pending = true;
 					t.lineStart = a_now;
+					t.prevLine = t.lastLine;
 					t.lastLine = a_now;
 					++t.lines;
 					if (s.debugLog) {
@@ -4501,7 +4505,20 @@ namespace CCC
 			// Starting on its own (bAutoListen): sitting for 1.5 s, or standing still for
 			// fAutoListenAfter seconds, near a conversation; not for a minute after you stopped
 			// one with the listen key.
-			const bool autoStart = s.autoListen && a_now >= g_filmMain.autoBlockedUntil && stillFor >= (sitting ? (std::min)(1.0f, s.autoListenAfter) : s.autoListenAfter);
+			// 0.8.6: not for one-liners ("Need something?") on its own: only once it's a real
+			// exchange, the one addressed answering, or the speaker going on to a second line
+			// within 20 s. (The listen key still films any.)
+			bool exchange = false;
+			if (const auto it = g_talkers.find(speaker); it != g_talkers.end()) {
+				const auto& t = it->second;
+				exchange = t.prevLine != std::chrono::steady_clock::time_point{} && t.lastLine - t.prevLine < 20s;
+			}
+			if (const auto it = g_talkers.find(listener); !exchange && it != g_talkers.end()) {
+				const auto& t = it->second;
+				exchange = t.addressed == speaker && a_now - t.lastLine < 20s;
+			}
+			const bool autoStart = s.autoListen && exchange && a_now >= g_filmMain.autoBlockedUntil &&
+			                       stillFor >= (sitting ? (std::min)(1.0f, s.autoListenAfter) : s.autoListenAfter);
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
@@ -4801,6 +4818,7 @@ namespace CCC
 					static auto last = now;
 					const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
 					last = now;
+					Hud::SetFirstLine(g_state.active && g_state.npcLinesStarted <= 1);
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
 
