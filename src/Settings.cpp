@@ -183,6 +183,13 @@ namespace CCC
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
+			{
+				std::string lower{ a_s.preset };
+				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (lower == "stardust") {
+					a_s.preset = "Frontier";  // Stardust's old name (until 0.8.7: too close to Starborn)
+				}
+			}
 			// Only a file that names a style applies it, so a style in the main INI doesn't undo
 			// fine-tuning there when the _user.ini is read after it.
 			if (const auto style = ReadString(a_path, L"Director", L"sCuttingStyle", ""); !style.empty()) {

@@ -20,6 +20,8 @@ test build; "diagnostic" items only add information to the log for testing.
   enough, and she talked for 49 s without one). A line over `fReactionLineMaxSecondsPlayer`
   (7 s) is shown on you for its first `fReactionLongLineSecondsPlayer` (4 s, new), then
   back to them for the rest. 0 waits for a line that suits, as before.
+- The Stardust preset is now Frontier (too close to Starborn). `sPreset=Stardust` still
+  works and gives Frontier.
 
 ## 0.8.6 - 2026-11-15
 

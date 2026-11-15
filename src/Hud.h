@@ -41,6 +41,6 @@ namespace CCC::Hud
 	void SetHideRollover(bool a_hide);
 
 	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
-	// a conversation is filmed, e.g. "PRESET: STARDUST". Main thread.
+	// a conversation is filmed, e.g. "PRESET: FRONTIER". Main thread.
 	void SetPresetLabel(const std::string& a_text);
 }

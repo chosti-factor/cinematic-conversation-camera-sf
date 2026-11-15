@@ -81,7 +81,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   the game's vendor flag on their faction, wherever the shop is.
 - **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
   SpaceOpera.
-- **Four more presets** with a Starfield flavour: Stardust, Starborn and Constellation, each
+- **Four more presets** with a Starfield flavour: Frontier, Starborn and Constellation, each
   mirroring one of CCC's, and Nebula with every shot in the library (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
@@ -124,7 +124,7 @@ Nebula uses every shot in the library.
 | Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | A TV drama: classic shot / reverse shot, calm and readable | (none) |
 | Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | A film-noir conversation: faces fill the screen, every flicker of an expression counts | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants (12-18 m) |
-| Stardust | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | A sci-fi streaming series: TV coverage that opens up to the set now and then | Up to 9 m indoors, 12 m outdoors |
+| Frontier | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | A sci-fi streaming series: TV coverage that opens up to the set now and then | Up to 9 m indoors, 12 m outdoors |
 | Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | An intimate character drama: close and personal, but with room to breathe | Distant only, up to 9 m indoors, 12 m outdoors |
 | Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | A space-opera epic: big establishing frames, cutting in close for the key moments | Up to 9 m indoors, 12 m outdoors |
 | Nebula | CCC SF | Every shot in the library: the everyday ones most often, CCC's rarer angles (low, high, dirty, profiles, shoulder variants) now and then | A documentary or a music video: restless and varied, unexpected angles | Up to 9 m indoors, 12 m outdoors |

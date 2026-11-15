@@ -4320,7 +4320,7 @@ namespace CCC
 				down = !(ui && ui->IsMenuOpen(console));
 			}
 			if (down && !wasDown) {
-				constexpr std::array<const char*, 7> kOrder{ "Standard", "Close", "Room", "Stardust", "Starborn", "Constellation", "Nebula" };
+				constexpr std::array<const char*, 7> kOrder{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
 				std::string current{ s.preset };
 				std::ranges::transform(current, current.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				std::size_t next = 0;

@@ -179,9 +179,9 @@ namespace CCC::Director
 		// go as far as CCC's framing wants, 12 to 18 m at the 45 degree lens), and a few of
 		// the other presets' shots mixed in, moving.
 		//
-		// Stardust (mirrors Standard; 0.8.3: closer to it): exactly Standard's shots, weights
+		// Frontier (Stardust until 0.8.7; mirrors Standard; 0.8.3: closer to it): exactly Standard's shots, weights
 		// and moves, with a few of Room's wider shots added, moving (about a fifth).
-		constexpr std::array kStardust{
+		constexpr std::array kFrontier{
 			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f },
 			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f },
 			PresetEntry{ ShotType::kCloseUp, 80, Move::kPushIn, 14, 5.0f },
@@ -659,8 +659,8 @@ namespace CCC::Director
 				LoadPreset(kRoom);
 				presetIndoor = 7.0f;
 				presetOutdoor = 13.0f;
-			} else if (preset == "stardust") {
-				LoadPreset(kStardust);
+			} else if (preset == "frontier") {
+				LoadPreset(kFrontier);
 				presetIndoor = 7.0f;
 				presetOutdoor = 13.0f;
 				g.roomIndoor = 9.0f;
@@ -1091,7 +1091,7 @@ namespace CCC::Director
 		// The preset's own (0.8.3): CCC's presets 45 degrees, CCC SF's 37.5.
 		std::string preset{ s.preset };
 		std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-		return preset == "stardust" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
+		return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
 	}
 
 	float RoomShotLimit(bool a_interior)

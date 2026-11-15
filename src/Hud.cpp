@@ -999,7 +999,7 @@ namespace CCC::Hud
 		}
 
 		// ---- The preset on screen (0.8.3, testing messages) ------------------------------
-		// "PRESET: STARDUST", in the bottom bar's right-hand side, for as long as a
+		// "PRESET: FRONTIER", in the bottom bar's right-hand side, for as long as a
 		// conversation is filmed, in the notifications' look.
 		constexpr const char* kPresetName = "cccPreset";
 

@@ -2,16 +2,16 @@
 
 The seven looks you can choose with `sPreset` in the `[Director]` section of the INI.
 Standard, Close and Room are CCC's own, kept as faithful to CCC as Starfield allows.
-Stardust, Starborn, Constellation and Nebula are CCC SF's own, with a Starfield flavour: a
+Frontier, Starborn, Constellation and Nebula are CCC SF's own, with a Starfield flavour: a
 37.5 degree lens (CCC's presets use 45), room shots kept closer, and shots from the other
-presets mixed in, moving. Stardust, Starborn and Constellation each mirror one of CCC's;
+presets mixed in, moving. Frontier, Starborn and Constellation each mirror one of CCC's;
 Nebula uses every shot in the library.
 
 Last updated: 0.8.3 (2026-11-15).
 
 ## At a glance
 
-| | Standard | Close | Room | Stardust | Starborn | Constellation | Nebula |
+| | Standard | Close | Room | Frontier | Starborn | Constellation | Nebula |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | From | CCC | CCC | CCC | CCC SF, mirrors Standard | CCC SF, mirrors Close | CCC SF, mirrors Room | CCC SF |
 | The look | Shoulders, close-ups, three-quarters and mediums on both sides | Shoulders, tight close-ups and extreme close-ups | Wide and full-figure shots | Standard, plus a few of Room's wider shots | Close, plus the reverse shoulder and three-quarter singles | Room, plus close-ups and a shoulder now and then | Every shot: the everyday ones most often, CCC's rarer angles now and then |
@@ -29,7 +29,7 @@ Last updated: 0.8.3 (2026-11-15).
 How often each shot comes up when the camera picks a new angle (its share of the preset's
 weights), and how the camera moves on it. An empty cell: the preset doesn't use that shot.
 
-| Shot | Standard | Close | Room | Stardust | Starborn | Constellation | Nebula |
+| Shot | Standard | Close | Room | Frontier | Starborn | Constellation | Nebula |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Over your shoulder | 16% locked | 25% locked |  | 13% locked | 18% locked | 5% locked | 7% locked |
 | Over the NPC's shoulder | 16% locked |  |  | 13% locked | 12% locked |  | 7% locked |
