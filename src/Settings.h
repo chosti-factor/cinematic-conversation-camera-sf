@@ -22,6 +22,8 @@ namespace CCC
 		int      listenButton{ 0x0080 };     // XInput button mask, held to listen (right stick click); 0 = none
 		float    listenHold{ 0.5f };         // seconds the button is held
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
+		float    roomShotMaxIndoors{ 9.0f };   // metres; 0 = as far as CCC's framing wants (0.8.1)
+		float    roomShotMaxOutdoors{ 12.0f };
 		bool     playerFace{ true };      // your character's expressions during conversations
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look
 		int      signatureChance{ 30 };     // % of neutral moments your background's expression shows

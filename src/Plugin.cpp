@@ -1432,9 +1432,14 @@ namespace CCC
 			g_state.roomDistance.fill(0.0f);
 			g_state.roomRise = roofed ? (std::max)(0.2f, ceiling - (mid.z - a_ground) - 0.4f) : 10.0f;
 			std::string summary;
+			// No further back than fRoomShotMaxIndoors / fRoomShotMaxOutdoors (0.8.1: the 15 to
+			// 18 m of CCC's framing at this lens felt too far away; 0 = no limit).
+			auto*       roomPlayer = RE::PlayerCharacter::GetSingleton();
+			const bool  interior = roomPlayer && roomPlayer->parentCell && roomPlayer->parentCell->IsInterior();
+			const float roomCap = interior ? Settings::Get().roomShotMaxIndoors : Settings::Get().roomShotMaxOutdoors;
 			for (std::size_t n = 0; n < kShots.size(); ++n) {
 				const auto& shot = kShots[n];
-				const float wanted = wants(shot.fill);
+				const float wanted = roomCap > 0.0f ? (std::min)(wants(shot.fill), roomCap) : wants(shot.fill);
 				const auto  room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
 				// The solver's angle for a bearing (bearings from the line towards the NPC,
 				// anticlockwise; the solver turns from the line towards you, by side).

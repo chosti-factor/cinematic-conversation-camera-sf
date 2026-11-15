@@ -20,6 +20,11 @@ test build; "diagnostic" items only add information to the log for testing.
   they last spoke, not from when the line began.
 
 ### Changed
+- Room shots stand no further back than 9 m indoors and 12 m outdoors
+  (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors`; 0 = as far as CCC's framing wants, 12 to
+  18 m at 45 degrees). 0.8.0 test: beautiful, but some felt too far away.
+- The README records the hybrid approach (a wider lens and somewhat longer distances) as
+  the one for now.
 - Reaction shots stay on you about 2.5 seconds, then cut back to the speaker, instead of
   the whole line (`fReactionSeconds`, 0 = the whole line). A line with less than about
   1.5 seconds left stays on you to the end.

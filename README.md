@@ -42,7 +42,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Room shots** (Wide, Master, Distant, in the Room and Stardust presets): placed where
   the room around the two of you has space for them, measured with the game's collision
   check, on the conversation's side of the line and with both faces in view
-  (`iRoomShotMinRoom`).
+  (`iRoomShotMinRoom`); up to 9 m back indoors and 12 m outdoors (`fRoomShotMaxIndoors`,
+  `fRoomShotMaxOutdoors`).
 
 ### New or distinct in CCC SF
 
@@ -78,7 +79,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Per-preset camera distances**, matched to each preset's widest shot.
 - **A wider conversation lens:** Starfield films conversations through a narrow 30 degree
   lens; the mod widens it while it films (`fConversationLens`, 45 by default; 0 keeps the
-  game's), so CCC's framings fit from closer.
+  game's), so CCC's framings fit from closer. The hybrid of a wider lens and a somewhat
+  longer camera distance is the approach for now (see the plan).
 - **Your character's face:** the game keeps it neutral and your lines carry no expression
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
   listener would), options with a skill, background or trait tag ([Persuade], [Space
@@ -99,8 +101,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 ### Differences from CCC, because of Starfield
 
 - Starfield's conversation lens is narrower (30 degrees) than the ones CCC was made for,
-  so its framings want the camera further back. The mod widens the lens (45 degrees by
-  default), each preset lets the camera go as far as its widest shot needs (Standard: 7 m
+  so its framings want the camera further back. The mod takes a hybrid approach: it widens
+  the lens (45 degrees by default) and lets the camera stand somewhat further back; each preset lets the camera go as far as its widest shot needs (Standard: 7 m
   indoors, 10.5 m outdoors), and obstacle detection pulls it in or picks another angle
   where walls are closer.
 - Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
@@ -122,7 +124,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
     narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
     Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
     (CCC's own distances with a lens as wide as CCC's), or a hybrid (a moderately wider lens
-    with somewhat longer distances, as 0.8 does at 45 degrees); perhaps per preset.
+    with somewhat longer distances). Hybrid chosen for now (0.8.1: 45 degrees); revisit the
+    lens and distances at polish, perhaps per preset, and indoors versus outdoors (room
+    shots already have their own caps, `fRoomShotMaxIndoors` and `fRoomShotMaxOutdoors`).
   - Emotion close-ups tuned from testing (which expressions push in, and how often; see
     [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Talking to a seated person from the side (about 90 degrees) leaves you out of the
