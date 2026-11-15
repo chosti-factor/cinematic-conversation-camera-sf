@@ -27,7 +27,7 @@ test build; "diagnostic" items only add information to the log for testing.
   quarter of reactions are close-ups of you (was about 40%), and every strong reaction is.
 - Filming people talking starts on its own as soon as a conversation scene begins near
   you, even while you're walking (scenes are few, and moving ends it; 0.8.5 test): no more
-  standing still first (`fAutoListenAfter` is gone). It gives you 0.75 s to stop walking
+  standing still first (`fAutoListenAfter` is gone). It gives you a second to stop walking
   before moving counts, and a conversation you've ended by moving or with the listen key
   doesn't start again on its own for two minutes.
 - Filming people talking is only offered, or started on its own, for conversations: the

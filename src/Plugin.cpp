@@ -4501,9 +4501,9 @@ namespace CCC
 			}
 			if (filming) {
 				const auto feet = player->GetPosition();
-				// 0.8.6: it can start while you're walking; for its first 0.75 s where you stand
+				// 0.8.6: it can start while you're walking; for its first second where you stand
 				// is still settling (you stop walking), then moving ends it.
-				if (a_now - g_filmMain.startedAt < 750ms) {
+				if (a_now - g_filmMain.startedAt < 1s) {
 					g_filmMain.playerAt = feet;
 				}
 				const float moved = FlatDistance(feet, g_filmMain.playerAt);
