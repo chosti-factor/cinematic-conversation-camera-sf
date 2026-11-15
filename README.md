@@ -115,7 +115,7 @@ shots from the other presets mixed in, moving.
 | Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | Distant only, up to 9 m indoors, 12 m outdoors |
 | Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | Up to 9 m indoors, 12 m outdoors |
 
-All six use the same 45 degree conversation lens (`fConversationLens`).
+All six use the same 45 degree conversation lens (`fConversationLens`). Every preset's shots, shares and moves: [docs/PRESETS.md](docs/PRESETS.md).
 
 ### Differences from CCC, because of Starfield
 

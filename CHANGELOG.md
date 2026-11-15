@@ -20,6 +20,7 @@ test build; "diagnostic" items only add information to the log for testing.
   natives Actor.IsInCombat and Actor.GetCombatState); called by its real slot.
 
 ### Changed
+- docs/PRESETS.md: every preset's shots, shares, moves and distances in tables.
 - The plan: filming people talking is finished in 0.8.x; 0.9.x is polish and optimization;
   1.0 the public beta.
 
