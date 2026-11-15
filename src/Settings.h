@@ -184,6 +184,7 @@ namespace CCC
 		float       reactionAfterSeconds{ 7.0f };  // their talking without a cut to you before a reaction is due (0.8.5)
 		float       reactionLineMin{ 2.5f };     // the line a reaction takes: at least ... seconds
 		float       reactionLineMax{ 7.0f };     // ... and at most
+		float       reactionLongLineHold{ 4.0f };  // a longer line: on you for its first this many seconds (0 = wait for one that suits)
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
 		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)

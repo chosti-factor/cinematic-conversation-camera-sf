@@ -209,6 +209,7 @@ namespace CCC
 			a_s.reactionAfterSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds), 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
+			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
 			a_s.reactionMinSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionMinSecondsPlayer", ReadFloat(a_path, L"Director", L"fReactionMinSeconds", a_s.reactionMinSeconds)), 0.0f, 10.0f);
 			a_s.avoidBystanders = ReadInt(a_path, L"Director", L"bAvoidBystandersNpc", ReadInt(a_path, L"Director", L"bAvoidBystanders", a_s.avoidBystanders ? 1 : 0)) != 0;
 			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Director", L"fBystanderStillNpc", ReadFloat(a_path, L"Director", L"fBystanderStill", a_s.bystanderStill)), 0.0f, 10.0f);

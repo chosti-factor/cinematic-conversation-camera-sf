@@ -11,6 +11,15 @@ test build; "diagnostic" items only add information to the log for testing.
   captain): looking for the first-person body beside your 3D read a list of the scene graph
   that isn't laid out the way the library describes. It's now looked for with the game's own
   search, and what's hidden is held so it can't be freed under the camera.
+- A reaction still due when your turn came was taken on the first line of their reply, a cut
+  to you 0.6 s after the cut to them (0.8.6 test, after choosing an option with Sarah). Your
+  turn drops it now, as it starts the time on them again.
+
+### Changed
+- Long lines take reactions too (0.8.6 test: Sarah's lines run 8 to 12 s, none was short
+  enough, and she talked for 49 s without one). A line over `fReactionLineMaxSecondsPlayer`
+  (7 s) is shown on you for its first `fReactionLongLineSecondsPlayer` (4 s, new), then
+  back to them for the rest. 0 waits for a line that suits, as before.
 
 ## 0.8.6 - 2026-11-15
 

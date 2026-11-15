@@ -37,10 +37,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   one) and fade in when the line ends (`[Interface]`).
 - **Reaction shots:** to break the monotony of a long stretch, after 7 s of their talking
   without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
-  its end (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the 7 s, and
-  a regular one can be cut away from when they're reached. With seated people and merchants
-  too. A reaction
-  is you listening, or a close-up of your expression, by its tier like theirs: mild 30%,
+  its end (`fReactionAfterSecondsPlayer`); a longer line, its first 4 s. Their emotion
+  close-ups count towards the 7 s, and a regular one can be cut away from when they're
+  reached. With seated people and merchants too. A reaction is you listening, or a close-up of your expression, by its tier like theirs: mild 30%,
   medium 50%, strong always (`iCloseUpChance...Player`). Details:
   [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's

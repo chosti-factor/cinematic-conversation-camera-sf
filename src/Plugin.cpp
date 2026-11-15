@@ -748,6 +748,7 @@ namespace CCC
 				return Subject::kNpc;
 			}
 			g_state.monoSeconds = 0.0f;  // your turn: the camera is on you (0.8.5)
+			g_state.reactionOwed = false;  // 0.8.6 test: one owed from before your turn cut to you 0.6 s into their reply
 			g_state.replyBeat = false;   // their answer to a persuasion is over
 			return Subject::kPlayer;
 		}
@@ -2046,7 +2047,7 @@ namespace CCC
 							const auto  secs = [](float a_seconds) {
 								return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
 							};
-							const auto take = [&](bool a_intoCloseUp, float a_from) {
+							const auto take = [&](bool a_intoCloseUp, float a_from, float a_hold = -1.0f) {
 								// 0.8.6: a close-up of you by your expression's tier (the same lists as theirs):
 								// iCloseUpChanceMildPlayer 30%, ...Medium 50%, ...Strong 100%.
 								const std::string face = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) ? Face::Shown() : std::string{};
@@ -2056,13 +2057,14 @@ namespace CCC
 								REX::INFO("Reaction shot: '{}' ({:.1f} s) shown on you {}{}", text.substr(0, 60), lineSeconds,
 									closeUp ? std::format("close (your {} expression, {})", faceTier == 3 ? "strong" : faceTier == 2 ? "medium" : "mild", face) :
 									          face.empty() ? std::string{ "listening" } : std::format("listening ({}, the {}% roll said no or no tier)", face, faceChance),
-									a_intoCloseUp ? std::format(", {:.1f} s into their emotion close-up", a_from) : std::string{});
+									a_intoCloseUp ? std::format(", {:.1f} s into their emotion close-up", a_from) :
+									a_hold > 0.0f ? std::format(", its first {:.1f} s (a long line), then back to them", a_hold) : std::string{});
 								g_state.reactionOwed = false;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
 								g_state.reactionFrom = g_state.lineStart + secs(a_from);
 								g_state.reactionOnAt = {};
-								g_state.reactionHold = -1.0f;  // to the end of the line
+								g_state.reactionHold = a_hold;  // < 0: to the end of the line
 								g_reactionStarted.store(true, std::memory_order_release);
 							};
 							if (g_state.lineIntense) {
@@ -2096,6 +2098,11 @@ namespace CCC
 								}
 								if (g_state.reactionOwed && lineSeconds >= s.reactionLineMin && lineSeconds <= s.reactionLineMax) {
 									take(false, 0.0f);
+								} else if (g_state.reactionOwed && lineSeconds > s.reactionLineMax && s.reactionLongLineHold > 0.0f) {
+									// 0.8.6 test: Sarah's lines run 8 to 12 s, none suited, and she went on for
+									// 49 s without one. A long line takes it too: on you from its start for
+									// fReactionLongLineSecondsPlayer, then back to them for the rest.
+									take(false, 0.0f, s.reactionLongLineHold);
 								} else if (g_state.reactionOwed && s.debugLog) {
 									REX::INFO("Reaction: due, but this line doesn't suit it ({:.1f} s); waiting for the next", lineSeconds);
 								}
