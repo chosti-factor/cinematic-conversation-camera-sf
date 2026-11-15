@@ -81,7 +81,7 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
   variants) come from CCC's library but no other preset uses them yet. The ground-level
   shot is left out until room measurement can place it.
 - **The same in every preset:** emotion close-ups on lines with an expression (every one but
-  Neutral and Friendly, by tier: mild 30%, medium 50%, strong always: `bEmotionCloseUpsNpc`),
+  Neutral and Friendly, by tier: mild 25%, medium 40%, strong always: `bEmotionCloseUpsNpc`),
   reaction shots of you listening in long stretches (`fReactionAfterSecondsPlayer`),
   close-ups of your expressions (`iCloseUpChance...Player`, by tier), holding on the answer after a
   persuasion (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people

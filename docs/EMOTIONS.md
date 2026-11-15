@@ -128,8 +128,10 @@ Notes:
   extreme. Close-ups of her were 38% of the time on screen (extreme ones 18%, 13 s each on
   average). Sarah's lines are more often tagged than the tally's average (76% against 52%,
   strong 18% against 5%).
-- 0.8.9: an extreme close-up holds its own line only; never two in a row. No change to the
-  tiers.
+- 0.8.9: an extreme close-up holds its own line only; never two in a row. Tier chances
+  lowered to mild 25%, medium 40% (strong stays 100%), for your close-ups too: from the
+  tally's shares, about 18% of all lines (was 21%); on the 0.8.7 Sarah test's mix, about
+  12 of 34 lines (was 13).
 
 ## Your character's face
 
@@ -242,6 +244,6 @@ names your expression.
 A kind of reaction shot: when a line is shown on you as a reaction and your face answers it
 with an expression, a close-up of you, pushing in, rather than the preset's angle of you
 listening, by the expression's tier (the same lists as the NPCs' emotion close-ups): mild
-30%, medium 50%, strong always (`iCloseUpChanceMildPlayer`, `iCloseUpChanceMediumPlayer`,
+25%, medium 40%, strong always (`iCloseUpChanceMildPlayer`, `iCloseUpChanceMediumPlayer`,
 `iCloseUpChanceStrongPlayer`); `iExtremeCloseUpChancePlayer` (40%) of those are extreme
 close-ups. How often reactions come: docs/REACTIONS.md.

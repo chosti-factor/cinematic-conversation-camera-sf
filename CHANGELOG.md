@@ -17,6 +17,9 @@ test build; "diagnostic" items only add information to the log for testing.
   a regular close-up if it's an emotion line too, otherwise back to their usual angle (or a
   new one); never two extreme close-ups in a row. Coming back from a reaction to an extreme
   close-up is a regular one.
+- Emotion close-ups' tier chances lowered: mild 25% (was 30), medium 40% (was 50), strong
+  still 100%; the same for close-ups of you in reactions (`iCloseUpChance...Npc`,
+  `iCloseUpChance...Player`).
 
 ## 0.8.8 - 2026-11-15
 

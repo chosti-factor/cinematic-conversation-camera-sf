@@ -2062,7 +2062,7 @@ namespace CCC
 							};
 							const auto take = [&](bool a_intoCloseUp, float a_from, float a_hold = -1.0f) {
 								// 0.8.6: a close-up of you by your expression's tier (the same lists as theirs):
-								// iCloseUpChanceMildPlayer 30%, ...Medium 50%, ...Strong 100%.
+								// iCloseUpChanceMildPlayer 25%, ...Medium 40%, ...Strong 100% (0.8.9; were 30 and 50).
 								const std::string face = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) ? Face::Shown() : std::string{};
 								int               faceChance = 0;
 								const int         faceTier = face.empty() ? 0 : CloseUpTier(face, &faceChance, true);

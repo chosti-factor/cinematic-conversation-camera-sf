@@ -13,8 +13,8 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 1. **Emotion line?** When the line starts, its expression tag is read. If it's on one of
    the three tiers, a roll of the tier's chance makes it an emotion line: mild
    (`sCloseUpEmotionsMildNpc`: Amused, Confident, Thinking, Grateful, Question, Impressed,
-   Tired, Concentrating, Relieved) 30%, medium (`...MediumNpc`: Concerned, Serious, Smirk,
-   Happy, Confused, Puzzled, Apologetic, Awed) 50%, strong (`...StrongNpc`: all the rest
+   Tired, Concentrating, Relieved) 25%, medium (`...MediumNpc`: Concerned, Serious, Smirk,
+   Happy, Confused, Puzzled, Apologetic, Awed) 40%, strong (`...StrongNpc`: all the rest
    but Neutral and Friendly) 100%; and a roll of
    `iExtremeCloseUpChanceNpc` (40%) makes it an extreme one. The camera cuts to a close-up
    (or extreme close-up) of them, pushing in slowly. If it's already on their close-up, it
@@ -48,7 +48,7 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
      (a regular one, on at least 2 s, no cut since) is taken like any line (0.8.8): the
      close-up isn't new, so it isn't cut away from at once.
    - Your face shows an expression on that line: a close-up of you, pushing in, by the
-     expression's tier (the same lists as theirs): mild 30%, medium 50%, strong always
+     expression's tier (the same lists as theirs): mild 25%, medium 40%, strong always
      (`iCloseUpChanceMildPlayer`, `...MediumPlayer`, `...StrongPlayer`);
      `iExtremeCloseUpChancePlayer` (40%) of those an extreme one.
    - Otherwise, you listening, in the preset's angle of you: your regular shots (shoulder,

@@ -34,8 +34,8 @@ namespace CCC
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look
 		int      signatureChance{ 30 };     // % of neutral moments your background's expression shows
 		int      playerCloseUpChance{ 50 };  // (until 0.8.5) % of reactions that are a close-up of you
-		int      closeUpChanceMildPlayer{ 30 };    // 0.8.6: by your expression's tier (the Npc tier lists)
-		int      closeUpChanceMediumPlayer{ 50 };
+		int      closeUpChanceMildPlayer{ 25 };    // 0.8.6: by your expression's tier (the Npc tier lists)
+		int      closeUpChanceMediumPlayer{ 40 };
 		int      closeUpChanceStrongPlayer{ 100 };
 		int      closeUpDistance{ 115 };   // close-ups stand this % of CCC's distance back
 		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
@@ -200,8 +200,8 @@ namespace CCC
 		std::string closeUpEmotionsMild{ "Amused,Confident,Thinking,Grateful,Question,Impressed,Tired,Concentrating,Relieved" };
 		std::string closeUpEmotionsMedium{ "Concerned,Serious,Smirk,Happy,Confused,Puzzled,Apologetic,Awed" };
 		std::string closeUpEmotionsStrong{ "VeryAngry,Rage,Angry,Irritated,Afraid,Shocked,Surprised,Disgust,Somber,Depressed,Worried,Nervous,Pleading,Disbelief,Defiant,Stern,Suspicious,Smug,Sarcastic,Flirting,SinisterSmile,InPain,Dying,EyesClosed" };
-		int         closeUpChanceMild{ 30 };
-		int         closeUpChanceMedium{ 50 };
+		int         closeUpChanceMild{ 25 };
+		int         closeUpChanceMedium{ 40 };
 		int         closeUpChanceStrong{ 100 };
 		// Plain shots (over the shoulder) for seated speakers and merchants: the shot library's
 		// angles often put the chair or the counter between the camera and them.
