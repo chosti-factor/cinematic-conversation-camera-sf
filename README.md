@@ -100,8 +100,10 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
   hold B on a controller) and/or starting on its own when a conversation begins near you,
   even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in
-  testing). Only for the game's conversation scenes, not barks; one scene at a time, the
-  nearest first, then the next one nearby. From first person, the view
+  testing; no prompt while it starts on its own). Only for the game's conversation scenes,
+  not barks; one scene at a time, the nearest first, then the next one nearby; followed into
+  the game's next scene with the same people, handed back when it only repeats itself.
+  Letterboxed, with a group shot now and then when three or more people are talking. From first person, the view
   is third person while it films, with you hidden, and back to first person after.
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
@@ -151,10 +153,10 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
 
 - In testing (0.8): the wider lens, room shots, filming people talking near you, your
   character's face, reaction shots and holding on the answer after a persuasion.
-- 0.8.x, filming people talking near you, the rest: groups of three or more with
-  occasional group shots; the letterbox and obstacle checks while filming them. (Done:
-  the listen key and controller button, the on-screen prompt, starting on its own for
-  conversation scenes nearby, never in combat.)
+- 0.8.x, filming people talking near you: done in 0.8.10 (the listen key and controller
+  button, the on-screen prompt, starting on its own for conversation scenes nearby, never in
+  combat, obstacle checks, one scene at a time, following a scene into the next, handing
+  back a scene that repeats itself, group shots, the letterbox).
 - Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
   Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
 - 0.9.x, polish and optimization:
@@ -175,15 +177,11 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
   - Plants and other objects without collision (which the obstacle check can't see) in
     front of wide outdoor shots, and walls it passes through (beside Commander Tuala at the
     MAST, every check said clear).
-  - Filming people talking: no listen prompt while `bAutoListen` is on (it starts on its
-    own anyway).
   - Starting a conversation while seated: strong vertical jitter at the start (0.8.5 test,
     The Rock).
   - Talking to someone while you sit (a bar stool) in first person: your full body isn't
     built (it waits for a standing height), so you're kept out of frame (0.8.5 log, August
     Bowen at The Rock).
-  - Filming people talking: follow a scene into the game's next scene with the same people,
-    and hand back when a scene is only repeating itself (as CCC does).
   - Smoother conversation starts; quest scenes recognised by their quest rather than the
     scene's name; the default amount of camera sway (`iCameraSway`).
 - 1.0, public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu

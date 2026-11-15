@@ -20,6 +20,17 @@ test build; "diagnostic" items only add information to the log for testing.
   frame or two after the camera moved; it's now set on the frame of the cut, for every cut,
   and there's no blur at all before the first shot.
 
+### Added
+- Filming people talking, the rest of 0.8:
+  - The letterbox bars (`bLetterbox`), as in your own conversations.
+  - Group shots: in a scene with three or more people, about one new line in four is a
+    shot of the whole group, from outside it across from the speaker; only when clear.
+  - A scene that leads into the game's next scene with the same people is followed into it,
+    without leaving the camera (as CCC does).
+  - A scene that's only repeating itself (two lines in a row already filmed) is handed
+    back, and isn't started again on its own for two minutes (as CCC does).
+  - No listen prompt while `bAutoListen` is on (it starts on its own anyway).
+
 ## 0.8.9 - 2026-11-15
 
 ### Fixed

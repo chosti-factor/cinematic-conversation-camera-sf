@@ -652,7 +652,8 @@ namespace CCC::Hud
 			float       ease{ 0.0f };      // 0 = off screen, 1 = fully in
 			float       barHeight{ 0.0f }; // stage units
 			bool        logged{ false };
-		} g_bars;
+		} g_bars, g_filmBars;  // the dialogue menu's; the HUD messages menu's, filming people talking (0.8.10)
+		bool g_filmingOthers = false;
 
 		bool FindChild(Value& a_parent, const char* a_name, Value& a_out)
 		{
@@ -683,21 +684,21 @@ namespace CCC::Hud
 			return SafeInvoke(&a_top, "addChildAt", nullptr, args, 2);
 		}
 
-		void UpdateLetterbox(bool a_want, float a_delta)
+		void UpdateLetterbox(LetterboxState& a_bars, const char* a_menu, bool a_want, float a_delta)
 		{
 			const auto& s = Settings::Get();
-			const auto  ref = OpenMovie("DialogueMenu");
+			const auto  ref = OpenMovie(a_menu);
 			if (!ref) {
-				g_bars.ease = 0.0f;
+				a_bars.ease = 0.0f;
 				return;
 			}
 			Value top;
-			if (!RootObject(ref->root, top, "DialogueMenu")) {
+			if (!RootObject(ref->root, top, a_menu)) {
 				return;
 			}
 			const float target = a_want ? 1.0f : 0.0f;
 			const float step = a_delta / (std::max)(s.letterboxFade, 0.01f);
-			g_bars.ease = g_bars.ease < target ? (std::min)(target, g_bars.ease + step) : (std::max)(target, g_bars.ease - step);
+			a_bars.ease = a_bars.ease < target ? (std::min)(target, a_bars.ease + step) : (std::max)(target, a_bars.ease - step);
 
 			Value upper, lower;
 			const bool have = FindChild(top, kTopName, upper) && FindChild(top, kBottomName, lower);
@@ -714,29 +715,29 @@ namespace CCC::Hud
 					height = Member(stage, "stageHeight", height);
 				}
 				const double bar = height * std::clamp(s.letterboxHeight, 0.02f, 0.3f);
-				g_bars.barHeight = static_cast<float>(bar);
+				a_bars.barHeight = static_cast<float>(bar);
 				if (!MakeBar(ref->root, top, kTopName, -width, -height, width * 3.0, height + bar) ||
 					!MakeBar(ref->root, top, kBottomName, -width, height - bar, width * 3.0, height + bar)) {
-					if (!g_bars.logged) {
-						g_bars.logged = true;
-						REX::WARN("HUD: couldn't add the letterbox bars to the dialogue menu");
+					if (!a_bars.logged) {
+						a_bars.logged = true;
+						REX::WARN("HUD: couldn't add the letterbox bars to {}", a_menu);
 					}
 					return;
 				}
-				if (!g_bars.logged || g_bars.movie != ref->movie.get()) {
-					g_bars.logged = true;
-					REX::INFO("HUD: letterbox bars added to the dialogue menu (stage {:.0f} x {:.0f}, bars {:.0f} high)", width, height, bar);
+				if (!a_bars.logged || a_bars.movie != ref->movie.get()) {
+					a_bars.logged = true;
+					REX::INFO("HUD: letterbox bars added to {} (stage {:.0f} x {:.0f}, bars {:.0f} high)", a_menu, width, height, bar);
 				}
-				g_bars.movie = ref->movie.get();
+				a_bars.movie = ref->movie.get();
 				if (!FindChild(top, kTopName, upper) || !FindChild(top, kBottomName, lower)) {
 					return;
 				}
 			}
 			// Slide in from the screen edges.
-			const float e = 1.0f - (1.0f - g_bars.ease) * (1.0f - g_bars.ease);
-			const Value upY{ static_cast<double>(-g_bars.barHeight * (1.0f - e)) };
-			const Value downY{ static_cast<double>(g_bars.barHeight * (1.0f - e)) };
-			const Value shown{ g_bars.ease > 0.001f };
+			const float e = 1.0f - (1.0f - a_bars.ease) * (1.0f - a_bars.ease);
+			const Value upY{ static_cast<double>(-a_bars.barHeight * (1.0f - e)) };
+			const Value downY{ static_cast<double>(a_bars.barHeight * (1.0f - e)) };
+			const Value shown{ a_bars.ease > 0.001f };
 			SafeSet(&upper, "y", &upY);
 			SafeSet(&lower, "y", &downY);
 			SafeSet(&upper, "visible", &shown);
@@ -1470,6 +1471,11 @@ namespace CCC::Hud
 		g_rollover.hide = a_hide;
 	}
 
+	void SetFilmingOthers(bool a_filming)
+	{
+		g_filmingOthers = a_filming;
+	}
+
 	void SetPresetLabel(const std::string& a_text)
 	{
 		g_presetLabel.text = a_text;
@@ -1514,7 +1520,12 @@ namespace CCC::Hud
 			UpdatePresetLabel(false);
 		}
 		if (s.letterbox && !g_broken) {
-			UpdateLetterbox(a_filming && dialogueOpen, a_delta);
+			UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
+			// Filming people talking near you (0.8.10): the same bars, on the HUD messages menu
+			// (under its subtitles), as no dialogue menu is open.
+			if (!g_broken) {
+				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
+			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
 			}

@@ -40,6 +40,10 @@ namespace CCC::Hud
 	// films people talking; put back when false. Main thread.
 	void SetHideRollover(bool a_hide);
 
+	// Filming people talking near you (0.8.10): the letterbox bars on the HUD, as in your own
+	// conversations (bLetterbox). Main thread.
+	void SetFilmingOthers(bool a_filming);
+
 	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
 	// a conversation is filmed, e.g. "PRESET: FRONTIER". Main thread.
 	void SetPresetLabel(const std::string& a_text);

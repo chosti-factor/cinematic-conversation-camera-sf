@@ -3873,6 +3873,7 @@ namespace CCC
 			bool                                  primed = false;  // seen once (what they said before isn't a new line)
 			const void*                           scene = nullptr;  // the scene they play a part in, if any
 			const void*                           lineScene = nullptr;  // the scene their last line was part of (0.8.10)
+			std::uintptr_t                        lineSaid = 0;  // their last reported line, by its words and record (0.8.10)
 		};
 
 		std::unordered_map<std::uint32_t, Talker> g_talkers;
@@ -4241,6 +4242,7 @@ namespace CCC
 						t.pending = false;
 						t.scene = CurrentSceneUnsafe(actor.get());
 						t.lineScene = t.scene;
+						t.lineSaid = raw && *raw ? static_cast<std::uintptr_t>(std::hash<std::string_view>{}(std::string_view{ raw })) ^ t.lastInfo : 0;
 						t.addressed = AddressedBy(actor->formID, t, playerFeet, playerHead);
 						ReportOverheardLine(actor.get(), t, a_now, playerFeet);
 					}
@@ -4277,6 +4279,9 @@ namespace CCC
 			std::uint32_t                         poseLine{ 0 };
 			RE::NiPoint3                          anchor{};    // the person in shot (two-shot: between them), eased
 			RE::NiPoint3                          lookOffset{};  // the aim, relative to the anchor
+			std::vector<std::uint32_t>            group;     // the scene's people lately, for group shots (0.8.10)
+			bool                                  groupShot{ false };  // this line's shot is the group shot
+			std::uint32_t                         lastGroupLine{ 0 };
 		} g_film;
 
 		struct FilmMain  // main thread only
@@ -4295,6 +4300,10 @@ namespace CCC
 			const void*                           scene{ nullptr };          // the scene being filmed
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
+			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
+			std::vector<std::uintptr_t>           infos;     // the lines filmed (by words and record), to notice repeats
+			std::uintptr_t                        lastSaid{ 0 };
+			int                                   repeats{ 0 };  // lines in a row heard before
 		} g_filmMain;
 
 		std::atomic<std::uint64_t> g_padUsedAt{ 0 };  // GetTickCount64 of the last controller input
@@ -4483,6 +4492,7 @@ namespace CCC
 					Hud::SetPrompt(text);
 					const bool filming = FilmingActive();
 					Hud::SetHideRollover(filming);
+					Hud::SetFilmingOthers(filming && !g_state.active);
 					// 0.8.4 test: filming from first person showed your character in a T-pose (the
 					// game doesn't animate your full body in first person); 0.8.6: with your body
 					// hidden, your first-person armour still showed, T-posed. The first-person body
@@ -4543,6 +4553,7 @@ namespace CCC
 				std::chrono::steady_clock::time_point lastLine;
 				const void*                           scene;
 				float                                 distance;
+				std::uintptr_t                        info;
 			};
 			std::vector<Candidate> candidates;
 			const auto             playerFeet = player->GetPosition();
@@ -4567,7 +4578,7 @@ namespace CCC
 						continue;
 					}
 				}
-				candidates.push_back({ id, t.addressed, t.lastLine, t.lineScene, FlatDistance(t.feet, playerFeet) });
+				candidates.push_back({ id, t.addressed, t.lastLine, t.lineScene, FlatDistance(t.feet, playerFeet), t.lineSaid });
 			}
 			bool filming;
 			{
@@ -4598,10 +4609,22 @@ namespace CCC
 				const void* scene = closest->scene;
 				return latestOf([scene](const Candidate& a_c) { return a_c.scene == scene; });
 			};
+			const auto declinedNow = [&](const void* a_scene) { return a_scene && a_scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s; };
+			const auto filmedPerson = [&](std::uint32_t a_id) { return std::ranges::find(g_filmMain.people, a_id) != g_filmMain.people.end(); };
 			const Candidate* pick = nullptr;
 			if (filming && g_filmMain.scene) {
 				const void* filmed = g_filmMain.scene;
 				pick = latestOf([filmed](const Candidate& a_c) { return a_c.scene == filmed; });
+				// The same people going on into the game's next scene (0.8.10, as CCC follows a
+				// scene into the next): theirs is followed, without leaving the camera.
+				const auto* onward = latestOf([&](const Candidate& a_c) {
+					return a_c.scene && a_c.scene != filmed && !declinedNow(a_c.scene) && filmedPerson(a_c.id);
+				});
+				if (onward && (!pick || onward->lastLine > pick->lastLine)) {
+					REX::INFO("Filming people talking: {} goes on into the next scene; following it", TalkerName(onward->id));
+					g_filmMain.scene = onward->scene;
+					pick = onward;
+				}
 			} else if (filming) {
 				pick = latestOf([](const Candidate&) { return true; });  // (the listen key, not a scene: as before)
 			} else {
@@ -4678,18 +4701,66 @@ namespace CCC
 						g_film.speaker = next->id;
 						g_film.listener = next->addressed;
 						++g_film.line;
+						g_filmMain.people = { next->id };
+						if (next->addressed != 0 && next->addressed != 0x14) {
+							g_filmMain.people.push_back(next->addressed);
+						}
+						g_filmMain.infos.clear();
+						if (next->info != 0) {
+							g_filmMain.infos.push_back(next->info);
+						}
+						g_filmMain.lastSaid = next->info;
+						g_filmMain.repeats = 0;
+						g_film.group.clear();
 						REX::INFO("Filming people talking: that one's over; on to {} and {}, nearby", TalkerName(next->id), TalkerName(next->addressed));
 					} else {
 						StopFilming("they've stopped talking");
 					}
 				} else {
-					std::scoped_lock lock{ g_film.lock };
-					if (latest != g_filmMain.lastLine || speaker != g_filmMain.lastSpeaker) {
-						g_filmMain.lastLine = latest;
-						g_filmMain.lastSpeaker = speaker;
-						g_film.speaker = speaker;
-						g_film.listener = listener;
-						++g_film.line;
+					bool repeating = false;
+					{
+						std::scoped_lock lock{ g_film.lock };
+						if (latest != g_filmMain.lastLine || speaker != g_filmMain.lastSpeaker) {
+							g_filmMain.lastLine = latest;
+							g_filmMain.lastSpeaker = speaker;
+							g_film.speaker = speaker;
+							g_film.listener = listener;
+							++g_film.line;
+							for (const auto id : { speaker, listener }) {
+								if (id != 0 && id != 0x14 && std::ranges::find(g_filmMain.people, id) == g_filmMain.people.end()) {
+									g_filmMain.people.push_back(id);
+								}
+							}
+						}
+						// A scene only repeating itself (0.8.10, as CCC hands back): two lines in a row
+						// already filmed. A line is known by its words once it's reported (one record
+						// can hold several lines).
+						if (pick->info != 0 && pick->info != g_filmMain.lastSaid) {
+							g_filmMain.lastSaid = pick->info;
+							if (std::ranges::find(g_filmMain.infos, pick->info) != g_filmMain.infos.end()) {
+								repeating = ++g_filmMain.repeats >= 2;
+							} else {
+								g_filmMain.infos.push_back(pick->info);
+								g_filmMain.repeats = 0;
+							}
+						}
+						// Who's in it lately, for the group shot: the scene's people who've spoken
+						// in the last 30 s, and whoever they spoke to.
+						g_film.group.clear();
+						for (const auto& [id, t] : g_talkers) {
+							if (t.lineScene && t.lineScene == g_filmMain.scene && t.lines > 0 && a_now - t.lastLine < 30s) {
+								for (const auto who : { id, t.addressed }) {
+									if (who != 0 && who != 0x14 && std::ranges::find(g_film.group, who) == g_film.group.end()) {
+										g_film.group.push_back(who);
+									}
+								}
+							}
+						}
+					}
+					if (repeating) {
+						StopFilming("the scene is only repeating itself");
+						g_filmMain.declinedScene = g_filmMain.scene;
+						g_filmMain.declinedAt = a_now;
 					}
 				}
 				return;
@@ -4723,14 +4794,29 @@ namespace CCC
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !pressed;
+				g_filmMain.people.clear();
+				g_filmMain.infos.clear();
+				g_filmMain.repeats = 0;
+				for (const auto id : { speaker, listener }) {
+					if (id != 0 && id != 0x14) {
+						g_filmMain.people.push_back(id);
+					}
+				}
+				if (pick->info != 0) {
+					g_filmMain.infos.push_back(pick->info);
+				}
+				g_filmMain.lastSaid = pick->info;
+				g_film.group.clear();
+				g_film.groupShot = false;
 				g_lensWanted.store(Director::WantedLens() >= 10.0f ? Director::WantedLens() : 30.0f, std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
 					pressed ? "" : " (on its own: a conversation scene nearby)");
 				return;
 			}
-			// The prompt (bListenPrompt), while there's a conversation to listen in on.
-			if (s.listenPrompt && conversation && (s.listenKey > 0 || s.listenButton > 0)) {
+			// The prompt (bListenPrompt), while there's a conversation to listen in on; not with
+			// bAutoListen on (0.8.10: it starts on its own anyway).
+			if (s.listenPrompt && !s.autoListen && conversation && (s.listenKey > 0 || s.listenButton > 0)) {
 				const bool pad = s.listenButton > 0 && (s.listenKey <= 0 || UsingController());
 				// A face button shows as its icon ("{B}", 0.8.4); other buttons and keys by name.
 				std::string key = pad ? ButtonName(s.listenButton) : KeyName(s.listenKey);
@@ -4749,7 +4835,8 @@ namespace CCC
 		// things and people at TerraBrew).
 		void FilmFrame()
 		{
-			std::uint32_t speakerId = 0, listenerId = 0, line = 0;
+			std::uint32_t              speakerId = 0, listenerId = 0, line = 0;
+			std::vector<std::uint32_t> groupIds;
 			{
 				std::scoped_lock lock{ g_film.lock };
 				if (!g_film.active) {
@@ -4758,6 +4845,7 @@ namespace CCC
 				speakerId = g_film.speaker;
 				listenerId = g_film.listener;
 				line = g_film.line;
+				groupIds = g_film.group;
 			}
 			auto* speaker = RE::TESForm::LookupByID<RE::Actor>(speakerId);
 			auto* listener = RE::TESForm::LookupByID<RE::Actor>(listenerId);
@@ -4771,15 +4859,40 @@ namespace CCC
 				return;
 			}
 			const RE::NiPoint3 sh = *speakerHead, lh = *listenerHead;
-			const auto subjectOf = [&](Shots::ShotType a_type) {
-				return a_type == Shots::ShotType::kTwoShot ? RE::NiPoint3{ (sh.x + lh.x) * 0.5f, (sh.y + lh.y) * 0.5f, (sh.z + lh.z) * 0.5f } : sh;
-			};
+			// Three or more people in the scene lately (0.8.10): their heads, for the group shot.
+			std::vector<RE::NiPoint3> groupHeads;
+			if (groupIds.size() >= 3) {
+				for (const auto id : groupIds) {
+					if (auto* who = RE::TESForm::LookupByID<RE::Actor>(id)) {
+						if (const auto head = Camera::HeadPosition(who)) {
+							groupHeads.push_back(*head);
+						}
+					}
+				}
+			}
+			RE::NiPoint3 groupCenter = sh;
+			if (!groupHeads.empty()) {
+				groupCenter = {};
+				const float n = static_cast<float>(groupHeads.size());
+				for (const auto& h : groupHeads) {
+					groupCenter.x += h.x / n;
+					groupCenter.y += h.y / n;
+					groupCenter.z += h.z / n;
+				}
+			}
 
 			std::scoped_lock lock{ g_film.lock };
+			const auto subjectOf = [&](Shots::ShotType a_type) {
+				if (g_film.groupShot && groupHeads.size() >= 3) {
+					return groupCenter;
+				}
+				return a_type == Shots::ShotType::kTwoShot ? RE::NiPoint3{ (sh.x + lh.x) * 0.5f, (sh.y + lh.y) * 0.5f, (sh.z + lh.z) * 0.5f } : sh;
+			};
 			const bool newLine = g_film.poseLine != line || !g_film.pose;
 			// The speaker walked off from where the shot was set up: set it up again.
 			const bool drifted = g_film.pose && Distance(subjectOf(g_film.shot), g_film.anchor) > 1.5f;
 			if (newLine || drifted) {
+				g_film.groupShot = false;  // (set again below if this one is a group shot)
 				static std::mt19937 rng{ std::random_device{}() };
 				constexpr std::array kChoices{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
 					Shots::ShotType::kMediumNpc, Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
@@ -4838,6 +4951,41 @@ namespace CCC
 					}
 					skipped += std::format("{}{}", skipped.empty() ? "" : ", ", Shots::Key(type));
 				}
+				// A group shot now and then (0.8.10): with three or more people in the scene, about
+				// one new line in four (never two in a row), from outside the group across from the
+				// speaker, wide enough for everyone; only when clear.
+				bool group = false;
+				if (newLine && groupHeads.size() >= 3 && line > g_film.lastGroupLine + 1 && std::uniform_int_distribution<int>{ 0, 3 }(rng) == 0) {
+					float radius = 0.0f;
+					for (const auto& h : groupHeads) {
+						radius = (std::max)(radius, std::hypot(h.x - groupCenter.x, h.y - groupCenter.y));
+					}
+					float dx = groupCenter.x - sh.x, dy = groupCenter.y - sh.y;
+					float len = std::hypot(dx, dy);
+					if (len < 0.2f) {  // the speaker in the middle: across from whoever they're addressing
+						dx = sh.x - lh.x;
+						dy = sh.y - lh.y;
+						len = std::hypot(dx, dy);
+					}
+					const float half = std::clamp(Director::LensDegrees(), 20.0f, 120.0f) * 0.5f * 0.017453292f;
+					const float back = (radius + 0.5f) / std::tan(half) + radius;
+					if (len > 0.01f && back <= 9.0f) {
+						Camera::Pose groupPose{};
+						groupPose.position = { groupCenter.x + dx / len * back, groupCenter.y + dy / len * back, groupCenter.z + 0.35f };
+						groupPose.lookAt = { groupCenter.x, groupCenter.y, groupCenter.z - 0.15f };
+						const auto toSpeaker = TestShot(sh, groupPose.position, lh, false);
+						if (toSpeaker.usable && toSpeaker.blockedAt < 0.0f) {
+							chosen = Shots::Result{};
+							chosen->ok = true;
+							chosen->pose = groupPose;
+							chosenType = Shots::ShotType::kMaster;
+							group = true;
+							g_film.lastGroupLine = line;
+						} else {
+							skipped += std::format("{}group", skipped.empty() ? "" : ", ");
+						}
+					}
+				}
 				if (!chosen && !fallback) {
 					return;
 				}
@@ -4848,6 +4996,7 @@ namespace CCC
 					}
 				}
 				const auto& use = chosen ? *chosen : *fallback;
+				g_film.groupShot = group;
 				g_film.shot = chosenType;
 				g_film.pose = use.pose;
 				g_film.anchor = subjectOf(chosenType);
@@ -4873,7 +5022,8 @@ namespace CCC
 			pose.lookAt = { g_film.anchor.x + g_film.lookOffset.x, g_film.anchor.y + g_film.lookOffset.y, g_film.anchor.z + g_film.lookOffset.z };
 			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
 				g_film.applied = true;
-				REX::INFO("Filming people talking: {} on {}", Shots::Key(g_film.shot), speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
+				REX::INFO("Filming people talking: {} on {}", g_film.groupShot ? std::format("group shot ({} people)", groupHeads.size()) : std::string{ Shots::Key(g_film.shot) },
+					speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
 			}
 		}
 
@@ -4890,13 +5040,15 @@ namespace CCC
 			const auto&                                     s = Settings::Get();
 			auto*                                           player = RE::PlayerCharacter::GetSingleton();
 			// While filming people talking (0.8.3) too, leaving out the two of them.
-			std::uint32_t filmSpeaker = 0, filmListener = 0;
-			bool          filming = false;
+			std::uint32_t              filmSpeaker = 0, filmListener = 0;
+			std::vector<std::uint32_t> filmGroup;  // (0.8.10: the scene's people aren't in the way of its group shot)
+			bool                       filming = false;
 			{
 				std::scoped_lock lock{ g_film.lock };
 				filming = g_film.active;
 				filmSpeaker = g_film.speaker;
 				filmListener = g_film.listener;
+				filmGroup = g_film.group;
 			}
 			if (s.avoidBystanders && ((g_state.active && !g_state.handedBack) || filming) && player) {
 				const char* source = nullptr;
@@ -4905,7 +5057,7 @@ namespace CCC
 					const auto center = player->GetPosition();
 					for (const auto& actor : nearby) {
 						if (!actor || actor.get() == player || (g_state.active && actor->formID == g_state.speakerId) ||
-							(filming && (actor->formID == filmSpeaker || actor->formID == filmListener))) {
+							(filming && (actor->formID == filmSpeaker || actor->formID == filmListener || std::ranges::find(filmGroup, actor->formID) != filmGroup.end()))) {
 							continue;
 						}
 						const auto  feet = actor->GetPosition();

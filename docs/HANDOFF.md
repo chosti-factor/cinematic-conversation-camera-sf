@@ -19,7 +19,20 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-14, 0.8.0)
+## Where things stand (2026-11-15, 0.8.10)
+
+- 0.8.10 finishes 0.8.x, filming people talking: one scene at a time (nearest first, then
+  the next), followed into the game's next scene with the same people, handed back when it
+  repeats (two lines in a row already filmed), group shots with three or more, the
+  letterbox on HUDMessagesMenu, no prompt with bAutoListen. From first person the game goes
+  to third person while it films (the first-person body can't be hidden:
+  "Player1stPersonBody" is a label, not a node).
+- Next, 0.9.x polish, first: conversation-start transitions (flashes). 0.8.10 sets the
+  blur focus on the camera thread on the frame of each cut (it lagged a frame or two on the
+  main thread, and the opening frame had the game's 1.5 m focus); if flashes remain, get a
+  60 fps clip of a start.
+
+## Earlier (2026-11-14, 0.8.0)
 
 - 0.8.0 is the current Test build, not yet tested in game:
   - The conversation lens (`fConversationLens`, 45): the game's camera FOV update
