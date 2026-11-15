@@ -5,8 +5,8 @@ of you listening, and a close-up of you. The same in every preset (the presets o
 which angle of you a listening reaction uses). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.5 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
-stretches, cutting only at the edges of their lines.
+Last updated: 0.8.6 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
 
