@@ -35,7 +35,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks and fade in when the line ends (`[Interface]`).
 - **Reaction shots:** now and then a line is shown on you listening (counted in sentences;
-  `iReactionEvery`, `iReactionChance`), with seated people and merchants too.
+  `iReactionEvery`, `iReactionChance`), with seated people and merchants too. A reaction
+  stays on you a couple of seconds, then cuts back to the speaker (`fReactionSeconds`).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   reply is a close-up, pushing in (`bPersuasionBeat`).
 - **Room shots** (Wide, Master, Distant, in the Room and Stardust presets): placed where
@@ -54,6 +55,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   shot onto whoever is in it, so they're sharp and the background stays softly blurred,
   even on longer outdoor shots (`bFocusOnSubject`). Two focus styles (`sFocusStyle`):
   Cinematic (more background blur) and Wide (deeper sharp zone, softer background blur).
+  Shots from more than 8 m away have no blur.
 - **Obstacle detection:** before each cut, the game's own camera collision test checks the
   line from the person in shot to the camera. A wall behind the camera pulls it in; a
   ladder or pillar in front of the person skips the shot for another angle; when nothing

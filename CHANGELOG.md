@@ -13,6 +13,16 @@ test build; "diagnostic" items only add information to the log for testing.
   158 degrees off the line). Where the room allows, each now prefers CCC's own angle for
   it (Wide and Distant on the line, Master 24 degrees off it) and keeps away from where
   the others stand.
+- The far room shots focused on things near the camera, leaving the people soft (0.8.0
+  test, the Lodge). Shots more than 8 m from the person in shot now have no blur at all.
+- Filming people talking stopped during long lines and pauses (Keeper Aquilus's group) and
+  had to be started again: the 10 seconds of quiet that end it are now counted from when
+  they last spoke, not from when the line began.
+
+### Changed
+- Reaction shots stay on you about 2.5 seconds, then cut back to the speaker, instead of
+  the whole line (`fReactionSeconds`, 0 = the whole line). A line with less than about
+  1.5 seconds left stays on you to the end.
 
 ### Added
 - A controller button for filming people talking near you: hold the right stick click for

@@ -74,6 +74,7 @@ namespace CCC
 			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
+			std::chrono::steady_clock::time_point reactionUntil{};           // back to the speaker then (0.8.1)
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
@@ -705,6 +706,10 @@ namespace CCC
 			// Shot/reverse-shot: the NPC holds the camera while talking; once they've been
 			// quiet briefly it's the player's turn, so cut to the player.
 			const bool talking = a_speaker->IsTalking();
+			if (talking && g_state.reactionActive && a_now >= g_state.reactionUntil) {
+				g_state.reactionActive = false;  // the reaction's done: back to the speaker
+				g_state.reactionCloseUp = false;
+			}
 			if (talking && g_state.reactionActive) {
 				return Subject::kPlayer;  // a reaction shot: you, listening
 			}
@@ -1951,6 +1956,15 @@ namespace CCC
 								g_state.reactionLines = 0;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
+								// A couple of seconds on you, then back to the speaker (0.8.1: a whole
+								// line on you felt long). The line's length is guessed from its
+								// subtitle (about 14 characters a second); when less than 1.5 s of it
+								// would be left, it stays on you to the end rather than flick back.
+								const float hold = s.reactionSeconds;
+								const float lineSeconds = static_cast<float>(text.size()) / 14.0f;
+								g_state.reactionUntil = hold <= 0.0f || lineSeconds - hold < 1.5f ?
+								                            std::chrono::steady_clock::time_point::max() :
+								                            now + std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(hold));
 								g_reactionStarted.store(true, std::memory_order_release);
 							} else {
 								g_state.reactionLines += sentences;
@@ -3289,6 +3303,7 @@ namespace CCC
 		bool                      g_blurRecordsRead = false;
 		bool                      g_blurRecordsChanged = false;
 		constexpr std::size_t     kBlurStrength = 0x38C, kBlurDistance = 0x398, kBlurRange = 0x3A4;
+		constexpr float           kNoBlurBeyond = 8.0f;  // metres from the camera to the person in shot
 
 		bool ReadBlurRecords()
 		{
@@ -3334,6 +3349,10 @@ namespace CCC
 				}
 				const float distance = a_shotDistance > 0.3f ? a_shotDistance : r.distance;
 				const float range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
+				// No blur at all on the far (room) shots: past about 8 m the game's blur kept
+				// things near the camera sharp and the people soft (0.8.0 test, the Lodge).
+				const float strength = a_shotDistance > kNoBlurBeyond ? 0.0f : r.strength;
+				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
 			}
@@ -3665,6 +3684,7 @@ namespace CCC
 			bool                                  pending = false;  // a line started; waiting for its subtitle
 			std::chrono::steady_clock::time_point lineStart{};
 			std::chrono::steady_clock::time_point lastLine{};
+			std::chrono::steady_clock::time_point lastHeard{};  // last seen talking (0.8.1)
 			std::chrono::steady_clock::time_point seen{};
 			std::uint32_t                         addressed = 0;   // formID; 0x14 = you
 			std::uint32_t                         lines = 0;
@@ -3990,6 +4010,7 @@ namespace CCC
 				const bool        newInfo = t.primed && info != 0 && info != t.lastInfo;
 				const bool        newSubtitle = t.primed && !subtitle.empty() && subtitle != t.lastSubtitle;
 				if (talking) {
+					t.lastHeard = a_now;
 					++talkingNow;
 					talkers += (talkers.empty() ? "" : ", ") + t.name + (ours ? " (yours)" : "");
 				}
@@ -4175,7 +4196,10 @@ namespace CCC
 				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || t.lastLine <= latest || FlatDistance(t.feet, playerFeet) > s.listenRange) {
 					continue;
 				}
-				if (a_now - t.lastLine > 10s) {
+				// Still part of it until 10 s after they last spoke: counted from the end of the
+				// line, not its start (0.8.0 test: filming stopped during long lines and the
+				// pauses in Keeper Aquilus's group, and had to be started again).
+				if (a_now - (std::max)(t.lastLine, t.lastHeard) > 10s) {
 					continue;
 				}
 				latest = t.lastLine;
@@ -4209,7 +4233,7 @@ namespace CCC
 					StopFilming("listen key");
 				} else if (moved > 0.5f) {
 					StopFilming("you moved");
-				} else if (speaker == 0 && a_now - g_filmMain.lastLine > 10s) {
+				} else if (speaker == 0) {
 					StopFilming("they've stopped talking");
 				} else if (speaker != 0) {
 					std::scoped_lock lock{ g_film.lock };
@@ -4546,8 +4570,8 @@ namespace CCC
 						if (st.debugLog && std::abs(d - lastDistance) > 0.25f) {
 							lastDistance = d;
 							static int logged = 0;
-							if (logged++ < 60) {
-								REX::INFO("Focus: {:.2f} m (the person in shot){}", d, st.deepFocusLongShots && d > st.deepFocusBeyond ? ", deep sharp zone" : "");
+							if (logged++ < 200) {
+								REX::INFO("Focus: {:.2f} m (the person in shot){}", d, d > kNoBlurBeyond ? ", no blur" : st.deepFocusLongShots && d > st.deepFocusBeyond ? ", deep sharp zone" : "");
 							}
 						}
 					} else if (g_blurRecordsChanged) {

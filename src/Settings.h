@@ -168,6 +168,7 @@ namespace CCC
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
 		float       bystanderStill{ 1.5f };   // seconds without moving before a bystander counts
 		int         reactionChance{ 50 };     // percent
+		float       reactionSeconds{ 2.5f };  // on you, then back to the speaker; 0 = the whole line (0.8.1)
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
 		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
