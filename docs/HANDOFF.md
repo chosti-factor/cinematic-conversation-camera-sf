@@ -65,6 +65,9 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   after, 9 am-1 pm Central. Outreach a few days before (machinima podcast, Starfield mod
   YouTubers, the Starfield Modding Discord). Be stable well before the Steam Winter Sale
   (2026-12-17).
+- Before 1.0: drop every fallback for old INI names (renamed keys read under their old
+  names in Settings.cpp, `sPreset=Stardust` for Frontier). Nobody outside testing has an
+  old INI, so 1.0 starts clean.
 
 ## Open observations from testing
 
