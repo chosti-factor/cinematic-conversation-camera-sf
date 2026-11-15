@@ -98,8 +98,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
-  hold B on a controller) and/or starting on its own when you sit down or stand still near
-  them (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in testing).
+  hold B on a controller) and/or starting on its own when a conversation begins near you,
+  even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in
+  testing). Only for the game's conversation scenes, not barks.
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
 - **Testing messages:** each line's expression, your face's answer and the shot used, with
@@ -150,8 +151,8 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
   character's face, reaction shots and holding on the answer after a persuasion.
 - 0.8.x, filming people talking near you, the rest: groups of three or more with
   occasional group shots; the letterbox and obstacle checks while filming them. (Done:
-  the listen key and controller button, the on-screen prompt, starting on its own when
-  you sit or stand still, never in combat.)
+  the listen key and controller button, the on-screen prompt, starting on its own for
+  conversation scenes nearby, never in combat.)
 - Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
   Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
 - 0.9.x, polish and optimization:

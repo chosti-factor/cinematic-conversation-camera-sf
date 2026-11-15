@@ -4206,6 +4206,10 @@ namespace CCC
 			std::chrono::steady_clock::time_point stillSince{};
 			std::chrono::steady_clock::time_point autoBlockedUntil{};  // you stopped it: no auto start before
 			bool                                  autoStarted{ false };
+			std::chrono::steady_clock::time_point startedAt{};
+			const void*                           scene{ nullptr };          // the scene being filmed
+			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
+			std::chrono::steady_clock::time_point declinedAt{};
 		} g_filmMain;
 
 		std::atomic<std::uint64_t> g_padUsedAt{ 0 };  // GetTickCount64 of the last controller input
@@ -4472,14 +4476,6 @@ namespace CCC
 					}
 				}
 			}
-			// Standing still, and sitting (your head well below standing height).
-			if (inMenu || FlatDistance(playerFeet, g_filmMain.stillAt) > 0.2f || g_filmMain.stillSince == std::chrono::steady_clock::time_point{}) {
-				g_filmMain.stillAt = playerFeet;
-				g_filmMain.stillSince = a_now;
-			}
-			const auto playerHead = Camera::HeadPosition(player);
-			const bool sitting = playerHead && playerHead->z - playerFeet.z < s.seatedHeadHeight;
-			const auto stillFor = std::chrono::duration<float>(a_now - g_filmMain.stillSince).count();
 			// The listen key, or the controller's listen button held for fListenHold seconds.
 			const bool focus = GameHasFocus();
 			const bool keyDown = s.listenKey > 0 && focus && (::GetAsyncKeyState(s.listenKey) & 0x8000) != 0;
@@ -4496,13 +4492,22 @@ namespace CCC
 				pressed = true;
 			}
 			if (filming) {
-				const auto  feet = player->GetPosition();
+				const auto feet = player->GetPosition();
+				// 0.8.6: it can start while you're walking; for its first 0.75 s where you stand
+				// is still settling (you stop walking), then moving ends it.
+				if (a_now - g_filmMain.startedAt < 750ms) {
+					g_filmMain.playerAt = feet;
+				}
 				const float moved = FlatDistance(feet, g_filmMain.playerAt);
 				if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
+					g_filmMain.declinedScene = g_filmMain.scene;
+					g_filmMain.declinedAt = a_now;
 				} else if (moved > 0.5f) {
 					StopFilming("you moved");
+					g_filmMain.declinedScene = g_filmMain.scene;  // not this scene again on its own
+					g_filmMain.declinedAt = a_now;
 				} else if (speaker == 0) {
 					StopFilming("they've stopped talking");
 				} else {
@@ -4527,12 +4532,16 @@ namespace CCC
 			// offered or started on their own: in the 0.8.5 log every real conversation between
 			// NPCs was one of the game's scenes (FC_AC_RandConv..., ...CityLife_Encounter...),
 			// and every one-liner wasn't. (The listen key still films any.)
-			bool conversation = false;
+			bool        conversation = false;
+			const void* scene = nullptr;
 			if (const auto it = g_talkers.find(speaker); it != g_talkers.end()) {
-				conversation = it->second.scene != nullptr;
+				scene = it->second.scene;
+				conversation = scene != nullptr;
 			}
-			const bool autoStart = s.autoListen && conversation && a_now >= g_filmMain.autoBlockedUntil &&
-			                       stillFor >= (sitting ? (std::min)(1.0f, s.autoListenAfter) : s.autoListenAfter);
+			// 0.8.6: a scene starts it on its own even while you're moving (scenes are few, and
+			// moving ends it), but not one you've already walked away from or stopped.
+			const bool declined = scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s;
+			const bool autoStart = s.autoListen && conversation && !declined && a_now >= g_filmMain.autoBlockedUntil;
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
@@ -4541,13 +4550,15 @@ namespace CCC
 				g_film.line = 1;
 				g_film.applied = false;
 				g_filmMain.playerAt = player->GetPosition();
+				g_filmMain.startedAt = a_now;
+				g_filmMain.scene = scene;
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !pressed;
 				g_lensWanted.store(Director::WantedLens() >= 10.0f ? Director::WantedLens() : 30.0f, std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
-					pressed ? "" : sitting ? " (on its own: you're sitting)" : " (on its own: you've stood still nearby)");
+					pressed ? "" : " (on its own: a conversation scene nearby)");
 				return;
 			}
 			// The prompt (bListenPrompt), while there's a conversation to listen in on.

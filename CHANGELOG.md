@@ -21,6 +21,11 @@ test build; "diagnostic" items only add information to the log for testing.
   `iCloseUpChanceMildNpc`, and the same for Medium and Strong. About one NPC line in five
   (was one in four at 50% for all), with the strong ones always. `sCloseUpEmotionsNpc` and
   `iCloseUpChanceNpc` are gone.
+- Filming people talking starts on its own as soon as a conversation scene begins near
+  you, even while you're walking (scenes are few, and moving ends it; 0.8.5 test): no more
+  standing still first (`fAutoListenAfter` is gone). It gives you 0.75 s to stop walking
+  before moving counts, and a conversation you've ended by moving or with the listen key
+  doesn't start again on its own for two minutes.
 - Filming people talking is only offered, or started on its own, for conversations: the
   game's scenes of people talking (in the 0.8.5 log every real NPC conversation was one,
   and every bark or one-liner, like "Need something?", wasn't). The listen key still films
