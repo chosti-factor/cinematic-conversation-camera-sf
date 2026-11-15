@@ -21,6 +21,12 @@ test build; "diagnostic" items only add information to the log for testing.
   (`sCloseUpEmotions`, was 29 of them), with a chance (`iCloseUpChance`, 50%). A listed
   line that rolls no is an ordinary line. About a quarter of NPC lines get an emotion
   close-up (estimate from the expression tally in docs/EMOTIONS.md).
+- Reaction shots: the time on you counts from the cut to you, not from the moment it was
+  decided (up to 0.8 s earlier: 0.8.2 test, some felt too short), and is never less than
+  `fReactionMinSeconds` (2 s). A reaction on a short line followed at once by another
+  carries into it until then.
+- docs/REACTIONS.md: the steps, rules and chances for emotion close-ups, reaction shots and
+  close-ups of you.
 - A reaction shot can interrupt an emotion close-up: their close-up first, for its minimum
   time on screen (`fShortestHold`, 2 s), then you for `fReactionSeconds`, then back to the
   same close-up, pushing in. Only on lines long enough for all three (judged from the

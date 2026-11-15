@@ -200,6 +200,7 @@ namespace CCC
 			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionEvery", a_s.reactionEvery), 1, 10);
 			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChance", a_s.reactionChance), 0, 100);
 			a_s.reactionSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionSeconds", a_s.reactionSeconds), 0.0f, 30.0f);
+			a_s.reactionMinSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionMinSeconds", a_s.reactionMinSeconds), 0.0f, 10.0f);
 			a_s.avoidBystanders = ReadInt(a_path, L"Director", L"bAvoidBystanders", a_s.avoidBystanders ? 1 : 0) != 0;
 			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Director", L"fBystanderStill", a_s.bystanderStill), 0.0f, 10.0f);
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeat", a_s.persuasionBeat ? 1 : 0) != 0;

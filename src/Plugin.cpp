@@ -74,8 +74,10 @@ namespace CCC
 			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
 			bool                                  reactionOwed{ false };
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
-			std::chrono::steady_clock::time_point reactionUntil{};           // back to the speaker then (0.8.1)
 			std::chrono::steady_clock::time_point reactionFrom{};            // on you from then (0.8.3: after an emotion close-up's minimum)
+			std::chrono::steady_clock::time_point reactionOnAt{};            // when the camera cut to you (0.8.3: the time counts from the cut)
+			float                                 reactionHold{ 2.5f };      // seconds on you from the cut; < 0 = the rest of the line
+			bool                                  reactionCarried{ false };  // carried into the next line for its minimum time
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
@@ -707,12 +709,17 @@ namespace CCC
 			// Shot/reverse-shot: the NPC holds the camera while talking; once they've been
 			// quiet briefly it's the player's turn, so cut to the player.
 			const bool talking = a_speaker->IsTalking();
-			if (talking && g_state.reactionActive && a_now >= g_state.reactionUntil) {
+			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
+				// A reaction shot: you, listening, for reactionHold seconds from the cut to you.
+				if (g_state.reactionOnAt == std::chrono::steady_clock::time_point{}) {
+					g_state.reactionOnAt = a_now;
+				}
+				const float on = std::chrono::duration<float>(a_now - g_state.reactionOnAt).count();
+				if (g_state.reactionHold < 0.0f || on < g_state.reactionHold) {
+					return Subject::kPlayer;
+				}
 				g_state.reactionActive = false;  // the reaction's done: back to the speaker
 				g_state.reactionCloseUp = false;
-			}
-			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
-				return Subject::kPlayer;  // a reaction shot: you, listening
 			}
 			if (talking) {
 				g_state.npcWasTalking = true;
@@ -1927,8 +1934,13 @@ namespace CCC
 					}
 					g_state.lineStart = now;
 					g_state.lineBeat = false;
-					g_state.reactionActive = false;
-					g_state.reactionCloseUp = false;
+					// A reaction carried over from the last line until its minimum time on you
+					// (fReactionMinSeconds) keeps going; anything else ends here.
+					if (!g_state.reactionCarried) {
+						g_state.reactionActive = false;
+						g_state.reactionCloseUp = false;
+					}
+					g_state.reactionCarried = false;
 					g_state.reactionPending = true;
 				}
 				// Reaction shots (CCC): every iReactionEvery-th line of their reply (Starfield's
@@ -1976,7 +1988,8 @@ namespace CCC
 							// for fReactionSeconds, and back to their close-up. Only on a line long
 							// enough for all three (with 1.5 s of the close-up after).
 							const float closeFirst = s.shortestHold;
-							const bool  fits = !g_state.lineIntense || (s.reactionSeconds > 0.0f && lineSeconds >= closeFirst + s.reactionSeconds + 1.5f);
+							const bool  fits = !g_state.lineIntense ||
+							                  (s.reactionSeconds > 0.0f && lineSeconds >= closeFirst + (std::max)(s.reactionSeconds, s.reactionMinSeconds) + 1.5f);
 							const bool rolled = due && fits && text.size() >= 40 &&
 							                    std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
 							// Your emotion close-up (0.7.11): when your face answers the line with an
@@ -1993,16 +2006,20 @@ namespace CCC
 								// line on you felt long). The line's length is guessed from its
 								// subtitle (about 14 characters a second); when less than 1.5 s of it
 								// would be left, it stays on you to the end rather than flick back.
-								const float hold = s.reactionSeconds;
+								// 0.8.3: counted from the cut to you, at least fReactionMinSeconds.
+								const float hold = (std::max)(s.reactionSeconds, s.reactionMinSeconds);
 								const auto  secs = [](float a_seconds) {
 									return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
 								};
+								const float left = lineSeconds - std::chrono::duration<float>(now - g_state.lineStart).count();
+								g_state.reactionOnAt = {};
+								g_state.reactionCarried = false;
 								if (g_state.lineIntense) {
 									g_state.reactionFrom = (std::max)(now, g_state.lineStart + secs(closeFirst));
-									g_state.reactionUntil = g_state.reactionFrom + secs(hold);
+									g_state.reactionHold = hold;
 								} else {
 									g_state.reactionFrom = now;
-									g_state.reactionUntil = hold <= 0.0f || lineSeconds - hold < 1.5f ? std::chrono::steady_clock::time_point::max() : now + secs(hold);
+									g_state.reactionHold = s.reactionSeconds <= 0.0f || left - hold < 1.5f ? -1.0f : hold;
 								}
 								g_reactionStarted.store(true, std::memory_order_release);
 							} else {
@@ -2036,8 +2053,19 @@ namespace CCC
 				}
 				if (!talkingNow && g_state.speakerWasTalking) {
 					g_state.lineBeat = false;
-					g_state.reactionActive = false;
-					g_state.reactionCloseUp = false;
+					// 0.8.3: a reaction that hasn't had fReactionMinSeconds on you yet carries into
+					// their next line until it has (a short line followed at once by another cut
+					// back to them too soon).
+					const bool onYou = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
+					const float on = onYou ? std::chrono::duration<float>(now - g_state.reactionOnAt).count() : 0.0f;
+					if (onYou && on < s.reactionMinSeconds) {
+						g_state.reactionHold = s.reactionMinSeconds;
+						g_state.reactionCarried = true;
+					} else {
+						g_state.reactionActive = false;
+						g_state.reactionCloseUp = false;
+						g_state.reactionCarried = false;
+					}
 					// A line you clicked past almost at once (on screen under half a second) wasn't
 					// really heard: it doesn't count. One you skip after that still does.
 					if (g_state.lineCounted > 0 && now - g_state.lineStart < 500ms) {

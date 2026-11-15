@@ -36,7 +36,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   NPC speaks and fade in when the line ends (`[Interface]`).
 - **Reaction shots:** now and then a line is shown on you listening (counted in sentences;
   `iReactionEvery`, `iReactionChance`), with seated people and merchants too. A reaction
-  stays on you a couple of seconds, then cuts back to the speaker (`fReactionSeconds`).
+  stays on you a couple of seconds from the cut, never less than 2, then cuts back to the
+  speaker (`fReactionSeconds`, `fReactionMinSeconds`). Details:
+  [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   reply is a close-up, pushing in (`bPersuasionBeat`).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
