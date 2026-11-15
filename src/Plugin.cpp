@@ -4424,11 +4424,20 @@ namespace CCC
 				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || t.lastLine <= latest || FlatDistance(t.feet, playerFeet) > s.listenRange) {
 					continue;
 				}
-				// Still part of it until 10 s after they last spoke: counted from the end of the
-				// line, not its start (0.8.0 test: filming stopped during long lines and the
-				// pauses in Keeper Aquilus's group, and had to be started again).
-				if (a_now - (std::max)(t.lastLine, t.lastHeard) > 10s) {
+				// Still part of it a while after they last spoke, counted from the end of the line
+				// (0.8.0 test: filming stopped during long lines and the pauses in Keeper Aquilus's
+				// group). 0.8.4: 10 s while they're still playing their part in a scene (the
+				// game's own pauses), 3 s once they aren't (0.8.3 test: the camera lingered long
+				// after the conversation was over).
+				const auto quiet = a_now - (std::max)(t.lastLine, t.lastHeard);
+				if (quiet > 10s) {
 					continue;
+				}
+				if (quiet > 3s) {
+					auto* actor = RE::TESForm::LookupByID<RE::Actor>(id);
+					if (!actor || !CurrentSceneUnsafe(actor)) {
+						continue;
+					}
 				}
 				latest = t.lastLine;
 				speaker = id;
@@ -4506,7 +4515,7 @@ namespace CCC
 			// Starting on its own (bAutoListen): sitting for 1.5 s, or standing still for
 			// fAutoListenAfter seconds, near a conversation; not for a minute after you stopped
 			// one with the listen key.
-			const bool autoStart = s.autoListen && a_now >= g_filmMain.autoBlockedUntil && stillFor >= (sitting ? 1.5f : s.autoListenAfter);
+			const bool autoStart = s.autoListen && a_now >= g_filmMain.autoBlockedUntil && stillFor >= (sitting ? (std::min)(1.0f, s.autoListenAfter) : s.autoListenAfter);
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
@@ -4527,7 +4536,12 @@ namespace CCC
 			// The prompt (bListenPrompt), while there's a conversation to listen in on.
 			if (s.listenPrompt && (s.listenKey > 0 || s.listenButton > 0)) {
 				const bool pad = s.listenButton > 0 && (s.listenKey <= 0 || UsingController());
-				prompt = std::format("Listen in on nearby conversation. {} {}", pad ? "Hold" : "Press", pad ? ButtonName(s.listenButton) : KeyName(s.listenKey));
+				// A face button shows as its icon ("{B}", 0.8.4); other buttons and keys by name.
+				std::string key = pad ? ButtonName(s.listenButton) : KeyName(s.listenKey);
+				if (pad && key.size() == 1) {
+					key = "{" + key + "}";
+				}
+				prompt = std::format("Listen in on nearby conversation. {} {}", pad ? "Hold" : "Press", key);
 			}
 		}
 

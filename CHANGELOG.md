@@ -17,6 +17,15 @@ test build; "diagnostic" items only add information to the log for testing.
   line-length log (and the 14-characters-a-second guess it checks) meaningful: single
   lines ran 13-17 characters a second.
 
+### Changed
+- Filming people talking near you (0.8.3 test):
+  - It stops soon after the conversation ends: 3 s after the last word, or up to 10 s
+    while they're still playing their part in one of the game's scenes (which pause
+    between lines). Before, always 10 s, and the camera lingered until you moved.
+  - It starts sooner on its own: standing still 1 s (`fAutoListenAfter`, was 2), sitting
+    1 s (was 1.5).
+  - The prompt shows the B button as its icon, in the game's button font ("Hold [B]").
+
 ## 0.8.3 - 2026-11-15
 
 ### Added

@@ -1101,6 +1101,7 @@ namespace CCC::Hud
 			std::uint32_t color{ 0xFFFFFF };
 			bool          bold{ false };
 			bool          embed{ true };
+			std::string   glyphFont;  // the button icons' font, for "{B}" in the prompt (0.8.4)
 		} g_prompt;
 
 		// The interaction prompt and name tag (RolloverWidget_mc), hidden while this mod films
@@ -1168,6 +1169,10 @@ namespace CCC::Hud
 					// largest text in the widget, is the key icon, not words).
 					const auto lowerFont = Lower(font);
 					const auto text = StringMember(field, "text");
+					if (lowerFont.find("button") != std::string::npos && g_prompt.glyphFont.empty()) {
+						g_prompt.glyphFont = font;
+						REX::INFO("HUD: the button icons' font is '{}' (the game's prompt shows '{}' in it)", font, text);
+					}
 					if (font.empty() || size <= best || lowerFont.find("button") != std::string::npos || lowerFont.find("controller") != std::string::npos ||
 						text.size() < 3) {
 						continue;
@@ -1258,9 +1263,36 @@ namespace CCC::Hud
 				Value format;
 				if (SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 4)) {
 					SafeSet(&field, "defaultTextFormat", &format);
-					const Value text{ g_prompt.text.c_str() };
-					SafeSet(&field, "text", &text);
-					SafeInvoke(&field, "setTextFormat", nullptr, &format, 1);
+					// "{B}" is a button: its icon in the game's button font once that's known
+					// (0.8.4), else the letter.
+					std::string plain, html;
+					bool        icon = false;
+					for (std::size_t i = 0; i < g_prompt.text.size(); ++i) {
+						const char c = g_prompt.text[i];
+						const auto close = c == '{' ? g_prompt.text.find('}', i) : std::string::npos;
+						if (close != std::string::npos) {
+							const auto key = g_prompt.text.substr(i + 1, close - i - 1);
+							plain += key;
+							if (!g_prompt.glyphFont.empty()) {
+								html += std::format("<font face=\"{}\">{}</font>", g_prompt.glyphFont, key);
+								icon = true;
+							} else {
+								html += key;
+							}
+							i = close;
+							continue;
+						}
+						plain += c;
+						html += c == '<' ? std::string{ "&lt;" } : c == '>' ? std::string{ "&gt;" } : c == '&' ? std::string{ "&amp;" } : std::string(1, c);
+					}
+					if (icon) {
+						const Value text{ html.c_str() };
+						SafeSet(&field, "htmlText", &text);
+					} else {
+						const Value text{ plain.c_str() };
+						SafeSet(&field, "text", &text);
+						SafeInvoke(&field, "setTextFormat", nullptr, &format, 1);
+					}
 					g_prompt.shown = g_prompt.text;
 				}
 			}

@@ -165,6 +165,8 @@ Nebula uses every shot in the library.
   - Plants and other objects without collision (which the obstacle check can't see) in
     front of wide outdoor shots, and walls it passes through (beside Commander Tuala at the
     MAST, every check said clear).
+  - Filming people talking: no listen prompt while `bAutoListen` is on (it starts on its
+    own anyway).
   - Smoother conversation starts; quest scenes recognised by their quest rather than the
     scene's name; the default amount of camera sway (`iCameraSway`).
 - 1.0, public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu

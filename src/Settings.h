@@ -24,7 +24,7 @@ namespace CCC
 		float    listenHold{ 0.5f };         // seconds the button is held
 		bool     listenPrompt{ true };       // "Listen in on nearby conversation" on screen (0.8.2)
 		bool     autoListen{ true };         // start on its own when you sit, or stand still near them (0.8.2)
-		float    autoListenAfter{ 2.0f };    // seconds standing still first (sitting: 1.5 s)
+		float    autoListenAfter{ 1.0f };    // seconds standing still first (sitting: 1 s at most), 0.8.4: was 2
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		float    roomShotMaxIndoors{ -1.0f };   // metres; 0 = as far as CCC's framing wants, -1 = the preset's own (0.8.1)
 		float    roomShotMaxOutdoors{ -1.0f };
