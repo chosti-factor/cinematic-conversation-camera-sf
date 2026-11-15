@@ -4628,8 +4628,10 @@ namespace CCC
 			} else if (filming) {
 				pick = latestOf([](const Candidate&) { return true; });  // (the listen key, not a scene: as before)
 			} else {
-				// The nearest one you haven't walked away from, else the nearest (for the prompt).
-				pick = nearestOf([&](const Candidate& a_c) { return !(a_c.scene && a_c.scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s); });
+				// The nearest conversation scene you haven't walked away from; else the nearest
+				// anything (for the listen key). 0.8.10 test: a customer's "Excuse me." (no scene)
+				// was nearer than Helena's scene starting, which waited 1.5 s for the bark to end.
+				pick = nearestOf([&](const Candidate& a_c) { return a_c.scene && !declinedNow(a_c.scene); });
 				if (!pick) {
 					pick = nearestOf([](const Candidate&) { return true; });
 				}

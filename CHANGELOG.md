@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.11 - 2026-11-15
+
+### Fixed
+- Filming people talking started 1.5 s late on Helena's scene at TerraBrew (0.8.10 test): a
+  customer's "Excuse me." nearby, not part of any scene, was picked as the nearest
+  conversation until it ended. Conversation scenes come first now; anything else only for
+  the listen key.
+
 ## 0.8.10 - 2026-11-15
 
 ### Fixed
