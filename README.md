@@ -133,9 +133,9 @@ All six use the same 45 degree conversation lens (`fConversationLens`).
 - In testing (0.8): the wider lens, room shots, filming people talking near you, your
   character's face, reaction shots and holding on the answer after a persuasion.
 - 0.8.x, filming people talking near you, the rest: groups of three or more with
-  occasional group shots; the letterbox and obstacle checks while filming them; never in
-  combat. (Done: the listen key and controller button, the on-screen prompt, starting on
-  its own when you sit or stand still.)
+  occasional group shots; the letterbox and obstacle checks while filming them. (Done:
+  the listen key and controller button, the on-screen prompt, starting on its own when
+  you sit or stand still, never in combat.)
 - Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
   Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
 - 0.9.x, polish and optimization:

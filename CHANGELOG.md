@@ -15,6 +15,9 @@ test build; "diagnostic" items only add information to the log for testing.
     or stand still near one for `fAutoListenAfter` seconds (4). Stopping it with the
     listen key keeps it from starting on its own for a minute.
   Neither shows or starts while a menu is open (pause, inventory, map, scanner...).
+- Never in combat: no prompt, no starting, and filming stops. Actor's IsInCombat is
+  virtual slot 0x16B in 1.16.244, not CommonLibSF's 0x16C (found from the game's Papyrus
+  natives Actor.IsInCombat and Actor.GetCombatState); called by its real slot.
 
 ### Changed
 - The plan: filming people talking is finished in 0.8.x; 0.9.x is polish and optimization;

@@ -4146,6 +4146,19 @@ namespace CCC
 			return held;
 		}
 
+		// Whether the actor is in combat. Actor's virtual IsInCombat is slot 0x16B (+0xB58) in
+		// 1.16.244, not CommonLibSF's 0x16C: the Papyrus natives Actor.IsInCombat (RVA
+		// 0x1F1F690) and Actor.GetCombatState (0x1FC6DE0) both call [vtable+0xB58] (0.8.2).
+		bool InCombat(RE::Actor* a_actor)
+		{
+			if (!a_actor) {
+				return false;
+			}
+			using IsInCombat_t = bool (*)(RE::Actor*);
+			const auto* vtable = *reinterpret_cast<const std::uintptr_t* const*>(a_actor);
+			return reinterpret_cast<IsInCombat_t>(vtable[0xB58 / sizeof(std::uintptr_t)])(a_actor);
+		}
+
 		// The controller was used more recently than the keyboard and mouse.
 		bool UsingController()
 		{
@@ -4231,6 +4244,12 @@ namespace CCC
 			} promptOut{ prompt };
 			if (!s.filmConversations || !player || g_state.active) {
 				StopFilming(g_state.active ? "your own conversation" : "off");
+				return;
+			}
+			// Never in combat: no prompt, no starting, and filming stops.
+			if (InCombat(player)) {
+				StopFilming("combat");
+				g_filmMain.stillSince = {};
 				return;
 			}
 			// The conversation going on near you: the most recent NPC-to-NPC line within reach.

@@ -38,6 +38,9 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - Earlier: the game's high-process actor list is at ProcessLists +0x60, not CommonLibSF's
   +0x58 (reported upstream, libxse/commonlibsf#57, confirmed by another modder; the user
   will offer a PR if it isn't fixed by about 2026-11-28).
+- Actor::IsInCombat is vtable slot 0x16B (+0xB58) in 1.16.244, not CommonLibSF's 0x16C
+  (Papyrus natives at RVA 0x1F1F690 and 0x1FC6DE0); GetCombatGroup likewise looks one
+  slot early (+0xAF8). Don't trust CommonLibSF's Actor virtual indices near there.
 - Crash lessons: don't read the lower-process actor lists or the cell's references (0.7.9
   and 0.7.10 crashed on load); only high-process actors are asked anything, guarded.
 
