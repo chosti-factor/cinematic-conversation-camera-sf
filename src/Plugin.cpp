@@ -4505,19 +4505,15 @@ namespace CCC
 			// Starting on its own (bAutoListen): sitting for 1.5 s, or standing still for
 			// fAutoListenAfter seconds, near a conversation; not for a minute after you stopped
 			// one with the listen key.
-			// 0.8.6: not for one-liners ("Need something?") on its own: only once it's a real
-			// exchange, the one addressed answering, or the speaker going on to a second line
-			// within 20 s. (The listen key still films any.)
-			bool exchange = false;
+			// 0.8.6: barks and one-liners ("Need something?", "Hey! You wanna dance?") aren't
+			// offered or started on their own: in the 0.8.5 log every real conversation between
+			// NPCs was one of the game's scenes (FC_AC_RandConv..., ...CityLife_Encounter...),
+			// and every one-liner wasn't. (The listen key still films any.)
+			bool conversation = false;
 			if (const auto it = g_talkers.find(speaker); it != g_talkers.end()) {
-				const auto& t = it->second;
-				exchange = t.prevLine != std::chrono::steady_clock::time_point{} && t.lastLine - t.prevLine < 20s;
+				conversation = it->second.scene != nullptr;
 			}
-			if (const auto it = g_talkers.find(listener); !exchange && it != g_talkers.end()) {
-				const auto& t = it->second;
-				exchange = t.addressed == speaker && a_now - t.lastLine < 20s;
-			}
-			const bool autoStart = s.autoListen && exchange && a_now >= g_filmMain.autoBlockedUntil &&
+			const bool autoStart = s.autoListen && conversation && a_now >= g_filmMain.autoBlockedUntil &&
 			                       stillFor >= (sitting ? (std::min)(1.0f, s.autoListenAfter) : s.autoListenAfter);
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
@@ -4537,7 +4533,7 @@ namespace CCC
 				return;
 			}
 			// The prompt (bListenPrompt), while there's a conversation to listen in on.
-			if (s.listenPrompt && (s.listenKey > 0 || s.listenButton > 0)) {
+			if (s.listenPrompt && conversation && (s.listenKey > 0 || s.listenButton > 0)) {
 				const bool pad = s.listenButton > 0 && (s.listenKey <= 0 || UsingController());
 				// A face button shows as its icon ("{B}", 0.8.4); other buttons and keys by name.
 				std::string key = pad ? ButtonName(s.listenButton) : KeyName(s.listenKey);
