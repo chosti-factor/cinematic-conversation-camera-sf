@@ -162,7 +162,7 @@ namespace CCC
 		// How lively the cutting is: Cinematic, Odyssey, SpaceWestern, Dogfight or SpaceOpera.
 		// Sets the three values below plus the chance of a fresh angle when the turn passes;
 		// any of the three given in the INI overrides the style's.
-		std::string cuttingStyle{ "SpaceWestern" };
+		std::string cuttingStyle{ "Preset" };  // 0.8.12: the preset's own rhythm
 		int         freshAngleChance{ 50 };    // % chance of a new angle each time the turn passes
 		int         minLines{ 2 };             // new angle after this many lines...
 		int         maxLines{ 5 };             // ...up to this many (random in between)

@@ -22,7 +22,8 @@ Last updated: 0.8.3 (2026-11-15).
 | Room shots | none | Distant | Wide, Distant, Master | Wide, Distant, Master | Distant | Wide, Distant, Master | Wide, Distant, Distant low, Master |
 | Room shots go back | | As far as CCC's framing wants | As far as CCC's framing wants (12-18 m) | Master up to 9 m indoors, 12 m outdoors; the others closer | Up to 9 m indoors, 12 m outdoors | Master up to 9 m indoors, 12 m outdoors; the others closer | Master up to 9 m indoors, 12 m outdoors; the others closer |
 | Other shots, camera at most | 7 m indoors, 10.5 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors |
-| Lens | 45 degrees | 45 degrees | 45 degrees | 37.5 degrees | 37.5 degrees | 37.5 degrees | 37.5 degrees |
+| Lens | Each angle its own, CCC's: 50-72 (shoulders 55, close-ups 50) | Each angle its own, CCC's: 35-50 | Each angle its own, CCC's: 45-95 | 37.5 degrees | 37.5 degrees | 37.5 degrees | 37.5 degrees |
+| Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-5 lines and half the turns, 2 s | The same | The same | The same |
 
 ## Shot by shot
 

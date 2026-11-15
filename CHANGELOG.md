@@ -4,6 +4,28 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.12 - 2026-11-15
+
+### Changed
+- CCC's presets made faithful to CCC 1.5.0, from its own exported presets:
+  - **A lens for every angle**, as CCC has had since 1.3 (Close 35-50 degrees, Standard
+    50-72, Room 45-95, in CCC's numbers). They were all 45 degrees here, which put the
+    camera further back than CCC, most of all on close-ups. Each angle stands where CCC's
+    numbers put it and is drawn as Skyrim shows it: Skyrim seems to measure its lens across
+    a 4:3 frame, so a 16:9 screen shows more (CCC's 50 is about 64 of Starfield's).
+  - **Each preset's own cutting rhythm**: Standard a new angle every 2-3 lines, Close every
+    3-6, Room every 3-5, never just because the turn passed; held 2.4 s at least, Room 3 s
+    (`sCuttingStyle=Preset`, the new default; a named style still sets one rhythm for all).
+  - Room's medium, three-quarter and overhead shots are still, as in CCC 1.5.0.
+  - Close-ups in CCC's presets at CCC's distance (`iCloseUpDistance=-1`, the preset's own:
+    100% for CCC's, 115% for CCC SF's narrower lens).
+- Room shots are measured at their own lens.
+
+### Added
+- The lens key (testing, `iLensKey`, L): during a conversation, CCC's lenses as Skyrim
+  shows them (the default), as CCC wrote them, or one lens for every angle (as before),
+  with the lens in use in the bottom bar.
+
 ## 0.8.11 - 2026-11-15
 
 ### Fixed

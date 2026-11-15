@@ -84,6 +84,11 @@ namespace CCC::Director
 	// (the default), as written, or the preset's one lens for every angle. Returns its name.
 	const char* NextLensMode();
 
+	// An angle's lens in the preset in use (0.8.12): the one its distance is worked out for,
+	// and the one drawn (the preset's one lens for angles without their own).
+	[[nodiscard]] float FramingLensFor(Shots::ShotType a_type);
+	[[nodiscard]] float DrawnLensFor(Shots::ShotType a_type);
+
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.
 	[[nodiscard]] float RoomShotLimit(bool a_interior);

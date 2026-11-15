@@ -86,10 +86,11 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100) (`iCameraSway`, default 40).
 - **Per-preset camera distances**, matched to each preset's widest shot.
-- **A wider conversation lens:** Starfield films conversations through a narrow 30 degree
-  lens; the mod widens it while it films (`fConversationLens`: 45 degrees in CCC's presets, 37.5
-  in CCC SF's; 0 keeps the game's), so CCC's framings fit from closer. The hybrid of a wider lens and a somewhat
-  longer camera distance is the approach for now (see the plan).
+- **A lens per angle, as CCC:** Starfield films conversations through a narrow 30 degree
+  lens; the mod sets its own while it films. CCC's presets use CCC 1.5.0's own lens for
+  every angle (Close 35-50 degrees, Standard 50-72, Room 45-95 in CCC's numbers), drawn as
+  Skyrim shows them; CCC SF's presets use 37.5 degrees for now. `fConversationLens` sets one
+  lens for everything (0 keeps the game's).
 - **Your character's face:** the game keeps it neutral and your lines carry no expression
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
   listener would), options with a skill, background or trait tag ([Persuade], [Space
@@ -119,7 +120,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 ### Presets
 
 Choose one with `sPreset`. CCC's three are as faithful to CCC as Starfield allows. CCC SF's
-four have a Starfield flavour: a 37.5 degree lens (CCC's use 45), room shots kept closer,
+four have a Starfield flavour: a 37.5 degree lens (CCC's use CCC's own per angle), room shots kept closer,
 and shots from the other presets mixed in, moving; three of them mirror one of CCC's, and
 Nebula uses every shot in the library.
 
@@ -142,7 +143,7 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
 
 - Starfield's conversation lens is narrower (30 degrees) than the ones CCC was made for,
   so its framings want the camera further back. The mod takes a hybrid approach: it widens
-  the lens (45 degrees in CCC's presets, 37.5 in CCC SF's) and lets the camera stand somewhat further back; each preset lets the camera go as far as its widest shot needs (Standard: 7 m
+  the lens (CCC's own for each angle in CCC's presets, 37.5 in CCC SF's) and lets the camera stand where CCC's numbers put it; each preset lets the camera go as far as its widest shot needs (Standard: 7 m
   indoors, 10.5 m outdoors), and obstacle detection pulls it in or picks another angle
   where walls are closer.
 - Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
@@ -164,9 +165,11 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
     narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
     Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
     (CCC's own distances with a lens as wide as CCC's), or a hybrid (a moderately wider lens
-    with somewhat longer distances). Hybrid chosen for now (45 degrees for CCC's presets, 37.5 for CCC SF's, 0.8.3); revisit the
-    lens and distances at polish, perhaps per preset, and indoors versus outdoors (room
-    shots already have their own caps, `fRoomShotMaxIndoors` and `fRoomShotMaxOutdoors`).
+    with somewhat longer distances). 0.8.12: CCC's presets take CCC 1.5.0's lens for each
+    angle, drawn as Skyrim shows them (the lens key compares that with CCC's numbers as
+    written and with one lens). Next: CCC SF's presets rebuilt on them, each with a film
+    flavour (Frontier a space western, Starborn Kubrick and Interstellar, Constellation a
+    hard sci-fi documentary, Nebula a trailer).
   - Emotion close-ups tuned from testing (which expressions push in, and how often; see
     [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Talking to a seated person from the side (about 90 degrees) leaves you out of the

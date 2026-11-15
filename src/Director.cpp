@@ -32,16 +32,24 @@ namespace CCC::Director
 		}
 
 		// 0.8.12, CCC's lens per angle. CCC's lenses are Skyrim's field of view, which (like
-		// Bethesda's other engines of its time) is measured across a 4:3 frame: a 16:9 screen
-		// shows more. Starfield's is measured across the frame as it is. The same picture on a
-		// 16:9 screen: 2 atan(tan(F/2) x 4/3). The lens key (testing) switches between this,
-		// the numbers as written, and one lens for everything, to compare by eye.
-		std::atomic<int>   g_lensMode{ 0 };        // 0 converted, 1 as written, 2 the preset's one lens
-		std::atomic<float> g_shotLens{ 0.0f };     // the lens of the shot on screen (0 = the preset's)
+		// Bethesda's other engines of its time) seems to be measured across a 4:3 frame, so a
+		// 16:9 screen shows more; Starfield's is measured across the frame as it is. CCC works
+		// out each angle's distance from its lens taken across the real frame (its
+		// DistanceForFill, ported here), so what Skyrim shows is: the camera where CCC's
+		// numbers put it, seen through the wider lens. The lens key (testing) switches between
+		// that, CCC's numbers as written, and one lens for everything, to compare by eye.
+		std::atomic<int>   g_lensMode{ 0 };        // 0 as Skyrim shows it, 1 as written, 2 the preset's one lens
+		std::atomic<float> g_shotLens{ 0.0f };     // the lens drawn for the shot on screen (0 = the preset's)
 
-		float SkyrimLens(float a_skyrim)
+		bool OwnLenses()
 		{
-			if (a_skyrim < 10.0f) {
+			return Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2;
+		}
+
+		// The lens drawn for an angle with a lens of its own (0 = none).
+		float DrawnLens(float a_skyrim)
+		{
+			if (a_skyrim < 10.0f || !OwnLenses()) {
 				return 0.0f;
 			}
 			if (g_lensMode.load(std::memory_order_relaxed) == 1) {
@@ -51,13 +59,19 @@ namespace CCC::Director
 			return 2.0f * std::atan(std::tan(a_skyrim * 0.5f * kDeg) * (4.0f / 3.0f)) / kDeg;
 		}
 
+		// The lens its distance is worked out for (0 = none): CCC's number.
+		float FramingLens(float a_skyrim)
+		{
+			return a_skyrim < 10.0f || !OwnLenses() ? 0.0f : a_skyrim;
+		}
+
 		struct Setup
 		{
 			int   weight{ 0 };  // 0 = not used
 			Move  move{ Move::kLocked };
 			int   amount{ 0 };   // 0-100
 			float seconds{ 4.2f };
-			float lens{ 0.0f };  // this angle's lens, Starfield degrees (0.8.12, as CCC 1.3+); 0 = the preset's
+			float lens{ 0.0f };  // this angle's lens, CCC's number (0.8.12, as CCC 1.3+); 0 = the preset's
 		};
 
 		struct Line
@@ -97,6 +111,12 @@ namespace CCC::Director
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
 			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
+			// The cutting rhythm in use (0.8.12): the preset's own (sCuttingStyle=Preset, as
+			// CCC's presets carry theirs), or the named style's.
+			int   freshAngleChance{ 50 };
+			int   minLines{ 2 };
+			int   maxLines{ 5 };
+			float shortestHold{ 2.0f };
 			int                       npcSerial{ 0 };           // the last line counter seen (0.8.3)
 			bool                      inReaction{ false };      // a reaction shot is on (0.8.6: an insert)
 			std::optional<ShotType>   reactionReturn;           // the speaker's shot to go back to after it
@@ -164,42 +184,44 @@ namespace CCC::Director
 		};
 
 		// The three built-in looks (CCC's Presets.cpp). Zoom moves stay listed as zooms;
-		// the solver performs them as push-ins and pull-outs.
+		// the solver performs them as push-ins and pull-outs. 0.8.12: each angle's lens, as
+		// CCC 1.5.0 exports them (Skyrim degrees), and Room's medium, three-quarter and overhead
+		// shots still, as in CCC 1.5.0 (they drifted and craned in the older CCC this came from).
 		constexpr std::array kStandard{
-			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseUp, 80, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kClosePlayer, 80, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kMediumNpc, 45, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kMediumPlayer, 45, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kTwoShot, 25, Move::kDrift, 10, 7.0f },
-			PresetEntry{ ShotType::kProfile, 15, Move::kLocked, 0, 4.2f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f, 55.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f, 55.0f },
+			PresetEntry{ ShotType::kCloseUp, 80, Move::kPushIn, 14, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kClosePlayer, 80, Move::kPushIn, 14, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 60, Move::kLocked, 0, 4.2f, 58.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 60, Move::kLocked, 0, 4.2f, 58.0f },
+			PresetEntry{ ShotType::kMediumNpc, 45, Move::kLocked, 0, 4.2f, 62.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 45, Move::kLocked, 0, 4.2f, 62.0f },
+			PresetEntry{ ShotType::kTwoShot, 25, Move::kDrift, 10, 7.0f, 72.0f },
+			PresetEntry{ ShotType::kProfile, 15, Move::kLocked, 0, 4.2f, 60.0f },
 		};
 		// CCC offers the extreme close-ups only on lines the writers marked as intense,
 		// which this plugin can't read yet, so their weight is cut from 75 to 12.
 		constexpr std::array kClose{
-			PresetEntry{ ShotType::kOverPlayerShoulder, 34, Move::kLocked, 0, 4.0f },
-			PresetEntry{ ShotType::kCloseUp, 36, Move::kPushIn, 40, 8.0f },
-			PresetEntry{ ShotType::kExtremeClose, 12, Move::kZoomIn, 40, 9.0f },
-			PresetEntry{ ShotType::kClosePlayer, 30, Move::kZoomOut, 20, 5.0f },
-			PresetEntry{ ShotType::kExtremeClosePlayer, 12, Move::kPushIn, 75, 7.0f },
-			PresetEntry{ ShotType::kDistant, 10, Move::kPullOut, 55, 8.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 34, Move::kLocked, 0, 4.0f, 40.0f },
+			PresetEntry{ ShotType::kCloseUp, 36, Move::kPushIn, 40, 8.0f, 50.0f },
+			PresetEntry{ ShotType::kExtremeClose, 12, Move::kZoomIn, 40, 9.0f, 40.0f },
+			PresetEntry{ ShotType::kClosePlayer, 30, Move::kZoomOut, 20, 5.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 12, Move::kPushIn, 75, 7.0f, 35.0f },
+			PresetEntry{ ShotType::kDistant, 10, Move::kPullOut, 55, 8.0f, 40.0f },
 		};
 		constexpr std::array kRoom{
-			PresetEntry{ ShotType::kMaster, 85, Move::kCraneUp, 40, 9.0f },
-			PresetEntry{ ShotType::kWide, 80, Move::kPullOut, 16, 8.0f },
-			PresetEntry{ ShotType::kLongNpc, 70, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kLongPlayer, 70, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kDistant, 55, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 12, 8.0f },
-			PresetEntry{ ShotType::kOverhead, 40, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kPlayerOverhead, 40, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 22, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 22, 4.2f },
-			PresetEntry{ ShotType::kMediumNpc, 35, Move::kDrift, 18, 4.2f },
-			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 18, 4.2f },
+			PresetEntry{ ShotType::kMaster, 85, Move::kCraneUp, 40, 9.0f, 95.0f },
+			PresetEntry{ ShotType::kWide, 80, Move::kPullOut, 16, 8.0f, 88.0f },
+			PresetEntry{ ShotType::kLongNpc, 70, Move::kCraneUp, 25, 7.0f, 80.0f },
+			PresetEntry{ ShotType::kLongPlayer, 70, Move::kCraneUp, 25, 7.0f, 80.0f },
+			PresetEntry{ ShotType::kDistant, 55, Move::kLocked, 0, 4.2f, 45.0f },
+			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 12, 8.0f, 80.0f },
+			PresetEntry{ ShotType::kOverhead, 40, Move::kLocked, 0, 4.2f, 85.0f },
+			PresetEntry{ ShotType::kPlayerOverhead, 40, Move::kLocked, 0, 4.2f, 85.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kLocked, 0, 4.2f, 72.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kLocked, 0, 4.2f, 72.0f },
+			PresetEntry{ ShotType::kMediumNpc, 35, Move::kLocked, 0, 4.2f, 70.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kLocked, 0, 4.2f, 70.0f },
 		};
 
 		// CCC SF's own presets (0.8.1): each mirrors one of CCC's, with a Starfield flavour:
@@ -311,7 +333,7 @@ namespace CCC::Director
 				setup = Setup{};
 			}
 			for (const auto& e : a_entries) {
-				g.setups[static_cast<std::size_t>(e.type)] = Setup{ e.weight, e.move, e.amount, e.seconds, SkyrimLens(e.lens) };
+				g.setups[static_cast<std::size_t>(e.type)] = Setup{ e.weight, e.move, e.amount, e.seconds, e.lens };
 			}
 		}
 
@@ -363,8 +385,9 @@ namespace CCC::Director
 		int NewLineTarget()
 		{
 			const auto& s = Settings::Get();
-			const int   lo = std::clamp(s.minLines, 1, 20);
-			const int   hi = std::clamp((std::max)(s.maxLines, lo), 1, 20);
+			(void)s;
+			const int lo = std::clamp(g.minLines, 1, 20);
+			const int hi = std::clamp((std::max)(g.maxLines, lo), 1, 20);
 			return std::uniform_int_distribution<int>{ lo, hi }(g.rng);
 		}
 
@@ -374,7 +397,9 @@ namespace CCC::Director
 			Shots::Input in;
 			in.npcHead = a_frame.npcHead;
 			in.playerHead = a_frame.playerHead;
-			in.lensDegrees = a_setup.lens >= 10.0f && Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2 ? a_setup.lens : Lens();
+			const float framing = FramingLens(a_setup.lens), drawn = DrawnLens(a_setup.lens);
+			in.lensDegrees = framing > 0.0f ? framing : Lens();
+			in.drawnLensDegrees = drawn > 0.0f ? drawn : in.lensDegrees;
 			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
 			in.side = a_frame.side;
@@ -627,7 +652,7 @@ namespace CCC::Director
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
 			g.extremeLineOver = false;
-			g_shotLens.store(g.setups[static_cast<std::size_t>(a_type)].lens, std::memory_order_relaxed);
+			g_shotLens.store(DrawnLens(g.setups[static_cast<std::size_t>(a_type)].lens), std::memory_order_relaxed);
 			g.current = a_type;
 			++g.cuts;
 			g.why = a_why;
@@ -681,6 +706,30 @@ namespace CCC::Director
 			// outdoors the two-shot, 10.2 m; Room: the long shots, 12.7 m).
 			presetIndoor = 7.0f;
 			presetOutdoor = 10.5f;
+			// The cutting rhythm: CCC 1.5.0's per preset (Standard a new angle every 2-3 lines,
+			// Close 3-6, Room 3-5; the turn never asks for one; held at least 2.4 s, Room 3 s);
+			// CCC SF's presets the Television rhythm for now (a fresh angle on half the turns,
+			// every 2-5 lines, 2 s). A named sCuttingStyle overrides.
+			{
+				std::string style{ s.cuttingStyle };
+				std::ranges::transform(style, style.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				const bool own = style.empty() || style == "preset";
+				const auto cut = [&](int a_fresh, int a_min, int a_max, float a_hold) {
+					g.freshAngleChance = own ? a_fresh : s.freshAngleChance;
+					g.minLines = own ? a_min : s.minLines;
+					g.maxLines = own ? a_max : s.maxLines;
+					g.shortestHold = own ? a_hold : s.shortestHold;
+				};
+				if (preset == "close") {
+					cut(0, 3, 6, 2.4f);
+				} else if (preset == "room") {
+					cut(0, 3, 5, 3.0f);
+				} else if (preset == "standard" || preset.empty()) {
+					cut(0, 2, 3, 2.4f);
+				} else {
+					cut(50, 2, 5, 2.0f);
+				}
+			}
 			// Room shots' own limits: CCC's presets none (as far as CCC's framing wants), CCC
 			// SF's 9 m indoors and 12 m outdoors.
 			g.roomIndoor = g.roomOutdoor = 0.0f;
@@ -793,7 +842,7 @@ namespace CCC::Director
 		g.skipped.clear();
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
-			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, s.freshAngleChance, s.minLines, s.maxLines, s.shortestHold);
+			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
@@ -959,7 +1008,7 @@ namespace CCC::Director
 				}
 			} else if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 				// The reverse: back to this person's own setup, unless they're due a new one.
-				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
+				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= g.freshAngleChance;
 				if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
 					Cut(*side.shot, a_frame, a_now, "turn", false);
 				} else {
@@ -986,7 +1035,7 @@ namespace CCC::Director
 				// Their next line after an extreme close-up (0.8.9): a regular close-up if it's an
 				// emotion line too, otherwise back to their usual angle (or a new one). Not before
 				// fShortestHold on screen.
-				if (held >= s.shortestHold) {
+				if (held >= g.shortestHold) {
 					std::optional<ShotType> shot;
 					const char*             why = "after the extreme close-up";
 					if (g.intensePending && Placeable(ShotType::kCloseUp, a_frame)) {
@@ -1011,7 +1060,7 @@ namespace CCC::Director
 				}
 			} else if (g.intensePending && alreadyClose) {
 				g.intensePending = false;
-			} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
+			} else if (side.changeDue && lineStarted && held >= g.shortestHold) {
 				if (const auto pick = Pick(a_frame); pick && pick != g.current) {
 					Cut(*pick, a_frame, a_now, "new angle", true);
 				} else {
@@ -1171,11 +1220,22 @@ namespace CCC::Director
 	{
 		// The shot's own (0.8.12, CCC's lens per angle), unless your own lens is set or the
 		// lens key asked for one lens.
-		if (const float shot = g_shotLens.load(std::memory_order_relaxed);
-			shot >= 10.0f && Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2) {
+		if (const float shot = g_shotLens.load(std::memory_order_relaxed); shot >= 10.0f && OwnLenses()) {
 			return shot;
 		}
 		return PresetLens();
+	}
+
+	float FramingLensFor(Shots::ShotType a_type)
+	{
+		const float own = FramingLens(g.setups[static_cast<std::size_t>(a_type)].lens);
+		return own > 0.0f ? own : Lens();
+	}
+
+	float DrawnLensFor(Shots::ShotType a_type)
+	{
+		const float own = DrawnLens(g.setups[static_cast<std::size_t>(a_type)].lens);
+		return own > 0.0f ? own : Lens();
 	}
 
 	const char* NextLensMode()
@@ -1183,7 +1243,7 @@ namespace CCC::Director
 		const int mode = (g_lensMode.load(std::memory_order_relaxed) + 1) % 3;
 		g_lensMode.store(mode, std::memory_order_relaxed);
 		g_presetSwitch.store(true);  // the angles' lenses are loaded again, converted or not
-		return mode == 0 ? "CCC, converted from 4:3" : mode == 1 ? "CCC, as written" : "one lens for all";
+		return mode == 0 ? "CCC, as Skyrim shows it" : mode == 1 ? "CCC, as written" : "one lens for all";
 	}
 
 	float RoomShotLimit(bool a_interior)

@@ -1378,13 +1378,16 @@ namespace CCC
 			constexpr float kSky = 15.0f;
 			constexpr float kWallMargin = 0.5f;
 			constexpr float kPeople = 1.8f;                  // height of a standing person
-			const float     kLens = Director::LensDegrees();  // the conversation lens (horizontal)
-			const float     vertical = 2.0f * std::atan(std::tan(kLens * 0.5f * std::numbers::pi_v<float> / 180.0f) / 1.7778f);
+			// Each room shot at its own lens (0.8.12: CCC's lens per angle): the one its distance is
+			// worked out for, and the one drawn.
+			const auto verticalOf = [](float a_lens) { return 2.0f * std::atan(std::tan(a_lens * 0.5f * std::numbers::pi_v<float> / 180.0f) / 1.7778f); };
+			Shots::ShotType current = Shots::ShotType::kWide;  // (set for each shot below)
 			const auto      share = [&](float a_distance) {  // of the frame's height, a person standing there
+                const float vertical = verticalOf(Director::DrawnLensFor(current));
                 return a_distance > 0.1f ? kPeople / (2.0f * a_distance * std::tan(vertical * 0.5f)) : 1.0f;
 			};
 			const auto wants = [&](float a_fill) {  // distance for a 0.6 m extent filling a_fill (as Shots)
-				return 0.3f / std::tan(vertical * a_fill * 0.5f);
+				return 0.3f / std::tan(verticalOf(Director::FramingLensFor(current)) * a_fill * 0.5f);
 			};
 
 			const RE::NiPoint3 mid{ (a_npcHead.x + a_playerHead.x) * 0.5f, (a_npcHead.y + a_playerHead.y) * 0.5f, (a_npcHead.z + a_playerHead.z) * 0.5f };
@@ -1467,6 +1470,7 @@ namespace CCC
 			};
 			constexpr std::array kShots{ RoomShot{ "Wide", 0.11f, 24.0f / 70.0f, 0.0f }, RoomShot{ "Master", 0.075f, 76.0f / 70.0f, 24.0f },
 				RoomShot{ "Distant", 0.09f, 28.0f / 70.0f, 0.0f } };
+			constexpr std::array kShotTypes{ Shots::ShotType::kWide, Shots::ShotType::kMaster, Shots::ShotType::kDistant };
 			const float lineSide = a_side < 0.0f ? -1.0f : 1.0f;
 			const float minShare = static_cast<float>(Settings::Get().roomShotMinRoom) / 100.0f;
 			g_state.roomAngle.fill(std::numeric_limits<float>::quiet_NaN());
@@ -1483,12 +1487,14 @@ namespace CCC
 			// distance from it in proportion (0.8.1 test: capped one by one, Wide and Distant
 			// came out the same, 12 m on the line).
 			float furthest = 0.0f;
-			for (const auto& shot : kShots) {
-				furthest = (std::max)(furthest, wants(shot.fill));
+			for (std::size_t n = 0; n < kShots.size(); ++n) {
+				current = kShotTypes[n];
+				furthest = (std::max)(furthest, wants(kShots[n].fill));
 			}
 			const float roomScale = roomCap > 0.0f && furthest > roomCap ? roomCap / furthest : 1.0f;
 			for (std::size_t n = 0; n < kShots.size(); ++n) {
 				const auto& shot = kShots[n];
+				current = kShotTypes[n];
 				const float wanted = wants(shot.fill) * roomScale;
 				const auto  room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
 				// The solver's angle for a bearing (bearings from the line towards the NPC,
@@ -4432,7 +4438,7 @@ namespace CCC
 			// The lens key (testing, 0.8.12), during a conversation only.
 			static bool lensWasDown = false;
 			const bool  lensDown = s.lensKey > 0 && g_state.active && GameHasFocus() && (::GetAsyncKeyState(s.lensKey) & 0x8000) != 0;
-			static const char* lensMode = "CCC, converted from 4:3";
+			static const char* lensMode = "CCC, as Skyrim shows it";
 			if (lensDown && !lensWasDown) {
 				lensMode = Director::NextLensMode();
 				REX::INFO("Lens key: {}", lensMode);

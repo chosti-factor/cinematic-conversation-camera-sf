@@ -385,7 +385,7 @@ namespace CCC::Shots
 		} else if (spec.overShoulder) {
 			float standoff = std::clamp(distance, kMinDistance, (std::max)(a_in.maxDistance, kMinDistance));
 			standoff = (std::max)(standoff, separation + 60.0f * kUnit);
-			const float half = std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f;
+			const float half = std::clamp(a_in.drawnLensDegrees > 0.0f ? a_in.drawnLensDegrees : a_in.lensDegrees, 10.0f, 150.0f) * 0.5f;
 			for (; angle > 2.0f; angle -= 0.25f) {
 				// Camera on the far side of the other person, `angle` off the line; both in 2D.
 				const float rad = angle * kDeg;
@@ -495,10 +495,10 @@ namespace CCC::Shots
 		if (lookSign == 0.0f) {
 			const auto   refDir = RotateAboutZ(toOther, spec.angleDeg * kDeg * lineSide);
 			const RE::NiPoint3 refPos{ anchorPoint.x + refDir.x * distance, anchorPoint.y + refDir.y * distance, anchorPoint.z + refDir.z * distance + rise };
-			(void)Compose(refPos, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
+			(void)Compose(refPos, target, toOther, a_in.drawnLensDegrees > 0.0f ? a_in.drawnLensDegrees : a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
 		}
 		result.lookSign = lookSign;
-		pose.lookAt = Compose(pose.position, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
+		pose.lookAt = Compose(pose.position, target, toOther, a_in.drawnLensDegrees > 0.0f ? a_in.drawnLensDegrees : a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
 		if (truck != 0.0f) {
 			RE::NiPoint3 fwd{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, 0.0f };
 			const float  fl = Length(fwd);
