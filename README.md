@@ -32,8 +32,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
   `bTrue180` films everything from that one side).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
-  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
-  NPC speaks and fade in when the line ends (`[Interface]`).
+  Starfield's subtitle sitting in the bottom bar (`[Interface]`; hiding the dialogue options
+  while the NPC speaks is optional, `bHideOptionsWhileSpeaking`).
 - **Reaction shots:** to break the monotony of a long stretch, after 7 s of their talking
   without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
   its end (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the 7 s, and
@@ -171,6 +171,8 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
     MAST, every check said clear).
   - Filming people talking: no listen prompt while `bAutoListen` is on (it starts on its
     own anyway).
+  - Starting a conversation while seated: strong vertical jitter at the start (0.8.5 test,
+    The Rock).
   - Talking to someone while you sit (a bar stool) in first person: your full body isn't
     built (it waits for a standing height), so you're kept out of frame (0.8.5 log, August
     Bowen at The Rock).

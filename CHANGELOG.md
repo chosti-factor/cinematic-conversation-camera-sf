@@ -7,6 +7,11 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.8.6 - unreleased
 
 ### Fixed
+- Pressing A or clicking to skip a companion's greeting chose your first option instead
+  (Sam and Vasco: "Let's trade gear", into their inventory; 0.8.4 and 0.8.5 tests). The
+  game shows the options during greetings, where A chooses rather than skips, and this mod
+  hid them while the NPC spoke, so they were chosen unseen. `bHideOptionsWhileSpeaking` is
+  now off by default: the options show as in the game.
 - A reaction could cut away from an emotion close-up 0.4 s after it began, when the 7 s on
   them were reached just then (0.8.5 log, Sam Coe, three times). Within the close-up's
   minimum time on screen (`fShortestHold`, 2 s) the reaction waits for the next line.
