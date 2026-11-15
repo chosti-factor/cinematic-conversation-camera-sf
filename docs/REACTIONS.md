@@ -50,6 +50,14 @@ stretches, cutting only at the edges of their lines.
 Lines that follow each other without a pause count as separate lines (0.8.4), so a long
 reply made of several lines gets its edit points between them.
 
+## An insert, not a turn
+
+A reaction is a brief aside: the angle of you is picked for it alone (your usual angle if it
+suits a reaction, never a room shot or a two-shot), and when it ends the camera goes back
+to exactly the speaker's shot from before. The preset's rhythm (a new angle every 2 to 5
+lines, a 50% chance of a fresh angle when the turn passes) and its mix of shots are the same
+with or without reactions.
+
 ## How often
 
 Short exchanges (a line or two of theirs, then you) never get a reaction. A long reply or
