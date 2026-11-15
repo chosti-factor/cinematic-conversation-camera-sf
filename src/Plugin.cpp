@@ -77,6 +77,7 @@ namespace CCC
 			std::chrono::steady_clock::time_point reactionFrom{};            // on you from then (0.8.3: after an emotion close-up's minimum)
 			std::chrono::steady_clock::time_point reactionOnAt{};            // when the camera cut to you (0.8.3: the time counts from the cut)
 			float                                 reactionHold{ 2.5f };      // seconds on you from the cut; < 0 = the rest of the line
+			bool                                  reactionShownLine{ false };  // a reaction was on screen during this line (0.8.10)
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			float                                 monoSeconds{ 0.0f };       // their talking since the camera last showed you (0.8.5)
@@ -719,6 +720,7 @@ namespace CCC
 				if (g_state.reactionOnAt == std::chrono::steady_clock::time_point{}) {
 					g_state.reactionOnAt = a_now;
 				}
+				g_state.reactionShownLine = true;
 				const float on = std::chrono::duration<float>(a_now - g_state.reactionOnAt).count();
 				if (g_state.reactionHold < 0.0f || on < g_state.reactionHold) {
 					return Subject::kPlayer;
@@ -1963,7 +1965,11 @@ namespace CCC
 						// 0.8.5: their talking adds to the time the camera has been on them without a
 						// cut to you; a reaction (it lasts the line) ends here, with the line.
 						const float lastedNow = std::chrono::duration<float>(now - g_state.lineStart).count();
-						const bool shown = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
+						// 0.8.9 test: a long line's reaction (on you for its first 4 s) had ended by the
+						// line's end, so it didn't count as shown: the time on them went on adding
+						// up (16, 24, 36 s) and the next four lines were all reactions.
+						const bool shown = g_state.reactionShownLine;
+						g_state.reactionShownLine = false;
 						if (shown || g_state.replyBeat) {
 							g_state.monoSeconds = 0.0f;  // (their answer to a persuasion doesn't count towards a reaction)
 						} else if (lastedNow > 0.0f && lastedNow < 60.0f) {

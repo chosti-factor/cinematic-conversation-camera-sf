@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.10 - 2026-11-15
+
+### Fixed
+- After a long line's reaction (on you for its first 4 s, then back to them), the time on
+  them wasn't started again, so the next lines were all reactions too (0.8.9 test, Sarah's
+  monologue: four in a row, the count reaching 36 s). A reaction on screen during a line
+  now starts the time again, however long it stayed.
+
 ## 0.8.9 - 2026-11-15
 
 ### Fixed
