@@ -132,8 +132,9 @@ All six use the same 45 degree conversation lens (`fConversationLens`).
   character's face, reaction shots and holding on the answer after a persuasion.
 - Filming people talking near you, the rest: groups of three or more with occasional group
   shots; the letterbox and obstacle checks while filming them; starting it automatically
-  while you sit (at a bar, on a bench) and, optionally, after standing still near them; a
-  controller button. Never in combat; moving or any input hands the camera back.
+  while you sit (at a bar, on a bench) and, optionally, after standing still near them
+  (the controller button came in 0.8.1). Never in combat; moving or any input hands the
+  camera back.
 - Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
   Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
 - Polish:
