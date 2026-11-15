@@ -120,13 +120,16 @@ Notes:
   tally); medium, 50% (Concerned, Serious, Smirk, Happy, Confused, Puzzled, Apologetic,
   Awed: about 14%); strong, 100% (the rest but Neutral and Friendly: about 5%). About 21%
   of all lines get an emotion close-up, most of them on lines with real feeling.
+  First test (two conversations with Sarah): 9 of 26 tagged lines got one (35%); of the 17
+  that didn't, 10 were mild (Confident 7 times) and 7 medium (Happy, Apologetic, Smirk).
+- 0.8.7: no change to the tiers.
 
 ## Your character's face
 
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.8.6 (2026-11-15).
+Last updated: 0.8.7 (2026-11-15).
 
 ### Listening: your face's answer to the NPC's line
 
