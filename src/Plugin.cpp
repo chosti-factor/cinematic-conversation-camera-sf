@@ -72,7 +72,7 @@ namespace CCC
 			bool                                  lineBeat{ false };         // this line answers a persuasion: held close-up
 			std::int64_t                          beatConsumed{ 0 };         // the persuasion outcome already used
 			int                                   reactionLines{ 0 };        // NPC lines in this reply since the last reaction roll
-			bool                                  reactionOwed{ false };
+			bool                                  reactionOwed{ false };     // the roll said yes: the next line that can take it (0.8.3, as CCC)
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			std::chrono::steady_clock::time_point reactionFrom{};            // on you from then (0.8.3: after an emotion close-up's minimum)
 			std::chrono::steady_clock::time_point reactionOnAt{};            // when the camera cut to you (0.8.3: the time counts from the cut)
@@ -83,7 +83,6 @@ namespace CCC
 			int                                   lineCounted{ 0 };          // sentences this line added towards a reaction
 			int                                   lineCountBefore{ 0 };      // the count before this line rolled (to undo a quick skip)
 			bool                                  lineOwedRoll{ false };     // this line made the reaction roll
-			bool                                  reactionOwed{ false };     // the roll said yes: the next line that can take it (0.8.3, as CCC)
 			bool                                  lineExtreme{ false };      // this emotion line's close-up is an extreme one (0.8.3)
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
 			int                                   msgSubject{ -1 };
