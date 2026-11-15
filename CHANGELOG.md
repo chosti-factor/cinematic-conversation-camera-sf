@@ -4,7 +4,25 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.2 - unreleased
+## 0.8.3 - unreleased
+
+### Changed
+- Filming people talking near you:
+  - Each line's shot is chosen from the ones the obstacle check finds clear (walls, things,
+    and people standing still, now watched while filming too), so wide shots stay where
+    they fit and are skipped where something's in the way (0.8.2 test: blocked at
+    TerraBrew, good with Keeper Aquilus's group).
+  - The camera stays put for the line, and its aim follows the person in shot through a
+    small dead band, slowly: no more horizontal jitter (0.8.2 test).
+  - The game's name tags and interaction prompt are hidden while it films (0.8.2 test:
+    the camera's aim brought them up).
+  - The listen prompt takes the look and size of the game's own interaction prompt (learned
+    the first time one is on screen), more readable than the notifications' look.
+  - Standing still 2 seconds starts it (`fAutoListenAfter`, was 4).
+  - The controller's listen button is B, held (`iListenButton=8192`, was the right stick
+    click).
+
+## 0.8.2 - 2026-11-15
 
 ### Added
 - Two ways to start filming people talking near you (`[Overhear]`):

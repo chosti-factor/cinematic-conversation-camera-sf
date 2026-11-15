@@ -4083,6 +4083,10 @@ namespace CCC
 			std::uint32_t                         line{ 0 };   // counts lines, to pick a new shot per line
 			std::optional<RE::NiPoint3>           smoothSpeaker, smoothListener;
 			bool                                  applied{ false };
+			std::optional<Camera::Pose>           pose;        // this line's camera, set up once (0.8.3)
+			std::uint32_t                         poseLine{ 0 };
+			RE::NiPoint3                          anchor{};    // the person in shot (two-shot: between them), eased
+			RE::NiPoint3                          lookOffset{};  // the aim, relative to the anchor
 		} g_film;
 
 		struct FilmMain  // main thread only
@@ -4219,6 +4223,7 @@ namespace CCC
 				g_film.active = false;
 				g_film.smoothSpeaker.reset();
 				g_film.smoothListener.reset();
+				g_film.pose.reset();
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			Camera::RestoreRender();
@@ -4240,7 +4245,11 @@ namespace CCC
 			struct PromptOut
 			{
 				std::string& text;
-				~PromptOut() { Hud::SetPrompt(text); }
+				~PromptOut()
+				{
+					Hud::SetPrompt(text);
+					Hud::SetHideRollover(FilmingActive());
+				}
 			} promptOut{ prompt };
 			if (!s.filmConversations || !player || g_state.active) {
 				StopFilming(g_state.active ? "your own conversation" : "off");
@@ -4368,10 +4377,14 @@ namespace CCC
 		}
 
 		// Camera thread (the gameplay camera's update): the shot of the current speaker.
+		// 0.8.3: each line's shot is chosen once, from shots the obstacle check finds clear
+		// (walls, things, people standing still), and its camera position stays put for the
+		// line; the aim follows the person in shot through a dead band, slowly, so the picture
+		// doesn't jitter with their head (0.8.2 test: horizontal jitter; wide shots blocked by
+		// things and people at TerraBrew).
 		void FilmFrame()
 		{
-			std::uint32_t   speakerId = 0, listenerId = 0, line = 0;
-			Shots::ShotType shot{};
+			std::uint32_t speakerId = 0, listenerId = 0, line = 0;
 			{
 				std::scoped_lock lock{ g_film.lock };
 				if (!g_film.active) {
@@ -4380,21 +4393,6 @@ namespace CCC
 				speakerId = g_film.speaker;
 				listenerId = g_film.listener;
 				line = g_film.line;
-				// A new shot for each line: over the listener's shoulder, a three-quarter or
-				// medium single, a close-up, or now and then the two of them.
-				static std::uint32_t pickedFor = 0;
-				if (pickedFor != line) {
-					pickedFor = line;
-					static std::mt19937 rng{ std::random_device{}() };
-					constexpr std::array kChoices{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
-						Shots::ShotType::kMediumNpc, Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
-					auto next = kChoices[std::uniform_int_distribution<std::size_t>{ 0, kChoices.size() - 1 }(rng)];
-					if (next == g_film.shot && next != Shots::ShotType::kOverPlayerShoulder) {
-						next = Shots::ShotType::kOverPlayerShoulder;
-					}
-					g_film.shot = next;
-				}
-				shot = g_film.shot;
 			}
 			auto* speaker = RE::TESForm::LookupByID<RE::Actor>(speakerId);
 			auto* listener = RE::TESForm::LookupByID<RE::Actor>(listenerId);
@@ -4407,39 +4405,97 @@ namespace CCC
 			if (!speakerHead || !listenerHead) {
 				return;
 			}
-			// Heads eased (about a fifth of a second), so the shot doesn't shake with them.
-			RE::NiPoint3 sh = *speakerHead, lh = *listenerHead;
-			{
-				std::scoped_lock lock{ g_film.lock };
-				auto ease = [](std::optional<RE::NiPoint3>& a_smooth, const RE::NiPoint3& a_now) {
-					if (!a_smooth || Distance(*a_smooth, a_now) > 1.0f) {
-						a_smooth = a_now;
-					} else {
-						a_smooth->x += (a_now.x - a_smooth->x) * 0.1f;
-						a_smooth->y += (a_now.y - a_smooth->y) * 0.1f;
-						a_smooth->z += (a_now.z - a_smooth->z) * 0.1f;
-					}
-					return *a_smooth;
-				};
-				sh = ease(g_film.smoothSpeaker, *speakerHead);
-				lh = ease(g_film.smoothListener, *listenerHead);
-			}
-			Shots::Input in;
-			in.npcHead = sh;
-			in.playerHead = lh;
-			in.lensDegrees = Director::LensDegrees();
-			in.maxDistance = 7.0f;
-			in.enforceLine = true;
-			const auto solved = Shots::Solve(shot, in);
-			if (!solved.ok) {
-				return;
-			}
-			if (Camera::ApplyRender(camera->cameraRoot.get(), solved.pose, 0.0f)) {
-				std::scoped_lock lock{ g_film.lock };
-				if (!g_film.applied) {
-					g_film.applied = true;
-					REX::INFO("Filming people talking: {} on {}", Shots::Key(shot), speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
+			const RE::NiPoint3 sh = *speakerHead, lh = *listenerHead;
+			const auto subjectOf = [&](Shots::ShotType a_type) {
+				return a_type == Shots::ShotType::kTwoShot ? RE::NiPoint3{ (sh.x + lh.x) * 0.5f, (sh.y + lh.y) * 0.5f, (sh.z + lh.z) * 0.5f } : sh;
+			};
+
+			std::scoped_lock lock{ g_film.lock };
+			const bool newLine = g_film.poseLine != line || !g_film.pose;
+			// The speaker walked off from where the shot was set up: set it up again.
+			const bool drifted = g_film.pose && Distance(subjectOf(g_film.shot), g_film.anchor) > 1.5f;
+			if (newLine || drifted) {
+				static std::mt19937 rng{ std::random_device{}() };
+				constexpr std::array kChoices{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
+					Shots::ShotType::kMediumNpc, Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
+				std::vector<Shots::ShotType> order;
+				auto first = kChoices[std::uniform_int_distribution<std::size_t>{ 0, kChoices.size() - 1 }(rng)];
+				if (newLine && first == g_film.shot && first != Shots::ShotType::kOverPlayerShoulder) {
+					first = Shots::ShotType::kOverPlayerShoulder;
 				}
+				if (drifted && !newLine) {
+					first = g_film.shot;
+				}
+				order.push_back(first);
+				std::vector<Shots::ShotType> rest{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc, Shots::ShotType::kMediumNpc,
+					Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
+				std::ranges::shuffle(rest, rng);
+				for (const auto type : rest) {
+					if (std::ranges::find(order, type) == order.end()) {
+						order.push_back(type);
+					}
+				}
+				Shots::Input in;
+				in.npcHead = sh;
+				in.playerHead = lh;
+				in.lensDegrees = Director::LensDegrees();
+				in.maxDistance = 7.0f;
+				in.enforceLine = true;
+				std::optional<Shots::Result> chosen, fallback;
+				Shots::ShotType              chosenType = first;
+				std::string                  skipped;
+				for (const auto type : order) {
+					const auto solved = Shots::Solve(type, in);
+					if (!solved.ok) {
+						continue;
+					}
+					if (!fallback) {
+						fallback = solved;
+						chosenType = type;
+					}
+					const bool overShoulder = type == Shots::ShotType::kOverPlayerShoulder;
+					const auto toSpeaker = TestShot(sh, solved.pose.position, lh, overShoulder);
+					bool       clear = toSpeaker.usable && toSpeaker.blockedAt < 0.0f;
+					if (clear && type == Shots::ShotType::kTwoShot) {
+						const auto toListener = TestShot(lh, solved.pose.position, sh, false);
+						clear = toListener.usable && toListener.blockedAt < 0.0f;
+					}
+					if (clear) {
+						chosen = solved;
+						chosenType = type;
+						break;
+					}
+					skipped += std::format("{}{}", skipped.empty() ? "" : ", ", Shots::Key(type));
+				}
+				if (!chosen && !fallback) {
+					return;
+				}
+				const auto& use = chosen ? *chosen : *fallback;
+				g_film.shot = chosenType;
+				g_film.pose = use.pose;
+				g_film.anchor = subjectOf(chosenType);
+				g_film.lookOffset = { use.pose.lookAt.x - g_film.anchor.x, use.pose.lookAt.y - g_film.anchor.y, use.pose.lookAt.z - g_film.anchor.z };
+				g_film.poseLine = line;
+				g_film.applied = false;
+				if (Settings::Get().debugLog && (!skipped.empty() || !chosen)) {
+					REX::INFO("Filming people talking: {} blocked from there{}", skipped, chosen ? "" : "; nothing clear, using the first anyway");
+				}
+			} else {
+				// The aim follows the person in shot through a dead band (4 cm), easing slowly.
+				const auto  subject = subjectOf(g_film.shot);
+				const float off = Distance(subject, g_film.anchor);
+				if (off > 0.04f) {
+					const float k = 0.06f * (off - 0.04f) / off;
+					g_film.anchor.x += (subject.x - g_film.anchor.x) * k;
+					g_film.anchor.y += (subject.y - g_film.anchor.y) * k;
+					g_film.anchor.z += (subject.z - g_film.anchor.z) * k;
+				}
+			}
+			Camera::Pose pose = *g_film.pose;
+			pose.lookAt = { g_film.anchor.x + g_film.lookOffset.x, g_film.anchor.y + g_film.lookOffset.y, g_film.anchor.z + g_film.lookOffset.z };
+			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
+				g_film.applied = true;
+				REX::INFO("Filming people talking: {} on {}", Shots::Key(g_film.shot), speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
 			}
 		}
 
@@ -4455,13 +4511,23 @@ namespace CCC
 			std::vector<Bystander>                          still;
 			const auto&                                     s = Settings::Get();
 			auto*                                           player = RE::PlayerCharacter::GetSingleton();
-			if (s.avoidBystanders && g_state.active && !g_state.handedBack && player) {
+			// While filming people talking (0.8.3) too, leaving out the two of them.
+			std::uint32_t filmSpeaker = 0, filmListener = 0;
+			bool          filming = false;
+			{
+				std::scoped_lock lock{ g_film.lock };
+				filming = g_film.active;
+				filmSpeaker = g_film.speaker;
+				filmListener = g_film.listener;
+			}
+			if (s.avoidBystanders && ((g_state.active && !g_state.handedBack) || filming) && player) {
 				const char* source = nullptr;
 				const auto  nearby = NearbyActors(player, source);
 				{
 					const auto center = player->GetPosition();
 					for (const auto& actor : nearby) {
-						if (!actor || actor.get() == player || actor->formID == g_state.speakerId) {
+						if (!actor || actor.get() == player || (g_state.active && actor->formID == g_state.speakerId) ||
+							(filming && (actor->formID == filmSpeaker || actor->formID == filmListener))) {
 							continue;
 						}
 						const auto  feet = actor->GetPosition();

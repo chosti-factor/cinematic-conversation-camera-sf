@@ -90,7 +90,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
-  hold R3 on a controller) and/or starting on its own when you sit down or stand still near
+  hold B on a controller) and/or starting on its own when you sit down or stand still near
   them (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in testing).
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.

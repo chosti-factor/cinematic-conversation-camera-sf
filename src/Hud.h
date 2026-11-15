@@ -31,4 +31,8 @@ namespace CCC::Hud
 	// The on-screen prompt below the crosshair ("" = none), e.g. "Listen in on nearby
 	// conversation. Press N". Main thread; drawn by Update.
 	void SetPrompt(const std::string& a_text);
+
+	// Hide the game's interaction prompt and name tags (RolloverWidget_mc) while this mod
+	// films people talking; put back when false. Main thread.
+	void SetHideRollover(bool a_hide);
 }

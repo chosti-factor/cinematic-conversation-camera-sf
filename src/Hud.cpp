@@ -1005,7 +1005,109 @@ namespace CCC::Hud
 			std::string shown;    // in the field now
 			bool        created{ false };
 			float       alpha{ 0.0f };
+			// The look of the game's own interaction prompt ("Talk" / the name, when you aim at
+			// someone): HUDMenu.RolloverWidget_mc, its largest text (0.8.3).
+			bool          lookKnown{ false };
+			float         lookAge{ 1.0f };
+			std::string   font;
+			double        size{ 18.0 };
+			std::uint32_t color{ 0xFFFFFF };
+			bool          bold{ false };
+			bool          embed{ true };
 		} g_prompt;
+
+		// The interaction prompt and name tag (RolloverWidget_mc), hidden while this mod films
+		// people talking (0.8.2 test: aiming through the camera brought up NPCs' name tags).
+		struct RolloverState
+		{
+			bool   hide{ false };    // wanted
+			bool   hidden{ false };  // done (alpha set to 0)
+			double alpha{ 0.75 };    // the game's, to put back
+		} g_rollover;
+
+		void CollectTextFields(const Value& a_obj, int a_depth, int& a_visited, std::vector<Value>& a_out)
+		{
+			if (++a_visited > 200 || a_depth > 8) {
+				return;
+			}
+			Value probe;
+			if (!StringMember(a_obj, "text").empty() && SafeGet(&a_obj, "textWidth", &probe)) {
+				a_out.push_back(a_obj);
+			}
+			const int children = static_cast<int>(Member(a_obj, "numChildren", 0.0));
+			for (int i = 0; i < children; ++i) {
+				Value index{ static_cast<std::int32_t>(i) };
+				Value child;
+				if (SafeInvoke(const_cast<Value*>(&a_obj), "getChildAt", &child, &index, 1) && child.IsDisplayObject()) {
+					CollectTextFields(child, a_depth + 1, a_visited, a_out);
+				}
+			}
+		}
+
+		// Main thread: learn the interaction prompt's look while it's on screen, and hide or
+		// put back the rollover widget.
+		void UpdateRollover(float a_delta)
+		{
+			const bool learn = !g_prompt.lookKnown && (g_prompt.lookAge += a_delta) >= 0.5f;
+			if (!learn && g_rollover.hide == g_rollover.hidden && !g_rollover.hide) {
+				return;
+			}
+			const auto ref = OpenMovie("HUDMenu");
+			if (!ref) {
+				return;
+			}
+			Value top, widget;
+			if (!RootObject(ref->root, top, "HUDMenu") || !Child(top, "RolloverWidget_mc", widget)) {
+				return;
+			}
+			if (learn) {
+				g_prompt.lookAge = 0.0f;
+				Value visible;
+				const bool shown = !SafeGet(&widget, "visible", &visible) || !visible.IsBoolean() || visible.GetBoolean();
+				std::vector<Value> fields;
+				int                visited = 0;
+				if (shown) {
+					CollectTextFields(widget, 0, visited, fields);
+				}
+				double best = 0.0;
+				for (auto& field : fields) {
+					Value format;
+					if (!SafeInvoke(&field, "getTextFormat", &format, nullptr, 0) || !format.IsObject()) {
+						continue;
+					}
+					const auto   font = StringMember(format, "font");
+					const double size = Member(format, "size", 0.0);
+					if (font.empty() || size <= best) {
+						continue;
+					}
+					best = size;
+					g_prompt.font = font;
+					g_prompt.size = size;
+					g_prompt.color = static_cast<std::uint32_t>(Member(format, "color", 0xFFFFFF));
+					Value bold, embed;
+					g_prompt.bold = SafeGet(&format, "bold", &bold) && bold.IsBoolean() && bold.GetBoolean();
+					g_prompt.embed = SafeGet(&field, "embedFonts", &embed) && embed.IsBoolean() ? embed.GetBoolean() : true;
+				}
+				if (best > 0.0) {
+					g_prompt.lookKnown = true;
+					g_prompt.shown.clear();  // redraw in the new look
+					REX::INFO("HUD: the listen prompt takes the look of the game's interaction prompt: font '{}', size {:.0f}, colour {:06X}{}", g_prompt.font,
+						g_prompt.size, g_prompt.color, g_prompt.bold ? ", bold" : "");
+				}
+			}
+			if (g_rollover.hide) {
+				if (!g_rollover.hidden) {
+					g_rollover.alpha = Member(widget, "alpha", 0.75);
+					g_rollover.hidden = true;
+				}
+				const Value zero{ 0.0 };
+				SafeSet(&widget, "alpha", &zero);
+			} else if (g_rollover.hidden) {
+				const Value alpha{ g_rollover.alpha };
+				SafeSet(&widget, "alpha", &alpha);
+				g_rollover.hidden = false;
+			}
+		}
 
 		void UpdatePrompt(float a_delta)
 		{
@@ -1052,11 +1154,15 @@ namespace CCC::Hud
 				g_prompt.shown.clear();
 			}
 			if (want && g_prompt.text != g_prompt.shown) {
-				// The notifications' look when it's been learned, otherwise the one they had in
-				// the 0.7 tests (bold main font, 18, white).
+				// The game's interaction prompt's look once seen (0.8.3), else the notifications'
+				// when learned, else the one they had in the 0.7 tests (bold main font, 18, white).
+				const bool  own = g_prompt.lookKnown;
 				const bool  known = g_msg.look == MessageState::Look::kKnown;
-				const Value args[4]{ Value{ known ? g_msg.font.c_str() : "$MAIN_Font_Bold" }, Value{ known ? g_msg.size : 18.0 },
-					Value{ known ? g_msg.color : 0xFFFFFFu }, Value{ known ? g_msg.bold : false } };
+				const Value args[4]{ Value{ own ? g_prompt.font.c_str() : known ? g_msg.font.c_str() : "$MAIN_Font_Bold" },
+					Value{ own ? g_prompt.size : known ? g_msg.size : 18.0 }, Value{ own ? g_prompt.color : known ? g_msg.color : 0xFFFFFFu },
+					Value{ own ? g_prompt.bold : known ? g_msg.bold : false } };
+				const Value embed{ own ? g_prompt.embed : known ? g_msg.embed : true };
+				SafeSet(&field, "embedFonts", &embed);
 				Value format;
 				if (SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 4)) {
 					SafeSet(&field, "defaultTextFormat", &format);
@@ -1222,11 +1328,19 @@ namespace CCC::Hud
 		g_prompt.text = a_text;
 	}
 
+	void SetHideRollover(bool a_hide)
+	{
+		g_rollover.hide = a_hide;
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (!g_broken && (!g_prompt.text.empty() || g_prompt.created) && CheckReady()) {
-			UpdatePrompt(a_delta);
+		if (!g_broken && CheckReady()) {
+			UpdateRollover(a_delta);
+			if (!g_prompt.text.empty() || g_prompt.created) {
+				UpdatePrompt(a_delta);
+			}
 		}
 		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
 			g_msg.available = false;

@@ -19,11 +19,11 @@ namespace CCC
 		bool     filmConversations{ true }; // film people talking near you (the listen key)
 		int      listenKey{ 0x4E };          // virtual-key code, 0 = no prompt or key (N)
 		float    listenRange{ 12.0f };       // how far from you a conversation may be
-		int      listenButton{ 0x0080 };     // XInput button mask, held to listen (right stick click); 0 = none
+		int      listenButton{ 0x2000 };     // XInput button mask, held to listen (B); 0 = none
 		float    listenHold{ 0.5f };         // seconds the button is held
 		bool     listenPrompt{ true };       // "Listen in on nearby conversation" on screen (0.8.2)
 		bool     autoListen{ true };         // start on its own when you sit, or stand still near them (0.8.2)
-		float    autoListenAfter{ 4.0f };    // seconds standing still first (sitting: 1.5 s)
+		float    autoListenAfter{ 2.0f };    // seconds standing still first (sitting: 1.5 s)
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		float    roomShotMaxIndoors{ -1.0f };   // metres; 0 = as far as CCC's framing wants, -1 = the preset's own (0.8.1)
 		float    roomShotMaxOutdoors{ -1.0f };
