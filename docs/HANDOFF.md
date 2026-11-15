@@ -66,6 +66,14 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   YouTubers, the Starfield Modding Discord). Be stable well before the Steam Winter Sale
   (2026-12-17).
 
+## Ideas kept for after testing
+
+- Reactions by time instead of sentences (0.8.4 discussion): count seconds of their speech
+  since the last reaction (`fReactionAfterSecondsPlayer`, about 8) instead of sentences,
+  plus a monotony guard: after about 12 s on the speaker without a cut to you, the next
+  line that can take it is a reaction, no roll (`fReactionGuardSecondsPlayer`). Commas as
+  counting units were considered and set aside (uneven). Decide after the 0.8.4 test.
+
 ## Open observations from testing
 
 - Many lines are emotion close-ups (0.8.3: every expression but Neutral and Friendly, at
