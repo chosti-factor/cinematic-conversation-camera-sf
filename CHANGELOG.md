@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.7 - 2026-11-15
+
+### Fixed
+- A crash when filming people talking started (0.8.6 test, Nyssa Marcano and a UC Vanguard
+  captain): looking for the first-person body beside your 3D read a list of the scene graph
+  that isn't laid out the way the library describes. It's now looked for with the game's own
+  search, and what's hidden is held so it can't be freed under the camera.
+
 ## 0.8.6 - 2026-11-15
 
 ### Fixed

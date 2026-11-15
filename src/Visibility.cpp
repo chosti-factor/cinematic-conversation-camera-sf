@@ -132,22 +132,14 @@ namespace CCC::Visibility
 
 	namespace
 	{
-		std::vector<RE::NiAVObject*> g_firstPersonHidden;  // culled by HideFirstPersonBody
-		bool                         g_firstPersonSearched = false;  // searched once per filming (the scene graph isn't walked every frame)
-		bool                         g_firstPersonLogged = false;
+		// Held by reference while hidden, so they can't be freed under us between frames.
+		std::vector<RE::NiPointer<RE::NiAVObject>> g_firstPersonHidden;  // culled by HideFirstPersonBody
+		bool g_firstPersonSearched = false;  // searched once per filming (the scene graph isn't walked every frame)
+		bool g_firstPersonLogged = false;
 
-		bool IsFirstPersonName(const char* a_name)
-		{
-			if (!a_name) {
-				return false;
-			}
-			std::string lower{ a_name };
-			std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-			return lower.find("1stperson") != std::string::npos;
-		}
-
-		// The first-person body: by name, under the player's own 3D, beside it (its parent's
-		// children), or under the camera.
+		// The first-person body, by name, with the game's own search: under the player's own
+		// 3D, under its parent (beside it), or under the camera. (0.8.6 walked the parent's
+		// child list itself and crashed: that list isn't laid out the way the library says.)
 		std::vector<RE::NiAVObject*> FindFirstPersonBody(RE::NiAVObject* a_root, std::string& a_where)
 		{
 			std::vector<RE::NiAVObject*> found;
@@ -156,14 +148,10 @@ namespace CCC::Visibility
 				if (auto* obj = a_root->GetObjectByName(name); obj && obj != a_root) {
 					found.push_back(obj);
 					a_where = "under your 3D";
-				}
-				if (auto* parent = a_root->parent) {
-					for (auto& child : parent->children) {
-						auto* obj = child.get();
-						if (obj && obj != a_root && IsFirstPersonName(obj->name.c_str()) && std::ranges::find(found, obj) == found.end()) {
-							found.push_back(obj);
-							a_where = std::format("beside your 3D ('{}')", obj->name.c_str());
-						}
+				} else if (auto* parent = a_root->parent) {
+					if (auto* other = parent->GetObjectByName(name); other && other != a_root && other != parent) {
+						found.push_back(other);
+						a_where = "beside your 3D";
 					}
 				}
 			}
@@ -183,9 +171,9 @@ namespace CCC::Visibility
 	{
 		std::scoped_lock lock{ g_mutex };
 		if (g_firstPersonSearched) {
-			for (auto* obj : g_firstPersonHidden) {
-				if (!IsCulled(obj)) {
-					SetCulled(obj, true);
+			for (auto& obj : g_firstPersonHidden) {
+				if (obj && !IsCulled(obj.get())) {
+					SetCulled(obj.get(), true);
 				}
 			}
 			return;
@@ -197,8 +185,7 @@ namespace CCC::Visibility
 		if (!g_firstPersonLogged) {
 			g_firstPersonLogged = true;
 			if (found.empty()) {
-				REX::INFO("First-person body: not found by name (your 3D '{}', its parent '{}' with {} children)", root ? root->name.c_str() : "none",
-					root && root->parent ? root->parent->name.c_str() : "none", root && root->parent ? root->parent->children.size() : 0u);
+				REX::INFO("First-person body: not found by name (your 3D '{}')", root ? root->name.c_str() : "none");
 			} else {
 				REX::INFO("First-person body: found {} ({} objects); hidden while filming from first person", where, found.size());
 			}
@@ -206,9 +193,7 @@ namespace CCC::Visibility
 		for (auto* obj : found) {
 			if (!IsCulled(obj)) {
 				SetCulled(obj, true);
-				if (std::ranges::find(g_firstPersonHidden, obj) == g_firstPersonHidden.end()) {
-					g_firstPersonHidden.push_back(obj);
-				}
+				g_firstPersonHidden.emplace_back(obj);
 			}
 		}
 	}
@@ -217,15 +202,9 @@ namespace CCC::Visibility
 	{
 		std::scoped_lock lock{ g_mutex };
 		g_firstPersonSearched = false;
-		if (g_firstPersonHidden.empty()) {
-			return;
-		}
-		// Only what can still be found now (the pointers may be stale otherwise).
-		std::string where;
-		const auto  found = FindFirstPersonBody(PlayerRoot(), where);
-		for (auto* obj : found) {
-			if (std::ranges::find(g_firstPersonHidden, obj) != g_firstPersonHidden.end() && IsCulled(obj)) {
-				SetCulled(obj, false);
+		for (auto& obj : g_firstPersonHidden) {
+			if (obj && IsCulled(obj.get())) {
+				SetCulled(obj.get(), false);
 			}
 		}
 		g_firstPersonHidden.clear();
