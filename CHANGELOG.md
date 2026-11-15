@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.8 - 2026-11-15
+
+### Fixed
+- Filming people talking from first person: your first-person armour still showed, T-posed
+  (0.8.6 test). It can't be found and hidden: "Player1stPersonBody" turned out to be a label
+  the game passes around, not a name in the scene (0.8.7 log: not found). Now the game's
+  view goes to third person while it films, with you hidden, and back to first person when
+  it stops.
+
 ## 0.8.7 - 2026-11-15
 
 ### Fixed

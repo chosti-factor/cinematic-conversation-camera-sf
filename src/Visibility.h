@@ -14,11 +14,4 @@ namespace CCC::Visibility
 	// Puts back what we changed. a_visible: leave the player shown (the conversation started
 	// in third person, where the game shows them) or hidden (first person).
 	void Restore(bool a_visible);
-
-	// While filming people talking from first person (0.8.6): also hide the game's
-	// first-person body ("Player1stPersonBody": your armour, posed for the first-person
-	// view, T-posed in a filmed shot), wherever it hangs. Every frame; the Restore below puts
-	// it back. Logs where it was found the first time.
-	void HideFirstPersonBody();
-	void RestoreFirstPersonBody();
 }

@@ -100,7 +100,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
   hold B on a controller) and/or starting on its own when a conversation begins near you,
   even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in
-  testing). Only for the game's conversation scenes, not barks.
+  testing). Only for the game's conversation scenes, not barks. From first person, the view
+  is third person while it films, with you hidden, and back to first person after.
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
 - **Testing messages:** each line's expression, your face's answer and the shot used, with

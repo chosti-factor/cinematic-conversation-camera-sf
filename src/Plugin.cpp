@@ -232,6 +232,7 @@ namespace CCC
 
 		bool                                  g_lastGameplayFirstPerson = false;
 		bool                                  g_restoreFirstPersonPending = false;
+		bool                                  g_filmThirdPerson = false;  // filming from first person: the game is in third person for it (0.8.8)
 		std::chrono::steady_clock::time_point g_restoreFirstPersonDeadline{};
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
@@ -4414,22 +4415,41 @@ namespace CCC
 					const bool filming = FilmingActive();
 					Hud::SetHideRollover(filming);
 					// 0.8.4 test: filming from first person showed your character in a T-pose (the
-					// game doesn't animate your full body in first person). Hidden while it films
-					// from first person, shown again after (unless your own conversation took over:
-					// it puts visibility back itself).
+					// game doesn't animate your full body in first person); 0.8.6: with your body
+					// hidden, your first-person armour still showed, T-posed. The first-person body
+					// isn't a node that can be found and hidden (0.8.7: "Player1stPersonBody" is a
+					// label the game passes around, not a name in the scene), so the game goes to
+					// third person while it films (both camera hooks film), you're hidden, and
+					// first person comes back when it stops (unless your own conversation took
+					// over: it puts visibility and the view back itself).
 					static bool hid = false;
 					auto*       camera = RE::PlayerCamera::GetSingleton();
 					const bool  firstPerson = camera && CurrentCameraStateIndex(camera) == 0;
-					if (filming && firstPerson && !g_state.active) {
-						Visibility::HidePlayer();
-						Visibility::HideFirstPersonBody();  // 0.8.6 test: your armour stayed, T-posed
-						hid = true;
-					} else if (hid) {
-						Visibility::RestoreFirstPersonBody();
-						if (!g_state.active) {
-							Visibility::Restore(true);
+					if (filming && !g_state.active) {
+						if (firstPerson && !g_filmThirdPerson && camera) {
+							camera->ForceThirdPerson();
+							g_filmThirdPerson = true;
+							REX::INFO("Filming people talking: from first person; the game's view is third person while it films, you hidden");
 						}
-						hid = false;
+						if (g_filmThirdPerson) {
+							Visibility::HidePlayer();
+							hid = true;
+						}
+					} else {
+						if (hid) {
+							if (!g_state.active) {
+								Visibility::Restore(true);
+							}
+							hid = false;
+						}
+						if (g_filmThirdPerson) {
+							g_filmThirdPerson = false;
+							if (!g_state.active) {
+								g_restoreFirstPersonPending = true;  // back to first person (StepFirstPersonRestore)
+								g_restoreFirstPersonDeadline = std::chrono::steady_clock::now() + 1500ms;
+								g_restoreFirstPersonNext = {};
+							}
+						}
 					}
 				}
 			} promptOut{ prompt };
@@ -5009,8 +5029,9 @@ namespace CCC
 					}
 				}
 
-				if (camera && !g_state.active && !g_restoreFirstPersonPending) {
-					// Remember which view the player uses outside conversations.
+				if (camera && !g_state.active && !g_restoreFirstPersonPending && !g_filmThirdPerson) {
+					// Remember which view the player uses outside conversations (not the third
+					// person filming puts you in, 0.8.8).
 					// Starfield can pass through third person for a moment while opening a
 					// conversation from first person, so only accept a change once it has
 					// lasted long enough to be real gameplay.
