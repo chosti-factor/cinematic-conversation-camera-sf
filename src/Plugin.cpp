@@ -2007,9 +2007,12 @@ namespace CCC
 						// (monoSeconds > 0: no turn of yours or reaction since, which cut away.)
 						const bool wasCloseUp = g_state.lineIntense && !g_state.lineExtreme && g_state.monoSeconds > 0.0f &&
 						                        std::chrono::duration<float>(now - g_state.lineStart).count() >= s.shortestHold;
+						// An extreme close-up holds one line only (0.8.9): the line after one, on the
+						// camera without a cut since, is never an extreme one too.
+						const bool afterExtreme = g_state.lineIntense && g_state.lineExtreme && g_state.monoSeconds > 0.0f;
 						g_state.lineIntense = rolled;
 						// Extreme or not decided here (0.8.3), so a reaction knows not to interrupt it.
-						g_state.lineExtreme = rolled && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
+						g_state.lineExtreme = rolled && !afterExtreme && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
 						g_state.closeUpGoesOn = rolled && wasCloseUp && !g_state.lineExtreme;
 						if (listed && !rolled && s.debugLog) {
 							REX::INFO("Emotion close-up: '{}' line ({}), the {}% roll said no", emotion, tier == 3 ? "strong" : tier == 2 ? "medium" : "mild", chance);

@@ -5,7 +5,7 @@ of you listening, and a close-up of you. The same in every preset (the presets o
 which angle of you a listening reaction uses). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.8 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.8.9 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -24,7 +24,9 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    (over 10 s), once the push-in is done, one cut to a medium or three-quarter shot of them.
    Never a reaction, and it doesn't count towards one.
 3. **Wait** up to 0.8 s for the line's subtitle and your face's expression to be set.
-4. (Extreme close-ups are never cut away from: the camera stays on them.)
+4. (Extreme close-ups are never cut away from during their line; each holds its own line
+   only, 0.8.9: the next line goes to a regular close-up if it's an emotion line too,
+   otherwise back to their usual angle. Never two in a row.)
 5. **Time on them.** Their talking adds up while the camera stays on them without showing
    you. Your own turns, and every reaction, start it again; a reaction still due when your
    turn comes is dropped (0.8.7).

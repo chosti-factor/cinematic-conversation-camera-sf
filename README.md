@@ -69,7 +69,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
 - **Emotion close-ups:** lines the game tags with an expression push in to a close-up of
-  the speaker, 40% of them extreme close-ups. The expressions come in three tiers with
+  the speaker, 40% of them extreme close-ups (each for its own line only). The expressions come in three tiers with
   their own chances: mild (Amused, Confident, Thinking...) 30%, medium (Concerned, Serious,
   Smirk...) 50%, strong (Angry, Afraid, Shocked, Somber...) always; Neutral and Friendly
   never (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`). About one line in five. CCC does this with lines Skyrim's

@@ -120,16 +120,23 @@ Notes:
   tally); medium, 50% (Concerned, Serious, Smirk, Happy, Confused, Puzzled, Apologetic,
   Awed: about 14%); strong, 100% (the rest but Neutral and Friendly: about 5%). About 21%
   of all lines get an emotion close-up, most of them on lines with real feeling.
-  First test (two conversations with Sarah): 9 of 26 tagged lines got one (35%); of the 17
-  that didn't, 10 were mild (Confident 7 times) and 7 medium (Happy, Apologetic, Smirk).
-- 0.8.7: no change to the tiers.
+  First test (0.8.6, two conversations with Sarah): 9 close-up cuts; of the 17 tagged lines
+  that didn't get one, 10 were mild (Confident 7 times) and 7 medium (Happy, Apologetic,
+  Smirk). (That count missed lines that carried on a close-up already on screen.)
+- 0.8.7 test (Sarah again, 34 lines): 26 tagged, 16 on an emotion close-up (47% of her
+  lines: strong 6 of 6, medium 6 of 8, mild 4 of 11), in 9 close-up shots, 4 of them
+  extreme. Close-ups of her were 38% of the time on screen (extreme ones 18%, 13 s each on
+  average). Sarah's lines are more often tagged than the tally's average (76% against 52%,
+  strong 18% against 5%).
+- 0.8.9: an extreme close-up holds its own line only; never two in a row. No change to the
+  tiers.
 
 ## Your character's face
 
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.8.7 (2026-11-15).
+Last updated: 0.8.9 (2026-11-15).
 
 ### Listening: your face's answer to the NPC's line
 

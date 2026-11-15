@@ -11,6 +11,13 @@ test build; "diagnostic" items only add information to the log for testing.
   line came out "to you" (she was facing you), and filming waited for Sarah's answer. A
   scene's opening line now goes to the nearest other person in the same scene.
 
+### Changed
+- An extreme close-up holds its own line only (0.8.7 test: 4 of them ran 13 s on average,
+  through the emotion lines after them, 18% of the time on screen). Their next line goes to
+  a regular close-up if it's an emotion line too, otherwise back to their usual angle (or a
+  new one); never two extreme close-ups in a row. Coming back from a reaction to an extreme
+  close-up is a regular one.
+
 ## 0.8.8 - 2026-11-15
 
 ### Fixed

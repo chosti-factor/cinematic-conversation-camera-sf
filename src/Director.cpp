@@ -72,6 +72,7 @@ namespace CCC::Director
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
+			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
 			int                       npcSerial{ 0 };           // the last line counter seen (0.8.3)
 			bool                      inReaction{ false };      // a reaction shot is on (0.8.6: an insert)
 			std::optional<ShotType>   reactionReturn;           // the speaker's shot to go back to after it
@@ -596,6 +597,7 @@ namespace CCC::Director
 		{
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
+			g.extremeLineOver = false;
 			g.current = a_type;
 			++g.cuts;
 			g.why = a_why;
@@ -747,6 +749,7 @@ namespace CCC::Director
 		g.loggedEmpty = false;
 		g.intensePending = false;
 		g.intenseSetup.reset();
+		g.extremeLineOver = false;
 		g.inReaction = false;
 		g.reactionReturn.reset();
 		g.reactionReturnSetup.reset();
@@ -797,6 +800,11 @@ namespace CCC::Director
 		if (npcStarted) {
 			g.intensePending = a_frame.intenseLine && s.emotionCloseUps;
 			g.intenseShot.reset();
+			// 0.8.7 test: extreme close-ups ran 13 s on average, through the emotion lines after
+			// them. One holds its own line only (0.8.9).
+			if (g.current && *g.current == ShotType::kExtremeClose && g.currentNpcSide) {
+				g.extremeLineOver = true;
+			}
 		}
 		if (!a_frame.npcTalking) {
 			g.intensePending = false;
@@ -871,7 +879,10 @@ namespace CCC::Director
 			}
 			if (g.inReaction && a_frame.npcTurn) {
 				g.inReaction = false;
-				const auto shot = g.reactionReturn;
+				auto shot = g.reactionReturn;
+				if (shot && *shot == ShotType::kExtremeClose) {
+					shot = ShotType::kCloseUp;  // an extreme close-up holds one line only (0.8.9)
+				}
 				const bool close = shot && (*shot == ShotType::kCloseUp || *shot == ShotType::kExtremeClose);
 				if (shot && g.current && !g.currentNpcSide && (Usable(*shot, a_frame) || (close && Placeable(*shot, a_frame)))) {
 					Cut(*shot, a_frame, a_now, "back from the reaction", false);
@@ -940,6 +951,33 @@ namespace CCC::Director
 					g.intenseShot = shot;
 				}
 				g.intensePending = false;
+			} else if (g.extremeLineOver && a_frame.npcTurn && g.current && *g.current == ShotType::kExtremeClose) {
+				// Their next line after an extreme close-up (0.8.9): a regular close-up if it's an
+				// emotion line too, otherwise back to their usual angle (or a new one). Not before
+				// fShortestHold on screen.
+				if (held >= s.shortestHold) {
+					std::optional<ShotType> shot;
+					const char*             why = "after the extreme close-up";
+					if (g.intensePending && Placeable(ShotType::kCloseUp, a_frame)) {
+						shot = ShotType::kCloseUp;
+						why = "intense line, after the extreme close-up";
+					} else if (side.shot && *side.shot != ShotType::kCloseUp && *side.shot != ShotType::kExtremeClose && Usable(*side.shot, a_frame)) {
+						shot = side.shot;
+					} else {
+						shot = Pick(a_frame);
+					}
+					if (shot && shot != g.current) {
+						const bool intense = *shot == ShotType::kCloseUp && g.intensePending;
+						Cut(*shot, a_frame, a_now, why, !intense && shot != side.shot);
+						if (intense) {
+							g.intenseSetup = IntenseSetup(*shot);
+							NoteEmotionCut(*shot);
+							g.intenseShot = shot;
+						}
+					}
+					g.extremeLineOver = false;
+					g.intensePending = false;
+				}
 			} else if (g.intensePending && alreadyClose) {
 				g.intensePending = false;
 			} else if (side.changeDue && lineStarted && held >= s.shortestHold) {
