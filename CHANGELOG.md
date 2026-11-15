@@ -25,9 +25,9 @@ test build; "diagnostic" items only add information to the log for testing.
   on you from its start to its end, and again after every 7 s in a long speech. Short
   exchanges never get one. The cuts fall at the edges of their lines, never in the middle.
   The sentence count, `iReactionSentencesPlayer`, `fReactionSecondsPlayer` and
-  `fReactionMinSecondsPlayer` are gone. A regular emotion close-up line can still take
-  one: their close-up first for 2 s, then you to the end of the line (no cut back to them
-  mid-line any more); never an extreme close-up.
+  `fReactionMinSecondsPlayer` are gone. Their emotion close-ups are part of the stretch:
+  when the 7 s are reached during a regular one, the camera cuts to you there, to the end
+  of the line (no cut back to them mid-line any more); never during an extreme one.
   `iReactionChancePlayer` is now the chance once due (100). New:
   `fReactionLineMinSecondsPlayer`, `fReactionLineMaxSecondsPlayer`.
 - The listen prompt's fonts are assigned rather than learned: the words in the bold main

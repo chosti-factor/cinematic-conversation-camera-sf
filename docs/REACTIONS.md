@@ -20,17 +20,18 @@ stretches, cutting only at the edges of their lines.
    is held on a close-up for the whole line (`bPersuasionBeatNpc`). It never takes a
    reaction, nor counts towards one.
 3. **Wait** up to 0.8 s for the line's subtitle and your face's expression to be set.
-4. (Extreme close-up lines are never reactions: the camera stays on them.)
+4. (Extreme close-ups are never cut away from: the camera stays on them.)
 5. **Time on them.** Their talking adds up while the camera stays on them without showing
    you. Your own turns, and every reaction, start it again.
 6. **A reaction due?** When that time reaches `fReactionAfterSecondsPlayer` (7 s), a
    reaction is due, `iReactionChancePlayer` (100%) of the time; a no waits another stretch.
 7. **Taken by the next line that suits it:** one of theirs that starts after it's due and
    lasts `fReactionLineMinSecondsPlayer` to `fReactionLineMaxSecondsPlayer` (2.5 to 7 s,
-   guessed from its subtitle at about 14 characters a second), not a persuasion answer. A
-   regular emotion close-up line can take it: their close-up first, for its minimum time on
-   screen (`fShortestHold`, 2 s), then you to the end of the line (2.5 to 7 s of it); never
-   an extreme close-up. The line is shown on you from its start to its end, so the cuts
+   guessed from its subtitle at about 14 characters a second), not a persuasion answer.
+   Their emotion close-ups are part of the stretch: when the time on them reaches 7 s
+   during a regular one, the camera cuts to you there, to the end of the line (if 2.5 to
+   7 s of it is left); never during an extreme one. A reaction already due when an emotion
+   line starts waits for the next line, so the close-up isn't cut away from at once. The line is shown on you from its start to its end, so the cuts
    fall at the edges of their lines, never in the middle.
    - Your face shows an expression on that line: `iCloseUpChancePlayer` (50%) a close-up of
      you, pushing in (`iExtremeCloseUpChancePlayer`, 40%, an extreme one).
@@ -73,5 +74,5 @@ Nothing about how often. They change what you see:
 | Length on you | The whole line | The whole line |
 | Emotion close-ups | Lines the writers marked at full intensity (a few percent) | Lines with an expression other than Neutral or Friendly, half the time (about a quarter of lines) |
 | Extreme close-ups | 1 in 3 | 40% |
-| Reaction during an emotion close-up | Never: it waits for the next line | After a regular close-up's 2 s, to the end of the line; never on an extreme one |
+| Reaction during an emotion close-up | Never: it waits for the next line | When the 7 s are reached during a regular one, to the end of the line; never an extreme one |
 | Close-ups of you | No (your listening face is animated, but not cut to) | Half the reactions, when your face shows an expression |

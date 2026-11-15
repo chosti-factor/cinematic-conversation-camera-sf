@@ -1939,10 +1939,11 @@ namespace CCC
 						// 0.8.5: their talking adds to the time the camera has been on them without a
 						// cut to you; a reaction (it lasts the line) ends here, with the line.
 						const float lastedNow = std::chrono::duration<float>(now - g_state.lineStart).count();
-						if (g_state.reactionActive) {
+						const bool shown = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
+						if (shown) {
 							g_state.monoSeconds = 0.0f;
 						} else if (lastedNow > 0.0f && lastedNow < 60.0f) {
-							g_state.monoSeconds += lastedNow;
+							g_state.monoSeconds += lastedNow;  // (a reaction planned for later in the line that never came counts as time on them)
 						}
 						g_state.reactionActive = false;
 						g_state.reactionCloseUp = false;
@@ -2018,40 +2019,53 @@ namespace CCC
 							// test: some reactions were too abrupt). Then the time starts again.
 							const float lineSeconds = static_cast<float>(text.size()) / 14.0f;
 							const float onThem = g_state.monoSeconds;
-							if (!g_state.reactionOwed && onThem >= s.reactionAfterSeconds) {
-								g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
-								if (!g_state.reactionOwed) {
-									g_state.monoSeconds = 0.0f;
-								}
-								if (s.debugLog) {
-									REX::INFO("Reaction: {:.1f} s on them without a cut to you; {}", onThem,
-										g_state.reactionOwed ? "one is due" : "the chance roll said no, another stretch first");
-								}
-							}
-							// An emotion close-up line (not an extreme one) can take it too: their close-up
-							// first, for its minimum time on screen (fShortestHold), then you to the end
-							// of the line; the time on you is what has to suit.
-							const float onYou = g_state.lineIntense ? lineSeconds - s.shortestHold : lineSeconds;
-							const bool  suits = onYou >= s.reactionLineMin && onYou <= s.reactionLineMax && !(g_state.lineIntense && g_state.lineExtreme);
-							if (g_state.reactionOwed && suits) {
-								g_state.reactionOwed = false;
-								g_state.monoSeconds = 0.0f;
+							const auto  secs = [](float a_seconds) {
+								return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
+							};
+							const auto take = [&](bool a_intoCloseUp, float a_from) {
 								const bool closeUp = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) &&
 								                     std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
-								REX::INFO("Reaction shot: '{}' ({:.1f} s) shown on you {}{}", text.substr(0, 60), lineSeconds,
-									closeUp ? "close (your expression)" : "listening", g_state.lineIntense ? ", after their emotion close-up" : "");
+								REX::INFO("Reaction shot: '{}' ({:.1f} s) shown on you {}{}", text.substr(0, 60), lineSeconds, closeUp ? "close (your expression)" : "listening",
+									a_intoCloseUp ? std::format(", {:.1f} s into their emotion close-up", a_from) : std::string{});
+								g_state.reactionOwed = false;
 								g_state.reactionActive = true;
 								g_state.reactionCloseUp = closeUp;
-								g_state.reactionFrom = g_state.lineIntense ?
-								                           (std::max)(now, g_state.lineStart + std::chrono::duration_cast<std::chrono::steady_clock::duration>(
-								                                                                  std::chrono::duration<float>(s.shortestHold))) :
-								                           now;
+								g_state.reactionFrom = g_state.lineStart + secs(a_from);
 								g_state.reactionOnAt = {};
-								g_state.reactionHold = -1.0f;  // the whole line
+								g_state.reactionHold = -1.0f;  // to the end of the line
 								g_reactionStarted.store(true, std::memory_order_release);
-							} else if (g_state.reactionOwed && s.debugLog) {
-								REX::INFO("Reaction: due, but this line doesn't suit it ({:.1f} s{}); waiting for the next", lineSeconds,
-									g_state.lineIntense && g_state.lineExtreme ? ", an extreme close-up" : g_state.lineIntense ? ", an emotion close-up, too short or long after its first 2 s" : "");
+							};
+							if (g_state.lineIntense) {
+								// An emotion close-up is part of the stretch on them (0.8.5): the
+								// reaction cuts into a regular one when the time on them reaches
+								// fReactionAfterSecondsPlayer during it, and stays to the end of the line
+								// (the rest has to suit). Never an extreme close-up; and one that was
+								// already due before the line waits for the next line, so the close-up
+								// isn't cut away from at once.
+								if (!g_state.lineExtreme && !g_state.reactionOwed && onThem < s.reactionAfterSeconds) {
+									const float crossAt = s.reactionAfterSeconds - onThem;
+									const float onYou = lineSeconds - crossAt;
+									if (onYou >= s.reactionLineMin && onYou <= s.reactionLineMax &&
+										std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
+										take(true, crossAt);
+									}
+								}
+							} else {
+								if (!g_state.reactionOwed && onThem >= s.reactionAfterSeconds) {
+									g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
+									if (!g_state.reactionOwed) {
+										g_state.monoSeconds = 0.0f;
+									}
+									if (s.debugLog) {
+										REX::INFO("Reaction: {:.1f} s on them without a cut to you; {}", onThem,
+											g_state.reactionOwed ? "one is due" : "the chance roll said no, another stretch first");
+									}
+								}
+								if (g_state.reactionOwed && lineSeconds >= s.reactionLineMin && lineSeconds <= s.reactionLineMax) {
+									take(false, 0.0f);
+								} else if (g_state.reactionOwed && s.debugLog) {
+									REX::INFO("Reaction: due, but this line doesn't suit it ({:.1f} s); waiting for the next", lineSeconds);
+								}
 							}
 						}
 					}
