@@ -33,7 +33,10 @@ namespace CCC
 		bool     playerFace{ true };      // your character's expressions during conversations
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look
 		int      signatureChance{ 30 };     // % of neutral moments your background's expression shows
-		int      playerCloseUpChance{ 50 };  // % of lines your face answers that become a close-up of you
+		int      playerCloseUpChance{ 50 };  // (until 0.8.5) % of reactions that are a close-up of you
+		int      closeUpChanceMildPlayer{ 30 };    // 0.8.6: by your expression's tier (the Npc tier lists)
+		int      closeUpChanceMediumPlayer{ 50 };
+		int      closeUpChanceStrongPlayer{ 100 };
 		int      closeUpDistance{ 115 };   // close-ups stand this % of CCC's distance back
 		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
 		bool     letterbox{ true };     // black bars while the camera films a conversation

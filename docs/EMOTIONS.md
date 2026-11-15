@@ -227,9 +227,11 @@ A reaction shot on a line your face has no answer for (no expression on it) give
 a listening look for it: your background's expression, or Concentrating. The shot message
 names your expression.
 
-### Your emotion close-ups (`iCloseUpChancePlayer`, 50%)
+### Your emotion close-ups (by tier, 0.8.6)
 
-A kind of reaction shot (0.8.3): when a line is shown on you as a reaction and your face
-answers it with an expression, this chance it's a close-up of you, pushing in, rather than
-the preset's angle of you listening; `iExtremeCloseUpChancePlayer` (40%) of those are extreme
+A kind of reaction shot: when a line is shown on you as a reaction and your face answers it
+with an expression, a close-up of you, pushing in, rather than the preset's angle of you
+listening, by the expression's tier (the same lists as the NPCs' emotion close-ups): mild
+30%, medium 50%, strong always (`iCloseUpChanceMildPlayer`, `iCloseUpChanceMediumPlayer`,
+`iCloseUpChanceStrongPlayer`); `iExtremeCloseUpChancePlayer` (40%) of those are extreme
 close-ups. How often reactions come: docs/REACTIONS.md.

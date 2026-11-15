@@ -167,6 +167,9 @@ namespace CCC
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", ReadInt(a_path, L"Face", L"bPlayerFace", a_s.playerFace ? 1 : 0)) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", ReadInt(a_path, L"Face", L"iQuestionChance", a_s.questionFaceChance)), 0, 100);
 			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChancePlayer", ReadInt(a_path, L"Face", L"iSignatureChance", a_s.signatureChance)), 0, 100);
+			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
+			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
+			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
 			a_s.playerCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChancePlayer", ReadInt(a_path, L"Face", L"iPlayerCloseUpChance", a_s.playerCloseUpChance)), 0, 100);
 			a_s.closeUpDistance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpDistance", a_s.closeUpDistance), 80, 150);
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;

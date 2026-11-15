@@ -949,7 +949,7 @@ namespace CCC
 		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
 		// Which emotion close-up tier a line's expression is in (0.8.6): 0 none, 1 mild, 2 medium,
 		// 3 strong; with the chance for it.
-		int CloseUpTier(std::string_view a_emotion, int* a_chance = nullptr)
+		int CloseUpTier(std::string_view a_emotion, int* a_chance = nullptr, bool a_player = false)
 		{
 			if (a_emotion.empty() || a_emotion == "none") {
 				return 0;
@@ -980,8 +980,10 @@ namespace CCC
 				return false;
 			};
 			const auto& s = Settings::Get();
-			const std::array<std::pair<const std::string*, int>, 3> tiers{ std::pair{ &s.closeUpEmotionsStrong, s.closeUpChanceStrong },
-				std::pair{ &s.closeUpEmotionsMedium, s.closeUpChanceMedium }, std::pair{ &s.closeUpEmotionsMild, s.closeUpChanceMild } };
+			const std::array<std::pair<const std::string*, int>, 3> tiers{
+				std::pair{ &s.closeUpEmotionsStrong, a_player ? s.closeUpChanceStrongPlayer : s.closeUpChanceStrong },
+				std::pair{ &s.closeUpEmotionsMedium, a_player ? s.closeUpChanceMediumPlayer : s.closeUpChanceMedium },
+				std::pair{ &s.closeUpEmotionsMild, a_player ? s.closeUpChanceMildPlayer : s.closeUpChanceMild } };
 			for (int i = 0; i < 3; ++i) {
 				if (inList(*tiers[i].first)) {
 					if (a_chance) {
@@ -2045,9 +2047,15 @@ namespace CCC
 								return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
 							};
 							const auto take = [&](bool a_intoCloseUp, float a_from) {
-								const bool closeUp = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) &&
-								                     std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.playerCloseUpChance;
-								REX::INFO("Reaction shot: '{}' ({:.1f} s) shown on you {}{}", text.substr(0, 60), lineSeconds, closeUp ? "close (your expression)" : "listening",
+								// 0.8.6: a close-up of you by your expression's tier (the same lists as theirs):
+								// iCloseUpChanceMildPlayer 30%, ...Medium 50%, ...Strong 100%.
+								const std::string face = s.playerFace && g_playerFaceShown.load(std::memory_order_acquire) ? Face::Shown() : std::string{};
+								int               faceChance = 0;
+								const int         faceTier = face.empty() ? 0 : CloseUpTier(face, &faceChance, true);
+								const bool        closeUp = faceTier > 0 && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < faceChance;
+								REX::INFO("Reaction shot: '{}' ({:.1f} s) shown on you {}{}", text.substr(0, 60), lineSeconds,
+									closeUp ? std::format("close (your {} expression, {})", faceTier == 3 ? "strong" : faceTier == 2 ? "medium" : "mild", face) :
+									          face.empty() ? std::string{ "listening" } : std::format("listening ({}, the {}% roll said no or no tier)", face, faceChance),
 									a_intoCloseUp ? std::format(", {:.1f} s into their emotion close-up", a_from) : std::string{});
 								g_state.reactionOwed = false;
 								g_state.reactionActive = true;

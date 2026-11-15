@@ -83,7 +83,7 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
 - **The same in every preset:** emotion close-ups on lines with an expression (every one but
   Neutral and Friendly, by tier: mild 30%, medium 50%, strong always: `bEmotionCloseUpsNpc`),
   reaction shots of you listening in long stretches (`fReactionAfterSecondsPlayer`),
-  close-ups of your expressions (`iCloseUpChancePlayer`), holding on the answer after a
+  close-ups of your expressions (`iCloseUpChance...Player`, by tier), holding on the answer after a
   persuasion (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people
   and merchants.
 - **Zooms are pushes.** Starfield's lens doesn't change during a shot, so a zoom in is done

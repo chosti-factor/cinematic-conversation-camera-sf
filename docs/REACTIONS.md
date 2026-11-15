@@ -38,8 +38,10 @@ stretches, cutting only at the edges of their lines.
    first 2 s (`fShortestHold`), or were already reached when it started, the reaction waits
    for the next line, so the close-up isn't cut away from at once. The line is shown on you from its start to its end, so the cuts
    fall at the edges of their lines, never in the middle.
-   - Your face shows an expression on that line: `iCloseUpChancePlayer` (50%) a close-up of
-     you, pushing in (`iExtremeCloseUpChancePlayer`, 40%, an extreme one).
+   - Your face shows an expression on that line: a close-up of you, pushing in, by the
+     expression's tier (the same lists as theirs): mild 30%, medium 50%, strong always
+     (`iCloseUpChanceMildPlayer`, `...MediumPlayer`, `...StrongPlayer`);
+     `iExtremeCloseUpChancePlayer` (40%) of those an extreme one.
    - Otherwise, you listening, in the preset's angle of you: your regular shots (shoulder,
      three-quarter, medium, close, long...), never the room, the two-shot or the profile of
      you both.

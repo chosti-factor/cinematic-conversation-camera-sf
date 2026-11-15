@@ -21,6 +21,10 @@ test build; "diagnostic" items only add information to the log for testing.
   `iCloseUpChanceMildNpc`, and the same for Medium and Strong. About one NPC line in five
   (was one in four at 50% for all), with the strong ones always. `sCloseUpEmotionsNpc` and
   `iCloseUpChanceNpc` are gone.
+- Close-ups of you in a reaction go by your expression's tier, the same lists as theirs:
+  mild 30%, medium 50%, strong 100% (`iCloseUpChanceMildPlayer`, `...MediumPlayer`,
+  `...StrongPlayer`; was 50% for any expression, `iCloseUpChancePlayer`, now gone). About a
+  quarter of reactions are close-ups of you (was about 40%), and every strong reaction is.
 - Filming people talking starts on its own as soon as a conversation scene begins near
   you, even while you're walking (scenes are few, and moving ends it; 0.8.5 test): no more
   standing still first (`fAutoListenAfter` is gone). It gives you 0.75 s to stop walking

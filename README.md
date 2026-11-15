@@ -40,7 +40,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   its end (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the 7 s, and
   a regular one can be cut away from when they're reached. With seated people and merchants
   too. A reaction
-  is you listening, or a close-up of your expression (`iCloseUpChancePlayer`). Details:
+  is you listening, or a close-up of your expression, by its tier like theirs: mild 30%,
+  medium 50%, strong always (`iCloseUpChance...Player`). Details:
   [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
