@@ -14,7 +14,8 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change, and
   docs/EMOTIONS.md (the NPC expressions and your face's tables) with every build.
 - A pure SFSE DLL, no .esp. Minor versions mark milestones (0.6 obstacle detection, 0.7 the
-  interface); 1.0 is the public beta.
+  interface, 0.8 room shots, the lens and filming people talking, 0.9 polish and
+  optimization); 1.0 is the public beta.
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 

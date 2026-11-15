@@ -4093,9 +4093,13 @@ namespace CCC
 			RE::NiPoint3                          playerAt{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
-			std::chrono::steady_clock::time_point promptAt{};
-			std::uint32_t                         promptedPair{ 0 };
+			RE::NiPoint3                          stillAt{};       // where you've stood still since stillSince
+			std::chrono::steady_clock::time_point stillSince{};
+			std::chrono::steady_clock::time_point autoBlockedUntil{};  // you stopped it: no auto start before
+			bool                                  autoStarted{ false };
 		} g_filmMain;
+
+		std::atomic<std::uint64_t> g_padUsedAt{ 0 };  // GetTickCount64 of the last controller input
 
 		// The controller's listen button (0.8.1): read straight from XInput (Xbox controllers,
 		// and most others through Steam Input), loaded when first needed. Held for fListenHold
@@ -4124,13 +4128,34 @@ namespace CCC
 			if (!getState || a_mask == 0) {
 				return false;
 			}
+			bool held = false;
 			for (DWORD pad = 0; pad < 4; ++pad) {
 				Pad state{};
-				if (getState(pad, &state) == ERROR_SUCCESS && (state.buttons & a_mask) == a_mask) {
-					return true;
+				if (getState(pad, &state) != ERROR_SUCCESS) {
+					continue;
+				}
+				// Any real input (not stick noise) marks the controller as in use, for the prompt.
+				if (state.buttons != 0 || state.leftTrigger > 30 || state.rightTrigger > 30 || std::abs(state.lx) > 9000 || std::abs(state.ly) > 9000 ||
+					std::abs(state.rx) > 9000 || std::abs(state.ry) > 9000) {
+					g_padUsedAt.store(::GetTickCount64(), std::memory_order_relaxed);
+				}
+				if ((state.buttons & a_mask) == a_mask) {
+					held = true;
 				}
 			}
-			return false;
+			return held;
+		}
+
+		// The controller was used more recently than the keyboard and mouse.
+		bool UsingController()
+		{
+			LASTINPUTINFO info{ sizeof(LASTINPUTINFO), 0 };
+			const auto    pad = g_padUsedAt.load(std::memory_order_relaxed);
+			if (pad == 0 || !::GetLastInputInfo(&info)) {
+				return false;
+			}
+			// GetLastInputInfo's tick is 32-bit: compare within the last 49 days' wrap.
+			return static_cast<std::uint32_t>(pad) - info.dwTime < 0x80000000u && static_cast<std::uint32_t>(pad) != info.dwTime;
 		}
 
 		bool GameHasFocus()
@@ -4198,6 +4223,12 @@ namespace CCC
 		{
 			const auto& s = Settings::Get();
 			auto*       player = RE::PlayerCharacter::GetSingleton();
+			std::string prompt;  // the on-screen prompt this tick ("" = none)
+			struct PromptOut
+			{
+				std::string& text;
+				~PromptOut() { Hud::SetPrompt(text); }
+			} promptOut{ prompt };
 			if (!s.filmConversations || !player || g_state.active) {
 				StopFilming(g_state.active ? "your own conversation" : "off");
 				return;
@@ -4225,6 +4256,30 @@ namespace CCC
 				std::scoped_lock lock{ g_film.lock };
 				filming = g_film.active;
 			}
+			// A menu over the game (pause, inventory, map, scanner...): no prompt, and the time
+			// standing still starts again when it closes.
+			bool inMenu = false;
+			if (auto* ui = RE::UI::GetSingleton()) {
+				static const std::array<RE::BSFixedString, 14> kMenus{ RE::BSFixedString{ "PauseMenu" }, RE::BSFixedString{ "DataMenu" },
+					RE::BSFixedString{ "InventoryMenu" }, RE::BSFixedString{ "ContainerMenu" }, RE::BSFixedString{ "BarterMenu" },
+					RE::BSFixedString{ "GalaxyStarMapMenu" }, RE::BSFixedString{ "PhotoModeMenu" }, RE::BSFixedString{ "Console" },
+					RE::BSFixedString{ "LoadingMenu" }, RE::BSFixedString{ "WorkshopMenu" }, RE::BSFixedString{ "SkillsMenu" },
+					RE::BSFixedString{ "StatusMenu" }, RE::BSFixedString{ "ScopeMenu" }, RE::BSFixedString{ "MonocleMenu" } };
+				for (const auto& menu : kMenus) {
+					if (ui->IsMenuOpen(menu)) {
+						inMenu = true;
+						break;
+					}
+				}
+			}
+			// Standing still, and sitting (your head well below standing height).
+			if (inMenu || FlatDistance(playerFeet, g_filmMain.stillAt) > 0.2f || g_filmMain.stillSince == std::chrono::steady_clock::time_point{}) {
+				g_filmMain.stillAt = playerFeet;
+				g_filmMain.stillSince = a_now;
+			}
+			const auto playerHead = Camera::HeadPosition(player);
+			const bool sitting = playerHead && playerHead->z - playerFeet.z < s.seatedHeadHeight;
+			const auto stillFor = std::chrono::duration<float>(a_now - g_filmMain.stillSince).count();
 			// The listen key, or the controller's listen button held for fListenHold seconds.
 			const bool focus = GameHasFocus();
 			const bool keyDown = s.listenKey > 0 && focus && (::GetAsyncKeyState(s.listenKey) & 0x8000) != 0;
@@ -4241,15 +4296,16 @@ namespace CCC
 				pressed = true;
 			}
 			if (filming) {
-				const auto feet = player->GetPosition();
+				const auto  feet = player->GetPosition();
 				const float moved = FlatDistance(feet, g_filmMain.playerAt);
 				if (pressed) {
 					StopFilming("listen key");
+					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
 				} else if (moved > 0.5f) {
 					StopFilming("you moved");
 				} else if (speaker == 0) {
 					StopFilming("they've stopped talking");
-				} else if (speaker != 0) {
+				} else {
 					std::scoped_lock lock{ g_film.lock };
 					if (latest != g_filmMain.lastLine || speaker != g_filmMain.lastSpeaker) {
 						g_filmMain.lastLine = latest;
@@ -4261,10 +4317,14 @@ namespace CCC
 				}
 				return;
 			}
-			if (speaker == 0) {
+			if (speaker == 0 || inMenu) {
 				return;
 			}
-			if (pressed) {
+			// Starting on its own (bAutoListen): sitting for 1.5 s, or standing still for
+			// fAutoListenAfter seconds, near a conversation; not for a minute after you stopped
+			// one with the listen key.
+			const bool autoStart = s.autoListen && a_now >= g_filmMain.autoBlockedUntil && stillFor >= (sitting ? 1.5f : s.autoListenAfter);
+			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
 				g_film.speaker = speaker;
@@ -4274,19 +4334,17 @@ namespace CCC
 				g_filmMain.playerAt = player->GetPosition();
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
+				g_filmMain.autoStarted = !pressed;
 				g_lensWanted.store(s.conversationLens >= 10.0f ? s.conversationLens : 30.0f, std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
-				REX::INFO("Filming people talking: {} and {}", TalkerName(speaker), TalkerName(listener));
+				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
+					pressed ? "" : sitting ? " (on its own: you're sitting)" : " (on its own: you've stood still nearby)");
 				return;
 			}
-			// Offer it, once per pair a minute.
-			const std::uint32_t pair = speaker ^ (listener << 1);
-			if (s.listenKey > 0 && (pair != g_filmMain.promptedPair || a_now - g_filmMain.promptAt > 60s)) {
-				g_filmMain.promptedPair = pair;
-				g_filmMain.promptAt = a_now;
-				const std::string how = s.listenButton > 0 ? std::format("press {} or hold {}", KeyName(s.listenKey), ButtonName(s.listenButton)) :
-				                                                std::format("press {}", KeyName(s.listenKey));
-				ShowHudMessage(std::format("{} and {} are talking: {} to listen", TalkerName(speaker), TalkerName(listener), how));
+			// The prompt (bListenPrompt), while there's a conversation to listen in on.
+			if (s.listenPrompt && (s.listenKey > 0 || s.listenButton > 0)) {
+				const bool pad = s.listenButton > 0 && (s.listenKey <= 0 || UsingController());
+				prompt = std::format("Listen in on nearby conversation. {} {}", pad ? "Hold" : "Press", pad ? ButtonName(s.listenButton) : KeyName(s.listenKey));
 			}
 		}
 

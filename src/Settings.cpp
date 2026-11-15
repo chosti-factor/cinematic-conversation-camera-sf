@@ -153,6 +153,9 @@ namespace CCC
 			a_s.listenRange = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);
 			a_s.listenButton = std::clamp(ReadInt(a_path, L"Overhear", L"iListenButton", a_s.listenButton), 0, 0xFFFF);
 			a_s.listenHold = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenHold", a_s.listenHold), 0.2f, 2.0f);
+			a_s.listenPrompt = ReadInt(a_path, L"Overhear", L"bListenPrompt", a_s.listenPrompt ? 1 : 0) != 0;
+			a_s.autoListen = ReadInt(a_path, L"Overhear", L"bAutoListen", a_s.autoListen ? 1 : 0) != 0;
+			a_s.autoListenAfter = std::clamp(ReadFloat(a_path, L"Overhear", L"fAutoListenAfter", a_s.autoListenAfter), 1.0f, 30.0f);
 			a_s.roomShotMinRoom = std::clamp(ReadInt(a_path, L"Director", L"iRoomShotMinRoom", a_s.roomShotMinRoom), 30, 100);
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);

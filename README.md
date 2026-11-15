@@ -89,8 +89,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   moments. Close-ups of you when your face shows something (`[Face]`; tables in
   [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
-  included; a notification offers to film them, and the listen key (N) starts and stops it
-  (`[Overhear]`; first step, in testing).
+  included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
+  hold R3 on a controller) and/or starting on its own when you sit down or stand still near
+  them (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in testing).
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
 - **Testing messages:** each line's expression, your face's answer and the shot used, with
@@ -131,14 +132,13 @@ All six use the same 45 degree conversation lens (`fConversationLens`).
 
 - In testing (0.8): the wider lens, room shots, filming people talking near you, your
   character's face, reaction shots and holding on the answer after a persuasion.
-- Filming people talking near you, the rest: groups of three or more with occasional group
-  shots; the letterbox and obstacle checks while filming them; starting it automatically
-  while you sit (at a bar, on a bench) and, optionally, after standing still near them
-  (the controller button came in 0.8.1). Never in combat; moving or any input hands the
-  camera back.
+- 0.8.x, filming people talking near you, the rest: groups of three or more with
+  occasional group shots; the letterbox and obstacle checks while filming them; never in
+  combat. (Done: the listen key and controller button, the on-screen prompt, starting on
+  its own when you sit or stand still.)
 - Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
   Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
-- Polish:
+- 0.9.x, polish and optimization:
   - **Distance, lens, or both:** how the shots get CCC's framing through Starfield's
     narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
     Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
@@ -158,7 +158,7 @@ All six use the same 45 degree conversation lens (`fConversationLens`).
     MAST, every check said clear).
   - Smoother conversation starts; quest scenes recognised by their quest rather than the
     scene's name; the default amount of camera sway (`iCameraSway`).
-- Public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
+- 1.0, public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
   replacer, a subtitle mod) and listing compatibility.
 
 ## Requirements

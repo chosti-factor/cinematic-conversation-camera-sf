@@ -993,6 +993,98 @@ namespace CCC::Hud
 			SafeSet(&field, "alpha", &va);
 			SafeSet(&field, "visible", &vv);
 		}
+
+		// ---- The listen prompt (0.8.2) -----------------------------------------------------
+		// "Listen in on nearby conversation. Press N": on screen below the crosshair, where
+		// the game's own prompts sit, in the notifications' look (not a testing message).
+		constexpr const char* kPromptName = "cccPrompt";
+
+		struct PromptState
+		{
+			std::string text;     // wanted on screen ("" = none)
+			std::string shown;    // in the field now
+			bool        created{ false };
+			float       alpha{ 0.0f };
+		} g_prompt;
+
+		void UpdatePrompt(float a_delta)
+		{
+			const bool want = !g_prompt.text.empty();
+			if (!want && !g_prompt.created) {
+				return;
+			}
+			const auto ref = OpenMovie("HUDMessagesMenu");
+			if (!ref) {
+				return;
+			}
+			Value top;
+			if (!RootObject(ref->root, top, "HUDMessagesMenu")) {
+				return;
+			}
+			Value field;
+			if (!FindChild(top, kPromptName, field)) {
+				if (!want) {
+					g_prompt.created = false;
+					return;
+				}
+				if (!SafeCreateObject(ref->root, &field, "flash.text.TextField")) {
+					return;
+				}
+				const bool  known = g_msg.look == MessageState::Look::kKnown;
+				const Value no{ false };
+				const Value name{ kPromptName };
+				const Value embed{ known ? g_msg.embed : true };
+				const Value autoSize{ "left" };
+				SafeSet(&field, "name", &name);
+				SafeSet(&field, "selectable", &no);
+				SafeSet(&field, "mouseEnabled", &no);
+				SafeSet(&field, "multiline", &no);
+				SafeSet(&field, "wordWrap", &no);
+				SafeSet(&field, "embedFonts", &embed);
+				SafeSet(&field, "autoSize", &autoSize);
+				if (known) {
+					CopyFilters(top, field);
+				}
+				if (!SafeInvoke(&top, "addChild", nullptr, &field, 1)) {
+					return;
+				}
+				g_prompt.created = true;
+				g_prompt.shown.clear();
+			}
+			if (want && g_prompt.text != g_prompt.shown) {
+				// The notifications' look when it's been learned, otherwise the one they had in
+				// the 0.7 tests (bold main font, 18, white).
+				const bool  known = g_msg.look == MessageState::Look::kKnown;
+				const Value args[4]{ Value{ known ? g_msg.font.c_str() : "$MAIN_Font_Bold" }, Value{ known ? g_msg.size : 18.0 },
+					Value{ known ? g_msg.color : 0xFFFFFFu }, Value{ known ? g_msg.bold : false } };
+				Value format;
+				if (SafeCreateObjectArgs(ref->root, &format, "flash.text.TextFormat", args, 4)) {
+					SafeSet(&field, "defaultTextFormat", &format);
+					const Value text{ g_prompt.text.c_str() };
+					SafeSet(&field, "text", &text);
+					SafeInvoke(&field, "setTextFormat", nullptr, &format, 1);
+					g_prompt.shown = g_prompt.text;
+				}
+			}
+			const float target = want ? 1.0f : 0.0f;
+			const float step = a_delta / 0.25f;
+			g_prompt.alpha = g_prompt.alpha < target ? (std::min)(target, g_prompt.alpha + step) : (std::max)(target, g_prompt.alpha - step);
+			double width = 1920.0, height = 1080.0;
+			Value  stage;
+			if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
+				width = Member(stage, "stageWidth", width);
+				height = Member(stage, "stageHeight", height);
+			}
+			const double gx = (width - Member(field, "textWidth", 400.0)) * 0.5;
+			const double gy = height * 0.62;
+			double       x = gx, y = gy;
+			LocalPoint(ref->root, top, gx, gy, x, y);
+			const Value vx{ x }, vy{ y }, va{ static_cast<double>(g_prompt.alpha) }, vv{ g_prompt.alpha > 0.001f };
+			SafeSet(&field, "x", &vx);
+			SafeSet(&field, "y", &vy);
+			SafeSet(&field, "alpha", &va);
+			SafeSet(&field, "visible", &vv);
+		}
 	}
 
 	namespace
@@ -1125,9 +1217,17 @@ namespace CCC::Hud
 		return g_persuasionOutcomeAt.load(std::memory_order_acquire);
 	}
 
+	void SetPrompt(const std::string& a_text)
+	{
+		g_prompt.text = a_text;
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
+		if (!g_broken && (!g_prompt.text.empty() || g_prompt.created) && CheckReady()) {
+			UpdatePrompt(a_delta);
+		}
 		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
 			g_msg.available = false;
 			return;

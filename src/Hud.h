@@ -27,4 +27,8 @@ namespace CCC::Hud
 	// False when it can't go there (no conversation filmed): use the game's notifications.
 	// Main thread.
 	bool ShowMessage(const std::string& a_text);
+
+	// The on-screen prompt below the crosshair ("" = none), e.g. "Listen in on nearby
+	// conversation. Press N". Main thread; drawn by Update.
+	void SetPrompt(const std::string& a_text);
 }

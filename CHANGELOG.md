@@ -6,6 +6,20 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.8.2 - unreleased
 
+### Added
+- Two ways to start filming people talking near you (`[Overhear]`):
+  - `bListenPrompt`: a prompt on screen below the crosshair, "Listen in on nearby
+    conversation. Press N" ("Hold R3" when you last used a controller), in the
+    notifications' look. It replaces the testing message that offered it.
+  - `bAutoListen`: starts on its own when you sit down near a conversation (after 1.5 s)
+    or stand still near one for `fAutoListenAfter` seconds (4). Stopping it with the
+    listen key keeps it from starting on its own for a minute.
+  Neither shows or starts while a menu is open (pause, inventory, map, scanner...).
+
+### Changed
+- The plan: filming people talking is finished in 0.8.x; 0.9.x is polish and optimization;
+  1.0 the public beta.
+
 ### Fixed
 - Room shots under a distance limit came out alike (0.8.1 test: Wide and Distant both 12 m
   back on the line outdoors, all three 9 m on the line indoors). The limit now applies to
