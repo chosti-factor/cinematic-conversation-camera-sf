@@ -114,15 +114,18 @@ four have a Starfield flavour: a 37.5 degree lens (CCC's use 45), room shots kep
 and shots from the other presets mixed in, moving; three of them mirror one of CCC's, and
 Nebula uses every shot in the library.
 
-| Preset | From | The look | Room shots go back |
-| --- | --- | --- | --- |
-| Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | (none) |
-| Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | Distant only, as far as CCC's framing wants |
-| Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | As far as CCC's framing wants (12-18 m) |
-| Stardust | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | Up to 9 m indoors, 12 m outdoors |
-| Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | Distant only, up to 9 m indoors, 12 m outdoors |
-| Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | Up to 9 m indoors, 12 m outdoors |
-| Nebula | CCC SF | Every shot in the library: the everyday ones most often, CCC's rarer angles (low, high, dirty, profiles, shoulder variants) now and then | Up to 9 m indoors, 12 m outdoors |
+| Preset | From | The look | Feels like | Room shots go back |
+| --- | --- | --- | --- | --- |
+| Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | A TV drama: classic shot / reverse shot, calm and readable | (none) |
+| Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | A psychological thriller or an interrogation scene: faces fill the screen, the camera presses in | Distant only, as far as CCC's framing wants |
+| Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants (12-18 m) |
+| Stardust | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | A sci-fi streaming series: TV coverage that opens up to the set now and then | Up to 9 m indoors, 12 m outdoors |
+| Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | An intimate character drama: close and personal, but with room to breathe | Distant only, up to 9 m indoors, 12 m outdoors |
+| Constellation | CCC SF (Room) | Room, plus close-ups and shoulders now and then (about a fifth) | A space-opera epic: big establishing frames, cutting in close for the key moments | Up to 9 m indoors, 12 m outdoors |
+| Nebula | CCC SF | Every shot in the library: the everyday ones most often, CCC's rarer angles (low, high, dirty, profiles, shoulder variants) now and then | A documentary or a music video: restless and varied, unexpected angles | Up to 9 m indoors, 12 m outdoors |
+
+For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = tripod,
+100 = fully handheld); a soap-opera feel comes closest with Standard and `iCameraSway=0`.
 
 `fConversationLens` sets one lens for every preset instead. Every preset's shots, shares and moves: [docs/PRESETS.md](docs/PRESETS.md).
 
