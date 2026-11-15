@@ -13,6 +13,15 @@ test build; "diagnostic" items only add information to the log for testing.
   view goes to third person while it films, with you hidden, and back to first person when
   it stops.
 
+### Changed
+- Two emotion lines in a row held one close-up for 17 s, the due reaction waiting at the
+  second (0.8.7 test, Sarah). An emotion line that carries on the close-up already on
+  screen (a regular one, on at least 2 s, no cut since) now takes a due reaction like any
+  line. One that brings a new close-up still waits, so it isn't cut away from at once.
+- A line guessed at 7.4 s lasted 6.0, and its split went you, then her for 2 s, then you
+  for your turn (0.8.7 test). Lines up to a second over `fReactionLineMaxSecondsPlayer`
+  (7 to 8 s) are shown on you whole; only longer ones are split.
+
 ## 0.8.7 - 2026-11-15
 
 ### Fixed

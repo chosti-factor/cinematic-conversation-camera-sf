@@ -82,6 +82,7 @@ namespace CCC
 			float                                 monoSeconds{ 0.0f };       // their talking since the camera last showed you (0.8.5)
 			int                                   npcLinesStarted{ 0 };      // their lines so far in this conversation (0.8.6)
 			bool                                  lineExtreme{ false };      // this emotion line's close-up is an extreme one (0.8.3)
+			bool                                  closeUpGoesOn{ false };    // this emotion line carries on the last line's close-up, no new cut (0.8.8)
 			const char*                           msgShot{ nullptr };        // shot messages: the last one shown
 			int                                   msgSubject{ -1 };
 			std::uint32_t                         msgCuts{ 0 };
@@ -1999,9 +2000,17 @@ namespace CCC
 						const int  tier = s.emotionCloseUps ? CloseUpTier(emotion, &chance) : 0;
 						const bool listed = tier > 0;
 						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < chance;
+						// 0.8.7 test: two emotion lines in a row held one close-up for 17 s, the due
+						// reaction waiting at the second. When the last line was a regular close-up
+						// on screen at least fShortestHold, this one carries it on with no new cut,
+						// so a due reaction can take it like any line.
+						// (monoSeconds > 0: no turn of yours or reaction since, which cut away.)
+						const bool wasCloseUp = g_state.lineIntense && !g_state.lineExtreme && g_state.monoSeconds > 0.0f &&
+						                        std::chrono::duration<float>(now - g_state.lineStart).count() >= s.shortestHold;
 						g_state.lineIntense = rolled;
 						// Extreme or not decided here (0.8.3), so a reaction knows not to interrupt it.
 						g_state.lineExtreme = rolled && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
+						g_state.closeUpGoesOn = rolled && wasCloseUp && !g_state.lineExtreme;
 						if (listed && !rolled && s.debugLog) {
 							REX::INFO("Emotion close-up: '{}' line ({}), the {}% roll said no", emotion, tier == 3 ? "strong" : tier == 2 ? "medium" : "mild", chance);
 						}
@@ -2068,7 +2077,7 @@ namespace CCC
 								g_state.reactionHold = a_hold;  // < 0: to the end of the line
 								g_reactionStarted.store(true, std::memory_order_release);
 							};
-							if (g_state.lineIntense) {
+							if (g_state.lineIntense && !g_state.closeUpGoesOn) {
 								// An emotion close-up is part of the stretch on them (0.8.5): the
 								// reaction cuts into a regular one when the time on them reaches
 								// fReactionAfterSecondsPlayer during it, and stays to the end of the line
@@ -2097,9 +2106,13 @@ namespace CCC
 											g_state.reactionOwed ? "one is due" : "the chance roll said no, another stretch first");
 									}
 								}
-								if (g_state.reactionOwed && lineSeconds >= s.reactionLineMin && lineSeconds <= s.reactionLineMax) {
+								// 0.8.7 test: a line guessed at 7.4 s lasted 6.0, and its split left 2 s on
+								// them between you and your turn. Up to a second over the longest, a line
+								// is shown on you whole; longer ones are split.
+								const float wholeMax = s.reactionLongLineHold > 0.0f ? s.reactionLineMax + 1.0f : s.reactionLineMax;
+								if (g_state.reactionOwed && lineSeconds >= s.reactionLineMin && lineSeconds <= wholeMax) {
 									take(false, 0.0f);
-								} else if (g_state.reactionOwed && lineSeconds > s.reactionLineMax && s.reactionLongLineHold > 0.0f) {
+								} else if (g_state.reactionOwed && lineSeconds > wholeMax && s.reactionLongLineHold > 0.0f) {
 									// 0.8.6 test: Sarah's lines run 8 to 12 s, none suited, and she went on for
 									// 49 s without one. A long line takes it too: on you from its start for
 									// fReactionLongLineSecondsPlayer, then back to them for the rest.

@@ -5,7 +5,7 @@ of you listening, and a close-up of you. The same in every preset (the presets o
 which angle of you a listening reaction uses). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.7 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.8.8 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -39,8 +39,12 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    first 2 s (`fShortestHold`), or were already reached when it started, the reaction waits
    for the next line, so the close-up isn't cut away from at once. The line is shown on you
    from its start to its end, so the cuts fall at the edges of their lines.
-   A longer line (over 7 s) takes it too (0.8.7): on you from its start for
-   `fReactionLongLineSecondsPlayer` (4 s), then back to them for the rest of the line.
+   A line up to a second longer (7 to 8 s) is shown on you whole; a longer one takes it too
+   (0.8.7): on you from its start for `fReactionLongLineSecondsPlayer` (4 s), then back to
+   them for the rest of the line.
+   - An emotion line that carries on the close-up already on screen from their last line
+     (a regular one, on at least 2 s, no cut since) is taken like any line (0.8.8): the
+     close-up isn't new, so it isn't cut away from at once.
    - Your face shows an expression on that line: a close-up of you, pushing in, by the
      expression's tier (the same lists as theirs): mild 30%, medium 50%, strong always
      (`iCloseUpChanceMildPlayer`, `...MediumPlayer`, `...StrongPlayer`);
@@ -86,7 +90,7 @@ Nothing about how often. They change what you see:
 | --- | --- | --- |
 | Reactions by default | Off | On |
 | When | Every 3rd line in a reply, a 50% roll | After 7 s of their talking without a cut to you (a long stretch), every time |
-| Which line | The next eligible line | The next line of 2.5 to 7 s; a longer one for its first 4 s |
+| Which line | The next eligible line | The next line of 2.5 to 8 s; a longer one for its first 4 s |
 | Short exchanges | Can get one if the reply has 3 lines | Never |
 | Angle of you | Your regular shots, never the room | The same |
 | Length on you | The whole line | The whole line |
