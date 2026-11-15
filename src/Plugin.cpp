@@ -70,6 +70,7 @@ namespace CCC
 			bool                                  lineIntense{ false };      // current line's expression is in sCloseUpEmotions
 			std::chrono::steady_clock::time_point lineStart{};
 			bool                                  lineBeat{ false };         // this line answers a persuasion: held close-up
+			bool                                  replyBeat{ false };        // ... and so does the rest of their reply, until your turn (0.8.5)
 			std::int64_t                          beatConsumed{ 0 };         // the persuasion outcome already used
 			bool                                  reactionOwed{ false };     // the roll said yes: the next line that can take it (0.8.3, as CCC)
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
@@ -746,6 +747,7 @@ namespace CCC
 				return Subject::kNpc;
 			}
 			g_state.monoSeconds = 0.0f;  // your turn: the camera is on you (0.8.5)
+			g_state.replyBeat = false;   // their answer to a persuasion is over
 			return Subject::kPlayer;
 		}
 
@@ -1940,8 +1942,8 @@ namespace CCC
 						// cut to you; a reaction (it lasts the line) ends here, with the line.
 						const float lastedNow = std::chrono::duration<float>(now - g_state.lineStart).count();
 						const bool shown = g_state.reactionActive && g_state.reactionOnAt != std::chrono::steady_clock::time_point{};
-						if (shown) {
-							g_state.monoSeconds = 0.0f;
+						if (shown || g_state.replyBeat) {
+							g_state.monoSeconds = 0.0f;  // (their answer to a persuasion doesn't count towards a reaction)
 						} else if (lastedNow > 0.0f && lastedNow < 60.0f) {
 							g_state.monoSeconds += lastedNow;  // (a reaction planned for later in the line that never came counts as time on them)
 						}
@@ -2007,7 +2009,7 @@ namespace CCC
 							g_state.lastLineText = text;
 						}
 						if (fresh && s.reactionShots && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
-							!g_state.lineBeat) {
+							!g_state.lineBeat && !g_state.replyBeat) {
 							// 0.8.5, reactions break the monotony of long stretches: once the camera
 							// has been on them for fReactionAfterSecondsPlayer of their talking without
 							// a cut to you, a reaction is due (iReactionChancePlayer of the time; a no
@@ -2081,6 +2083,8 @@ namespace CCC
 						age < std::chrono::duration_cast<std::chrono::steady_clock::duration>(8s).count()) {
 						g_state.beatConsumed = outcome;
 						g_state.lineBeat = true;
+						g_state.replyBeat = true;
+						g_state.monoSeconds = 0.0f;
 						g_state.reactionActive = false;
 						g_state.reactionCloseUp = false;
 						REX::INFO("Persuasion beat: this answer is held on a close-up of the NPC");
@@ -2298,7 +2302,7 @@ namespace CCC
 				frame.intenseExtreme = g_state.lineExtreme;
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
-				frame.persuasionBeat = g_state.lineBeat;
+				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;
@@ -2329,7 +2333,7 @@ namespace CCC
 				frame.intenseExtreme = g_state.lineExtreme;
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
-				frame.persuasionBeat = g_state.lineBeat;
+				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
 				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;

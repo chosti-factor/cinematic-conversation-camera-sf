@@ -30,6 +30,10 @@ test build; "diagnostic" items only add information to the log for testing.
   of the line (no cut back to them mid-line any more); never during an extreme one.
   `iReactionChancePlayer` is now the chance once due (100). New:
   `fReactionLineMinSecondsPlayer`, `fReactionLineMaxSecondsPlayer`.
+- The persuasion beat holds their whole reply, as CCC (was the first line only): a
+  close-up, pushing in; in a long answer (over 10 s), once the push-in is done, one cut to
+  a medium or three-quarter shot of them. Never a cut away from them or a reaction shot,
+  and the answer doesn't count towards the next reaction.
 - The listen prompt's fonts are assigned rather than learned: the words in the bold main
   font, light (the game's own prompt words are dark on a panel this prompt doesn't have),
   the button as its icon.

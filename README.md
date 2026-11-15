@@ -42,7 +42,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   is you listening, or a close-up of your expression (`iCloseUpChancePlayer`). Details:
   [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
-  reply is a close-up, pushing in (`bPersuasionBeatNpc`).
+  whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
+  them, never a cut away (`bPersuasionBeatNpc`).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
   space for them, measured with the game's collision check, on the conversation's side of
   the line and with both faces in view (`iRoomShotMinRoom`). In CCC's presets as far back

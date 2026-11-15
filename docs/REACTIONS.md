@@ -16,9 +16,10 @@ stretches, cutting only at the edges of their lines.
    `iExtremeCloseUpChanceNpc` (40%) makes it an extreme one. The camera cuts to a close-up
    (or extreme close-up) of them, pushing in slowly. If it's already on their close-up, it
    stays.
-2. **Persuasion answer?** After a persuasion's outcome or a chosen skill check, their answer
-   is held on a close-up for the whole line (`bPersuasionBeatNpc`). It never takes a
-   reaction, nor counts towards one.
+2. **Persuasion answer?** After a persuasion's outcome or a chosen skill check, their whole
+   reply is held on them (`bPersuasionBeatNpc`): a close-up, pushing in; in a long answer
+   (over 10 s), once the push-in is done, one cut to a medium or three-quarter shot of them.
+   Never a reaction, and it doesn't count towards one.
 3. **Wait** up to 0.8 s for the line's subtitle and your face's expression to be set.
 4. (Extreme close-ups are never cut away from: the camera stays on them.)
 5. **Time on them.** Their talking adds up while the camera stays on them without showing

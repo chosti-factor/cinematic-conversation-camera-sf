@@ -82,6 +82,8 @@ namespace CCC::Director
 			clock::time_point                            clearanceAt{};
 			std::string                                  skipped;  // shots left out for obstacles, for the next Director line
 			bool                                         beatActive{ false };  // holding the persuasion beat's close-up
+			clock::time_point                            beatAt{};             // when it started (0.8.5)
+			bool                                         beatWidened{ false }; // the one wider shot of them in a long answer, taken
 			std::uint32_t                                cuts{ 0 };
 			const char*                                  why{ "" };
 			std::optional<bool>                          plainTurn;  // nothing fitted this turn (true = theirs): plain shot until the turn changes
@@ -804,7 +806,9 @@ namespace CCC::Director
 		const bool alreadyClose = g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
 
 		// Persuasion beat (CCC's "Hold On Their Answer"): the NPC's answer to a persuasion's
-		// outcome is a close-up of them, held for the whole line while the camera pushes in.
+		// outcome is a close-up of them, pushing in, held for their whole reply (0.8.5, as CCC:
+		// was the first line only). In a long answer (over 10 s), once the push-in is done, one
+		// cut to a medium or three-quarter shot of them; never away from them.
 		if (a_frame.persuasionBeat && a_frame.npcTurn && !g.beatActive) {
 			std::optional<ShotType> shot;
 			if (Placeable(ShotType::kCloseUp, a_frame)) {
@@ -816,6 +820,8 @@ namespace CCC::Director
 				Cut(*shot, a_frame, a_now, "persuasion beat", true);
 				g.intenseSetup = IntenseSetup(ShotType::kCloseUp);
 				g.beatActive = true;
+				g.beatAt = a_now;
+				g.beatWidened = false;
 			} else {
 				REX::INFO("Director: persuasion beat skipped (no clear close-up)");
 				g.beatActive = true;  // don't retry every frame
@@ -825,7 +831,18 @@ namespace CCC::Director
 		if (!a_frame.persuasionBeat) {
 			g.beatActive = false;
 		}
-		const bool holding = g.beatActive && a_frame.npcTurn && g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose);
+		if (g.beatActive && a_frame.npcTurn && !g.beatWidened && g.current && (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose) &&
+			std::chrono::duration<float>(a_now - g.beatAt).count() > 10.0f) {
+			g.beatWidened = true;
+			for (const auto type : { ShotType::kMediumNpc, ShotType::kThreeQuarterNpc }) {
+				if (Placeable(type, a_frame)) {
+					Cut(type, a_frame, a_now, "persuasion beat, a long answer: wider", false);
+					break;
+				}
+			}
+		}
+		const bool holding = g.beatActive && a_frame.npcTurn && g.current &&
+		                     (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose || g.beatWidened);
 		if (!holding) {
 			if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
 				// The turn passes to them on an intense line: the turn's cut is the close-up.
