@@ -2011,7 +2011,13 @@ namespace CCC
 					{
 						const auto emotion = LineEmotion(static_cast<RE::Actor*>(speaker));
 						int        chance = 0;
-						const int  tier = s.emotionCloseUps ? CloseUpTier(emotion, &chance) : 0;
+						// The preset's own (0.8.13): none in CCC's Standard and Room, strong lines
+						// only in Close (CCC's "full intensity"), every tier in CCC SF's.
+						const int  mode = Director::EmotionCloseUps();
+						int        tier = mode != 0 ? CloseUpTier(emotion, &chance) : 0;
+						if (mode == 3 && tier != 3) {
+							tier = 0;
+						}
 						const bool listed = tier > 0;
 						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < chance;
 						// 0.8.7 test: two emotion lines in a row held one close-up for 17 s, the due
@@ -2058,7 +2064,7 @@ namespace CCC
 						if (fresh) {
 							g_state.lastLineText = text;
 						}
-						if (fresh && s.reactionShots && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
+						if (fresh && Director::ReactionShots() && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat && !g_state.replyBeat) {
 							// 0.8.5, reactions break the monotony of long stretches: once the camera
 							// has been on them for fReactionAfterSecondsPlayer of their talking without
@@ -3830,7 +3836,9 @@ namespace CCC
 			}
 			const char* raw = a_speaker->currentProcess->high->strVoiceSubtitle.c_str();
 			const auto  emotion = LineEmotion(a_speaker);
-			const bool  closeUp = Settings::Get().emotionCloseUps && CloseUpTier(emotion) > 0;
+			const int   mode = Director::EmotionCloseUps();
+			const int   tier = mode != 0 ? CloseUpTier(emotion) : 0;
+			const bool  closeUp = tier > 0 && (mode != 3 || tier == 3);
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
 			// Your face answers the line (0.8): mirrored or a listener's response; untagged
 			// lines give your face back to the game.

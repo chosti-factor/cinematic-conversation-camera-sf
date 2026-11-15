@@ -81,12 +81,15 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
 - **Nebula is the least tested.** Its rarer angles (low, high, dirty, profiles, the shoulder
   variants) come from CCC's library but no other preset uses them yet. The ground-level
   shot is left out until room measurement can place it.
-- **The same in every preset:** emotion close-ups on lines with an expression (every one but
-  Neutral and Friendly, by tier: mild 25%, medium 40%, strong always: `bEmotionCloseUpsNpc`),
-  reaction shots of you listening in long stretches (`fReactionAfterSecondsPlayer`),
-  close-ups of your expressions (`iCloseUpChance...Player`, by tier), holding on the answer after a
-  persuasion (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people
-  and merchants.
+- **CCC SF's presets only (0.8.13):** emotion close-ups on lines with an expression (every
+  one but Neutral and Friendly, by tier: mild 25%, medium 40%, strong always), reaction shots
+  of you listening in long stretches (`fReactionAfterSecondsPlayer`), and close-ups of your
+  expressions in them (`iCloseUpChance...Player`, by tier). CCC's presets keep CCC's vision:
+  no reactions, and emotion close-ups only in Close, on strong lines
+  (`bEmotionCloseUpsNpc`, `bReactionShotsPlayer`: -1 the preset's own, 0 off, 1 on).
+- **The same in every preset:** holding on the answer after a persuasion
+  (`bPersuasionBeatNpc`), and the plain over-the-shoulder shots for seated people and
+  merchants.
 - **Zooms are pushes.** Starfield's lens doesn't change during a shot, so a zoom in is done
   as a push in and a zoom out as a pull out.
 - **Extreme close-ups are rarer than in CCC.** CCC offers them on lines the writers marked

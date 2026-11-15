@@ -844,7 +844,7 @@ namespace CCC::Director
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
-			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, s.emotionCloseUps ? "on" : "off", s.extremeCloseUpChance,
+			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", s.extremeCloseUpChance,
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
 				s.closeUpChanceStrong, s.closeUpEmotionsStrong));
 		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
@@ -878,7 +878,7 @@ namespace CCC::Director
 
 		// Emotion close-ups: a line tagged with one of the chosen expressions starts.
 		if (npcStarted) {
-			g.intensePending = a_frame.intenseLine && s.emotionCloseUps;
+			g.intensePending = a_frame.intenseLine && EmotionCloseUps() != 0;
 			g.intenseShot.reset();
 			// 0.8.7 test: extreme close-ups ran 13 s on average, through the emotion lines after
 			// them. One holds its own line only (0.8.9).
@@ -1153,7 +1153,7 @@ namespace CCC::Director
 				gp.playerClose = false;
 				gp.shot.reset();
 			}
-			if (!a_frame.npcTalking || !a_frame.npcTurn || !s.emotionCloseUps) {
+			if (!a_frame.npcTalking || !a_frame.npcTurn || EmotionCloseUps() == 0) {
 				if (gp.shot) {
 					REX::INFO("Director: emotion close-up over; back to the plain shot");
 				}
@@ -1224,6 +1224,43 @@ namespace CCC::Director
 			return shot;
 		}
 		return PresetLens();
+	}
+
+	namespace
+	{
+		bool CccPreset()
+		{
+			std::string preset{ Settings::Get().preset };
+			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			return preset.empty() || preset == "standard" || preset == "close" || preset == "room";
+		}
+
+		bool ClosePreset()
+		{
+			std::string preset{ Settings::Get().preset };
+			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			return preset == "close";
+		}
+	}
+
+	int EmotionCloseUps()
+	{
+		const int mode = Settings::Get().emotionCloseUps;
+		if (mode >= 0) {
+			return mode;  // yours: 0 none, 1 every tier
+		}
+		// The preset's own (0.8.13): CCC pushes in for emotion only on lines marked full
+		// intensity, and only Close has the angle for it; CCC SF's presets use every tier.
+		if (CccPreset()) {
+			return ClosePreset() ? 3 : 0;
+		}
+		return 1;
+	}
+
+	bool ReactionShots()
+	{
+		const int mode = Settings::Get().reactionShots;
+		return mode >= 0 ? mode == 1 : !CccPreset();  // the preset's own: CCC's off (CCC's default), CCC SF's on
 	}
 
 	float FramingLensFor(Shots::ShotType a_type)

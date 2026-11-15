@@ -35,7 +35,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks (except during their first line, the greeting, where the game lets A choose
   one) and fade in when the line ends (`[Interface]`).
-- **Reaction shots:** to break the monotony of a long stretch, after 7 s of their talking
+- **Reaction shots** (CCC SF's presets; CCC's have them off, as CCC ships): to break the monotony of a long stretch, after 7 s of their talking
   without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
   its end (`fReactionAfterSecondsPlayer`); a line over 8 s, its first 4 s. Their emotion
   close-ups count towards the 7 s, and a regular one can be cut away from when they're
@@ -68,7 +68,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   line from the person in shot to the camera. A wall behind the camera pulls it in; a
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
-- **Emotion close-ups:** lines the game tags with an expression push in to a close-up of
+- **Emotion close-ups** (every tier in CCC SF's presets; in CCC's, only Close, on strong lines): lines the game tags with an expression push in to a close-up of
   the speaker, 40% of them extreme close-ups (each for its own line only). The expressions come in three tiers with
   their own chances: mild (Amused, Confident, Thinking...) 25%, medium (Concerned, Serious,
   Smirk...) 40%, strong (Angry, Afraid, Shocked, Somber...) always; Neutral and Friendly

@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.13 - 2026-11-15
+
+### Changed
+- CCC's presets keep CCC's vision: emotion close-ups and reaction shots are each preset's
+  own now (`bEmotionCloseUpsNpc` and `bReactionShotsPlayer`, -1, the new default).
+  - Standard and Room: no emotion close-ups (CCC pushes in for emotion only with the
+    extreme close-up, an angle only Close has; Room is about the room) and no reactions
+    (off as CCC ships).
+  - Close: emotion close-ups on strong lines only, the nearest thing to CCC's "full
+    intensity"; no reactions.
+  - CCC SF's presets: every tier, and reactions, with close-ups of you in them: what sets
+    them apart.
+  - 0 or 1 still sets either for every preset.
+
 ## 0.8.12 - 2026-11-15
 
 ### Changed

@@ -175,7 +175,7 @@ namespace CCC
 		bool        true180{ false };
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
-		bool        reactionShots{ true };    // now and then, one of the NPC's lines is shown on you listening
+		int         reactionShots{ -1 };      // one of the NPC's lines shown on you: -1 the preset's own (0.8.13: CCC's off, CCC SF's on), 0 off, 1 on
 		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
 		float       bystanderStill{ 1.5f };   // seconds without moving before a bystander counts
@@ -194,7 +194,7 @@ namespace CCC
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
-		bool        emotionCloseUps{ true };
+		int         emotionCloseUps{ -1 };    // -1 the preset's own (0.8.13: Standard and Room none, Close strong lines only, CCC SF's every tier), 0 off, 1 every tier
 		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
 		int         extremeCloseUpChancePlayer{ 40 };  // % of close-ups of you that are extreme (0.8.3)
 		// Emotion close-ups by tier (0.8.6): each list with its own chance (%).

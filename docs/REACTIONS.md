@@ -1,11 +1,14 @@
 # Close-ups and reaction shots
 
 How the camera decides, on each NPC line, between their emotion close-up, a reaction shot
-of you listening, and a close-up of you. The same in every preset (the presets only decide
-which angle of you a listening reaction uses). Settings are in the `[Director]` section of
+of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets' own
+(Frontier, Starborn, Constellation, Nebula): CCC's keep CCC's vision, with no reactions
+(off as CCC ships) and emotion close-ups only in Close, on strong lines
+(`bEmotionCloseUpsNpc` and `bReactionShotsPlayer`: -1 the preset's own, 0 off, 1 on in
+every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.9 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.8.13 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
