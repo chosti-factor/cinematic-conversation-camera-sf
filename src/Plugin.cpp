@@ -3876,10 +3876,13 @@ namespace CCC
 				}
 				// 0.8.7 test: a scene's opening line (Nyssa to Sarah) came out "to you", Nyssa
 				// facing you, and filming waited 6 s for Sarah's answer. Nobody in the scene has
-				// spoken yet: the nearest other person in the same scene.
-				float nearest = 15.0f;
+				// spoken yet: the nearest other person in the same scene. (Not when you're part of
+				// the scene yourself: then a line facing you is yours.)
+				auto*       player = RE::PlayerCharacter::GetSingleton();
+				const bool  youInScene = player && CurrentSceneUnsafe(player) == a_t.scene;
+				float       nearest = 15.0f;
 				for (const auto& [id, other] : g_talkers) {
-					if (id != a_speaker && other.scene == a_t.scene) {
+					if (!youInScene && id != a_speaker && other.scene == a_t.scene) {
 						if (const float d = FlatDistance(other.feet, a_t.feet); d < nearest) {
 							nearest = d;
 							partner = id;
