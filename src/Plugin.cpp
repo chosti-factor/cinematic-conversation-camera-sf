@@ -3871,6 +3871,21 @@ namespace CCC
 				if (partner != 0) {
 					return partner;
 				}
+				// 0.8.7 test: a scene's opening line (Nyssa to Sarah) came out "to you", Nyssa
+				// facing you, and filming waited 6 s for Sarah's answer. Nobody in the scene has
+				// spoken yet: the nearest other person in the same scene.
+				float nearest = 15.0f;
+				for (const auto& [id, other] : g_talkers) {
+					if (id != a_speaker && other.scene == a_t.scene) {
+						if (const float d = FlatDistance(other.feet, a_t.feet); d < nearest) {
+							nearest = d;
+							partner = id;
+						}
+					}
+				}
+				if (partner != 0) {
+					return partner;
+				}
 			}
 			const float   fx = std::sin(a_t.heading), fy = std::cos(a_t.heading);
 			std::uint32_t best = 0;
@@ -4147,6 +4162,9 @@ namespace CCC
 				t.head = head ? *head : RE::NiPoint3{ feet.x, feet.y, feet.z + 1.6f };
 				t.heading = actor->GetAngleZ();
 				t.seen = a_now;
+				// Everyone's scene, not only a speaker's (0.8.8): the first line of a scene can
+				// then be put to the partner who hasn't spoken yet.
+				t.scene = CurrentSceneUnsafe(actor.get());
 				const bool talking = talkingNowFlag;
 				const bool ours = g_state.active && actor->formID == g_state.speakerId;
 				// A new line: they start talking, or a new dialogue record or subtitle turns up

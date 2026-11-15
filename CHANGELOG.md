@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.9 - 2026-11-15
+
+### Fixed
+- Filming people talking started 6 s late at Sarah and Nyssa (0.8.7 test): Nyssa's opening
+  line came out "to you" (she was facing you), and filming waited for Sarah's answer. A
+  scene's opening line now goes to the nearest other person in the same scene.
+
 ## 0.8.8 - 2026-11-15
 
 ### Fixed
