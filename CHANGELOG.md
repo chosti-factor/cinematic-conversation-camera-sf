@@ -27,6 +27,11 @@ test build; "diagnostic" items only add information to the log for testing.
   `iCloseUpChanceMildNpc`, and the same for Medium and Strong. About one NPC line in five
   (was one in four at 50% for all), with the strong ones always. `sCloseUpEmotionsNpc` and
   `iCloseUpChanceNpc` are gone.
+- Reaction shots are inserts: the angle of you is picked for the reaction only (your own
+  angle for your turns stays as it was, room shots included), and afterwards the camera
+  goes back to exactly the speaker's shot from before, with no new-angle roll and their
+  line count going on. Before, each reaction counted as two turns, so it changed the
+  speaker's angle more often than the preset's rhythm and narrowed your turns' shots.
 - Close-ups of you in a reaction go by your expression's tier, the same lists as theirs:
   mild 30%, medium 50%, strong 100% (`iCloseUpChanceMildPlayer`, `...MediumPlayer`,
   `...StrongPlayer`; was 50% for any expression, `iCloseUpChancePlayer`, now gone). About a

@@ -73,6 +73,9 @@ namespace CCC::Director
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
 			int                       npcSerial{ 0 };           // the last line counter seen (0.8.3)
+			bool                      inReaction{ false };      // a reaction shot is on (0.8.6: an insert)
+			std::optional<ShotType>   reactionReturn;           // the speaker's shot to go back to after it
+			std::optional<Setup>      reactionReturnSetup;      // and its move, if an emotion close-up's
 			bool                      playerCloseDone{ false }; // this reaction's close-up of you is done
 			std::optional<Setup>      intenseSetup;             // the move used by an emotion close-up
 			float                     limit{ std::numeric_limits<float>::infinity() };  // obstacle: camera at most this far from the subject
@@ -744,6 +747,9 @@ namespace CCC::Director
 		g.loggedEmpty = false;
 		g.intensePending = false;
 		g.intenseSetup.reset();
+		g.inReaction = false;
+		g.reactionReturn.reset();
+		g.reactionReturnSetup.reset();
 		g.limit = std::numeric_limits<float>::infinity();
 		g.plainTurn.reset();
 		g.beatActive = false;
@@ -855,13 +861,28 @@ namespace CCC::Director
 					g.intenseShot = shot;
 				}
 			}
-			// Back from a reaction that interrupted this line's emotion close-up (0.8.3): the
-			// same close-up again, pushing in.
-			if (a_frame.npcTurn && a_frame.intenseLine && a_frame.npcTalking && g.intenseShot && g.current && !g.currentNpcSide &&
-				Placeable(*g.intenseShot, a_frame)) {
-				const auto shot = *g.intenseShot;
-				Cut(shot, a_frame, a_now, "back from the reaction, intense line", false);
-				g.intenseSetup = IntenseSetup(shot);
+			// 0.8.6: a reaction is an insert. It starts: remember the speaker's shot. It ends,
+			// back to them: exactly that shot again, no new angle (the turn's 50% fresh-angle roll
+			// isn't made, and their line count goes on as if it hadn't happened).
+			if (a_frame.reaction && !a_frame.npcTurn && !g.inReaction) {
+				g.inReaction = true;
+				g.reactionReturn = g.current && g.currentNpcSide ? g.current : g.npc.shot;
+				g.reactionReturnSetup = g.intenseSetup;
+			}
+			if (g.inReaction && a_frame.npcTurn) {
+				g.inReaction = false;
+				const auto shot = g.reactionReturn;
+				const bool close = shot && (*shot == ShotType::kCloseUp || *shot == ShotType::kExtremeClose);
+				if (shot && g.current && !g.currentNpcSide && (Usable(*shot, a_frame) || (close && Placeable(*shot, a_frame)))) {
+					Cut(*shot, a_frame, a_now, "back from the reaction", false);
+					g.intenseSetup = g.reactionReturnSetup;
+				}
+				g.reactionReturn.reset();
+				g.reactionReturnSetup.reset();
+			} else if (g.inReaction && !a_frame.reaction) {
+				g.inReaction = false;  // their line ended on you: it's your turn now
+				g.reactionReturn.reset();
+				g.reactionReturnSetup.reset();
 			}
 
 			// Your emotion close-up: the reaction's cut is a close-up of you, pushing in, once per
@@ -877,7 +898,24 @@ namespace CCC::Director
 					g.intenseSetup = IntenseSetup(*shot);
 				}
 			}
-			if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
+			if ((!g.current || a_frame.npcTurn != g.currentNpcSide) && a_frame.reaction && !a_frame.npcTurn) {
+				// A reaction (an insert, 0.8.6): your usual angle if it suits a reaction, else one
+				// picked for this reaction only; your own angle for your turns stays as it was.
+				std::optional<ShotType> shot = side.shot && Usable(*side.shot, a_frame) ? side.shot : std::nullopt;
+				if (!shot) {
+					const auto was = g.current;
+					g.current = side.shot;  // so Pick avoids repeating it
+					shot = Pick(a_frame);
+					g.current = was;
+				}
+				if (shot) {
+					Cut(*shot, a_frame, a_now, "reaction", false);
+				} else {
+					g.current.reset();
+					g.plainTurn = a_frame.npcTurn;
+					return std::nullopt;
+				}
+			} else if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 				// The reverse: back to this person's own setup, unless they're due a new one.
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= s.freshAngleChance;
 				if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
