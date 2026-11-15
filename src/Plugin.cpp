@@ -1912,7 +1912,18 @@ namespace CCC
 			{
 				const bool talkingNow = speaker->IsTalking();
 				if (talkingNow && !g_state.speakerWasTalking) {
-					g_state.lineIntense = s.emotionCloseUps && IsCloseUpEmotion(LineEmotion(static_cast<RE::Actor*>(speaker)));
+					// An emotion close-up: a line tagged with one of sCloseUpEmotions, iCloseUpChance
+					// of the time (0.8.3: every expression but Neutral and Friendly, at 67%). A line
+					// that rolls no is an ordinary line (it can be a reaction).
+					{
+						const auto emotion = LineEmotion(static_cast<RE::Actor*>(speaker));
+						const bool listed = s.emotionCloseUps && IsCloseUpEmotion(emotion);
+						const bool rolled = listed && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.closeUpChance;
+						g_state.lineIntense = rolled;
+						if (listed && !rolled && s.debugLog) {
+							REX::INFO("Emotion close-up: '{}' line, the {}% roll said no", emotion, s.closeUpChance);
+						}
+					}
 					g_state.lineStart = now;
 					g_state.lineBeat = false;
 					g_state.reactionActive = false;

@@ -79,7 +79,8 @@ weights), and how the camera moves on it. An empty cell: the preset doesn't use 
 - **Nebula is the least tested.** Its rarer angles (low, high, dirty, profiles, the shoulder
   variants) come from CCC's library but no other preset uses them yet. The ground-level
   shot is left out until room measurement can place it.
-- **The same in every preset:** emotion close-ups on intense lines (`bEmotionCloseUps`),
+- **The same in every preset:** emotion close-ups on lines with an expression (every one but
+  Neutral and Friendly, 67% of the time: `bEmotionCloseUps`, `iCloseUpChance`),
   reaction shots of you listening (`iReactionEvery`, `iReactionChance`, `fReactionSeconds`),
   close-ups of your expressions (`iPlayerCloseUpChance`), holding on the answer after a
   persuasion (`bPersuasionBeat`), and the plain over-the-shoulder shots for seated people

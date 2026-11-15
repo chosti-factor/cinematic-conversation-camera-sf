@@ -68,7 +68,8 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 
 ## Open observations from testing
 
-- Many lines are emotion close-ups (29 expressions listed), which take priority over
+- Many lines are emotion close-ups (0.8.3: every expression but Neutral and Friendly, at
+  67%), which take priority over
   reactions; maybe let a reaction win now and then.
 - Large speakers (Vasco) can block you in over-the-shoulder shots: size the near-body check
   from the actor's bounds.

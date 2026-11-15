@@ -3,7 +3,8 @@
 Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups
 (`sCloseUpEmotions`). This is a running tally from the test logs, to choose which
-tags push in. ✱ = on the close-up list at the time of writing.
+tags push in. ✱ = on the close-up list at the time of writing (0.8.3: every expression but
+Neutral and Friendly, see the notes below the second table).
 
 Last updated: 2026-11-13, logs from 0.4.11 to 0.5.4, 707 NPC lines (every spoken line
 counted, so lines heard twice count twice).
@@ -109,6 +110,10 @@ Notes:
   close-up list.
 - 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
   Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
+- 0.8.3: every expression but Neutral and Friendly is on the list (the ✱ column above is
+  from before), and a listed line gets its close-up 67% of the time (`iCloseUpChance`).
+  From the tally at the top, that's about half of all NPC lines tagged for it (no tag, 24%,
+  and Friendly, 24%, are the rest), so about a third of all lines get an emotion close-up.
 
 ## Your character's face
 

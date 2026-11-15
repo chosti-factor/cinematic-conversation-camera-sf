@@ -17,6 +17,10 @@ test build; "diagnostic" items only add information to the log for testing.
   CCC's presets, 37.5 for CCC SF's (Stardust, Starborn, Constellation, Nebula), a little
   closer to Starfield's own look. 0 is still the game's 30, and 20-70 your own for every
   preset.
+- Emotion close-ups: every expression but Neutral and Friendly is now on the list
+  (`sCloseUpEmotions`, was 29 of them), with a chance (`iCloseUpChance`, 67%). A listed
+  line that rolls no is an ordinary line and can be a reaction shot. About a third of NPC
+  lines get an emotion close-up (estimate from the expression tally in docs/EMOTIONS.md).
 - Stardust is closer to Standard: exactly Standard's shots, weights and moves, with a few of
   Room's wider shots added (about a fifth, was 40%).
 - Filming people talking near you:
