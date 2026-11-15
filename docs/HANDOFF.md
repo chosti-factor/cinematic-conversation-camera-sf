@@ -27,7 +27,9 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   letterbox on HUDMessagesMenu, no prompt with bAutoListen. From first person the game goes
   to third person while it films (the first-person body can't be hidden:
   "Player1stPersonBody" is a label, not a node).
-- Next, 0.9.x polish, first: conversation-start transitions (flashes). 0.8.10 sets the
+- Conversation-start flashes: "extremely minimal" after 0.8.10 (tester, 2026-11-15); left
+  as they are, polished only if there's time before 1.0.
+- Next, 0.9.x polish, earlier first in line: conversation-start transitions (flashes). 0.8.10 sets the
   blur focus on the camera thread on the frame of each cut (it lagged a frame or two on the
   main thread, and the opening frame had the game's 1.5 m focus); if flashes remain, get a
   60 fps clip of a start.
