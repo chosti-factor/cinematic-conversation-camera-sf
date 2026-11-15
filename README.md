@@ -42,7 +42,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
   space for them, measured with the game's collision check, on the conversation's side of
   the line and with both faces in view (`iRoomShotMinRoom`). In CCC's presets as far back
-  as CCC's framing wants; in CCC SF's up to 9 m indoors and 12 m outdoors
+  as CCC's framing wants; in CCC SF's the furthest of them (Master) up to 9 m indoors and
+  12 m outdoors, the others closer in proportion
   (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` to set your own).
 
 ### New or distinct in CCC SF

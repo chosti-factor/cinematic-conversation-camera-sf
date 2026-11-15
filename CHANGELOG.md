@@ -4,7 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.1 - unreleased
+## 0.8.2 - unreleased
+
+### Fixed
+- Room shots under a distance limit came out alike (0.8.1 test: Wide and Distant both 12 m
+  back on the line outdoors, all three 9 m on the line indoors). The limit now applies to
+  the furthest of them (Master) and the others keep their distance from it in proportion
+  (outdoors in CCC SF's presets about 12, 10 and 8 m for Master, Distant and Wide), and
+  each keeps further away from where the others stand.
+
+## 0.8.1 - 2026-11-15
 
 ### Fixed
 - The conversation lens: the game hands its set-FOV the 29.6 degrees it draws, not the

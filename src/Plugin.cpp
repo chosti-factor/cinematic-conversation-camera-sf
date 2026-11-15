@@ -1438,9 +1438,17 @@ namespace CCC
 			auto*       roomPlayer = RE::PlayerCharacter::GetSingleton();
 			const bool  interior = roomPlayer && roomPlayer->parentCell && roomPlayer->parentCell->IsInterior();
 			const float roomCap = Director::RoomShotLimit(interior);
+			// The limit applies to the furthest of them (Master), and the others keep their
+			// distance from it in proportion (0.8.1 test: capped one by one, Wide and Distant
+			// came out the same, 12 m on the line).
+			float furthest = 0.0f;
+			for (const auto& shot : kShots) {
+				furthest = (std::max)(furthest, wants(shot.fill));
+			}
+			const float roomScale = roomCap > 0.0f && furthest > roomCap ? roomCap / furthest : 1.0f;
 			for (std::size_t n = 0; n < kShots.size(); ++n) {
 				const auto& shot = kShots[n];
-				const float wanted = roomCap > 0.0f ? (std::min)(wants(shot.fill), roomCap) : wants(shot.fill);
+				const float wanted = wants(shot.fill) * roomScale;
 				const auto  room = [&](int i) { return (shot.rise > 0.7f ? (std::min)(low[i], high[i]) : low[i]) - kWallMargin; };
 				// The solver's angle for a bearing (bearings from the line towards the NPC,
 				// anticlockwise; the solver turns from the line towards you, by side).
@@ -1476,7 +1484,7 @@ namespace CCC
 				}
 				const auto score = [&](int i) {
 					const float space = (std::min)(room(i), wanted);
-					return space - 0.02f * std::abs(angleOf(i) - shot.angle) - (used[i] > 0 ? 0.5f : 0.0f);
+					return space - 0.02f * std::abs(angleOf(i) - shot.angle) - (used[i] > 0 ? 3.0f : 0.0f);
 				};
 				std::ranges::sort(order, [&](int a, int b) { return score(a) > score(b); });
 				float bestDistance = 0.0f;
