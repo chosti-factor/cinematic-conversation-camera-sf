@@ -4415,8 +4415,10 @@ namespace CCC
 					const bool  firstPerson = camera && CurrentCameraStateIndex(camera) == 0;
 					if (filming && firstPerson && !g_state.active) {
 						Visibility::HidePlayer();
+						Visibility::HideFirstPersonBody();  // 0.8.6 test: your armour stayed, T-posed
 						hid = true;
 					} else if (hid) {
+						Visibility::RestoreFirstPersonBody();
 						if (!g_state.active) {
 							Visibility::Restore(true);
 						}
@@ -4647,16 +4649,13 @@ namespace CCC
 				in.maxDistance = 7.0f;
 				in.enforceLine = true;
 				std::optional<Shots::Result> chosen, fallback;
-				Shots::ShotType              chosenType = first;
+				Shots::ShotType              chosenType = first, fallbackType = first;
+				float                        fallbackRoom = -1.0f;  // how far from the speaker the camera can stand clear
 				std::string                  skipped;
 				for (const auto type : order) {
-					const auto solved = Shots::Solve(type, in);
+					auto solved = Shots::Solve(type, in);
 					if (!solved.ok) {
 						continue;
-					}
-					if (!fallback) {
-						fallback = solved;
-						chosenType = type;
 					}
 					const bool overShoulder = type == Shots::ShotType::kOverPlayerShoulder;
 					const auto toSpeaker = TestShot(sh, solved.pose.position, lh, overShoulder);
@@ -4670,10 +4669,25 @@ namespace CCC
 						chosenType = type;
 						break;
 					}
+					// 0.8.6 test (Neon Security's headquarters): with nothing clear the first shot
+					// was used as it was, the camera beyond the room's walls. Now the one with the
+					// most room, pulled in short of the wall.
+					const float room = toSpeaker.blockedAt >= 0.0f ? toSpeaker.blockedAt : toSpeaker.length;
+					if (room > fallbackRoom) {
+						fallbackRoom = room;
+						fallback = solved;
+						fallbackType = type;
+					}
 					skipped += std::format("{}{}", skipped.empty() ? "" : ", ", Shots::Key(type));
 				}
 				if (!chosen && !fallback) {
 					return;
+				}
+				if (!chosen) {
+					chosenType = fallbackType;
+					if (fallbackRoom >= 0.0f) {
+						Camera::PullIn(fallback->pose, subjectOf(fallbackType), (std::max)(0.6f, fallbackRoom - 0.3f));
+					}
 				}
 				const auto& use = chosen ? *chosen : *fallback;
 				g_film.shot = chosenType;
@@ -4683,7 +4697,8 @@ namespace CCC
 				g_film.poseLine = line;
 				g_film.applied = false;
 				if (Settings::Get().debugLog && (!skipped.empty() || !chosen)) {
-					REX::INFO("Filming people talking: {} blocked from there{}", skipped, chosen ? "" : "; nothing clear, using the first anyway");
+					REX::INFO("Filming people talking: {} blocked from there{}", skipped,
+						chosen ? std::string{} : std::format("; nothing clear: {} pulled in to {:.1f} m", Shots::Key(fallbackType), (std::max)(0.6f, fallbackRoom - 0.3f)));
 				}
 			} else {
 				// The aim follows the person in shot through a dead band (4 cm), easing slowly.

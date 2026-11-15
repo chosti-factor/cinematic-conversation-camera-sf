@@ -181,6 +181,8 @@ For a handheld or found-footage feel with any preset, raise `iCameraSway` (0 = t
   - Talking to someone while you sit (a bar stool) in first person: your full body isn't
     built (it waits for a standing height), so you're kept out of frame (0.8.5 log, August
     Bowen at The Rock).
+  - Filming people talking: follow a scene into the game's next scene with the same people,
+    and hand back when a scene is only repeating itself (as CCC does).
   - Smoother conversation starts; quest scenes recognised by their quest rather than the
     scene's name; the default amount of camera sway (`iCameraSway`).
 - 1.0, public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu

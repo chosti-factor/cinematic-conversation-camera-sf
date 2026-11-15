@@ -7,6 +7,12 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.8.6 - unreleased
 
 ### Fixed
+- Filming people talking with nothing clear used the first shot as it was, the camera
+  beyond the room's walls (0.8.5 test, Neon Security's headquarters). Now the shot with the
+  most room, pulled in short of the wall.
+- Filming people talking from first person: your body was hidden but your armour stayed,
+  T-posed (0.8.5 test). The game's first-person body ("Player1stPersonBody") is looked for
+  and hidden too; the log says where it was found.
 - Pressing A or clicking to skip a companion's greeting chose your first option instead
   (Sam and Vasco: "Let's trade gear", into their inventory; 0.8.4 and 0.8.5 tests). The
   game shows the options during greetings, where A chooses rather than skips, and this mod
