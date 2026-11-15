@@ -2047,7 +2047,10 @@ namespace CCC
 								if (!g_state.lineExtreme && !g_state.reactionOwed && onThem < s.reactionAfterSeconds) {
 									const float crossAt = s.reactionAfterSeconds - onThem;
 									const float onYou = lineSeconds - crossAt;
-									if (onYou >= s.reactionLineMin && onYou <= s.reactionLineMax &&
+									// 0.8.5 test: the 7 s came 0.4 s into a close-up, a cut away at once.
+									// Within its minimum time on screen (fShortestHold), the reaction
+									// waits for the next line instead, as one already due does.
+									if (crossAt >= s.shortestHold && onYou >= s.reactionLineMin && onYou <= s.reactionLineMax &&
 										std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
 										take(true, crossAt);
 									}

@@ -4,7 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.5 - unreleased
+## 0.8.6 - unreleased
+
+### Fixed
+- A reaction could cut away from an emotion close-up 0.4 s after it began, when the 7 s on
+  them were reached just then (0.8.5 log, Sam Coe, three times). Within the close-up's
+  minimum time on screen (`fShortestHold`, 2 s) the reaction waits for the next line.
+
+## 0.8.5 - 2026-11-15
 
 ### Fixed
 - Filming people talking from first person showed your character in a T-pose (the game

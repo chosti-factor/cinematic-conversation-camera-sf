@@ -121,7 +121,7 @@ Notes:
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.8.5 (2026-11-15).
+Last updated: 0.8.6 (2026-11-15).
 
 ### Listening: your face's answer to the NPC's line
 

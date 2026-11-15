@@ -31,8 +31,9 @@ stretches, cutting only at the edges of their lines.
    guessed from its subtitle at about 14 characters a second), not a persuasion answer.
    Their emotion close-ups are part of the stretch: when the time on them reaches 7 s
    during a regular one, the camera cuts to you there, to the end of the line (if 2.5 to
-   7 s of it is left); never during an extreme one. A reaction already due when an emotion
-   line starts waits for the next line, so the close-up isn't cut away from at once. The line is shown on you from its start to its end, so the cuts
+   7 s of it is left); never during an extreme one. When the 7 s come within the close-up's
+   first 2 s (`fShortestHold`), or were already reached when it started, the reaction waits
+   for the next line, so the close-up isn't cut away from at once. The line is shown on you from its start to its end, so the cuts
    fall at the edges of their lines, never in the middle.
    - Your face shows an expression on that line: `iCloseUpChancePlayer` (50%) a close-up of
      you, pushing in (`iExtremeCloseUpChancePlayer`, 40%, an extreme one).
