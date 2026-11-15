@@ -4184,8 +4184,8 @@ namespace CCC
 			case 0x0008: return "D-pad right";
 			case 0x0010: return "Menu";
 			case 0x0020: return "View";
-			case 0x0040: return "the left stick";
-			case 0x0080: return "the right stick";
+			case 0x0040: return "L3";
+			case 0x0080: return "R3";
 			case 0x0100: return "LB";
 			case 0x0200: return "RB";
 			case 0x1000: return "A";
