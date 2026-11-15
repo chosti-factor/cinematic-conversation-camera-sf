@@ -3127,7 +3127,10 @@ namespace CCC
 						g_state.restoreFirstPerson = false;
 						return;
 					}
-					if (waited < 700) {
+					// 0.8.4 test: asking again at 0.7 s, with the first answer arriving at 0.83 s,
+					// left your head missing in a conversation with Vasco; the game usually answers
+					// within about a second.
+					if (waited < 1200) {
 						return;
 					}
 					// 0.6.2 logs: the game sometimes takes 1.5-3 s to act on the request (the new
@@ -4403,7 +4406,24 @@ namespace CCC
 				~PromptOut()
 				{
 					Hud::SetPrompt(text);
-					Hud::SetHideRollover(FilmingActive());
+					const bool filming = FilmingActive();
+					Hud::SetHideRollover(filming);
+					// 0.8.4 test: filming from first person showed your character in a T-pose (the
+					// game doesn't animate your full body in first person). Hidden while it films
+					// from first person, shown again after (unless your own conversation took over:
+					// it puts visibility back itself).
+					static bool hid = false;
+					auto*       camera = RE::PlayerCamera::GetSingleton();
+					const bool  firstPerson = camera && CurrentCameraStateIndex(camera) == 0;
+					if (filming && firstPerson && !g_state.active) {
+						Visibility::HidePlayer();
+						hid = true;
+					} else if (hid) {
+						if (!g_state.active) {
+							Visibility::Restore(true);
+						}
+						hid = false;
+					}
 				}
 			} promptOut{ prompt };
 			if (!s.filmConversations || !player || g_state.active) {
@@ -4429,11 +4449,13 @@ namespace CCC
 				// group). 0.8.4: 10 s while they're still playing their part in a scene (the
 				// game's own pauses), 3 s once they aren't (0.8.3 test: the camera lingered long
 				// after the conversation was over).
-				const auto quiet = a_now - (std::max)(t.lastLine, t.lastHeard);
-				if (quiet > 10s) {
+				// 0.8.4 test: still too long; now fFilmEndSecondsNpc (0.5 s) once they're not in
+				// a scene, fFilmEndSecondsSceneNpc (4 s) while they are.
+				const float quiet = std::chrono::duration<float>(a_now - (std::max)(t.lastLine, t.lastHeard)).count();
+				if (quiet > s.filmEndSecondsScene) {
 					continue;
 				}
-				if (quiet > 3s) {
+				if (quiet > s.filmEndSeconds) {
 					auto* actor = RE::TESForm::LookupByID<RE::Actor>(id);
 					if (!actor || !CurrentSceneUnsafe(actor)) {
 						continue;
@@ -5067,7 +5089,8 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 	}
 
 	CCC::g_hooksSafe = true;
-	REX::INFO("Cinematic Conversation Camera SF 0.8.1 loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})",
-		settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
+	const auto version = SFSE::GetPluginVersion();
+	REX::INFO("Cinematic Conversation Camera SF {}.{}.{} loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})", version.major(),
+		version.minor(), version.patch(), settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
 	return true;
 }

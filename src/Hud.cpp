@@ -1094,14 +1094,18 @@ namespace CCC::Hud
 			float       alpha{ 0.0f };
 			// The look of the game's own interaction prompt ("Talk" / the name, when you aim at
 			// someone): HUDMenu.RolloverWidget_mc, its largest text (0.8.3).
-			bool          lookKnown{ false };
+			// 0.8.4: assigned from what the 0.8.3 and 0.8.4 logs found (the words: bold main
+			// font, 22; the button icons: '$Controller_Buttons_inverted', where the game writes
+			// "A" for the A button). The words are light here: the game's are dark on a light
+			// panel this prompt doesn't have.
+			bool          lookKnown{ true };
 			float         lookAge{ 1.0f };
-			std::string   font;
-			double        size{ 18.0 };
-			std::uint32_t color{ 0xFFFFFF };
+			std::string   font{ "$MAIN_Font_Bold" };
+			double        size{ 22.0 };
+			std::uint32_t color{ 0xEDEDED };
 			bool          bold{ false };
 			bool          embed{ true };
-			std::string   glyphFont;  // the button icons' font, for "{B}" in the prompt (0.8.4)
+			std::string   glyphFont{ "$Controller_Buttons_inverted" };  // for "{B}" in the prompt
 		} g_prompt;
 
 		// The interaction prompt and name tag (RolloverWidget_mc), hidden while this mod films

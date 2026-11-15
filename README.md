@@ -117,7 +117,7 @@ Nebula uses every shot in the library.
 | Preset | From | The look | Feels like | Room shots go back |
 | --- | --- | --- | --- | --- |
 | Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly locked off | A TV drama: classic shot / reverse shot, calm and readable | (none) |
-| Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | A psychological thriller or an interrogation scene: faces fill the screen, the camera presses in | Distant only, as far as CCC's framing wants |
+| Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in | A film-noir confrontation: faces fill the screen, every flicker of an expression counts | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes and drifts | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants (12-18 m) |
 | Stardust | CCC SF (Standard) | Standard, plus a few of Room's wider shots (about a fifth) | A sci-fi streaming series: TV coverage that opens up to the set now and then | Up to 9 m indoors, 12 m outdoors |
 | Starborn | CCC SF (Close) | Close, plus the reverse shoulder and slowly drifting three-quarter singles | An intimate character drama: close and personal, but with room to breathe | Distant only, up to 9 m indoors, 12 m outdoors |

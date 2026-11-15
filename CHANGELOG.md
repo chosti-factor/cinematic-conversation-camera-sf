@@ -4,7 +4,27 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.8.4 - unreleased
+## 0.8.5 - unreleased
+
+### Fixed
+- Filming people talking from first person showed your character in a T-pose (the game
+  doesn't animate your full body in first person; 0.8.4 test, The Rock in Akila). You're
+  hidden while it films from first person.
+- Your head went missing in a conversation started from first person (0.8.4 test, Vasco
+  at the Lodge): the body rebuild was asked for again at 0.7 s and the first answer came at
+  0.83 s. It asks again at 1.2 s now.
+- The log's "loaded" line named 0.8.1 whatever the version.
+
+### Changed
+- Filming people talking ends sooner after the conversation: 0.5 s after the last word
+  (`fFilmEndSecondsNpc`), up to 4 s while they're still in one of the game's scenes
+  (`fFilmEndSecondsSceneNpc`; was 3 and 10).
+- The listen prompt's fonts are assigned rather than learned: the words in the bold main
+  font, light (the game's own prompt words are dark on a panel this prompt doesn't have),
+  the button as its icon.
+- README: Close "feels like" a film-noir confrontation.
+
+## 0.8.4 - 2026-11-15
 
 ### Fixed
 - The listen prompt took the look of the interaction prompt's button icon

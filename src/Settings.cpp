@@ -156,6 +156,8 @@ namespace CCC
 			a_s.listenHold = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenHold", a_s.listenHold), 0.2f, 2.0f);
 			a_s.listenPrompt = ReadInt(a_path, L"Overhear", L"bListenPrompt", a_s.listenPrompt ? 1 : 0) != 0;
 			a_s.autoListen = ReadInt(a_path, L"Overhear", L"bAutoListen", a_s.autoListen ? 1 : 0) != 0;
+			a_s.filmEndSeconds = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsNpc", a_s.filmEndSeconds), 0.1f, 10.0f);
+			a_s.filmEndSecondsScene = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsSceneNpc", a_s.filmEndSecondsScene), a_s.filmEndSeconds, 15.0f);
 			a_s.autoListenAfter = std::clamp(ReadFloat(a_path, L"Overhear", L"fAutoListenAfter", a_s.autoListenAfter), 0.5f, 30.0f);
 			a_s.roomShotMinRoom = std::clamp(ReadInt(a_path, L"Director", L"iRoomShotMinRoom", a_s.roomShotMinRoom), 30, 100);
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
