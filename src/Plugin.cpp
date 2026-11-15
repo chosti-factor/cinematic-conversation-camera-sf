@@ -1475,7 +1475,7 @@ namespace CCC
 					const int   i = order[k];
 					const float d = std::clamp(room(i), 0.0f, wanted);
 					if (d < 1.0f) {
-						break;
+						continue;  // ordered by score now, not by room: a later one can still have room
 					}
 					const float        a = eyeline + i * 2.0f * std::numbers::pi_v<float> / kBearings;
 					const RE::NiPoint3 cam{ mid.x + std::cos(a) * d, mid.y + std::sin(a) * d, mid.z + (std::min)(shot.rise, g_state.roomRise) };
