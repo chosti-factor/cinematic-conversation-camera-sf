@@ -11,6 +11,10 @@ test build; "diagnostic" items only add information to the log for testing.
   them wasn't started again, so the next lines were all reactions too (0.8.9 test, Sarah's
   monologue: four in a row, the count reaching 36 s). A reaction on screen during a line
   now starts the time again, however long it stayed.
+- Filming people talking: two scenes side by side were filmed as one, cutting between them
+  (0.8.9 test, TerraBrew: Helena and her manager, and the customers in line). One scene at a
+  time now: the nearest first, only its lines while it lasts, then on to the next one
+  nearby if there is one, without leaving the filming camera.
 
 ## 0.8.9 - 2026-11-15
 

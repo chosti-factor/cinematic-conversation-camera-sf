@@ -3848,6 +3848,7 @@ namespace CCC
 			std::string                           lastSubtitle;
 			bool                                  primed = false;  // seen once (what they said before isn't a new line)
 			const void*                           scene = nullptr;  // the scene they play a part in, if any
+			const void*                           lineScene = nullptr;  // the scene their last line was part of (0.8.10)
 		};
 
 		std::unordered_map<std::uint32_t, Talker> g_talkers;
@@ -4215,6 +4216,7 @@ namespace CCC
 					if ((raw && *raw) || a_now - t.lineStart > 600ms) {
 						t.pending = false;
 						t.scene = CurrentSceneUnsafe(actor.get());
+						t.lineScene = t.scene;
 						t.addressed = AddressedBy(actor->formID, t, playerFeet, playerHead);
 						ReportOverheardLine(actor.get(), t, a_now, playerFeet);
 					}
@@ -4506,12 +4508,22 @@ namespace CCC
 				g_filmMain.stillSince = {};
 				return;
 			}
-			// The conversation going on near you: the most recent NPC-to-NPC line within reach.
-			std::uint32_t speaker = 0, listener = 0;
-			auto          latest = std::chrono::steady_clock::time_point{};
-			const auto    playerFeet = player->GetPosition();
+			// The conversations going on near you: NPC-to-NPC lines within reach.
+			// 0.8.10 test: two scenes side by side at TerraBrew were filmed as one, cutting
+			// between them. One at a time now: while filming a scene, only its lines; otherwise
+			// the nearest conversation; when the one filmed is over, on to the next if there is one.
+			struct Candidate
+			{
+				std::uint32_t                         id;
+				std::uint32_t                         addressed;
+				std::chrono::steady_clock::time_point lastLine;
+				const void*                           scene;
+				float                                 distance;
+			};
+			std::vector<Candidate> candidates;
+			const auto             playerFeet = player->GetPosition();
 			for (const auto& [id, t] : g_talkers) {
-				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || t.lastLine <= latest || FlatDistance(t.feet, playerFeet) > s.listenRange) {
+				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || FlatDistance(t.feet, playerFeet) > s.listenRange) {
 					continue;
 				}
 				// Still part of it a while after they last spoke, counted from the end of the line
@@ -4531,15 +4543,53 @@ namespace CCC
 						continue;
 					}
 				}
-				latest = t.lastLine;
-				speaker = id;
-				listener = t.addressed;
+				candidates.push_back({ id, t.addressed, t.lastLine, t.lineScene, FlatDistance(t.feet, playerFeet) });
 			}
 			bool filming;
 			{
 				std::scoped_lock lock{ g_film.lock };
 				filming = g_film.active;
 			}
+			// The latest line among those that pass a_keep.
+			const auto latestOf = [&](auto a_keep) {
+				const Candidate* best = nullptr;
+				for (const auto& c : candidates) {
+					if (a_keep(c) && (!best || c.lastLine > best->lastLine)) {
+						best = &c;
+					}
+				}
+				return best;
+			};
+			// The nearest conversation (its latest line), among those that pass a_keep.
+			const auto nearestOf = [&](auto a_keep) {
+				const Candidate* closest = nullptr;  // (not "near": a Windows macro)
+				for (const auto& c : candidates) {
+					if (a_keep(c) && (!closest || c.distance < closest->distance)) {
+						closest = &c;
+					}
+				}
+				if (!closest || !closest->scene) {
+					return closest;
+				}
+				const void* scene = closest->scene;
+				return latestOf([scene](const Candidate& a_c) { return a_c.scene == scene; });
+			};
+			const Candidate* pick = nullptr;
+			if (filming && g_filmMain.scene) {
+				const void* filmed = g_filmMain.scene;
+				pick = latestOf([filmed](const Candidate& a_c) { return a_c.scene == filmed; });
+			} else if (filming) {
+				pick = latestOf([](const Candidate&) { return true; });  // (the listen key, not a scene: as before)
+			} else {
+				// The nearest one you haven't walked away from, else the nearest (for the prompt).
+				pick = nearestOf([&](const Candidate& a_c) { return !(a_c.scene && a_c.scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s); });
+				if (!pick) {
+					pick = nearestOf([](const Candidate&) { return true; });
+				}
+			}
+			std::uint32_t speaker = pick ? pick->id : 0;
+			std::uint32_t listener = pick ? pick->addressed : 0;
+			auto          latest = pick ? pick->lastLine : std::chrono::steady_clock::time_point{};
 			// A menu over the game (pause, inventory, map, scanner...): no prompt, and the time
 			// standing still starts again when it closes.
 			bool inMenu = false;
@@ -4589,7 +4639,25 @@ namespace CCC
 					g_filmMain.declinedScene = g_filmMain.scene;  // not this scene again on its own
 					g_filmMain.declinedAt = a_now;
 				} else if (speaker == 0) {
-					StopFilming("they've stopped talking");
+					// Over: on to the next conversation scene nearby, if there's one (and it starts
+					// on its own), without leaving the filming camera.
+					const void* filmed = g_filmMain.scene;
+					const auto* next = s.autoListen && filmed ? nearestOf([&](const Candidate& a_c) {
+						return a_c.scene && a_c.scene != filmed && !(a_c.scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s);
+					}) :
+					                                            nullptr;
+					if (next) {
+						std::scoped_lock lock{ g_film.lock };
+						g_filmMain.scene = next->scene;
+						g_filmMain.lastLine = next->lastLine;
+						g_filmMain.lastSpeaker = next->id;
+						g_film.speaker = next->id;
+						g_film.listener = next->addressed;
+						++g_film.line;
+						REX::INFO("Filming people talking: that one's over; on to {} and {}, nearby", TalkerName(next->id), TalkerName(next->addressed));
+					} else {
+						StopFilming("they've stopped talking");
+					}
 				} else {
 					std::scoped_lock lock{ g_film.lock };
 					if (latest != g_filmMain.lastLine || speaker != g_filmMain.lastSpeaker) {
@@ -4612,12 +4680,8 @@ namespace CCC
 			// offered or started on their own: in the 0.8.5 log every real conversation between
 			// NPCs was one of the game's scenes (FC_AC_RandConv..., ...CityLife_Encounter...),
 			// and every one-liner wasn't. (The listen key still films any.)
-			bool        conversation = false;
-			const void* scene = nullptr;
-			if (const auto it = g_talkers.find(speaker); it != g_talkers.end()) {
-				scene = it->second.scene;
-				conversation = scene != nullptr;
-			}
+			const void* scene = pick->scene;
+			const bool  conversation = scene != nullptr;
 			// 0.8.6: a scene starts it on its own even while you're moving (scenes are few, and
 			// moving ends it), but not one you've already walked away from or stopped.
 			const bool declined = scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s;
