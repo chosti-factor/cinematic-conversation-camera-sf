@@ -304,6 +304,7 @@ namespace CCC
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text);
 		void                FilmFrame();
+		void                FocusOnShot(float a_distance);
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		std::atomic<int>    g_lineSerial{ 0 };          // counts their lines, parts included (0.8.3)
@@ -2517,7 +2518,9 @@ namespace CCC
 			{
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
-				g_shotDistance.store(waitingView || pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz), std::memory_order_relaxed);
+				const float distance = waitingView || pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
+				g_shotDistance.store(distance, std::memory_order_relaxed);
+				FocusOnShot(distance);  // on this very frame (0.8.10)
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -3456,7 +3459,9 @@ namespace CCC
 		};
 		std::array<BlurRecord, 3> g_blurRecords{};
 		bool                      g_blurRecordsRead = false;
-		bool                      g_blurRecordsChanged = false;
+		std::atomic<bool>         g_blurRecordsChanged{ false };
+		std::atomic<bool>         g_blurReady{ false };  // read and usable (main thread sets it)
+		std::atomic<float>        g_blurWritten{ -1.0f };  // the shot distance last written (-1: the game's own)
 		constexpr std::size_t     kBlurStrength = 0x38C, kBlurDistance = 0x398, kBlurRange = 0x3A4;
 		constexpr float           kNoBlurBeyond = 8.0f;  // metres from the camera to the person in shot
 
@@ -3506,7 +3511,9 @@ namespace CCC
 				const float range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
 				// No blur at all on the far (room) shots: past about 8 m the game's blur kept
 				// things near the camera sharp and the people soft (0.8.0 test, the Lodge).
-				const float strength = a_shotDistance > kNoBlurBeyond ? 0.0f : r.strength;
+				// 0.8.10: none either before the first shot (no distance yet): the game's own
+				// focus, 1.5 m, blurred the opening frame of a shot 4 m away.
+				const float strength = a_shotDistance > kNoBlurBeyond || a_shotDistance <= 0.3f ? 0.0f : r.strength;
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
@@ -3524,6 +3531,23 @@ namespace CCC
 				}
 			}
 			g_blurRecordsChanged = false;
+			g_blurWritten.store(-1.0f, std::memory_order_relaxed);
+		}
+
+		// 0.8.10: the focus follows a cut on the same frame. It was set from the main thread, a
+		// frame or two after the camera moved, so the first frame of a shot could be focused for
+		// the last one (a blurred flash, most visible at the start of a conversation).
+		void FocusOnShot(float a_distance)
+		{
+			const auto& st = Settings::Get();
+			if (!st.focusOnSubject || !g_blurReady.load(std::memory_order_acquire) || g_state.handedBack || g_state.smallSpeaker) {
+				return;
+			}
+			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f) {
+				return;
+			}
+			g_blurWritten.store(a_distance, std::memory_order_relaxed);
+			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond);
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:
@@ -5089,6 +5113,7 @@ namespace CCC
 					const bool   live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
 					static float lastDistance = -1.0f;
 					if (live && st.focusOnSubject && ReadBlurRecords()) {
+						g_blurReady.store(true, std::memory_order_release);
 						const float d = g_shotDistance.load(std::memory_order_relaxed);
 						WriteBlurRecords(d, st.deepFocusLongShots, st.deepFocusBeyond);
 						if (st.debugLog && std::abs(d - lastDistance) > 0.25f) {

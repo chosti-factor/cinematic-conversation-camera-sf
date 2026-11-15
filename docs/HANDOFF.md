@@ -59,8 +59,10 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 
 ## Release plan
 
-- 1.0 public beta on Nexus: Friday 2026-11-20, 9-11 am US Central (15:00-17:00 UTC);
-  fallback Friday 2026-11-27 (Thanksgiving weekend). Features frozen by Tuesday, testing
+- 1.0 public beta on Nexus: moved (2026-11-15) from Friday 2026-11-20 to Friday 2026-11-27
+  (Thanksgiving weekend), 9-11 am US Central (15:00-17:00 UTC), or Wednesday 2026-11-25 if
+  that serves views better (decided closer to the date). Polish first: conversation-start
+  transitions (flashes) are the priority. Features frozen by Tuesday, testing
   Wednesday, Nexus page and a 60-90 s clip Thursday. Reddit (r/starfieldmods) the Saturday
   after, 9 am-1 pm Central. Outreach a few days before (machinima podcast, Starfield mod
   YouTubers, the Starfield Modding Discord). Be stable well before the Steam Winter Sale

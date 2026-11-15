@@ -15,6 +15,10 @@ test build; "diagnostic" items only add information to the log for testing.
   (0.8.9 test, TerraBrew: Helena and her manager, and the customers in line). One scene at a
   time now: the nearest first, only its lines while it lasts, then on to the next one
   nearby if there is one, without leaving the filming camera.
+- Conversation starts: the first frames of the first shot could be blurred (the game's own
+  focus, 1.5 m, on a shot 4 m away), a flash. The focus was set from the main thread a
+  frame or two after the camera moved; it's now set on the frame of the cut, for every cut,
+  and there's no blur at all before the first shot.
 
 ## 0.8.9 - 2026-11-15
 
