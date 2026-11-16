@@ -2619,7 +2619,9 @@ namespace CCC
 			// Reveal right here so the player is visible on this very frame (doing it only from
 			// the main-thread task left them hidden for the first frame of the shot, a visible
 			// pop in third-person conversations). The main thread keeps it up afterwards.
-			const bool shownYet = !g_state.startedFirstPerson || g_state.framesSinceWaiting > 2;
+			// 0.8.17 (shown at once): two frames from inside your head. 0.8.18 (after three):
+			// one frame of the first shot without you, then you popped in. Two it is.
+			const bool shownYet = !g_state.startedFirstPerson || g_state.framesSinceWaiting > 1;
 			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady && shownYet;
 			// While the first-person body is being rebuilt, keep the player hidden: the new
 			// head appears around the camera (0.3.31 showed one frame of the eyes from inside).
@@ -2964,11 +2966,17 @@ namespace CCC
 				const auto a = dir(*reported), b = dir(view);
 				wrongFrame = a.x * b.x + a.y * b.y + a.z * b.z < 0.94f;  // over 20 degrees apart
 			}
-			if ((mode != 1 || wrongFrame) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+			// Placed against the root as it's about to be (your view), not as it is on this frame
+			// (still pointing away): against that one, the 0.8.18 cover came out as two frames
+			// of ceiling once the game moved the root. Your own field of view, not the dialogue's.
+			if ((mode != 1 || wrongFrame) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, false, &view)) {
 				g_exitMasking = true;
-				g_exitCoverFrames = mode == 2 ? 3 : 1;
+				// 0.8.18 test: covering only this frame left two frames of ceiling in the clips:
+				// the cover has to be put back after the first-person camera's own first updates
+				// (ExitMaskEnd, on each of them), which a count of 1 never did.
+				g_exitCoverFrames = mode == 2 || wrongFrame ? 3 : 1;
 				if (mode == 1) {
-					REX::INFO("Exit: the game's first frame points away from your view; covered with your view");
+					REX::INFO("Exit: the game's first frame points away from your view; your view held over it for its first updates");
 				}
 			}
 			return true;
@@ -3007,7 +3015,7 @@ namespace CCC
 				return;
 			}
 			if (--g_exitCoverFrames > 0 && camera && g_firstPersonView &&
-				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
+				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, false, &*g_firstPersonView)) {
 				return;  // keep covering
 			}
 			g_exitMasking = false;

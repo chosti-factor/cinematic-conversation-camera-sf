@@ -9,6 +9,14 @@ test build; "diagnostic" items only add information to the log for testing.
 The start of 0.9.x, polish. Testing messages and the detailed log stay on until the last
 step before 1.0.
 
+### Fixed
+- First-person exits: 0.8.18's cover of the game's first frame came out as two frames of
+  ceiling (it was placed against the camera as it was on that frame, still pointing away,
+  and the game then moved it). It's now placed against your view, held for the first
+  updates, at your own field of view.
+- First-person starts: 0.8.18 showed you a frame too late (the first shot without you,
+  then your head popped in). You're shown one frame sooner.
+
 ### Removed
 - Old INI names no longer read: the keys from before the Npc/Player renames (bReactionShots,
   bEmotionCloseUps, bPersuasionBeat, iExtremeCloseUpChance, bPlainShotsSeated, bFacePlayer's
