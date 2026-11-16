@@ -19,7 +19,23 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-15, 0.8.14)
+## Where things stand (2026-11-16, 0.8.17)
+
+- Sway test over: CCC's presets on a tripod (0), Frontier 50, Constellation 70 plus a
+  handheld wander at 0.5, Nebula 40, Starborn 0; the sway key is gone.
+- Your side's angle now counts your turns (the player is silent; it never counted before).
+- Chosen option: read by its highlight or the list's selectedIndex (all options are at full
+  opacity, so 0.8.16 always took the first); persuasion panel options read too. The log's
+  "HUD: chose ..." line lists every option's state: check it in the 0.8.17 test.
+- Persuasion beat on every round's answer (the verdict comes while the panel is open);
+  seated people get it in every preset. CCC's presets keep it (CCC ships it on).
+- Seated NPC, you standing: the plain shot stands wider and lower behind you.
+- Filming others: ends on a move only after you've stopped.
+- To test in 0.8.17: tagged choices and persuasion close-ups, seated framing, your angle
+  changing in Standard/Starborn/Constellation. Waiting on the user's footage of the Neon
+  ranger fading in before any change there.
+
+## Earlier (2026-11-15, 0.8.14)
 
 - Lenses settled: each angle has its own, CCC 1.5.0's numbers as written (CCC's exported
   presets; two Skyrim clips measured: close-ups 26%/23% and extreme close-ups ~59% of the
