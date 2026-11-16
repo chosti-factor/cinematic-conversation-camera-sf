@@ -14,6 +14,15 @@ step before 1.0.
   bEmotionCloseUps, bPersuasionBeat, iExtremeCloseUpChance, bPlainShotsSeated, bFacePlayer's
   bPlayerFace, and the rest), bShowEmotions/bShowShots, and `sPreset=Stardust` (Frontier).
 - `iCloseUpDistance`: every angle has its own lens, so close-ups stand at CCC's distance.
+- `iCloseUpChancePlayer`, unused since 0.8.5 (the Mild/Medium/Strong chances replaced it).
+
+### Changed
+- `fConversationLens=0` (the default) now means each angle's own lens, as -1 did (which
+  still works); one lens for everything is 20-70, and the game's own is 30.
+- `sBeatTags`: Negotiation added ("Negotiate" didn't match the game's [Negotiation]).
+- The INI's comments brought up to date and tidied: each preset's cutting listed, the
+  persuasion hold's two behaviours, starting filming not while running, the controller
+  button, the real names of your close-up chances; development notes removed.
 
 ## 0.8.18 - 2026-11-16
 

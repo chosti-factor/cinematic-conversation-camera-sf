@@ -148,14 +148,14 @@ namespace CCC
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
 			a_s.conversationLens = ReadFloat(a_path, L"Camera", L"fConversationLens", a_s.conversationLens);
-			a_s.conversationLens = a_s.conversationLens < 0.0f ? -1.0f : a_s.conversationLens < 10.0f ? 0.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
+			// 0 (or -1) = the preset's own lenses (0.9.0: 0 was the game's 30, which 30 still gives).
+			a_s.conversationLens = a_s.conversationLens < 10.0f ? -1.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
 			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
 			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
 			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
 			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
-			a_s.playerCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChancePlayer", a_s.playerCloseUpChance), 0, 100);
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);

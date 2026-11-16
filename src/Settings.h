@@ -16,7 +16,7 @@ namespace CCC
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
 		int      presetKey{ 0x55 };       // switches presets on the fly (U; 0 = none), 0.8.3
-		float    conversationLens{ -1.0f };  // the conversation lens, degrees (0 = the game's 30, -1 = the preset's own)
+		float    conversationLens{ -1.0f };  // the conversation lens, degrees (-1 = the preset's own)
 		bool     filmConversations{ true }; // film people talking near you (the listen key)
 		int      listenKey{ 0x4E };          // virtual-key code, 0 = no prompt or key (N)
 		float    listenRange{ 12.0f };       // how far from you a conversation may be
@@ -33,7 +33,6 @@ namespace CCC
 		bool     playerFace{ true };      // your character's expressions during conversations
 		int      questionFaceChance{ 40 };  // % of untagged questions you ask with a questioning look
 		int      signatureChance{ 30 };     // % of neutral moments your background's expression shows
-		int      playerCloseUpChance{ 50 };  // (until 0.8.5) % of reactions that are a close-up of you
 		int      closeUpChanceMildPlayer{ 25 };    // 0.8.6: by your expression's tier (the Npc tier lists)
 		int      closeUpChanceMediumPlayer{ 40 };
 		int      closeUpChanceStrongPlayer{ 100 };
@@ -189,7 +188,7 @@ namespace CCC
 		float       reactionLineMax{ 7.0f };     // ... and at most
 		float       reactionLongLineHold{ 4.0f };  // a longer line: on you for its first this many seconds (0 = wait for one that suits)
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
-		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Commerce" };
+		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Negotiation,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
 		int         cameraSway{ -1 };         // % of the heads' sway the camera's angle follows (0 = none, 100 = full); -1 = the preset's own (0.8.14)
 		bool        cameraMoves{ true };
