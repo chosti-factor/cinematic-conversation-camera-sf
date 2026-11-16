@@ -4,7 +4,7 @@ Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
 character's face. Kept up to date with every build.
 
-## The rules now (0.8.16)
+## The rules now (0.8.17)
 
 - **Which presets:** Frontier, Starborn and Nebula use every tier; Constellation, the
   documentary, strong lines only.
@@ -28,7 +28,8 @@ character's face. Kept up to date with every build.
 - **Close-ups of you** in reaction shots, by your expression's tier, the same lists and
   chances, and when you choose a tagged option (0.8.16): every tag but [Pay ...], an extreme
   close-up for Intimidate, Threaten, Manipulate, Deceive, Lie and Attack, the others extreme
-  40% of the time (CCC SF's presets). See "Your character's face" below.
+  40% of the time (CCC SF's presets), and every option in a persuasion (0.8.17). See "Your
+  character's face" below.
 
 ## The tally
 
