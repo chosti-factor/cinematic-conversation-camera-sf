@@ -88,6 +88,10 @@ namespace CCC::Director
 	[[nodiscard]] int  EmotionCloseUps();
 	[[nodiscard]] bool ReactionShots();
 
+	// Seconds of their talking without a cut to you before a reaction is due (0.8.15): your
+	// fReactionAfterSecondsPlayer, or the preset's own.
+	[[nodiscard]] float ReactionAfterSeconds();
+
 	// The camera sway in use (0.8.14): your iCameraSway, or the preset's own.
 	[[nodiscard]] int CameraSway();
 

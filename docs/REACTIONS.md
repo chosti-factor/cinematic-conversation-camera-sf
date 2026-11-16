@@ -33,7 +33,8 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 5. **Time on them.** Their talking adds up while the camera stays on them without showing
    you. Your own turns, and every reaction, start it again; a reaction still due when your
    turn comes is dropped (0.8.7).
-6. **A reaction due?** When that time reaches `fReactionAfterSecondsPlayer` (7 s), a
+6. **A reaction due?** When that time reaches `fReactionAfterSecondsPlayer` (the preset's
+   own: Frontier 10 s, Starborn 9 s, Constellation 12 s, Nebula 7 s), a
    reaction is due, `iReactionChancePlayer` (100%) of the time; a no waits another stretch.
 7. **Taken by the next line that suits it:** one of theirs that starts after it's due and
    lasts `fReactionLineMinSecondsPlayer` to `fReactionLineMaxSecondsPlayer` (2.5 to 7 s,

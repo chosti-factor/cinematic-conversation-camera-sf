@@ -28,8 +28,8 @@ Last updated: 0.8.14 (2026-11-15).
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-3 lines and most turns, 1.6 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 22% | 59% | 7% | 24% |
 | Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 8% | 11% | 54% | 19% |
-| Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Every tier | Every tier |
-| Reaction shots of you | off | off | off | on | on | on | on |
+| Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |
+| Reaction shots of you | off | off | off | after 10 s of their talking | after 9 s | after 12 s | after 7 s |
 | Room shots go back | | As far as CCC's framing wants | As far as CCC's framing wants | Up to 9 m indoors, 12 m outdoors | The same | The same | The same |
 | Other shots, camera at most | 7 m indoors, 10.5 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors |
 

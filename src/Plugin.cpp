@@ -2093,6 +2093,7 @@ namespace CCC
 							// line, so the cuts are at the line's edges, never in the middle (0.8.4
 							// test: some reactions were too abrupt). Then the time starts again.
 							const float lineSeconds = static_cast<float>(text.size()) / 14.0f;
+							const float reactionAfter = Director::ReactionAfterSeconds();  // the preset's own (0.8.15)
 							const float onThem = g_state.monoSeconds;
 							const auto  secs = [](float a_seconds) {
 								return std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(a_seconds));
@@ -2124,8 +2125,8 @@ namespace CCC
 								// (the rest has to suit). Never an extreme close-up; and one that was
 								// already due before the line waits for the next line, so the close-up
 								// isn't cut away from at once.
-								if (!g_state.lineExtreme && !g_state.reactionOwed && onThem < s.reactionAfterSeconds) {
-									const float crossAt = s.reactionAfterSeconds - onThem;
+								if (!g_state.lineExtreme && !g_state.reactionOwed && onThem < reactionAfter) {
+									const float crossAt = reactionAfter - onThem;
 									const float onYou = lineSeconds - crossAt;
 									// 0.8.5 test: the 7 s came 0.4 s into a close-up, a cut away at once.
 									// Within its minimum time on screen (fShortestHold), the reaction
@@ -2136,7 +2137,7 @@ namespace CCC
 									}
 								}
 							} else {
-								if (!g_state.reactionOwed && onThem >= s.reactionAfterSeconds) {
+								if (!g_state.reactionOwed && onThem >= reactionAfter) {
 									g_state.reactionOwed = std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance;
 									if (!g_state.reactionOwed) {
 										g_state.monoSeconds = 0.0f;

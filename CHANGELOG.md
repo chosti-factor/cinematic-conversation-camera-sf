@@ -23,6 +23,12 @@ test build; "diagnostic" items only add information to the log for testing.
   two-shot and group 72).
 
 ### Changed
+- Emotion close-ups and reactions fitted to each CCC SF preset (0.8.14 test: reactions took
+  16-36% of the time, emotion close-ups 4-16%, so up to half of Frontier was the extras
+  rather than its own angles): reactions after 10 s of their talking in Frontier, 9 s in
+  Starborn, 12 s in Constellation, 7 s in Nebula (`fReactionAfterSecondsPlayer=-1`, the
+  preset's own); Constellation's emotion close-ups on strong lines only, the documentary
+  keeping its distance.
 - Filming people talking: closer for two people (close-ups, three-quarters and shoulders
   most, a medium now and then, no two-shot); the two-shot and the group shot stay for three
   or more.

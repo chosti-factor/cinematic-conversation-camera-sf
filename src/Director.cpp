@@ -1259,7 +1259,21 @@ namespace CCC::Director
 		if (CccPreset()) {
 			return ClosePreset() ? 3 : 0;
 		}
-		return 1;
+		// Constellation, the documentary, observes from a distance and cuts in tight only for
+		// the strong lines (0.8.15: emotion close-ups and reactions took a quarter of it).
+		return PresetIs("constellation") ? 3 : 1;
+	}
+
+	float ReactionAfterSeconds()
+	{
+		const float mine = Settings::Get().reactionAfterSeconds;
+		if (mine > 0.0f) {
+			return mine;
+		}
+		// The preset's own (0.8.15; the 0.8.14 test had reactions at 16-36% of the time in CCC
+		// SF's presets): Frontier's relaxed pace 10 s, Starborn's long holds 9 s,
+		// Constellation's observer 12 s, Nebula 7 s.
+		return PresetIs("frontier") ? 10.0f : PresetIs("starborn") ? 9.0f : PresetIs("constellation") ? 12.0f : 7.0f;
 	}
 
 	int CameraSway()

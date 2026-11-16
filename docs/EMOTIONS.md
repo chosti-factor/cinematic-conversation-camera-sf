@@ -4,9 +4,10 @@ Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
 character's face. Kept up to date with every build.
 
-## The rules now (0.8.14)
+## The rules now (0.8.15)
 
-- **Which presets:** CCC SF's (Frontier, Starborn, Constellation, Nebula) use every tier.
+- **Which presets:** Frontier, Starborn and Nebula use every tier; Constellation, the
+  documentary, strong lines only.
   CCC's keep CCC's vision: none in Standard and Room, strong lines only in Close (the nearest
   thing to CCC's "full intensity"). `bEmotionCloseUpsNpc`: -1 the preset's own (default),
   0 none, 1 every tier in every preset.

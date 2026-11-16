@@ -214,7 +214,8 @@ namespace CCC
 			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", ReadInt(a_path, L"Director", L"iReactionEvery", a_s.reactionEvery)), 1, 10);
 			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", ReadInt(a_path, L"Director", L"iReactionChance", a_s.reactionChance)), 0, 100);
 			a_s.reactionSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionSecondsPlayer", ReadFloat(a_path, L"Director", L"fReactionSeconds", a_s.reactionSeconds)), 0.0f, 30.0f);
-			a_s.reactionAfterSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds), 2.0f, 120.0f);
+			a_s.reactionAfterSeconds = ReadFloat(a_path, L"Director", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds);
+			a_s.reactionAfterSeconds = a_s.reactionAfterSeconds < 0.0f ? -1.0f : std::clamp(a_s.reactionAfterSeconds, 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
 			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
