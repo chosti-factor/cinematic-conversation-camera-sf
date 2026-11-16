@@ -15,6 +15,18 @@ test build; "diagnostic" items only add information to the log for testing.
 - Filming people talking ended on momentum: walking up to a conversation, it started and
   your last steps ended it 1.3 s later (0.8.16 test, TerraBrew). Moving ends it only once
   you've come to a stop (0.4 s still); walking on 3 m without stopping still ends it.
+- The option you chose was misread: every option shows at full opacity, so the first one
+  was taken for whatever you picked (the 0.8.16 test logged 'Let's trade gear.' for a
+  Sarah line, and [Pay ...] for [Persuade]), so tagged choices never got their close-up.
+  Now the option with its highlight showing, or the list's selected index; and the log says
+  how it was told apart.
+- The persuasion panel's options weren't read at all. Each is a skill check, so each now
+  gets the close-up of you too (an extreme one for the confrontational skills).
+- With a seated NPC (plain shots), the close-up for your choice waited for an NPC line, and
+  you don't speak, so it never showed.
+- Seated NPCs: your body hid most of them. The plain shot looked down over your shoulder
+  onto their lower head; it now stands wider and lower behind you
+  (`fOverSeatedBehind`/`Side`/`Height`), so the line to them passes clear of you.
 - Camera sway in CCC's presets (Standard, Close, Room): CCC's camera doesn't sway, so
   they're on a tripod now (were 40).
 

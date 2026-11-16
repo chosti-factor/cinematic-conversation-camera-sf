@@ -407,7 +407,10 @@ namespace CCC::Hud
 			float alpha[2]{ 1.0f, 1.0f };
 			float setAlpha[2]{ -1.0f, -1.0f };  // what we wrote last frame (-1 = nothing), to see whether the game keeps it
 			int   logs{ 0 };                     // log lines this session (capped)
-			std::string highlighted;             // the option under the cursor, to know which was chosen
+			std::string highlighted[2];          // the option under the cursor, to know which was chosen
+			std::string how[2];                  // how it was told apart (0.8.17), and every option's state, for the log
+			std::string states[2];
+			int         choiceLogs{ 0 };
 			bool  overrideLogged{ false };
 			bool  listDumped{ false };
 		} g_options;
@@ -569,31 +572,84 @@ namespace CCC::Hud
 					}
 				}
 				g_options.setAlpha[i] = -1.0f;
-				// The option under the cursor (its text at full opacity; the others are dimmed).
-				// When the list goes, that's the one chosen: a skill-check option ([Intimidate],
-				// [Manipulation], [Pay 500 Credits]...) gets the persuasion beat on the answer.
-				if (i == 0 && now) {
+				// The option under the cursor. 0.8.16 took the first one at full opacity, but every
+				// option was at full opacity (the test logged the first option, 'Let's trade gear.',
+				// for whatever you chose, and [Pay ...] for [Persuade]). Now: the only option not
+				// dimmed; else the only one with its highlight (Mask_mc) showing; else the list's
+				// selectedIndex. Kept from the last frame that told them apart, since the list can
+				// reset as it closes. Also in the persuasion panel's list (0.8.17).
+				if (now) {
 					Value holder;
 					if (Child(list, "EntryHolder_mc", holder)) {
-						for (int e = 0; e < 12; ++e) {
-							Value entry, textHolder, field;
-							const auto name = std::format("Entry{}", e);
+						std::array<std::string, 12> texts;
+						std::array<double, 12>      textAlpha{};
+						std::array<double, 12>      maskAlpha{};
+						int                         count = 0;
+						for (; count < 12; ++count) {
+							Value      entry, textHolder, field, mask;
+							const auto name = std::format("Entry{}", count);
 							if (!Child(holder, name.c_str(), entry)) {
 								break;
 							}
-							if (Child(entry, "TextHolder_mc", textHolder) && Member(textHolder, "alpha", 0.0) > 0.9 && Child(textHolder, "textField", field)) {
-								g_options.highlighted = StringMember(field, "text");
-								break;
+							if (Child(entry, "TextHolder_mc", textHolder)) {
+								textAlpha[count] = Member(textHolder, "alpha", 0.0);
+								if (Child(textHolder, "textField", field)) {
+									texts[count] = StringMember(field, "text");
+								}
 							}
+							if (Child(entry, "Mask_mc", mask)) {
+								maskAlpha[count] = Member(mask, "visible", 1.0) != 0.0 ? Member(mask, "alpha", 0.0) : 0.0;
+							}
+						}
+						const int selected = static_cast<int>(Member(list, "selectedIndex", -1.0));
+						int         pick = -1;
+						const char* how = "";
+						int         bright = 0, brightAt = -1, masked = 0, maskedAt = -1;
+						for (int e = 0; e < count; ++e) {
+							if (textAlpha[e] > 0.9) {
+								++bright;
+								brightAt = e;
+							}
+							if (maskAlpha[e] > 0.05) {
+								++masked;
+								maskedAt = e;
+							}
+						}
+						if (count == 1) {
+							pick = 0;
+							how = "the only option";
+						} else if (bright == 1) {
+							pick = brightAt;
+							how = "the only one not dimmed";
+						} else if (masked == 1) {
+							pick = maskedAt;
+							how = "the only one highlighted";
+						} else if (selected >= 0 && selected < count) {
+							pick = selected;
+							how = "the list's selectedIndex";
+						}
+						if (pick >= 0 && !texts[pick].empty()) {
+							g_options.highlighted[i] = texts[pick];
+							g_options.how[i] = how;
+							std::string states;
+							for (int e = 0; e < count; ++e) {
+								states += std::format("{}{}: text {:.2f}, highlight {:.2f}", e ? "; " : "", e, textAlpha[e], maskAlpha[e]);
+							}
+							g_options.states[i] = std::format("{}; selectedIndex {}", states, selected);
 						}
 					}
 				}
-				if (i == 0 && !now && g_options.wasVisible[0] && !g_options.highlighted.empty()) {
-					const auto& chosen = g_options.highlighted;
-					if (g_choiceListener) {
-						g_choiceListener(chosen);
+				if (!now && g_options.wasVisible[i] && !g_options.highlighted[i].empty()) {
+					const std::string chosen = g_options.highlighted[i];
+					g_options.highlighted[i].clear();
+					if (g_options.choiceLogs < 30) {
+						++g_options.choiceLogs;
+						REX::INFO("HUD: chose '{}'{} ({}; {})", chosen.substr(0, 60), i == 1 ? " in the persuasion" : "", g_options.how[i], g_options.states[i]);
 					}
-					if (chosen.starts_with('[')) {
+					if (g_choiceListener) {
+						g_choiceListener(chosen, i == 1);
+					}
+					if (i == 0 && chosen.starts_with('[')) {
 						const auto close = chosen.find(']');
 						const auto tag = chosen.substr(1, close == std::string::npos ? 0 : close - 1);
 						if (IsBeatTag(tag)) {
@@ -604,7 +660,6 @@ namespace CCC::Hud
 							REX::INFO("HUD: chose '{}' ([{}] isn't on sBeatTags)", chosen.substr(0, 60), tag);
 						}
 					}
-					g_options.highlighted.clear();
 				}
 				if (now != g_options.wasVisible[i] && g_options.logs < 40) {
 					++g_options.logs;

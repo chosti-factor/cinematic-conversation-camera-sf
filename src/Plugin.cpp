@@ -304,7 +304,7 @@ namespace CCC
 		std::mt19937 g_reactionRng{ std::random_device{}() };
 
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
-		void                OnOptionChosen(const std::string& a_text);
+		void                OnOptionChosen(const std::string& a_text, bool a_persuasion);
 		void                FilmFrame();
 		void                FocusOnShot(float a_distance);
 		void                LensNow();
@@ -2356,6 +2356,11 @@ namespace CCC
 			const auto& nearHeadRef = subject == Subject::kNpc ? *playerHead : *npcHead;
 			const auto& farHeadRef = subject == Subject::kNpc ? *npcHead : *playerHead;
 			const bool  nearSeated = farHeadRef.z - nearHeadRef.z > 0.2f;
+			// The other way round: the person in shot is sitting and the near one standing. The
+			// plain over-the-shoulder shot looked down past your shoulder onto them, and your
+			// body hid most of them (0.8.16 test, a seated recruit): wider and lower, at their
+			// level, so the line to them passes clear of you (0.8.17).
+			const bool  farSeated = nearHeadRef.z - farHeadRef.z > 0.2f;
 			// First-person conversations open on the NPC from just in front of the player's
 			// eyes: while the body is being rebuilt (the game passes through first and third
 			// person), nothing of the player (arms, half-built body) is in front of the camera.
@@ -2504,6 +2509,8 @@ namespace CCC
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide * plainSign, s.seatedHeight) :
 			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide * plainSign, s.vendorHeight) :
+			                   farSeated ?
+			                   Camera::Shot(nearHeadRef, farHeadRef, s.overSeatedBehind, s.overSeatedSide * (plainSign < 0.0f ? -1.0f : 1.0f), s.overSeatedHeight) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef, plainSign);
 			// Obstacles on the plain shot (seated people, merchants, or nothing in the preset
 			// fits): checked when the camera turns to the other person. A wall behind the
@@ -3688,16 +3695,18 @@ namespace CCC
 		// Diagnostic (0.7.3): where the game keeps the line you just chose. Your own voice data
 		// never shows it (0.7.2), so look through the dialogue menu's topic manager for
 		// dialogue records, directly or one pointer away, and log each with its tag.
-		void OnOptionChosen(const std::string& a_text)
+		void OnOptionChosen(const std::string& a_text, bool a_persuasion)
 		{
 			// A close-up of you for a tagged option (0.8.16; CCC SF's presets): every tag but a
 			// payment ([Pay 500 Credits] is a transaction). The confrontational skills always an
 			// extreme close-up; the others by iExtremeCloseUpChancePlayer, as the NPCs' are.
+			// Every option in a persuasion too, tagged or not: each is a skill check (0.8.17).
 			if (g_state.active && !g_state.handedBack && Director::ChoiceCloseUps()) {
 				const auto open = a_text.find('[');
 				const auto close = a_text.find(']');
-				if (open != std::string::npos && close != std::string::npos && close > open + 1 && open <= 3) {
-					std::string tag = a_text.substr(open + 1, close - open - 1);
+				const bool tagged = open != std::string::npos && close != std::string::npos && close > open + 1 && open <= 3;
+				if (tagged || a_persuasion) {
+					std::string tag = tagged ? a_text.substr(open + 1, close - open - 1) : std::string{ "persuasion" };
 					std::ranges::transform(tag, tag.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 					if (!tag.starts_with("pay")) {
 						bool extreme = false;
@@ -3706,7 +3715,8 @@ namespace CCC
 						}
 						g_state.choiceCloseUp = true;
 						g_state.choiceExtreme = extreme;
-						REX::INFO("Your choice '{}': a close-up of you{}", a_text.substr(0, close + 1), extreme ? " (extreme: a confrontational skill)" : "");
+						REX::INFO("Your choice '{}'{}: a close-up of you{}", tagged ? a_text.substr(0, close + 1) : a_text.substr(0, 40), a_persuasion ? " in a persuasion" : "",
+							extreme ? " (extreme: a confrontational skill)" : "");
 					}
 				}
 			}

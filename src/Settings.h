@@ -69,6 +69,9 @@ namespace CCC
 		float seatedForward{ 0.25f };
 		float seatedSide{ 0.9f };
 		float seatedHeight{ 0.3f };
+		float overSeatedBehind{ 0.35f };   // over your shoulder onto someone seated (0.8.17)
+		float overSeatedSide{ 0.6f };
+		float overSeatedHeight{ -0.25f };
 		// Merchants on your lines: the camera stands in front of and beside them, facing you,
 		// like the seated shot (behind them it was close enough that the game faded them out,
 		// and shops put shelves and counters there).

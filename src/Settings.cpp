@@ -273,6 +273,9 @@ namespace CCC
 			a_s.seatedForward = ReadFloat(a_path, L"PlainCamera", L"fSeatedForward", a_s.seatedForward);
 			a_s.seatedSide = ReadFloat(a_path, L"PlainCamera", L"fSeatedSide", a_s.seatedSide);
 			a_s.seatedHeight = ReadFloat(a_path, L"PlainCamera", L"fSeatedHeight", a_s.seatedHeight);
+			a_s.overSeatedBehind = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedBehind", a_s.overSeatedBehind);
+			a_s.overSeatedSide = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedSide", a_s.overSeatedSide);
+			a_s.overSeatedHeight = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedHeight", a_s.overSeatedHeight);
 			a_s.vendorSide = ReadFloat(a_path, L"PlainCamera", L"fVendorSideNpc", ReadFloat(a_path, L"PlainCamera", L"fVendorSide", a_s.vendorSide));
 			a_s.vendorHeight = ReadFloat(a_path, L"PlainCamera", L"fVendorHeightNpc", ReadFloat(a_path, L"PlainCamera", L"fVendorHeight", a_s.vendorHeight));
 

@@ -1149,13 +1149,15 @@ namespace CCC::Director
 		};
 		// Your emotion close-up, on a reaction (0.7.11: reactions with seated people and
 		// merchants too, shown on the plain shot of you otherwise).
-		const bool playerClose = a_frame.playerCloseUp && !a_frame.npcTurn && a_frame.npcTalking;
+		// Your tagged choice's close-up too (0.8.17: the 0.8.16 test's persuasion was with a seated
+		// recruit, where it couldn't show: you don't speak, so it waited for an NPC line).
+		const bool playerClose = a_frame.playerCloseUp && !a_frame.npcTurn && (a_frame.npcTalking || a_frame.playerChoice);
 		if (playerClose) {
 			if (!gp.playerClose) {
 				gp.playerClose = true;
 				gp.shot.reset();
 				if (const auto shot = PlayerCloseShot(a_frame)) {
-					begin(*shot, "reaction: your expression", false);
+					begin(*shot, a_frame.playerChoice ? "your tagged choice" : "reaction: your expression", false);
 				}
 				LogSkipped();
 			}
