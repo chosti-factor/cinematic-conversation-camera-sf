@@ -15,6 +15,17 @@ test build; "diagnostic" items only add information to the log for testing.
 - Filming people talking started again for a second after a scene had ended (0.8.14 test,
   Amoli and Gerhard: a talking flag flickering), a flip to third person and back. It only
   starts on its own on a line that began after it last stopped.
+- Starting a conversation from first person: the first shot began with you missing and you
+  appeared a moment later (0.8.14 test, the Ranger at Neon), while your full body was being
+  built. Your own view holds until it's ready (about 0.15 s, at most 0.6 s).
+- Filming people talking used whatever lens your last conversation ended on. Each shot has
+  its own now (Standard's, as CCC: close-up 50, shoulder 55, three-quarter 58, medium 62,
+  two-shot and group 72).
+
+### Changed
+- Filming people talking: closer for two people (close-ups, three-quarters and shoulders
+  most, a medium now and then, no two-shot); the two-shot and the group shot stay for three
+  or more.
 
 ## 0.8.14 - 2026-11-15
 

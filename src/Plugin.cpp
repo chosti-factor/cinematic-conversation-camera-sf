@@ -306,6 +306,23 @@ namespace CCC
 		void                FilmFrame();
 		void                FocusOnShot(float a_distance);
 		void                LensNow();
+		std::atomic<float>  g_filmLens{ 50.0f };  // the lens of the shot filming people talking (0.8.15)
+
+		// Filming people talking (0.8.15): each shot on Standard's lens for it (CCC's numbers).
+		float FilmLens(Shots::ShotType a_type, bool a_group)
+		{
+			if (a_group) {
+				return 72.0f;
+			}
+			switch (a_type) {
+			case Shots::ShotType::kCloseUp: return 50.0f;
+			case Shots::ShotType::kOverPlayerShoulder: return 55.0f;
+			case Shots::ShotType::kThreeQuarterNpc: return 58.0f;
+			case Shots::ShotType::kMediumNpc: return 62.0f;
+			case Shots::ShotType::kTwoShot: return 72.0f;
+			default: return 50.0f;
+			}
+		}
 		bool                FilmingActive();
 		std::atomic<bool>   g_playerFaceShown{ false };  // your face answers the NPC's current line (set on the main thread)
 		std::atomic<int>    g_lineSerial{ 0 };          // counts their lines, parts included (0.8.3)
@@ -2361,7 +2378,11 @@ namespace CCC
 				}
 			}
 			std::optional<Camera::Pose> waitingView;
-			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
+			// From first person, until your full body is ready (about 0.15 s), your own view,
+			// with you hidden (0.8.14 test, the Ranger at Neon: the first shot began with you
+			// missing and you popped in a moment later). At most 0.6 s.
+			const bool bodyPending = g_state.startedFirstPerson && !g_state.bodyReady && now - g_state.started < 600ms;
+			if (gameplayView && (bodyPending || (startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
 			std::optional<Camera::Pose> directed;
@@ -4842,7 +4863,7 @@ namespace CCC
 				g_filmMain.lastSaid = pick->info;
 				g_film.group.clear();
 				g_film.groupShot = false;
-				g_lensWanted.store(Director::WantedLens() >= 10.0f ? Director::WantedLens() : 30.0f, std::memory_order_relaxed);
+				g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
 					pressed ? "" : " (on its own: a conversation scene nearby)");
@@ -4928,10 +4949,17 @@ namespace CCC
 			if (newLine || drifted) {
 				g_film.groupShot = false;  // (set again below if this one is a group shot)
 				static std::mt19937 rng{ std::random_device{}() };
-				constexpr std::array kChoices{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
+				// 0.8.15: closer for two people (close-ups, three-quarters and shoulders most, a
+				// medium now and then); the two-shot only with three or more, who also get the
+				// group shot.
+				const bool groupScene = groupHeads.size() >= 3;
+				constexpr std::array kPair{ Shots::ShotType::kCloseUp, Shots::ShotType::kCloseUp, Shots::ShotType::kThreeQuarterNpc,
+					Shots::ShotType::kThreeQuarterNpc, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kMediumNpc };
+				constexpr std::array kGroup{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc,
 					Shots::ShotType::kMediumNpc, Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
 				std::vector<Shots::ShotType> order;
-				auto first = kChoices[std::uniform_int_distribution<std::size_t>{ 0, kChoices.size() - 1 }(rng)];
+				auto first = groupScene ? kGroup[std::uniform_int_distribution<std::size_t>{ 0, kGroup.size() - 1 }(rng)] :
+				                          kPair[std::uniform_int_distribution<std::size_t>{ 0, kPair.size() - 1 }(rng)];
 				if (newLine && first == g_film.shot && first != Shots::ShotType::kOverPlayerShoulder) {
 					first = Shots::ShotType::kOverPlayerShoulder;
 				}
@@ -4940,7 +4968,10 @@ namespace CCC
 				}
 				order.push_back(first);
 				std::vector<Shots::ShotType> rest{ Shots::ShotType::kOverPlayerShoulder, Shots::ShotType::kThreeQuarterNpc, Shots::ShotType::kMediumNpc,
-					Shots::ShotType::kCloseUp, Shots::ShotType::kTwoShot };
+					Shots::ShotType::kCloseUp };
+				if (groupScene) {
+					rest.push_back(Shots::ShotType::kTwoShot);
+				}
 				std::ranges::shuffle(rest, rng);
 				for (const auto type : rest) {
 					if (std::ranges::find(order, type) == order.end()) {
@@ -4958,6 +4989,7 @@ namespace CCC
 				float                        fallbackRoom = -1.0f;  // how far from the speaker the camera can stand clear
 				std::string                  skipped;
 				for (const auto type : order) {
+					in.lensDegrees = FilmLens(type, false);
 					auto solved = Shots::Solve(type, in);
 					if (!solved.ok) {
 						continue;
@@ -5001,7 +5033,7 @@ namespace CCC
 						dy = sh.y - lh.y;
 						len = std::hypot(dx, dy);
 					}
-					const float half = std::clamp(Director::LensDegrees(), 20.0f, 120.0f) * 0.5f * 0.017453292f;
+					const float half = FilmLens(Shots::ShotType::kTwoShot, true) * 0.5f * 0.017453292f;
 					const float back = (radius + 0.5f) / std::tan(half) + radius;
 					if (len > 0.01f && back <= 9.0f) {
 						Camera::Pose groupPose{};
@@ -5032,6 +5064,7 @@ namespace CCC
 				const auto& use = chosen ? *chosen : *fallback;
 				g_film.groupShot = group;
 				g_film.shot = chosenType;
+				g_filmLens.store(FilmLens(chosenType, group), std::memory_order_relaxed);
 				g_film.pose = use.pose;
 				g_film.anchor = subjectOf(chosenType);
 				g_film.lookOffset = { use.pose.lookAt.x - g_film.anchor.x, use.pose.lookAt.y - g_film.anchor.y, use.pose.lookAt.z - g_film.anchor.z };
@@ -5052,6 +5085,7 @@ namespace CCC
 					g_film.anchor.z += (subject.z - g_film.anchor.z) * k;
 				}
 			}
+			g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 			Camera::Pose pose = *g_film.pose;
 			pose.lookAt = { g_film.anchor.x + g_film.lookOffset.x, g_film.anchor.y + g_film.lookOffset.y, g_film.anchor.z + g_film.lookOffset.z };
 			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
@@ -5283,7 +5317,7 @@ namespace CCC
 					// (Filming people talking near you uses the lens too, at least the game's 30.)
 					const bool filmingOthers = FilmingActive();
 					const float lens = Director::WantedLens();
-					g_lensWanted.store(filmingOthers && lens < 10.0f ? 30.0f : lens, std::memory_order_relaxed);
+					g_lensWanted.store(filmingOthers ? g_filmLens.load(std::memory_order_relaxed) : lens, std::memory_order_relaxed);  // (0.8.15: filming kept the last conversation's lens)
 					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
 						g_lensCalls.store(0, std::memory_order_relaxed);

@@ -113,7 +113,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   prompt while it starts on its own). Only for the game's conversation scenes,
   not barks; one scene at a time, the nearest first, then the next one nearby; followed into
   the game's next scene with the same people, handed back when it only repeats itself.
-  Letterboxed, with a group shot now and then when three or more people are talking. From first person, the view
+  Letterboxed; two people filmed close (close-ups, three-quarters, shoulders), with a
+  two-shot or a group shot now and then when three or more are talking. From first person, the view
   is third person while it films, with you hidden, and back to first person after.
 - **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
   a wall; people walking through stay in.
