@@ -11,6 +11,12 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   Actions build (Windows, xmake, CommonLibSF). Pushes to `main` also replace the rolling
   "Test build" pre-release; pushes to other branches only build.
 - `.md`-only pushes don't build and can go out freely.
+- Commit as the owner, before the first commit in a new workspace (it defaults to
+  "Claude <noreply@anthropic.com>", which GitHub lists as a separate contributor):
+  `git config user.name chosti-factor` and
+  `git config user.email 55879567+chosti-factor@users.noreply.github.com` (GitHub's private
+  no-reply address). Claude is credited in each message's `Co-authored-by` line. All
+  history was re-authored this way on 2026-11-16, with the original dates kept.
 - Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change, and
   docs/EMOTIONS.md (the NPC expressions and your face's tables) with every build.
 - A pure SFSE DLL, no .esp. Minor versions mark milestones (0.6 obstacle detection, 0.7 the
