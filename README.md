@@ -111,7 +111,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
   hold B on a controller) and/or starting on its own when a conversation begins near you,
-  even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no
+  even as you walk past; moving ends it once you've come to a stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no
   prompt while it starts on its own). Only for the game's conversation scenes,
   not barks; one scene at a time, the nearest first, then the next one nearby; followed into
   the game's next scene with the same people, handed back when it only repeats itself.

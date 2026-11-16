@@ -4403,6 +4403,9 @@ namespace CCC
 			std::chrono::steady_clock::time_point buttonSince{};  // the controller button, held since
 			bool                                  buttonFired{ false };
 			RE::NiPoint3                          playerAt{};
+			RE::NiPoint3                          startFeet{};   // where you were when it started
+			bool                                  settled{ false };  // you've come to a stop since it started (0.8.17)
+			std::chrono::steady_clock::time_point stopSince{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
 			RE::NiPoint3                          stillAt{};       // where you've stood still since stillSince
@@ -4787,12 +4790,20 @@ namespace CCC
 			}
 			if (filming) {
 				const auto feet = player->GetPosition();
-				// 0.8.6: it can start while you're walking; for its first second where you stand
-				// is still settling (you stop walking), then moving ends it.
-				if (a_now - g_filmMain.startedAt < 1s) {
-					g_filmMain.playerAt = feet;
+				// It can start while you're walking (0.8.6). Moving ends it only once you've come to
+				// a stop (0.8.17: the 0.8.16 test ran on into a TerraBrew conversation and ended it
+				// 1.3 s in, on momentum): until you've stood still for 0.4 s, where you stand follows
+				// you. Walking on 3 m without stopping ends it too.
+				if (!g_filmMain.settled) {
+					if (FlatDistance(feet, g_filmMain.playerAt) > 0.05f) {
+						g_filmMain.playerAt = feet;
+						g_filmMain.stopSince = a_now;
+					} else if (a_now - g_filmMain.startedAt >= 1s && a_now - g_filmMain.stopSince >= 400ms) {
+						g_filmMain.settled = true;
+					}
 				}
-				const float moved = FlatDistance(feet, g_filmMain.playerAt);
+				const float moved = g_filmMain.settled ? FlatDistance(feet, g_filmMain.playerAt) :
+				                    FlatDistance(feet, g_filmMain.startFeet) > 3.0f ? 1.0f : 0.0f;
 				if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
@@ -4910,6 +4921,9 @@ namespace CCC
 				g_film.line = 1;
 				g_film.applied = false;
 				g_filmMain.playerAt = player->GetPosition();
+				g_filmMain.startFeet = g_filmMain.playerAt;
+				g_filmMain.settled = false;
+				g_filmMain.stopSince = a_now;
 				g_filmMain.startedAt = a_now;
 				g_filmMain.scene = scene;
 				g_filmMain.lastLine = latest;

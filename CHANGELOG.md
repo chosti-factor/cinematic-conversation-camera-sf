@@ -12,6 +12,9 @@ test build; "diagnostic" items only add information to the log for testing.
   held a two-shot of you for nine turns in a row, and in Standard, Close, Room and Starborn
   (no fresh-angle roll) your angle only changed when it stopped fitting. Each of your turns
   now counts as one of your lines.
+- Filming people talking ended on momentum: walking up to a conversation, it started and
+  your last steps ended it 1.3 s later (0.8.16 test, TerraBrew). Moving ends it only once
+  you've come to a stop (0.4 s still); walking on 3 m without stopping still ends it.
 - Camera sway in CCC's presets (Standard, Close, Room): CCC's camera doesn't sway, so
   they're on a tripod now (were 40).
 
