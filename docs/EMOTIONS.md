@@ -128,6 +128,7 @@ Notes:
   extreme. Close-ups of her were 38% of the time on screen (extreme ones 18%, 13 s each on
   average). Sarah's lines are more often tagged than the tally's average (76% against 52%,
   strong 18% against 5%).
+- 0.8.14: no change to the tiers (CCC SF's presets rebuilt; they keep every tier).
 - 0.8.13: the tiers apply in CCC SF's presets; CCC's keep CCC's vision (no emotion close-ups
   in Standard and Room, strong lines only in Close). `bEmotionCloseUpsNpc=1` puts every
   tier in every preset.
@@ -141,7 +142,7 @@ Notes:
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.8.13 (2026-11-15).
+Last updated: 0.8.14 (2026-11-15).
 
 ### Listening: your face's answer to the NPC's line
 
