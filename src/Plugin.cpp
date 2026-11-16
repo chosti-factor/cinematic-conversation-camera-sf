@@ -1879,7 +1879,7 @@ namespace CCC
 					// the camera follows the heads exactly, as in 0.6.0). 0.6.1-0.6.2 applied the
 					// percentage only to the angle, after the dead band had already removed most
 					// of the motion, so even 100% hardly swayed.
-					const float w = std::clamp(s.cameraSway, 0, 100) / 100.0f;
+					const float w = std::clamp(Director::CameraSway(), 0, 100) / 100.0f;
 					npcHead = RE::NiPoint3{ npcHead->x + (npcSwayHead.x - npcHead->x) * w, npcHead->y + (npcSwayHead.y - npcHead->y) * w,
 						npcHead->z + (npcSwayHead.z - npcHead->z) * w };
 					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,

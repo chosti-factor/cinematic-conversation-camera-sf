@@ -224,7 +224,7 @@ namespace CCC
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", ReadInt(a_path, L"Director", L"bPersuasionBeat", a_s.persuasionBeat ? 1 : 0)) != 0;
 			a_s.beatTags = ReadString(a_path, L"Director", L"sBeatTags", a_s.beatTags);
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Camera", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
-			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), 0, 100);
+			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), -1, 100);
 			a_s.emotionCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bEmotionCloseUpsNpc", ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps)), -1, 1);
 			a_s.closeUpEmotionsMild = ReadString(a_path, L"Director", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);
 			a_s.closeUpEmotionsMedium = ReadString(a_path, L"Director", L"sCloseUpEmotionsMediumNpc", a_s.closeUpEmotionsMedium);

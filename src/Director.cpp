@@ -24,6 +24,13 @@ namespace CCC::Director
 		// so the lens set there is the lens drawn.
 		float PresetLens();
 
+		bool PresetIs(const char* a_name)
+		{
+			std::string preset{ Settings::Get().preset };
+			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			return preset == a_name;
+		}
+
 		// The lens a shot without its own is framed for: the preset's, or the game's.
 		float Lens()
 		{
@@ -200,106 +207,117 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kLocked, 0, 4.2f, 70.0f },
 		};
 
-		// CCC SF's own presets (0.8.1): each mirrors one of CCC's, with a Starfield flavour:
-		// room shots no further back than 9 m indoors and 12 m outdoors (CCC's own presets
-		// go as far as CCC's framing wants, 12 to 18 m at the 45 degree lens), and a few of
-		// the other presets' shots mixed in, moving.
+		// CCC SF's own presets, rebuilt in 0.8.14 on CCC 1.5.0's lenses, each with a film
+		// flavour (Starfield's "NASA-punk" influences) and its own movement, cutting and sway;
+		// room shots no further back than 9 m indoors and 12 m outdoors. Each angle's lens is
+		// in the same measure as CCC's (horizontal degrees, as drawn). The extreme close-ups
+		// are mostly the emotion close-ups' (every tier, in these presets), so their own
+		// weights stay low.
 		//
-		// Frontier (Stardust until 0.8.7; mirrors Standard; 0.8.3: closer to it): exactly Standard's shots, weights
-		// and moves, with a few of Room's wider shots added, moving (about a fifth).
+		// Frontier, a space western (Firefly, The Expanse): Akila, Neon, the outposts. Built on
+		// Standard: shoulders and singles a little longer in the lens (5 degrees narrower), the
+		// two-shot, three-quarters and mediums drifting slowly as on a dolly in a saloon, close-ups
+		// pushing in; now and then a long shot craning up or the room pulling out.
 		constexpr std::array kFrontier{
-			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseUp, 80, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kClosePlayer, 80, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kMediumNpc, 45, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kMediumPlayer, 45, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kTwoShot, 25, Move::kDrift, 10, 7.0f },
-			PresetEntry{ ShotType::kProfile, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kLongPlayer, 25, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kMaster, 35, Move::kCraneUp, 40, 9.0f },
-			PresetEntry{ ShotType::kWide, 35, Move::kPullOut, 16, 8.0f },
-			PresetEntry{ ShotType::kDistant, 25, Move::kPullOut, 30, 8.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 100, Move::kLocked, 0, 4.2f, 50.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 100, Move::kLocked, 0, 4.2f, 50.0f },
+			PresetEntry{ ShotType::kCloseUp, 70, Move::kPushIn, 14, 6.0f, 45.0f },
+			PresetEntry{ ShotType::kClosePlayer, 70, Move::kPushIn, 14, 6.0f, 45.0f },
+			PresetEntry{ ShotType::kExtremeClose, 5, Move::kPushIn, 20, 7.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 5, Move::kPushIn, 20, 7.0f, 40.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 60, Move::kDrift, 8, 6.0f, 52.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 60, Move::kDrift, 8, 6.0f, 52.0f },
+			PresetEntry{ ShotType::kMediumNpc, 45, Move::kDrift, 8, 6.0f, 56.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 45, Move::kDrift, 8, 6.0f, 56.0f },
+			PresetEntry{ ShotType::kTwoShot, 40, Move::kDrift, 12, 8.0f, 65.0f },
+			PresetEntry{ ShotType::kProfile, 15, Move::kLocked, 0, 4.2f, 55.0f },
+			PresetEntry{ ShotType::kLongNpc, 15, Move::kCraneUp, 20, 8.0f, 70.0f },
+			PresetEntry{ ShotType::kLongPlayer, 15, Move::kCraneUp, 20, 8.0f, 70.0f },
+			PresetEntry{ ShotType::kWide, 15, Move::kPullOut, 14, 8.0f, 80.0f },
+			PresetEntry{ ShotType::kDistant, 10, Move::kLocked, 0, 4.2f, 45.0f },
 		};
-		// Starborn (mirrors Close): Close's shoulders, close-ups and extreme close-ups with
-		// their pushes and zooms, plus the reverse shoulder and three-quarter singles drifting
-		// slowly, so the faces get a moment of breathing room, and a capped Distant.
+		// Starborn, Kubrick and Interstellar: the Unity, the artifacts, the uncanny. Built on
+		// Close: long, compressed lenses (35-45), faces centred in the frame (no look room,
+		// the subject straight down the middle), very slow push-ins held long, a perfectly
+		// still camera (no sway), and one slow crane up on the wide shots as a reveal. No
+		// drifting: the stillness is the point.
 		constexpr std::array kStarborn{
-			PresetEntry{ ShotType::kOverPlayerShoulder, 34, Move::kLocked, 0, 4.0f },
-			PresetEntry{ ShotType::kOverNpcShoulder, 22, Move::kLocked, 0, 4.0f },
-			PresetEntry{ ShotType::kCloseUp, 36, Move::kPushIn, 40, 8.0f },
-			PresetEntry{ ShotType::kExtremeClose, 12, Move::kZoomIn, 40, 9.0f },
-			PresetEntry{ ShotType::kClosePlayer, 30, Move::kZoomOut, 20, 5.0f },
-			PresetEntry{ ShotType::kExtremeClosePlayer, 12, Move::kPushIn, 75, 7.0f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 14, Move::kDrift, 10, 5.0f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 14, Move::kDrift, 10, 5.0f },
-			PresetEntry{ ShotType::kDistant, 10, Move::kPullOut, 30, 8.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 20, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kCloseUp, 45, Move::kPushIn, 30, 12.0f, 45.0f },
+			PresetEntry{ ShotType::kClosePlayer, 35, Move::kPushIn, 25, 12.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClose, 8, Move::kPushIn, 30, 12.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kPushIn, 30, 12.0f, 35.0f },
+			PresetEntry{ ShotType::kDistant, 10, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kMaster, 8, Move::kCraneUp, 30, 12.0f, 60.0f },
 		};
-		// Nebula (0.8.3, CCC SF's own): every shot in the library, the everyday ones most
-		// often and CCC's rarer angles (low, high, dirty, profiles, the shoulder variants) now
-		// and then; the ground-level shot waits for room measurement to place it.
-		constexpr std::array kNebula{
-			PresetEntry{ ShotType::kOverPlayerShoulder, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kOverNpcShoulder, 60, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseUp, 50, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kClosePlayer, 50, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kExtremeClose, 10, Move::kZoomIn, 40, 9.0f },
-			PresetEntry{ ShotType::kExtremeClosePlayer, 10, Move::kPushIn, 40, 7.0f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kMediumNpc, 30, Move::kDrift, 18, 4.2f },
-			PresetEntry{ ShotType::kMediumPlayer, 30, Move::kDrift, 18, 4.2f },
-			PresetEntry{ ShotType::kOverPlayerShoulderLow, 15, Move::kPushIn, 20, 5.0f },
-			PresetEntry{ ShotType::kOverPlayerShoulderHigh, 15, Move::kTiltDown, 20, 5.0f },
-			PresetEntry{ ShotType::kOverPlayerShoulderWide, 15, Move::kPullOut, 20, 6.0f },
-			PresetEntry{ ShotType::kOverNpcShoulderLow, 15, Move::kPushIn, 20, 5.0f },
-			PresetEntry{ ShotType::kOverNpcShoulderHigh, 15, Move::kTiltDown, 20, 5.0f },
-			PresetEntry{ ShotType::kOverNpcShoulderWide, 15, Move::kPullOut, 20, 6.0f },
-			PresetEntry{ ShotType::kDirtyNpc, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kDirtyPlayer, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseProfile, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseLow, 15, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kCloseHigh, 15, Move::kTiltDown, 18, 5.0f },
-			PresetEntry{ ShotType::kCloseWide, 15, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kMediumProfile, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kPlayerProfile, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kLowProfile, 10, Move::kTiltUp, 18, 5.0f },
-			PresetEntry{ ShotType::kLowAngle, 15, Move::kTiltUp, 18, 5.0f },
-			PresetEntry{ ShotType::kPlayerLow, 15, Move::kTiltUp, 18, 5.0f },
-			PresetEntry{ ShotType::kHighAngle, 15, Move::kCraneDown, 22, 5.0f },
-			PresetEntry{ ShotType::kTwoShot, 30, Move::kDrift, 12, 8.0f },
-			PresetEntry{ ShotType::kProfile, 15, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kLongPlayer, 25, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kOverhead, 15, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kPlayerOverhead, 15, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kWide, 25, Move::kPullOut, 16, 8.0f },
-			PresetEntry{ ShotType::kMaster, 25, Move::kCraneUp, 40, 9.0f },
-			PresetEntry{ ShotType::kDistant, 20, Move::kPullOut, 30, 8.0f },
-			PresetEntry{ ShotType::kDistantLow, 15, Move::kDrift, 10, 8.0f },
-		};
-		// Constellation (mirrors Room): Room's wide and full-figure shots with their moves,
-		// plus close-ups and shoulders now and then (about a fifth of the weight), so faces
-		// and your character's expressions still get seen.
+		// Constellation, a hard sci-fi documentary (The Martian, Apollo 13): the Lodge, labs,
+		// ships. Built on Room, watched from across the room on longer lenses (45-70, Room's
+		// are 45-95): the distant shot and the master most, small slow drifts everywhere as an
+		// operator following along, the most handheld sway, cranes on the master and the long
+		// shots to show the space and the work; faces now and then (about a fifth).
 		constexpr std::array kConstellation{
-			PresetEntry{ ShotType::kMaster, 85, Move::kCraneUp, 40, 9.0f },
-			PresetEntry{ ShotType::kWide, 80, Move::kPullOut, 16, 8.0f },
-			PresetEntry{ ShotType::kLongNpc, 70, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kLongPlayer, 70, Move::kCraneUp, 25, 7.0f },
-			PresetEntry{ ShotType::kDistant, 55, Move::kPullOut, 30, 8.0f },
-			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 12, 8.0f },
-			PresetEntry{ ShotType::kOverhead, 40, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kPlayerOverhead, 40, Move::kCraneDown, 22, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 22, 4.2f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 22, 4.2f },
-			PresetEntry{ ShotType::kMediumNpc, 35, Move::kDrift, 18, 4.2f },
-			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 18, 4.2f },
-			PresetEntry{ ShotType::kOverPlayerShoulder, 40, Move::kLocked, 0, 4.2f },
-			PresetEntry{ ShotType::kCloseUp, 45, Move::kPushIn, 14, 5.0f },
-			PresetEntry{ ShotType::kClosePlayer, 45, Move::kPushIn, 14, 5.0f },
+			PresetEntry{ ShotType::kDistant, 75, Move::kDrift, 8, 9.0f, 45.0f },
+			PresetEntry{ ShotType::kMaster, 70, Move::kCraneUp, 25, 10.0f, 70.0f },
+			PresetEntry{ ShotType::kWide, 55, Move::kDrift, 10, 9.0f, 60.0f },
+			PresetEntry{ ShotType::kLongNpc, 55, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kLongPlayer, 55, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 10, 9.0f, 60.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kMediumNpc, 35, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
+			PresetEntry{ ShotType::kPlayerOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kDrift, 6, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 30, Move::kDrift, 6, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kCloseUp, 20, Move::kPushIn, 10, 6.0f, 45.0f },
+			PresetEntry{ ShotType::kClosePlayer, 20, Move::kPushIn, 10, 6.0f, 45.0f },
+			PresetEntry{ ShotType::kExtremeClose, 4, Move::kPushIn, 15, 7.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 4, Move::kPushIn, 15, 7.0f, 40.0f },
+		};
+		// Nebula, a trailer: every angle in the library, every move CCC has (cranes, tilts,
+		// drifts, pushes, pulls) at bigger amounts over shorter times, wide and long lenses
+		// both, quick cutting. The ground-level shot waits for room measurement to place it.
+		constexpr std::array kNebula{
+			PresetEntry{ ShotType::kOverPlayerShoulder, 60, Move::kPushIn, 10, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 60, Move::kPushIn, 10, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kCloseUp, 50, Move::kPushIn, 30, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kClosePlayer, 50, Move::kPushIn, 30, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kExtremeClose, 8, Move::kPushIn, 40, 5.0f, 40.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kPushIn, 40, 5.0f, 40.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 18, 5.0f, 58.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 18, 5.0f, 58.0f },
+			PresetEntry{ ShotType::kMediumNpc, 30, Move::kDrift, 20, 5.0f, 62.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 30, Move::kDrift, 20, 5.0f, 62.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulderLow, 15, Move::kPushIn, 25, 5.0f, 55.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulderHigh, 15, Move::kTiltDown, 25, 5.0f, 55.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulderWide, 15, Move::kPullOut, 25, 5.0f, 65.0f },
+			PresetEntry{ ShotType::kOverNpcShoulderLow, 15, Move::kPushIn, 25, 5.0f, 55.0f },
+			PresetEntry{ ShotType::kOverNpcShoulderHigh, 15, Move::kTiltDown, 25, 5.0f, 55.0f },
+			PresetEntry{ ShotType::kOverNpcShoulderWide, 15, Move::kPullOut, 25, 5.0f, 65.0f },
+			PresetEntry{ ShotType::kDirtyNpc, 15, Move::kDrift, 12, 5.0f, 45.0f },
+			PresetEntry{ ShotType::kDirtyPlayer, 15, Move::kDrift, 12, 5.0f, 45.0f },
+			PresetEntry{ ShotType::kCloseProfile, 15, Move::kPushIn, 20, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kCloseLow, 15, Move::kPushIn, 20, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kCloseHigh, 15, Move::kTiltDown, 22, 5.0f, 50.0f },
+			PresetEntry{ ShotType::kCloseWide, 15, Move::kPushIn, 20, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kMediumProfile, 15, Move::kDrift, 15, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kPlayerProfile, 15, Move::kDrift, 15, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kLowProfile, 10, Move::kTiltUp, 22, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kLowAngle, 15, Move::kTiltUp, 22, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kPlayerLow, 15, Move::kTiltUp, 22, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kHighAngle, 15, Move::kCraneDown, 26, 5.0f, 65.0f },
+			PresetEntry{ ShotType::kTwoShot, 30, Move::kDrift, 18, 6.0f, 72.0f },
+			PresetEntry{ ShotType::kProfile, 15, Move::kDrift, 12, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
+			PresetEntry{ ShotType::kLongPlayer, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
+			PresetEntry{ ShotType::kOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
+			PresetEntry{ ShotType::kPlayerOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
+			PresetEntry{ ShotType::kWide, 25, Move::kPullOut, 22, 6.0f, 88.0f },
+			PresetEntry{ ShotType::kMaster, 25, Move::kCraneUp, 45, 7.0f, 95.0f },
+			PresetEntry{ ShotType::kDistant, 20, Move::kPullOut, 35, 6.0f, 45.0f },
+			PresetEntry{ ShotType::kDistantLow, 15, Move::kDrift, 15, 6.0f, 45.0f },
 		};
 
 		template <std::size_t N>
@@ -387,10 +405,10 @@ namespace CCC::Director
 			in.npcGround = a_frame.npcGround;
 			in.playerGround = a_frame.playerGround;
 			in.feetValid = a_frame.feetValid;
-			in.sway = static_cast<float>(s.cameraSway) / 100.0f;
-			// The preset's own (0.8.12): CCC's presets at CCC's distance, CCC SF's 15% further back
-			// (their flatter, narrower lens); or yours.
-			in.closeUpScale = static_cast<float>(s.closeUpDistance > 0 ? s.closeUpDistance : PresetLens() < 40.0f ? 115 : 100) / 100.0f;
+			in.sway = static_cast<float>(CameraSway()) / 100.0f;
+			in.lookRoomScale = PresetIs("starborn") ? 0.0f : 1.0f;  // Starborn: faces centred (0.8.14)
+			// CCC's distance (0.8.14: every preset has its lenses now), or yours.
+			in.closeUpScale = static_cast<float>(s.closeUpDistance > 0 ? s.closeUpDistance : 100) / 100.0f;
 			in.roomAngle = a_frame.roomAngle;
 			in.roomDistance = a_frame.roomDistance;
 			in.roomRise = a_frame.roomRise;
@@ -683,8 +701,7 @@ namespace CCC::Director
 			presetOutdoor = 10.5f;
 			// The cutting rhythm: CCC 1.5.0's per preset (Standard a new angle every 2-3 lines,
 			// Close 3-6, Room 3-5; the turn never asks for one; held at least 2.4 s, Room 3 s);
-			// CCC SF's presets the Television rhythm for now (a fresh angle on half the turns,
-			// every 2-5 lines, 2 s). A named sCuttingStyle overrides.
+			// CCC SF's their own (0.8.14). A named sCuttingStyle overrides.
 			{
 				std::string style{ s.cuttingStyle };
 				std::ranges::transform(style, style.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -699,10 +716,16 @@ namespace CCC::Director
 					cut(0, 3, 6, 2.4f);
 				} else if (preset == "room") {
 					cut(0, 3, 5, 3.0f);
-				} else if (preset == "standard" || preset.empty()) {
-					cut(0, 2, 3, 2.4f);
+				} else if (preset == "frontier") {
+					cut(25, 2, 4, 2.4f);   // relaxed: a fresh angle on a quarter of the turns
+				} else if (preset == "starborn") {
+					cut(0, 4, 7, 3.5f);    // long holds, few cuts
+				} else if (preset == "constellation") {
+					cut(25, 3, 5, 2.8f);   // an observer's rhythm
+				} else if (preset == "nebula") {
+					cut(75, 2, 3, 1.6f);   // quick
 				} else {
-					cut(50, 2, 5, 2.0f);
+					cut(0, 2, 3, 2.4f);    // Standard
 				}
 			}
 			// Room shots' own limits: CCC's presets none (as far as CCC's framing wants), CCC
@@ -826,7 +849,7 @@ namespace CCC::Director
 			s.obstacleCheck && !g_obstacleTest ? ", but the game's collision check isn't available" : "");
 		REX::INFO("Settings in effect: close-ups follow the face {}, 180-degree rule {}, never across the eyeline {}, camera sway {}%, head dead band {:.2f} m",
 			s.followFace ? "on" : "off", s.true180 ? "on (one side for the whole conversation)" : "off (each person over their own side)",
-			s.enforceLine || s.true180 ? "on" : "off", s.cameraSway, s.faceDeadband);
+			s.enforceLine || s.true180 ? "on" : "off", CameraSway(), s.faceDeadband);
 	}
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
@@ -1232,6 +1255,17 @@ namespace CCC::Director
 			return ClosePreset() ? 3 : 0;
 		}
 		return 1;
+	}
+
+	int CameraSway()
+	{
+		const int mine = Settings::Get().cameraSway;
+		if (mine >= 0) {
+			return mine;
+		}
+		// The preset's own (0.8.14): CCC's 40; Frontier a touch of handheld, Starborn locked
+		// off, Constellation the documentary operator's, Nebula 40.
+		return PresetIs("frontier") ? 50 : PresetIs("starborn") ? 0 : PresetIs("constellation") ? 70 : 40;
 	}
 
 	bool ReactionShots()

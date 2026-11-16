@@ -495,10 +495,10 @@ namespace CCC::Shots
 		if (lookSign == 0.0f) {
 			const auto   refDir = RotateAboutZ(toOther, spec.angleDeg * kDeg * lineSide);
 			const RE::NiPoint3 refPos{ anchorPoint.x + refDir.x * distance, anchorPoint.y + refDir.y * distance, anchorPoint.z + refDir.z * distance + rise };
-			(void)Compose(refPos, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
+			(void)Compose(refPos, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.overShoulder ? spec.lookRoom : spec.lookRoom * a_in.lookRoomScale, lookSign);
 		}
 		result.lookSign = lookSign;
-		pose.lookAt = Compose(pose.position, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.lookRoom, lookSign);
+		pose.lookAt = Compose(pose.position, target, toOther, a_in.lensDegrees, a_in.aspect, spec.headroom, spec.overShoulder ? spec.lookRoom : spec.lookRoom * a_in.lookRoomScale, lookSign);
 		if (truck != 0.0f) {
 			RE::NiPoint3 fwd{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, 0.0f };
 			const float  fl = Length(fwd);

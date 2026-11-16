@@ -80,9 +80,16 @@ namespace CCC::Director
 	// presets 45, CCC SF's 37.5); below 10 = the game's own.
 	[[nodiscard]] float WantedLens();
 
-
 	// An angle's lens in the preset in use (0.8.12): its own, CCC's, or the preset's one lens.
 	[[nodiscard]] float LensFor(Shots::ShotType a_type);
+
+	// Emotion close-ups and reaction shots in the preset in use (0.8.13): your setting, or the
+	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
+	[[nodiscard]] int  EmotionCloseUps();
+	[[nodiscard]] bool ReactionShots();
+
+	// The camera sway in use (0.8.14): your iCameraSway, or the preset's own.
+	[[nodiscard]] int CameraSway();
 
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.

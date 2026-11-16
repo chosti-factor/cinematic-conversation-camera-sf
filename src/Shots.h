@@ -101,6 +101,7 @@ namespace CCC::Shots
 		float        lensDegrees{ 29.6f };  // horizontal
 		float        aspect{ 1.7778f };
 		float        closeUpScale{ 1.0f };  // close singles this much further back (iCloseUpDistance)
+		float        lookRoomScale{ 1.0f };  // singles' room in the direction they look (0 = centred, Starborn), 0.8.14
 		// Room shots (0.8): where the room measurement found space for Wide, Master and
 		// Distant (index 0-2): the angle off the eyeline, on the conversation's side
 		// (NaN = no room for it), the most distance the room allows, and the most the camera
