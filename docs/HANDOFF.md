@@ -19,7 +19,18 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-15, 0.8.10)
+## Where things stand (2026-11-15, 0.8.14)
+
+- Lenses settled: each angle has its own, CCC 1.5.0's numbers as written (CCC's exported
+  presets; two Skyrim clips measured: close-ups 26%/23% and extreme close-ups ~59% of the
+  picture's height, as CCC's numbers give in Starfield's measure). CCC 1.5.0's shot table,
+  read from SceneDirector.dll (a switch of stores at file offset ~0x9e270), matches ours.
+- CCC's presets keep CCC's vision (no reactions; emotion close-ups only in Close, strong
+  lines); CCC SF's presets rebuilt with film flavours (Frontier space western, Starborn
+  Kubrick/Interstellar, Constellation documentary, Nebula trailer): lenses, moves, cutting,
+  sway (`iCameraSway=-1`) and Starborn's centred framing per preset.
+
+## Earlier (2026-11-15, 0.8.10)
 
 - 0.8.10 finishes 0.8.x, filming people talking: one scene at a time (nearest first, then
   the next), followed into the game's next scene with the same people, handed back when it
