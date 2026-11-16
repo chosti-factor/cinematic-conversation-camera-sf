@@ -627,13 +627,13 @@ namespace CCC::Director
 
 		// Counts a line for its speaker when it ends, unless it was short. Returns true on
 		// the frame a line starts.
-		bool TrackLine(Line& a_line, Side& a_side, bool a_talking, clock::time_point a_now)
+		bool TrackLine(Line& a_line, Side& a_side, bool a_talking, clock::time_point a_now, bool a_count = true)
 		{
 			bool started = false;
 			if (a_talking && !a_line.talking) {
 				a_line.start = a_now;
 				started = true;
-			} else if (!a_talking && a_line.talking) {
+			} else if (!a_talking && a_line.talking && a_count) {
 				const float seconds = std::chrono::duration<float>(a_now - a_line.start).count();
 				if (seconds >= Settings::Get().shortLineSeconds && ++a_side.lines >= a_side.linesTarget) {
 					a_side.changeDue = true;
@@ -874,7 +874,10 @@ namespace CCC::Director
 			npcStarted = true;
 		}
 		g.npcSerial = a_frame.npcLineSerial;
-		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now);
+		// Your lines are counted by turn, not by voice (0.8.17): the player is silent, so the
+		// 0.8.16 test held you on one angle for nine turns (Constellation) and never changed it in
+		// the presets with no fresh-angle roll.
+		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now, false);
 		const bool  lineStarted = a_frame.npcTurn ? npcStarted : playerStarted;
 		const float held = std::chrono::duration<float>(a_now - g.cutAt).count();
 		auto&       side = a_frame.npcTurn ? g.npc : g.player;
@@ -1012,6 +1015,10 @@ namespace CCC::Director
 				}
 			} else if (!g.current || a_frame.npcTurn != g.currentNpcSide) {
 				// The reverse: back to this person's own setup, unless they're due a new one.
+				// Each of your turns counts as one of your lines (0.8.17).
+				if (!a_frame.npcTurn && side.shot && ++side.lines >= side.linesTarget) {
+					side.changeDue = true;
+				}
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= g.freshAngleChance;
 				if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
 					Cut(*side.shot, a_frame, a_now, "turn", false);

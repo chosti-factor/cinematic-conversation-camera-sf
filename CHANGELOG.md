@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.17 - 2026-11-16
+
+### Fixed
+- Your angle never changed on its own. The player doesn't speak, so your side's line count
+  (the preset's "new angle every N lines") never moved: in the 0.8.16 test Constellation
+  held a two-shot of you for nine turns in a row, and in Standard, Close, Room and Starborn
+  (no fresh-angle roll) your angle only changed when it stopped fitting. Each of your turns
+  now counts as one of your lines.
+
 ## 0.8.16 - 2026-11-16
 
 ### Added
