@@ -22,6 +22,14 @@ test build; "diagnostic" items only add information to the log for testing.
   its own now (Standard's, as CCC: close-up 50, shoulder 55, three-quarter 58, medium 62,
   two-shot and group 72).
 
+### Added
+- The sway key (testing, `iSwayKey`, L): cycles how the camera sways, shown in the bottom
+  bar: as set (the preset's `iCameraSway`, the share of the people's own head movement the
+  camera follows; 0.8.14 test: subtle, as standing people's heads move only 1-3 cm), 150%
+  wherever the preset has any, or as set plus a handheld wander (a slow, smooth drift of up
+  to 2 cm and 0.35 degrees, from a few sine waves a frame: Constellation full, Frontier and
+  Nebula half, Starborn and CCC's presets none). Sway now goes up to 150.
+
 ### Changed
 - Emotion close-ups and reactions fitted to each CCC SF preset (0.8.14 test: reactions took
   16-36% of the time, emotion close-ups 4-16%, so up to half of Frontier was the extras

@@ -92,8 +92,16 @@ namespace CCC::Director
 	// fReactionAfterSecondsPlayer, or the preset's own.
 	[[nodiscard]] float ReactionAfterSeconds();
 
-	// The camera sway in use (0.8.14): your iCameraSway, or the preset's own.
+	// The camera sway in use (0.8.14): your iCameraSway, or the preset's own; 150 with the
+	// sway key's second mode (0.8.15, testing).
 	[[nodiscard]] int CameraSway();
+
+	// The handheld wander's strength, 0-1 (0.8.15, the sway key's third mode; testing).
+	[[nodiscard]] float Handheld();
+
+	// The sway key (testing, 0.8.15): the next mode (as set, 150%, handheld), and its name.
+	const char*               NextSwayMode();
+	[[nodiscard]] const char* SwayModeName();
 
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.

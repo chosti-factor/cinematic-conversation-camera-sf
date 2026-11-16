@@ -295,7 +295,7 @@ namespace CCC::Shots
 			const float fx = of.x - sf.x, fy = of.y - sf.y;
 			const float fl = std::sqrt(fx * fx + fy * fy);
 			const float hl = std::sqrt(toOther.x * toOther.x + toOther.y * toOther.y);
-			const float w = std::clamp(a_in.sway, 0.0f, 1.0f);
+			const float w = std::clamp(a_in.sway, 0.0f, 1.5f);  // (0.8.15: up to 150%)
 			const auto& sh = spec.onNpc ? a_in.npcSwayHead : a_in.playerSwayHead;
 			const auto& oh = spec.onNpc ? a_in.playerSwayHead : a_in.npcSwayHead;
 			const float sx = oh.x - sh.x, sy = oh.y - sh.y;

@@ -306,6 +306,40 @@ namespace CCC
 		void                FilmFrame();
 		void                FocusOnShot(float a_distance);
 		void                LensNow();
+
+		// A handheld camera's wander (0.8.15): a slow, smooth drift of where the camera stands
+		// (up to 2 cm) and where it aims (up to 0.35 degrees), from a few slow sine waves at
+		// unrelated speeds, so it never repeats visibly; a_strength 0-1. A few sines a frame.
+		void ApplyHandheld(Camera::Pose& a_pose, float a_strength, std::chrono::steady_clock::time_point a_now)
+		{
+			if (a_strength <= 0.0f) {
+				return;
+			}
+			static const auto start = a_now;
+			const float       t = std::chrono::duration<float>(a_now - start).count();
+			const auto        wave = [t](float a, float b, float c) {
+                return 0.5f * std::sin(t * 0.83f + a) + 0.3f * std::sin(t * 1.37f + b) + 0.2f * std::sin(t * 2.11f + c);
+			};
+			RE::NiPoint3 f{ a_pose.lookAt.x - a_pose.position.x, a_pose.lookAt.y - a_pose.position.y, a_pose.lookAt.z - a_pose.position.z };
+			const float  d = std::sqrt(f.x * f.x + f.y * f.y + f.z * f.z);
+			if (d < 0.05f) {
+				return;
+			}
+			f = { f.x / d, f.y / d, f.z / d };
+			RE::NiPoint3 r{ f.y, -f.x, 0.0f };
+			const float  rl = std::sqrt(r.x * r.x + r.y * r.y);
+			if (rl < 1e-3f) {
+				return;
+			}
+			r = { r.x / rl, r.y / rl, 0.0f };
+			const RE::NiPoint3 u{ r.y * f.z - r.z * f.y, r.z * f.x - r.x * f.z, r.x * f.y - r.y * f.x };
+			const float        move = 0.02f * a_strength;
+			const float        aim = std::tan(0.35f * a_strength * 0.017453292f) * d;
+			const float        px = wave(0.0f, 1.3f, 2.9f) * move, pz = wave(4.1f, 0.7f, 5.3f) * move;
+			const float        ax = wave(2.2f, 3.7f, 0.4f) * aim, az = wave(5.8f, 2.6f, 1.9f) * aim;
+			a_pose.position = { a_pose.position.x + r.x * px + u.x * pz, a_pose.position.y + r.y * px + u.y * pz, a_pose.position.z + r.z * px + u.z * pz };
+			a_pose.lookAt = { a_pose.lookAt.x + r.x * ax + u.x * az, a_pose.lookAt.y + r.y * ax + u.y * az, a_pose.lookAt.z + r.z * ax + u.z * az };
+		}
 		std::atomic<float>  g_filmLens{ 50.0f };  // the lens of the shot filming people talking (0.8.15)
 
 		// Filming people talking (0.8.15): each shot on Standard's lens for it (CCC's numbers).
@@ -1896,7 +1930,7 @@ namespace CCC
 					// the camera follows the heads exactly, as in 0.6.0). 0.6.1-0.6.2 applied the
 					// percentage only to the angle, after the dead band had already removed most
 					// of the motion, so even 100% hardly swayed.
-					const float w = std::clamp(Director::CameraSway(), 0, 100) / 100.0f;
+					const float w = std::clamp(Director::CameraSway(), 0, 150) / 100.0f;  // (0.8.15: up to 150%)
 					npcHead = RE::NiPoint3{ npcHead->x + (npcSwayHead.x - npcHead->x) * w, npcHead->y + (npcSwayHead.y - npcHead->y) * w,
 						npcHead->z + (npcSwayHead.z - npcHead->z) * w };
 					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,
@@ -2560,6 +2594,10 @@ namespace CCC
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
+			// The handheld wander (0.8.15, the sway key's third mode): not on your own view.
+			if (!waitingView && !pov) {
+				ApplyHandheld(*pose, Director::Handheld(), now);
+			}
 			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
@@ -4466,8 +4504,23 @@ namespace CCC
 				REX::INFO("Preset key: now {} (until the game is restarted; sPreset in the INI sets the one it starts with)", kOrder[next]);
 			}
 			wasDown = down;
+			// The sway key (testing, 0.8.15): as set, 150%, or with a handheld wander.
+			static bool swayWasDown = false;
+			bool        swayDown = false;
+			if (s.swayKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.swayKey) & 0x8000) != 0) {
+				static const RE::BSFixedString console{ "Console" };
+				auto*                          ui = RE::UI::GetSingleton();
+				swayDown = !(ui && ui->IsMenuOpen(console));
+			}
+			if (swayDown && !swayWasDown) {
+				const char* mode = Director::NextSwayMode();
+				REX::INFO("Sway key: {} (sway {}%, handheld {:.0f}%)", mode, Director::CameraSway(), Director::Handheld() * 100.0f);
+			}
+			swayWasDown = swayDown;
 			if (s.showMessages) {
-				std::string label = std::format("PRESET: {}", Settings::Get().preset);
+				const float handheld = Director::Handheld();
+				std::string label = std::format("PRESET: {}   SWAY: {} {}%{}", Settings::Get().preset, Director::SwayModeName(), Director::CameraSway(),
+					handheld > 0.0f ? std::format(" + HANDHELD {:.0f}%", handheld * 100.0f) : std::string{});
 				std::ranges::transform(label, label.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 				Hud::SetPresetLabel(label);
 			}

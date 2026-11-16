@@ -1276,15 +1276,43 @@ namespace CCC::Director
 		return PresetIs("frontier") ? 10.0f : PresetIs("starborn") ? 9.0f : PresetIs("constellation") ? 12.0f : 7.0f;
 	}
 
+	namespace
+	{
+		// The sway key (testing, 0.8.15): 0 the heads' sway as set, 1 amplified (150% wherever
+		// the preset has any), 2 as set plus a handheld wander.
+		std::atomic<int> g_swayMode{ 0 };
+	}
+
 	int CameraSway()
 	{
 		const int mine = Settings::Get().cameraSway;
-		if (mine >= 0) {
-			return mine;
-		}
 		// The preset's own (0.8.14): CCC's 40; Frontier a touch of handheld, Starborn locked
 		// off, Constellation the documentary operator's, Nebula 40.
-		return PresetIs("frontier") ? 50 : PresetIs("starborn") ? 0 : PresetIs("constellation") ? 70 : 40;
+		const int sway = mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("starborn") ? 0 : PresetIs("constellation") ? 70 : 40;
+		return g_swayMode.load(std::memory_order_relaxed) == 1 && sway > 0 ? 150 : sway;
+	}
+
+	float Handheld()
+	{
+		if (g_swayMode.load(std::memory_order_relaxed) != 2) {
+			return 0.0f;
+		}
+		// The handheld wander's strength (0.8.15): Constellation's operator the most, Frontier
+		// and Nebula light, Starborn and CCC's presets none (CCC has nothing like it).
+		return PresetIs("constellation") ? 1.0f : PresetIs("frontier") || PresetIs("nebula") ? 0.5f : 0.0f;
+	}
+
+	const char* NextSwayMode()
+	{
+		const int mode = (g_swayMode.load(std::memory_order_relaxed) + 1) % 3;
+		g_swayMode.store(mode, std::memory_order_relaxed);
+		return SwayModeName();
+	}
+
+	const char* SwayModeName()
+	{
+		const int mode = g_swayMode.load(std::memory_order_relaxed);
+		return mode == 0 ? "AS SET" : mode == 1 ? "150%" : "HANDHELD";
 	}
 
 	bool ReactionShots()
