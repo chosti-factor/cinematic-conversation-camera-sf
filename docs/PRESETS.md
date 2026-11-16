@@ -6,7 +6,9 @@ switch on the fly with the preset key, U, while testing).
 - **Standard, Close and Room** are CCC's own, as faithful to CCC 1.5.0 as Starfield allows:
   its angles, how often each comes up, how each moves, each angle's own lens and each
   preset's cutting rhythm, from CCC's own exported presets. No reaction shots (off as CCC
-  ships); emotion close-ups only in Close, on strong lines; no camera sway (a tripod, as CCC).
+  ships); emotion close-ups only in Close, on strong lines; no camera sway (a tripod, as CCC);
+  CCC's "Hold On Their Answer" (on, as CCC ships): a close-up of the NPC's answer to every
+  persuasion round, seated people included.
 - **Frontier, Starborn, Constellation and Nebula** are CCC SF's own, each with a film
   flavour drawn from Starfield's "NASA-punk" influences, its own lenses, movement, cutting
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
