@@ -6,13 +6,13 @@ switch on the fly with the preset key, U, while testing).
 - **Standard, Close and Room** are CCC's own, as faithful to CCC 1.5.0 as Starfield allows:
   its angles, how often each comes up, how each moves, each angle's own lens and each
   preset's cutting rhythm, from CCC's own exported presets. No reaction shots (off as CCC
-  ships); emotion close-ups only in Close, on strong lines.
+  ships); emotion close-ups only in Close, on strong lines; no camera sway (a tripod, as CCC).
 - **Frontier, Starborn, Constellation and Nebula** are CCC SF's own, each with a film
   flavour drawn from Starfield's "NASA-punk" influences, its own lenses, movement, cutting
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.8.14 (2026-11-15).
+Last updated: 0.8.17 (2026-11-16).
 
 ## At a glance
 
@@ -23,7 +23,7 @@ Last updated: 0.8.14 (2026-11-15).
 | The look | Shoulders, close-ups, three-quarters and mediums on both sides | Shoulders, tight close-ups and extreme close-ups | Wide and full-figure shots | Standard on slightly longer lenses, with the room now and then | Close-ups and shoulders, faces centred in the frame, one slow reveal of the room | Watched from across the room; faces now and then | Every angle in the library |
 | Camera movement | Mostly still; close-ups push in; the two-shot drifts | Pushes and zooms on every close-up | Cranes and pull-outs on the wide shots, the rest still | Slow drifts on the two-shot, three-quarters and mediums, as on a dolly; close-ups push in | Very slow push-ins (12 s), held long; one slow crane up; nothing drifts | Small, slow drifts everywhere, as an operator following along; cranes on the master and long shots | Every move, bigger and quicker |
 | Lenses (degrees, per angle) | 50-72 | 35-50 | 45-95 | 40-80 | 35-60 | 40-70 | 40-95 |
-| Camera sway (`iCameraSway`) | 40 | 40 | 40 | 50, a touch of handheld | 0, locked off | 70, handheld | 40 |
+| Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 50, a touch of handheld | 0, locked off | 70 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces centred, no room in the direction they look | | |
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-3 lines and most turns, 1.6 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 22% | 59% | 7% | 24% |

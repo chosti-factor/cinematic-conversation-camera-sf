@@ -92,8 +92,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   (Kubrick and *Interstellar*), Constellation (a hard sci-fi documentary) and Nebula (a
   trailer), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
-  fully handheld (100); each preset has its own (40 in CCC's, Starborn locked off,
-  Constellation handheld), or `iCameraSway` sets one.
+  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn
+  locked off, Constellation handheld), or `iCameraSway` sets one.
 - **Per-preset camera distances**, matched to each preset's widest shot.
 - **A lens per angle, as CCC:** Starfield films conversations through a narrow 30 degree
   lens; the mod sets its own while it films. CCC's presets use CCC 1.5.0's own lens for

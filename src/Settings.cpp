@@ -147,7 +147,6 @@ namespace CCC
 				const std::int32_t fallback = legacy >= 0 ? legacy : (a_s.showMessages ? 1 : 0);
 				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
 				a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
-				a_s.swayKey = std::clamp(ReadInt(a_path, L"Debug", L"iSwayKey", a_s.swayKey), 0, 0xFE);
 			}
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
 			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", ReadInt(a_path, L"Overhear", L"bFilmConversations", a_s.filmConversations ? 1 : 0)) != 0;

@@ -12,6 +12,16 @@ test build; "diagnostic" items only add information to the log for testing.
   held a two-shot of you for nine turns in a row, and in Standard, Close, Room and Starborn
   (no fresh-angle roll) your angle only changed when it stopped fitting. Each of your turns
   now counts as one of your lines.
+- Camera sway in CCC's presets (Standard, Close, Room): CCC's camera doesn't sway, so
+  they're on a tripod now (were 40).
+
+### Changed
+- The sway test is over (0.8.16): the presets keep their sway, and Constellation now has a
+  slow handheld wander of its own, at half the strength tested (`iCameraSway=0` turns it
+  off). Frontier and Nebula have none.
+
+### Removed
+- The sway key (`iSwayKey`, L) and the sway part of the testing message's preset label.
 
 ## 0.8.16 - 2026-11-16
 

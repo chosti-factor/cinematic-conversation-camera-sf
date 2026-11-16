@@ -1932,7 +1932,7 @@ namespace CCC
 					// the camera follows the heads exactly, as in 0.6.0). 0.6.1-0.6.2 applied the
 					// percentage only to the angle, after the dead band had already removed most
 					// of the motion, so even 100% hardly swayed.
-					const float w = std::clamp(Director::CameraSway(), 0, 150) / 100.0f;  // (0.8.15: up to 150%)
+					const float w = std::clamp(Director::CameraSway(), 0, 100) / 100.0f;
 					npcHead = RE::NiPoint3{ npcHead->x + (npcSwayHead.x - npcHead->x) * w, npcHead->y + (npcSwayHead.y - npcHead->y) * w,
 						npcHead->z + (npcSwayHead.z - npcHead->z) * w };
 					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,
@@ -4531,23 +4531,8 @@ namespace CCC
 				REX::INFO("Preset key: now {} (until the game is restarted; sPreset in the INI sets the one it starts with)", kOrder[next]);
 			}
 			wasDown = down;
-			// The sway key (testing, 0.8.15): as set, 150%, or with a handheld wander.
-			static bool swayWasDown = false;
-			bool        swayDown = false;
-			if (s.swayKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.swayKey) & 0x8000) != 0) {
-				static const RE::BSFixedString console{ "Console" };
-				auto*                          ui = RE::UI::GetSingleton();
-				swayDown = !(ui && ui->IsMenuOpen(console));
-			}
-			if (swayDown && !swayWasDown) {
-				const char* mode = Director::NextSwayMode();
-				REX::INFO("Sway key: {} (sway {}%, handheld {:.0f}%)", mode, Director::CameraSway(), Director::Handheld() * 100.0f);
-			}
-			swayWasDown = swayDown;
 			if (s.showMessages) {
-				const float handheld = Director::Handheld();
-				std::string label = std::format("PRESET: {}   SWAY: {} {}%{}", Settings::Get().preset, Director::SwayModeName(), Director::CameraSway(),
-					handheld > 0.0f ? std::format(" + HANDHELD {:.0f}%", handheld * 100.0f) : std::string{});
+				std::string label = std::format("PRESET: {}", Settings::Get().preset);
 				std::ranges::transform(label, label.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 				Hud::SetPresetLabel(label);
 			}
