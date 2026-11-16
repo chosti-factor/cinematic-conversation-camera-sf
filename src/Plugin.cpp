@@ -4418,6 +4418,9 @@ namespace CCC
 			std::chrono::steady_clock::time_point stopSince{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
+			RE::NiPoint3                          speedFeet{};     // your speed over the last quarter second (0.8.18)
+			std::chrono::steady_clock::time_point speedAt{};
+			float                                 speed{ 0.0f };
 			RE::NiPoint3                          stillAt{};       // where you've stood still since stillSince
 			std::chrono::steady_clock::time_point stillSince{};
 			std::chrono::steady_clock::time_point autoBlockedUntil{};  // you stopped it: no auto start before
@@ -4685,6 +4688,15 @@ namespace CCC
 			};
 			std::vector<Candidate> candidates;
 			const auto             playerFeet = player->GetPosition();
+			if (g_filmMain.speedAt == std::chrono::steady_clock::time_point{} || a_now - g_filmMain.speedAt > 2s) {
+				g_filmMain.speedFeet = playerFeet;
+				g_filmMain.speedAt = a_now;
+				g_filmMain.speed = 0.0f;
+			} else if (const float dt = std::chrono::duration<float>(a_now - g_filmMain.speedAt).count(); dt >= 0.25f) {
+				g_filmMain.speed = FlatDistance(playerFeet, g_filmMain.speedFeet) / dt;
+				g_filmMain.speedFeet = playerFeet;
+				g_filmMain.speedAt = a_now;
+			}
 			for (const auto& [id, t] : g_talkers) {
 				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || FlatDistance(t.feet, playerFeet) > s.listenRange) {
 					continue;
@@ -4922,7 +4934,10 @@ namespace CCC
 			// flag flickering after Amoli and Gerhard's scene ended started it again for a
 			// second, a flip to third person and back).
 			const bool freshLine = pick->lastLine > g_filmMain.stoppedAt;
-			const bool autoStart = s.autoListen && conversation && !declined && freshLine && a_now >= g_filmMain.autoBlockedUntil;
+			// Not while you're running past (0.8.18: the 0.8.17 test started one as you ran by,
+			// flipped to third person and back 0.4 s later); walking up to one still starts it.
+			const bool running = g_filmMain.speed > 3.0f;
+			const bool autoStart = s.autoListen && conversation && !declined && freshLine && !running && a_now >= g_filmMain.autoBlockedUntil;
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;

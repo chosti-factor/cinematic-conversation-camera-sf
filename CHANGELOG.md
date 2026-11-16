@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.18 - 2026-11-16
+
+### Fixed
+- Filming people talking started as you ran past a conversation, flipped to third person
+  and back 0.4 s later (0.8.17 test, Neon Security). It no longer starts on its own while
+  you're running (over 3 m/s); walking up to one still starts it.
+
 ## 0.8.17 - 2026-11-16
 
 ### Fixed
