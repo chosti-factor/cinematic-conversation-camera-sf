@@ -22,10 +22,11 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ### From CCC
 
-- **The shot library and director:** all 39 camera setups with CCC's framing, CCC's three
-  presets (Standard, Close, Room), camera moves (push, pull, crane, tilt, drift, orbit,
-  slide), and CCC's cutting rules: each person keeps their angle across the
-  back-and-forth and gets a new one after a few of their lines; short lines don't count.
+- **The shot library and director:** all 39 camera setups with CCC's framing, CCC 1.5.0's
+  three presets (Standard, Close, Room) with each angle's own lens, camera moves (push,
+  pull, crane, tilt, drift), and CCC's cutting rules: each person keeps their angle across
+  the back-and-forth and gets a new one after a few of their lines, at each preset's own
+  rhythm; short lines don't count.
 - **Close-ups that follow the face:** a close-up turns toward a face turned to its work
   and drops to look up into a lowered one (`bFollowFace`).
 - **The 180-degree rule:** each conversation is staged from one side of the line between
@@ -35,13 +36,6 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks (except during their first line, the greeting, where the game lets A choose
   one) and fade in when the line ends (`[Interface]`).
-- **Reaction shots** (CCC SF's presets; CCC's have them off, as CCC ships): to break the monotony of a long stretch, after 7 s of their talking
-  without a cut to you, their next line of 2.5 to 7 s is shown on you, from its start to
-  its end (`fReactionAfterSecondsPlayer`); a line over 8 s, its first 4 s. Their emotion
-  close-ups count towards the 7 s, and a regular one can be cut away from when they're
-  reached. With seated people and merchants too. A reaction is you listening, or a close-up of your expression, by its tier like theirs: mild 25%,
-  medium 40%, strong always (`iCloseUpChance...Player`). Details:
-  [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
   whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
   them, never a cut away (`bPersuasionBeatNpc`).
@@ -68,21 +62,34 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   line from the person in shot to the camera. A wall behind the camera pulls it in; a
   ladder or pillar in front of the person skips the shot for another angle; when nothing
   is fully clear, the angle with the most room is used (`bObstacleCheck`).
-- **Emotion close-ups** (every tier in CCC SF's presets; in CCC's, only Close, on strong lines): lines the game tags with an expression push in to a close-up of
-  the speaker, 40% of them extreme close-ups (each for its own line only). The expressions come in three tiers with
-  their own chances: mild (Amused, Confident, Thinking...) 25%, medium (Concerned, Serious,
-  Smirk...) 40%, strong (Angry, Afraid, Shocked, Somber...) always; Neutral and Friendly
-  never (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`). About one line in five. CCC does this with lines Skyrim's
-  writers marked as intense; Starfield has no such mark, so the expression decides. The
-  expression of each line can be shown on screen while testing (`bShowMessages`).
+- **Emotion close-ups** (every tier in CCC SF's presets; in CCC's, only Close, on strong
+  lines): lines the game tags with an expression push in to a close-up of the speaker, 40%
+  of them extreme close-ups (each for its own line only). The expressions come in three
+  tiers with their own chances: mild (Amused, Confident, Thinking...) 25%, medium
+  (Concerned, Serious, Smirk...) 40%, strong (Angry, Afraid, Shocked, Somber...) always;
+  Neutral and Friendly never (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`). About one
+  line in five, more with emotional characters. CCC does this with lines Skyrim's writers
+  marked as intense; Starfield has no such mark, so the expression decides. Each line's
+  expression can be shown on screen while testing (`bShowMessages`). Tables:
+  [docs/EMOTIONS.md](docs/EMOTIONS.md).
+- **Reaction shots, reworked** (CCC SF's presets; CCC's have them off, as CCC ships): to
+  break the monotony of a long stretch, after 7 s of their talking without a cut to you,
+  their next line of 2.5 to 8 s is shown on you from its start to its end; a longer line,
+  its first 4 s (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the
+  7 s, and a regular one can be cut away from when they're reached. A reaction is an insert:
+  the camera goes back to exactly the speaker's shot. It's you listening, or a close-up of
+  your expression, by its tier like theirs: mild 25%, medium 40%, strong always
+  (`iCloseUpChance...Player`). Details: [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
   library, whose angles often put the chair, the shop counter or the clutter around it in
   front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are recognised by
   the game's vendor flag on their faction, wherever the shop is.
-- **Cutting styles**, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
+- **Cutting:** each preset has its own rhythm (`sCuttingStyle=Preset`); a named style sets
+  one for every preset, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
   SpaceOpera.
-- **Four more presets** with a Starfield flavour: Frontier, Starborn and Constellation, each
-  mirroring one of CCC's, and Nebula with every shot in the library (see Presets below).
+- **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
+  (Kubrick and *Interstellar*), Constellation (a hard sci-fi documentary) and Nebula (a
+  trailer), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100); each preset has its own (40 in CCC's, Starborn locked off,
   Constellation handheld), or `iCameraSway` sets one.
@@ -102,8 +109,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
   hold B on a controller) and/or starting on its own when a conversation begins near you,
-  even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; in
-  testing; no prompt while it starts on its own). Only for the game's conversation scenes,
+  even as you walk past; moving ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no
+  prompt while it starts on its own). Only for the game's conversation scenes,
   not barks; one scene at a time, the nearest first, then the next one nearby; followed into
   the game's next scene with the same people, handed back when it only repeats itself.
   Letterboxed, with a group shot now and then when three or more people are talking. From first person, the view
@@ -115,9 +122,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   bar (`bShowMessages`, `fMessageSeconds`).
 - **Preset key:** U switches to the next preset on the fly, even mid-conversation
   (`iPresetKey`).
-- Clean exits in both perspectives (starts can still show a frame or two of the game's
-  own camera). Small speakers (robots) and quest scenes you take part in (someone walks
-  up and starts talking, several people taking turns) keep the game's own camera.
+- Clean exits in both perspectives, and starts with at most a brief flash. Small speakers
+  (robots) and quest scenes you take part in (someone walks up and starts talking, several
+  people taking turns) keep the game's own camera.
 
 ### Presets
 
@@ -156,41 +163,30 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
 
 ### Planned, roughly in order
 
-- In testing (0.8): the wider lens, room shots, filming people talking near you, your
-  character's face, reaction shots and holding on the answer after a persuasion.
-- 0.8.x, filming people talking near you: done in 0.8.10 (the listen key and controller
-  button, the on-screen prompt, starting on its own for conversation scenes nearby, never in
-  combat, obstacle checks, one scene at a time, following a scene into the next, handing
-  back a scene that repeats itself, group shots, the letterbox).
-- Your character's face, later maybe: your traits setting a temperament (Introvert subtler,
-  Extrovert fuller, Empath mirrors more), and cautiously more of the text of your lines.
+- Done in 0.8.x: CCC's presets made faithful to CCC 1.5.0 (each angle's own lens, its
+  cutting), CCC SF's presets rebuilt with film flavours, filming people talking near you
+  (prompt and auto-start, scenes one at a time, followed into the next, group shots,
+  letterbox), your character's face, reworked reaction shots, holding on the answer after a
+  persuasion, emotion close-ups by tier.
 - 0.9.x, polish and optimization:
-  - **Distance, lens, or both:** how the shots get CCC's framing through Starfield's
-    narrower lens. Pure distance (the game's 30 degree lens, the camera further back:
-    Starfield's flatter, telephoto look, but wide shots rarely fit indoors), pure lens
-    (CCC's own distances with a lens as wide as CCC's), or a hybrid (a moderately wider lens
-    with somewhat longer distances). Settled in 0.8.12-0.8.14: each angle's own lens, CCC's
-    numbers as written (measured against Skyrim clips), and CCC SF's presets rebuilt on
-    them with film flavours.
-  - Emotion close-ups tuned from testing (which expressions push in, and how often; see
-    [docs/EMOTIONS.md](docs/EMOTIONS.md)).
-  - Talking to a seated person from the side (about 90 degrees) leaves you out of the
-    picture; a seated NPC hidden behind your body in the plain over-the-shoulder shot; a
-    switch for reaction shots with seated people and merchants.
+  - Seated conversations: strong vertical jitter at the start (0.8.5 test, The Rock); in
+    first person on a bar stool your full body isn't built, so you're kept out of frame;
+    talking to a seated person from the side (about 90 degrees) leaves you out of the
+    picture; a seated NPC hidden behind your body in the plain over-the-shoulder shot.
   - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
     shots.
-  - Plants and other objects without collision (which the obstacle check can't see) in
-    front of wide outdoor shots, and walls it passes through (beside Commander Tuala at the
-    MAST, every check said clear).
-  - Starting a conversation while seated: strong vertical jitter at the start (0.8.5 test,
-    The Rock).
-  - Talking to someone while you sit (a bar stool) in first person: your full body isn't
-    built (it waits for a standing height), so you're kept out of frame (0.8.5 log, August
-    Bowen at The Rock).
-  - Smoother conversation starts; quest scenes recognised by their quest rather than the
-    scene's name; the default amount of camera sway (`iCameraSway`).
-- 1.0, public beta, after testing with popular UI mods (a HUD replacer, a dialogue menu
-  replacer, a subtitle mod) and listing compatibility.
+  - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
+  - Release: the log's testing diagnostics and the testing messages off by default; the old
+    INI names (from before the Npc/Player renames, and Stardust) no longer read.
+  - If time allows: the brief flash at conversation starts; quest scenes recognised by
+    their quest rather than the scene's name.
+  - After 1.0: plants and other objects without collision (which the obstacle check can't
+    see) in front of wide outdoor shots, and walls it passes through (beside Commander Tuala
+    at the MAST, every check said clear).
+- 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
+  replacer, a dialogue menu replacer, a subtitle mod) and listing compatibility.
+- Later, maybe: your traits setting your face's temperament (Introvert subtler, Extrovert
+  fuller, Empath mirrors more), and cautiously more of the text of your lines.
 
 ## Requirements
 
@@ -221,7 +217,7 @@ apply without restarting the game.
 | `[General]` | On/off, extra logging |
 | `[Director]` | Preset, cutting style, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | The conversation lens, who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height |
+| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height |
 | `[Body]` | Showing your character, building the full body from first person |
 | `[Transitions]` | How the first and last frames of a conversation are handled |
 | `[PlainCamera]` | The simple over-the-shoulder shots used when the director is off |

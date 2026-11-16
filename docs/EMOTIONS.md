@@ -1,10 +1,36 @@
-# Line expressions seen in testing
+# Line expressions and emotion close-ups
 
 Every spoken NPC line carries one of the game's facial-expression tags
-(`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups
-(`sCloseUpEmotions...Npc` tiers). This is a running tally from the test logs, to choose which
-tags push in. ✱ = on the close-up list at the time of writing (0.8.3: every expression but
-Neutral and Friendly, see the notes below the second table).
+(`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
+character's face. Kept up to date with every build.
+
+## The rules now (0.8.14)
+
+- **Which presets:** CCC SF's (Frontier, Starborn, Constellation, Nebula) use every tier.
+  CCC's keep CCC's vision: none in Standard and Room, strong lines only in Close (the nearest
+  thing to CCC's "full intensity"). `bEmotionCloseUpsNpc`: -1 the preset's own (default),
+  0 none, 1 every tier in every preset.
+- **Three tiers, each with its own chance** that a line pushes in to a close-up of the
+  speaker (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`):
+
+  | Tier | Expressions | Chance |
+  | --- | --- | --- |
+  | Mild | Amused, Confident, Thinking, Grateful, Question, Impressed, Tired, Concentrating, Relieved | 25% |
+  | Medium | Concerned, Serious, Smirk, Happy, Confused, Puzzled, Apologetic, Awed | 40% |
+  | Strong | VeryAngry, Rage, Angry, Irritated, Afraid, Shocked, Surprised, Disgust, Somber, Depressed, Worried, Nervous, Pleading, Disbelief, Defiant, Stern, Suspicious, Smug, Sarcastic, Flirting, SinisterSmile, InPain, Dying, EyesClosed | always |
+  | None | Neutral, Friendly, no tag | never |
+
+- About one NPC line in five overall (from the tally below); emotional characters get more
+  (Sarah: about a third).
+- **Extreme close-ups:** `iExtremeCloseUpChanceNpc` (40%) of them, each for its own line
+  only, never two in a row; reactions never cut into one.
+- **Close-ups of you** in reaction shots, by your expression's tier, the same lists and
+  chances (CCC SF's presets, which have reaction shots). See "Your character's face" below.
+
+## The tally
+
+A running tally from the test logs, used to choose the tiers. ✱ = on the close-up list
+before 0.8.3 (since then every expression but Neutral and Friendly is on a tier).
 
 Last updated: 2026-11-13, logs from 0.4.11 to 0.5.4, 707 NPC lines (every spoken line
 counted, so lines heard twice count twice).
@@ -45,8 +71,8 @@ Notes:
 - 0.6.2 added Happy, Smirk, Puzzled, Suspicious, Relieved and Concentrating to the list.
   The list now covers about 19% of all lines (was 15%); Concerned,
   Serious and Smirk account for over half of that.
-- New since the last tally: SinisterSmile (one line, Ularu Chen). Not on the list yet; a
-  candidate for close-ups.
+- New since the last tally: SinisterSmile (one line, Ularu Chen). On the strong tier since
+  0.8.6.
 - Starfield has no emotion strength per line (Skyrim's writers set one, which CCC uses), so
   the tag is all there is to go on.
 
@@ -55,8 +81,8 @@ Notes:
 The game's facial expressions (`AnimFaceArchetype*` keywords) that an actor's face can be set to,
 from the list in Player Camera During Dialogue by rrrafau, which applies them to the player.
 The same set tags NPC lines; several have never come up in testing (they may be rare in the
-game's dialogue, or used mainly by scenes). These are also the expressions available for your
-character's face (planned).
+game's dialogue, or used mainly by scenes). These are also the expressions your character's
+face can show (below).
 
 | Expression | Seen in testing | On the close-up list |
 |---|---|---|
@@ -128,14 +154,14 @@ Notes:
   extreme. Close-ups of her were 38% of the time on screen (extreme ones 18%, 13 s each on
   average). Sarah's lines are more often tagged than the tally's average (76% against 52%,
   strong 18% against 5%).
-- 0.8.14: no change to the tiers (CCC SF's presets rebuilt; they keep every tier).
-- 0.8.13: the tiers apply in CCC SF's presets; CCC's keep CCC's vision (no emotion close-ups
-  in Standard and Room, strong lines only in Close). `bEmotionCloseUpsNpc=1` puts every
-  tier in every preset.
 - 0.8.9: an extreme close-up holds its own line only; never two in a row. Tier chances
   lowered to mild 25%, medium 40% (strong stays 100%), for your close-ups too: from the
   tally's shares, about 18% of all lines (was 21%); on the 0.8.7 Sarah test's mix, about
   12 of 34 lines (was 13).
+- 0.8.13: the tiers apply in CCC SF's presets; CCC's keep CCC's vision (no emotion close-ups
+  in Standard and Room, strong lines only in Close). `bEmotionCloseUpsNpc=1` puts every
+  tier in every preset.
+- 0.8.14: no change to the tiers (CCC SF's presets rebuilt; they keep every tier).
 
 ## Your character's face
 
@@ -239,7 +265,8 @@ without a skill tag), this chance of your background's expression instead.
 
 ### Reaction shots
 
-A reaction shot on a line your face has no answer for (no expression on it) gives your face
+Reaction shots are in CCC SF's presets (CCC's have them off, as CCC ships). A reaction shot
+on a line your face has no answer for (no expression on it) gives your face
 a listening look for it: your background's expression, or Concentrating. The shot message
 names your expression.
 

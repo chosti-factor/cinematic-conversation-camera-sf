@@ -8,7 +8,7 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.13 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.8.14 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -93,7 +93,7 @@ Nothing about how often. They change what you see:
 
 | | CCC | CCC SF |
 | --- | --- | --- |
-| Reactions by default | Off | On |
+| Reactions by default | Off | On in CCC SF's presets, off in CCC's (as CCC) |
 | When | Every 3rd line in a reply, a 50% roll | After 7 s of their talking without a cut to you (a long stretch), every time |
 | Which line | The next eligible line | The next line of 2.5 to 8 s; a longer one for its first 4 s |
 | Short exchanges | Can get one if the reply has 3 lines | Never |
