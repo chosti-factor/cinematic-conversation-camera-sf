@@ -179,7 +179,8 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
     shots.
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Release: the log's testing diagnostics and the testing messages off by default; the old
-    INI names (from before the Npc/Player renames, and Stardust) no longer read.
+    INI names (from before the Npc/Player renames, and Stardust) no longer read;
+    `iCloseUpDistance` removed (every preset has its own lenses now).
   - If time allows: the brief flash at conversation starts; quest scenes recognised by
     their quest rather than the scene's name.
   - After 1.0: plants and other objects without collision (which the obstacle check can't
