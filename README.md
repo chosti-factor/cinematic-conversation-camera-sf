@@ -88,8 +88,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 - **Per-preset camera distances**, matched to each preset's widest shot.
 - **A lens per angle, as CCC:** Starfield films conversations through a narrow 30 degree
   lens; the mod sets its own while it films. CCC's presets use CCC 1.5.0's own lens for
-  every angle (Close 35-50 degrees, Standard 50-72, Room 45-95 in CCC's numbers), drawn as
-  Skyrim shows them; CCC SF's presets use 37.5 degrees for now. `fConversationLens` sets one
+  every angle (Close 35-50 degrees, Standard 50-72, Room 45-95), as CCC wrote them (checked
+  against Skyrim clips); CCC SF's presets use 37.5 degrees for now. `fConversationLens` sets one
   lens for everything (0 keeps the game's).
 - **Your character's face:** the game keeps it neutral and your lines carry no expression
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a

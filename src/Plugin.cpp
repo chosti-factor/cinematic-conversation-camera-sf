@@ -4446,7 +4446,7 @@ namespace CCC
 			// The lens key (testing, 0.8.12), during a conversation only.
 			static bool lensWasDown = false;
 			const bool  lensDown = s.lensKey > 0 && g_state.active && GameHasFocus() && (::GetAsyncKeyState(s.lensKey) & 0x8000) != 0;
-			static const char* lensMode = "CCC, as Skyrim shows it";
+			static const char* lensMode = "CCC, as written";
 			if (lensDown && !lensWasDown) {
 				lensMode = Director::NextLensMode();
 				REX::INFO("Lens key: {}", lensMode);

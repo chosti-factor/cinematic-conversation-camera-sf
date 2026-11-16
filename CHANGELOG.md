@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.14 - 2026-11-15
+
+### Changed
+- CCC's lenses are used as CCC wrote them. Measured in two Skyrim clips with CCC on Close
+  (Faralda, Tolfdir): close-ups, close-ups of you and extreme close-ups fill 26%, 23% and
+  53-65% of the picture's height, as CCC's numbers give when Skyrim's lens is measured the
+  way Starfield's is; 0.8.12's reading of it as measured across a 4:3 frame gave 20%, 17%
+  and 44%. CCC 1.5.0's shot table (fills, angles, heights), read from its DLL, is the same
+  as this port's. The lens key now starts on "as written".
+
 ## 0.8.13 - 2026-11-15
 
 ### Changed

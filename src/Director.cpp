@@ -38,7 +38,11 @@ namespace CCC::Director
 		// DistanceForFill, ported here), so what Skyrim shows is: the camera where CCC's
 		// numbers put it, seen through the wider lens. The lens key (testing) switches between
 		// that, CCC's numbers as written, and one lens for everything, to compare by eye.
-		std::atomic<int>   g_lensMode{ 0 };        // 0 as Skyrim shows it, 1 as written, 2 the preset's one lens
+		// 0.8.14: CCC's numbers as written are the default. Measured in two Skyrim clips (CCC's
+		// Close, Faralda and Tolfdir): close-ups, close-ups of you and extreme close-ups came out
+		// the size CCC's numbers give when Skyrim's lens is measured as Starfield's is (26%, 23%,
+		// 59% of the picture's height), not the 4:3 reading's (20%, 17%, 44%).
+		std::atomic<int>   g_lensMode{ 1 };        // 0 the 4:3 reading (wider), 1 as written, 2 the preset's one lens
 		std::atomic<float> g_shotLens{ 0.0f };     // the shot on screen's own lens, CCC's number (0 = the preset's)
 
 		bool OwnLenses()
@@ -1282,7 +1286,7 @@ namespace CCC::Director
 		const int mode = (g_lensMode.load(std::memory_order_relaxed) + 1) % 3;
 		g_lensMode.store(mode, std::memory_order_relaxed);
 		g_presetSwitch.store(true);  // the angles' lenses are loaded again, converted or not
-		return mode == 0 ? "CCC, as Skyrim shows it" : mode == 1 ? "CCC, as written" : "one lens for all";
+		return mode == 0 ? "CCC, read as 4:3 (wider)" : mode == 1 ? "CCC, as written" : "one lens for all";
 	}
 
 	float RoomShotLimit(bool a_interior)
