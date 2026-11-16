@@ -10,6 +10,16 @@ test build; "diagnostic" items only add information to the log for testing.
 - Filming people talking started as you ran past a conversation, flipped to third person
   and back 0.4 s later (0.8.17 test, Neon Security). It no longer starts on its own while
   you're running (over 3 m/s); walking up to one still starts it.
+- Flashes at conversation starts from first person (0.8.17 clips, seated and standing):
+  your own view, shown while your body is rebuilt (about 0.1 s), was drawn through the
+  conversation lens, a sudden zoom; it keeps your own field of view now. Then two frames
+  from inside your head (your hat's brim, your eyebrows) as the first shot came in: you're
+  shown only once that shot has been on screen for a few frames.
+- A one-frame flash on the way back to first person: the game's first frame looked at the
+  floor (in all ten exits). That frame is covered with your view.
+- After a won persuasion, the whole reply stayed on the NPC and you were barely seen (23 s
+  on Sieghart). With reaction shots on (CCC SF's presets), the hold covers their answer and
+  the verdict; the next line is you, reacting. CCC's presets hold the whole reply, as CCC.
 
 ## 0.8.17 - 2026-11-16
 

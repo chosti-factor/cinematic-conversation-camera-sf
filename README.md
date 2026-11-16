@@ -37,8 +37,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   NPC speaks (except during their first line, the greeting, where the game lets A choose
   one) and fade in when the line ends (`[Interface]`).
 - **Holding on the answer** after each persuasion round (the verdict included) or a skill
-  check, seated people too: the NPC's whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
-  them, never a cut away (`bPersuasionBeatNpc`).
+  check, seated people too: a close-up of the NPC, pushing in. In CCC's presets their whole
+  reply stays on them, as in CCC; in CCC SF's, after the answer and the verdict, a shot of
+  you reacting (`bPersuasionBeatNpc`).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
   space for them, measured with the game's collision check, on the conversation's side of
   the line and with both faces in view (`iRoomShotMinRoom`). In CCC's presets as far back

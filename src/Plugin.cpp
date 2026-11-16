@@ -73,6 +73,8 @@ namespace CCC
 			bool                                  replyBeat{ false };        // ... and so does the rest of their reply, until your turn (0.8.5)
 			std::int64_t                          beatConsumed{ 0 };         // the persuasion outcome already used
 			bool                                  reactionOwed{ false };     // the roll said yes: the next line that can take it (0.8.3, as CCC)
+			int                                   beatLines{ 0 };            // lines of a persuasion's answer held so far (0.8.18)
+			bool                                  afterBeat{ false };        // the hold on their answer just ended: you, reacting, on this line
 			bool                                  reactionActive{ false };   // this NPC line is shown on the player
 			std::chrono::steady_clock::time_point reactionFrom{};            // on you from then (0.8.3: after an emotion close-up's minimum)
 			std::chrono::steady_clock::time_point reactionOnAt{};            // when the camera cut to you (0.8.3: the time counts from the cut)
@@ -148,6 +150,8 @@ namespace CCC
 			std::chrono::steady_clock::time_point directLastSample{};
 			std::optional<RE::NiPoint3>           directLastHead{};
 			bool                                  bodyReady{ true };         // safe to show the player
+			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
+			int                                   framesSinceWaiting{ 0 };   // frames on a shot since your own view ended (0.8.18)
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
 			bool                                  npcEverTalked{ false };
@@ -300,6 +304,7 @@ namespace CCC
 		// touch from the dialogue camera hook's worker threads (0.2.0 froze doing that). The
 		// hook only records what it wants; the main-thread watchdog applies it.
 		bool g_wantRevealPlayer = false;
+		std::atomic<float> g_waitingLens{ 0.0f };  // your own view's field of view while it's shown (0.8.18)
 		bool g_wantHidePlayer = false;
 		std::mt19937 g_reactionRng{ std::random_device{}() };
 
@@ -752,6 +757,7 @@ namespace CCC
 			g_repair = Repair{};
 			g_wantRevealPlayer = false;
 			g_wantHidePlayer = false;
+			g_waitingLens.store(0.0f, std::memory_order_relaxed);
 			g_state = State{};
 		}
 
@@ -1757,6 +1763,9 @@ namespace CCC
 			float gameFov = 0.0f;
 			SafeCopy(&gameFov, reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset, sizeof(float));
 			const bool wideFrame = gameFov > 60.0f && gameFov < 170.0f;
+			if (wideFrame && g_state.startFov <= 0.0f) {
+				g_state.startFov = gameFov;
+			}
 			if (s.debugLog && g_conversationNumber <= 40 && g_state.framesThisConversation <= 12) {
 				REX::INFO("FOV frame {} (+{} ms): game's field of view {:.2f}{}", g_state.framesThisConversation,
 					std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - g_state.started).count(), gameFov,
@@ -2094,6 +2103,15 @@ namespace CCC
 					}
 					g_state.lineStart = now;
 					g_state.lineBeat = false;
+					// 0.8.17 test: after the persuasion was won, Sieghart's whole 23 s reply stayed on
+					// him and you were barely seen. With reaction shots on (CCC SF's presets), the
+					// hold covers their answer and the line after it (the verdict); the next line is
+					// you, reacting. CCC's presets hold the whole reply, as CCC does.
+					if (g_state.replyBeat && ++g_state.beatLines >= 3 && Director::ReactionShots()) {
+						g_state.replyBeat = false;
+						g_state.afterBeat = true;
+						REX::INFO("Persuasion beat: held for their answer and the verdict; now you, reacting");
+					}
 					g_state.reactionActive = false;
 					g_state.reactionCloseUp = false;
 					g_state.reactionPending = true;
@@ -2118,6 +2136,7 @@ namespace CCC
 						if (fresh) {
 							g_state.lastLineText = text;
 						}
+						const bool afterBeat = std::exchange(g_state.afterBeat, false);
 						if (fresh && Director::ReactionShots() && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
 							!g_state.lineBeat && !g_state.replyBeat) {
 							// 0.8.5, reactions break the monotony of long stretches: once the camera
@@ -2155,7 +2174,12 @@ namespace CCC
 								g_state.reactionHold = a_hold;  // < 0: to the end of the line
 								g_reactionStarted.store(true, std::memory_order_release);
 							};
-							if (g_state.lineIntense && !g_state.closeUpGoesOn) {
+							if (afterBeat) {
+								// Right after the hold on a persuasion's answer (0.8.18): you, on this
+								// line, whatever it is; a long one only for its first part.
+								const float longest = s.reactionLongLineHold > 0.0f ? s.reactionLineMax + 1.0f : s.reactionLineMax;
+								take(false, 0.0f, lineSeconds > longest && s.reactionLongLineHold > 0.0f ? s.reactionLongLineHold : -1.0f);
+							} else if (g_state.lineIntense && !g_state.closeUpGoesOn) {
 								// An emotion close-up is part of the stretch on them (0.8.5): the
 								// reaction cuts into a regular one when the time on them reaches
 								// fReactionAfterSecondsPlayer during it, and stays to the end of the line
@@ -2214,6 +2238,8 @@ namespace CCC
 						g_state.beatConsumed = outcome;
 						g_state.lineBeat = true;
 						g_state.replyBeat = true;
+						g_state.beatLines = 1;
+						g_state.afterBeat = false;
 						g_state.monoSeconds = 0.0f;
 						g_state.reactionActive = false;
 						g_state.reactionCloseUp = false;
@@ -2428,6 +2454,13 @@ namespace CCC
 			if (gameplayView && (bodyPending || (startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
+			// Your own view keeps your own field of view (0.8.18: the 0.8.17 clips from first
+			// person showed it zoomed to the conversation lens for its 0.1 s, a flash). And from
+			// first person you're shown only once the first shot has been on screen for two
+			// frames: shown on the frame the camera left your eyes, two frames from inside your
+			// head (the brim of your hat, your eyebrows) slipped through.
+			g_waitingLens.store(waitingView && g_state.startFov > 10.0f ? g_state.startFov : 0.0f, std::memory_order_relaxed);
+			g_state.framesSinceWaiting = waitingView ? 0 : g_state.framesSinceWaiting + 1;
 			std::optional<Camera::Pose> directed;
 			if (s.director && !waitingView && !pov && g_state.plainShots) {
 				// Plain shots (seated people, merchants): only the emotion close-ups, from in
@@ -2586,10 +2619,11 @@ namespace CCC
 			// Reveal right here so the player is visible on this very frame (doing it only from
 			// the main-thread task left them hidden for the first frame of the shot, a visible
 			// pop in third-person conversations). The main thread keeps it up afterwards.
-			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady;
+			const bool shownYet = !g_state.startedFirstPerson || g_state.framesSinceWaiting > 2;
+			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady && shownYet;
 			// While the first-person body is being rebuilt, keep the player hidden: the new
 			// head appears around the camera (0.3.31 showed one frame of the eyes from inside).
-			g_wantHidePlayer = g_state.hidePlayer || (g_state.startedFirstPerson && !g_state.bodyReady);
+			g_wantHidePlayer = g_state.hidePlayer || (g_state.startedFirstPerson && (!g_state.bodyReady || !shownYet));
 			if (g_wantRevealPlayer) {
 				Visibility::RevealPlayer();
 			} else if (g_wantHidePlayer) {
@@ -2917,9 +2951,25 @@ namespace CCC
 			Visibility::Restore(false);
 			LogExitFrame(camera, 0);
 			g_exitLogFrames = 6;
-			if (mode != 1 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+			// The game's first first-person frame looks at the floor (0.8.17: in all ten exits it
+			// aimed 70-85 degrees down, a frame of carpet in the clips). With no cover (mode 1),
+			// that frame is still covered with your view whenever it points elsewhere.
+			bool wrongFrame = false;
+			if (const auto reported = Camera::PoseOf(camera->cameraRoot.get())) {
+				const auto dir = [](const Camera::Pose& a_p) {
+					RE::NiPoint3 d{ a_p.lookAt.x - a_p.position.x, a_p.lookAt.y - a_p.position.y, a_p.lookAt.z - a_p.position.z };
+					const float  n = std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
+					return n > 1e-4f ? RE::NiPoint3{ d.x / n, d.y / n, d.z / n } : d;
+				};
+				const auto a = dir(*reported), b = dir(view);
+				wrongFrame = a.x * b.x + a.y * b.y + a.z * b.z < 0.94f;  // over 20 degrees apart
+			}
+			if ((mode != 1 || wrongFrame) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
 				g_exitCoverFrames = mode == 2 ? 3 : 1;
+				if (mode == 1) {
+					REX::INFO("Exit: the game's first frame points away from your view; covered with your view");
+				}
 			}
 			return true;
 		}
@@ -3013,7 +3063,8 @@ namespace CCC
 
 		float LensFor(float a_fov)
 		{
-			const float wanted = g_lensWanted.load(std::memory_order_relaxed);
+			const float waiting = g_waitingLens.load(std::memory_order_relaxed);
+			const float wanted = waiting >= 10.0f ? waiting : g_lensWanted.load(std::memory_order_relaxed);
 			if (!g_lensActive.load(std::memory_order_relaxed) || wanted < 10.0f) {
 				return a_fov;
 			}
