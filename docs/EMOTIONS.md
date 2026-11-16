@@ -30,42 +30,43 @@ character's face. Kept up to date with every build.
 
 ## The tally
 
-A running tally from the test logs, used to choose the tiers. ✱ = on the close-up list
-before 0.8.3 (since then every expression but Neutral and Friendly is on a tier).
+A running tally from the test logs, used to choose the tiers. The last column is the rule
+now (0.8.9 on): ✱ mild, 25% of the time; ✱✱ medium, 40%; ✱✱✱ strong, always; none, never.
+(In the presets that use emotion close-ups: see "The rules now" above.)
 
 Last updated: 2026-11-13, logs from 0.4.11 to 0.5.4, 707 NPC lines (every spoken line
 counted, so lines heard twice count twice).
 
-| Tag | Lines | Share |
-|---|---|---|
-| (no tag: greetings, shop barks) | 173 | 24% |
-| Friendly | 171 | 24% |
-| Amused | 63 | 9% |
-| Confident | 61 | 9% |
-| Thinking | 37 | 5% |
-| Grateful | 37 | 5% |
-| Concerned ✱ | 31 | 4% |
-| Serious ✱ | 23 | 3% |
-| Smirk ✱ | 18 | 3% |
-| Neutral | 12 | 2% |
-| Question | 10 | 1% |
-| Nervous ✱ | 10 | 1% |
-| Apologetic ✱ | 10 | 1% |
-| Worried ✱ | 9 | 1% |
-| Happy ✱ | 7 | <1% |
-| Confused ✱ | 7 | <1% |
-| Irritated ✱ | 5 | <1% |
-| Impressed | 5 | <1% |
-| Surprised ✱ | 3 | <1% |
-| Somber ✱ | 3 | <1% |
-| Awed ✱ | 3 | <1% |
-| Tired | 2 | <1% |
-| Puzzled ✱ | 2 | <1% |
-| Suspicious ✱ | 1 | <1% |
-| SinisterSmile | 1 | <1% |
-| Relieved ✱ | 1 | <1% |
-| Disgust ✱ | 1 | <1% |
-| Concentrating ✱ | 1 | <1% |
+| Tag | Lines | Share | Close-up tier now |
+|---|---|---|---|
+| (no tag: greetings, shop barks) | 173 | 24% | none |
+| Friendly | 171 | 24% | none |
+| Amused | 63 | 9% | ✱ mild (25%) |
+| Confident | 61 | 9% | ✱ mild (25%) |
+| Thinking | 37 | 5% | ✱ mild (25%) |
+| Grateful | 37 | 5% | ✱ mild (25%) |
+| Concerned | 31 | 4% | ✱✱ medium (40%) |
+| Serious | 23 | 3% | ✱✱ medium (40%) |
+| Smirk | 18 | 3% | ✱✱ medium (40%) |
+| Neutral | 12 | 2% | none |
+| Question | 10 | 1% | ✱ mild (25%) |
+| Nervous | 10 | 1% | ✱✱✱ strong (always) |
+| Apologetic | 10 | 1% | ✱✱ medium (40%) |
+| Worried | 9 | 1% | ✱✱✱ strong (always) |
+| Happy | 7 | <1% | ✱✱ medium (40%) |
+| Confused | 7 | <1% | ✱✱ medium (40%) |
+| Irritated | 5 | <1% | ✱✱✱ strong (always) |
+| Impressed | 5 | <1% | ✱ mild (25%) |
+| Surprised | 3 | <1% | ✱✱✱ strong (always) |
+| Somber | 3 | <1% | ✱✱✱ strong (always) |
+| Awed | 3 | <1% | ✱✱ medium (40%) |
+| Tired | 2 | <1% | ✱ mild (25%) |
+| Puzzled | 2 | <1% | ✱✱ medium (40%) |
+| Suspicious | 1 | <1% | ✱✱✱ strong (always) |
+| SinisterSmile | 1 | <1% | ✱✱✱ strong (always) |
+| Relieved | 1 | <1% | ✱ mild (25%) |
+| Disgust | 1 | <1% | ✱✱✱ strong (always) |
+| Concentrating | 1 | <1% | ✱ mild (25%) |
 
 Notes:
 
@@ -85,51 +86,51 @@ The same set tags NPC lines; several have never come up in testing (they may be 
 game's dialogue, or used mainly by scenes). These are also the expressions your character's
 face can show (below).
 
-| Expression | Seen in testing | On the close-up list |
+| Expression | Seen in testing | Close-up tier now |
 |---|---|---|
-| Neutral | yes |  |
-| Afraid | - | ✱ |
-| Amused | yes |  |
-| Angry | - | ✱ |
-| Apologetic | yes | ✱ |
-| Awed | yes | ✱ |
-| Concentrating | yes | ✱ |
-| Concerned | yes | ✱ |
-| Confident | yes |  |
-| Confused | yes | ✱ |
-| Defiant | - | ✱ |
-| Depressed | - | ✱ |
-| Disbelief | - | ✱ |
-| Disgust | yes | ✱ |
-| Dying | - |  |
-| EyesClosed | - |  |
-| Flirting | - | ✱ |
-| Friendly | yes |  |
-| Grateful | yes |  |
-| Happy | yes | ✱ |
-| Impressed | yes |  |
-| InPain | - |  |
-| Irritated | yes | ✱ |
-| Nervous | yes | ✱ |
-| Pleading | - | ✱ |
-| Puzzled | yes | ✱ |
-| Question | yes |  |
-| Rage | - | ✱ |
-| Relieved | yes | ✱ |
-| Sarcastic | - | ✱ |
-| Serious | yes | ✱ |
-| Shocked | - | ✱ |
-| SinisterSmile | yes |  |
-| Smirk | yes | ✱ |
-| Smug | - | ✱ |
-| Somber | yes | ✱ |
-| Stern | - | ✱ |
-| Surprised | yes | ✱ |
-| Suspicious | yes | ✱ |
-| Thinking | yes |  |
-| Tired | yes |  |
-| VeryAngry | - | ✱ |
-| Worried | yes | ✱ |
+| Neutral | yes | none |
+| Afraid | - | ✱✱✱ strong (always) |
+| Amused | yes | ✱ mild (25%) |
+| Angry | - | ✱✱✱ strong (always) |
+| Apologetic | yes | ✱✱ medium (40%) |
+| Awed | yes | ✱✱ medium (40%) |
+| Concentrating | yes | ✱ mild (25%) |
+| Concerned | yes | ✱✱ medium (40%) |
+| Confident | yes | ✱ mild (25%) |
+| Confused | yes | ✱✱ medium (40%) |
+| Defiant | - | ✱✱✱ strong (always) |
+| Depressed | - | ✱✱✱ strong (always) |
+| Disbelief | - | ✱✱✱ strong (always) |
+| Disgust | yes | ✱✱✱ strong (always) |
+| Dying | - | ✱✱✱ strong (always) |
+| EyesClosed | - | ✱✱✱ strong (always) |
+| Flirting | - | ✱✱✱ strong (always) |
+| Friendly | yes | none |
+| Grateful | yes | ✱ mild (25%) |
+| Happy | yes | ✱✱ medium (40%) |
+| Impressed | yes | ✱ mild (25%) |
+| InPain | - | ✱✱✱ strong (always) |
+| Irritated | yes | ✱✱✱ strong (always) |
+| Nervous | yes | ✱✱✱ strong (always) |
+| Pleading | - | ✱✱✱ strong (always) |
+| Puzzled | yes | ✱✱ medium (40%) |
+| Question | yes | ✱ mild (25%) |
+| Rage | - | ✱✱✱ strong (always) |
+| Relieved | yes | ✱ mild (25%) |
+| Sarcastic | - | ✱✱✱ strong (always) |
+| Serious | yes | ✱✱ medium (40%) |
+| Shocked | - | ✱✱✱ strong (always) |
+| SinisterSmile | yes | ✱✱✱ strong (always) |
+| Smirk | yes | ✱✱ medium (40%) |
+| Smug | - | ✱✱✱ strong (always) |
+| Somber | yes | ✱✱✱ strong (always) |
+| Stern | - | ✱✱✱ strong (always) |
+| Surprised | yes | ✱✱✱ strong (always) |
+| Suspicious | yes | ✱✱✱ strong (always) |
+| Thinking | yes | ✱ mild (25%) |
+| Tired | yes | ✱ mild (25%) |
+| VeryAngry | - | ✱✱✱ strong (always) |
+| Worried | yes | ✱✱✱ strong (always) |
 
 Notes:
 
@@ -137,8 +138,7 @@ Notes:
   close-up list.
 - 0.7.4 also replaced six guessed names that aren't real expressions (Angry, Annoyed, Fearful,
   Scared, Disgusted, Sad) with the game's own: VeryAngry, Rage, Afraid, Depressed and Shocked.
-- 0.8.3: every expression but Neutral and Friendly is on the list (the ✱ column above is
-  from before), and a listed line gets its close-up 50% of the time (`iCloseUpChanceNpc`).
+- 0.8.3: every expression but Neutral and Friendly is on the list, and a listed line gets its close-up 50% of the time (`iCloseUpChanceNpc`).
   From the tally at the top, that's about half of all NPC lines tagged for it (no tag, 24%,
   and Friendly, 24%, are the rest), so about a quarter of all lines get an emotion
   close-up. A reaction shot of you can interrupt one after its minimum time on screen.
