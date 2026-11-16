@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.0 - 2026-11-16
+
+The start of 0.9.x, polish. Testing messages and the detailed log stay on until the last
+step before 1.0.
+
+### Removed
+- Old INI names no longer read: the keys from before the Npc/Player renames (bReactionShots,
+  bEmotionCloseUps, bPersuasionBeat, iExtremeCloseUpChance, bPlainShotsSeated, bFacePlayer's
+  bPlayerFace, and the rest), bShowEmotions/bShowShots, and `sPreset=Stardust` (Frontier).
+- `iCloseUpDistance`: every angle has its own lens, so close-ups stand at CCC's distance.
+
 ## 0.8.18 - 2026-11-16
 
 ### Fixed

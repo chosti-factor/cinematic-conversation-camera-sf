@@ -131,25 +131,10 @@ namespace CCC
 		{
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
-			// [Debug] since 0.4.16; [General] still read for INIs from 0.4.14-0.4.15.
-			// bShowMessages (0.7.5) replaces bShowEmotions and bShowShots; an older INI's keys
-			// still count when it has no bShowMessages (either one on = messages on).
-			{
-				std::int32_t legacy = -1;
-				for (const auto* key : { L"bShowEmotions", L"bShowShots" }) {
-					for (const auto* section : { L"General", L"Debug" }) {
-						const auto v = ReadInt(a_path, section, key, -1);
-						if (v >= 0) {
-							legacy = std::max(legacy, v != 0 ? 1 : 0);
-						}
-					}
-				}
-				const std::int32_t fallback = legacy >= 0 ? legacy : (a_s.showMessages ? 1 : 0);
-				a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", fallback) != 0;
-				a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
-			}
+			a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", a_s.showMessages ? 1 : 0) != 0;
+			a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
-			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", ReadInt(a_path, L"Overhear", L"bFilmConversations", a_s.filmConversations ? 1 : 0)) != 0;
+			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;
 			a_s.listenKey = std::clamp(ReadInt(a_path, L"Overhear", L"iListenKey", a_s.listenKey), 0, 254);
 			a_s.listenRange = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);
 			a_s.listenButton = std::clamp(ReadInt(a_path, L"Overhear", L"iListenButton", a_s.listenButton), 0, 0xFFFF);
@@ -164,15 +149,13 @@ namespace CCC
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
 			a_s.conversationLens = ReadFloat(a_path, L"Camera", L"fConversationLens", a_s.conversationLens);
 			a_s.conversationLens = a_s.conversationLens < 0.0f ? -1.0f : a_s.conversationLens < 10.0f ? 0.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
-			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", ReadInt(a_path, L"Face", L"bPlayerFace", a_s.playerFace ? 1 : 0)) != 0;
-			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", ReadInt(a_path, L"Face", L"iQuestionChance", a_s.questionFaceChance)), 0, 100);
-			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChancePlayer", ReadInt(a_path, L"Face", L"iSignatureChance", a_s.signatureChance)), 0, 100);
+			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
+			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
+			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
 			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
 			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
 			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
-			a_s.playerCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChancePlayer", ReadInt(a_path, L"Face", L"iPlayerCloseUpChance", a_s.playerCloseUpChance)), 0, 100);
-			a_s.closeUpDistance = ReadInt(a_path, L"Director", L"iCloseUpDistance", a_s.closeUpDistance);
-			a_s.closeUpDistance = a_s.closeUpDistance < 0 ? -1 : std::clamp(a_s.closeUpDistance, 80, 150);
+			a_s.playerCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChancePlayer", a_s.playerCloseUpChance), 0, 100);
 			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
@@ -184,13 +167,6 @@ namespace CCC
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
-			{
-				std::string lower{ a_s.preset };
-				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-				if (lower == "stardust") {
-					a_s.preset = "Frontier";  // Stardust's old name (until 0.8.7: too close to Starborn)
-				}
-			}
 			// Only a file that names a style applies it, so a style in the main INI doesn't undo
 			// fine-tuning there when the _user.ini is read after it.
 			if (const auto style = ReadString(a_path, L"Director", L"sCuttingStyle", ""); !style.empty()) {
@@ -211,33 +187,33 @@ namespace CCC
 			a_s.enforceLine = ReadInt(a_path, L"Director", L"bEnforceLine", a_s.enforceLine ? 1 : 0) != 0;
 			a_s.followFace = ReadInt(a_path, L"Director", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
 			a_s.choiceCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bChoiceCloseUpsPlayer", a_s.choiceCloseUps), -1, 1);
-			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", ReadInt(a_path, L"Director", L"bReactionShots", a_s.reactionShots)), -1, 1);
-			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", ReadInt(a_path, L"Director", L"iReactionEvery", a_s.reactionEvery)), 1, 10);
-			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", ReadInt(a_path, L"Director", L"iReactionChance", a_s.reactionChance)), 0, 100);
-			a_s.reactionSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionSecondsPlayer", ReadFloat(a_path, L"Director", L"fReactionSeconds", a_s.reactionSeconds)), 0.0f, 30.0f);
+			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", a_s.reactionShots), -1, 1);
+			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", a_s.reactionEvery), 1, 10);
+			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", a_s.reactionChance), 0, 100);
+			a_s.reactionSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionSecondsPlayer", a_s.reactionSeconds), 0.0f, 30.0f);
 			a_s.reactionAfterSeconds = ReadFloat(a_path, L"Director", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds);
 			a_s.reactionAfterSeconds = a_s.reactionAfterSeconds < 0.0f ? -1.0f : std::clamp(a_s.reactionAfterSeconds, 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
 			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
-			a_s.reactionMinSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionMinSecondsPlayer", ReadFloat(a_path, L"Director", L"fReactionMinSeconds", a_s.reactionMinSeconds)), 0.0f, 10.0f);
-			a_s.avoidBystanders = ReadInt(a_path, L"Director", L"bAvoidBystandersNpc", ReadInt(a_path, L"Director", L"bAvoidBystanders", a_s.avoidBystanders ? 1 : 0)) != 0;
-			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Director", L"fBystanderStillNpc", ReadFloat(a_path, L"Director", L"fBystanderStill", a_s.bystanderStill)), 0.0f, 10.0f);
-			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", ReadInt(a_path, L"Director", L"bPersuasionBeat", a_s.persuasionBeat ? 1 : 0)) != 0;
+			a_s.reactionMinSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionMinSecondsPlayer", a_s.reactionMinSeconds), 0.0f, 10.0f);
+			a_s.avoidBystanders = ReadInt(a_path, L"Director", L"bAvoidBystandersNpc", a_s.avoidBystanders ? 1 : 0) != 0;
+			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Director", L"fBystanderStillNpc", a_s.bystanderStill), 0.0f, 10.0f);
+			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", a_s.persuasionBeat ? 1 : 0) != 0;
 			a_s.beatTags = ReadString(a_path, L"Director", L"sBeatTags", a_s.beatTags);
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Camera", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
 			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), -1, 100);
-			a_s.emotionCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bEmotionCloseUpsNpc", ReadInt(a_path, L"Director", L"bEmotionCloseUps", a_s.emotionCloseUps)), -1, 1);
+			a_s.emotionCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bEmotionCloseUpsNpc", a_s.emotionCloseUps), -1, 1);
 			a_s.closeUpEmotionsMild = ReadString(a_path, L"Director", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);
 			a_s.closeUpEmotionsMedium = ReadString(a_path, L"Director", L"sCloseUpEmotionsMediumNpc", a_s.closeUpEmotionsMedium);
 			a_s.closeUpEmotionsStrong = ReadString(a_path, L"Director", L"sCloseUpEmotionsStrongNpc", a_s.closeUpEmotionsStrong);
-			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChanceNpc", ReadInt(a_path, L"Director", L"iExtremeCloseUpChance", a_s.extremeCloseUpChance)), 0, 100);
+			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChanceNpc", a_s.extremeCloseUpChance), 0, 100);
 			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
 			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
 			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
-			a_s.extremeCloseUpChancePlayer = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChancePlayer", ReadInt(a_path, L"Director", L"iExtremeCloseUpChance", a_s.extremeCloseUpChancePlayer)), 0, 100);
-			a_s.plainShotsSeated = ReadInt(a_path, L"Director", L"bPlainShotsSeatedNpc", ReadInt(a_path, L"Director", L"bPlainShotsSeated", a_s.plainShotsSeated ? 1 : 0)) != 0;
-			a_s.plainShotsMerchants = ReadInt(a_path, L"Director", L"bPlainShotsMerchantsNpc", ReadInt(a_path, L"Director", L"bPlainShotsMerchants", a_s.plainShotsMerchants ? 1 : 0)) != 0;
+			a_s.extremeCloseUpChancePlayer = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChancePlayer", a_s.extremeCloseUpChancePlayer), 0, 100);
+			a_s.plainShotsSeated = ReadInt(a_path, L"Director", L"bPlainShotsSeatedNpc", a_s.plainShotsSeated ? 1 : 0) != 0;
+			a_s.plainShotsMerchants = ReadInt(a_path, L"Director", L"bPlainShotsMerchantsNpc", a_s.plainShotsMerchants ? 1 : 0) != 0;
 			a_s.cameraMoves = ReadInt(a_path, L"Director", L"bCameraMoves", a_s.cameraMoves ? 1 : 0) != 0;
 			for (auto& [key, value] : ReadSection(a_path, L"Shots")) {
 				std::erase_if(a_s.shotOverrides, [&](const auto& a_p) { return a_p.first == key; });
@@ -250,7 +226,7 @@ namespace CCC
 			a_s.busyFollowSmoothing = std::clamp(ReadFloat(a_path, L"Camera", L"fBusyFollowSmoothing", a_s.busyFollowSmoothing), 0.0f, 5.0f);
 			a_s.busyHeadSpeed = std::clamp(ReadFloat(a_path, L"Camera", L"fBusyHeadSpeed", a_s.busyHeadSpeed), 0.02f, 5.0f);
 			a_s.exitHoldSeconds = std::clamp(ReadFloat(a_path, L"Camera", L"fExitHoldSeconds", a_s.exitHoldSeconds), 0.0f, 5.0f);
-			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeightNpc", ReadFloat(a_path, L"Camera", L"fMinSpeakerHeight", a_s.minSpeakerHeight)), 0.0f, 3.0f);
+			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeightNpc", a_s.minSpeakerHeight), 0.0f, 3.0f);
 			a_s.gameCameraInScenes = ReadInt(a_path, L"Camera", L"bGameCameraInScenes", a_s.gameCameraInScenes ? 1 : 0) != 0;
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
 			// sFocusStyle (0.5.1); bDeepFocusLongShots=1 from 0.5.0 INIs means Wide.
@@ -276,13 +252,13 @@ namespace CCC
 			a_s.overSeatedBehind = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedBehind", a_s.overSeatedBehind);
 			a_s.overSeatedSide = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedSide", a_s.overSeatedSide);
 			a_s.overSeatedHeight = ReadFloat(a_path, L"PlainCamera", L"fOverSeatedHeight", a_s.overSeatedHeight);
-			a_s.vendorSide = ReadFloat(a_path, L"PlainCamera", L"fVendorSideNpc", ReadFloat(a_path, L"PlainCamera", L"fVendorSide", a_s.vendorSide));
-			a_s.vendorHeight = ReadFloat(a_path, L"PlainCamera", L"fVendorHeightNpc", ReadFloat(a_path, L"PlainCamera", L"fVendorHeight", a_s.vendorHeight));
+			a_s.vendorSide = ReadFloat(a_path, L"PlainCamera", L"fVendorSideNpc", a_s.vendorSide);
+			a_s.vendorHeight = ReadFloat(a_path, L"PlainCamera", L"fVendorHeightNpc", a_s.vendorHeight);
 
 			a_s.revealPlayer = ReadInt(a_path, L"Body", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
-			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBodyPlayer", ReadInt(a_path, L"Body", L"bFixFirstPersonBody", a_s.fixFirstPersonBody ? 1 : 0)) != 0;
-			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Body", L"iBodyRebuildMethodPlayer", ReadInt(a_path, L"Body", L"iBodyRebuildMethod", a_s.bodyRebuildMethod)), 0, 1);
-			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Body", L"iBodyUpdateFlagsPlayer", ReadInt(a_path, L"Body", L"iBodyUpdateFlags", a_s.bodyUpdateFlags)), 1, 0xFFFF);
+			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
+			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Body", L"iBodyRebuildMethodPlayer", a_s.bodyRebuildMethod), 0, 1);
+			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Body", L"iBodyUpdateFlagsPlayer", a_s.bodyUpdateFlags), 1, 0xFFFF);
 
 			a_s.startMode = std::clamp(ReadInt(a_path, L"Transitions", L"iStartMode", a_s.startMode), 0, 2);
 			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);

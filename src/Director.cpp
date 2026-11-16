@@ -407,8 +407,6 @@ namespace CCC::Director
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(CameraSway()) / 100.0f;
 			in.lookRoomScale = PresetIs("starborn") ? 0.0f : 1.0f;  // Starborn: faces centred (0.8.14)
-			// CCC's distance (0.8.14: every preset has its lenses now), or yours.
-			in.closeUpScale = static_cast<float>(s.closeUpDistance > 0 ? s.closeUpDistance : 100) / 100.0f;
 			in.roomAngle = a_frame.roomAngle;
 			in.roomDistance = a_frame.roomDistance;
 			in.roomRise = a_frame.roomRise;

@@ -124,11 +124,13 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
   ESM; the plugin reads what each sets (to find: globals or otherwise). Likely choices, not free
   values, so presets of each setting; the INI and the SFSE Menu Framework page stay.
-- 0.9.x: remove `iCloseUpDistance` (no longer needed: every angle has its own lens, so
-  close-ups stand at CCC's distance; the default -1 already means 100%).
-- Before 1.0: drop every fallback for old INI names (renamed keys read under their old
-  names in Settings.cpp, `sPreset=Stardust` for Frontier). Nobody outside testing has an
-  old INI, so 1.0 starts clean.
+- Done in 0.9.0: `iCloseUpDistance` removed; old INI names and `sPreset=Stardust` no
+  longer read.
+- 0.9.x order agreed 2026-11-16: seated conversations (start jitter, side-on framing, bar
+  stool body), large speakers (Vasco), the SFSE Menu Framework page, UI-mod compatibility
+  testing, then if time allows quest-scene recognition. The testing messages and the
+  detailed log stay ON by default until the very last step before 1.0 (the user's call:
+  they keep evaluating with them).
 
 ## Open observations from testing
 

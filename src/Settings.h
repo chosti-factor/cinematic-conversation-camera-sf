@@ -37,7 +37,6 @@ namespace CCC
 		int      closeUpChanceMildPlayer{ 25 };    // 0.8.6: by your expression's tier (the Npc tier lists)
 		int      closeUpChanceMediumPlayer{ 40 };
 		int      closeUpChanceStrongPlayer{ 100 };
-		int      closeUpDistance{ -1 };    // close-ups stand this % of CCC's distance back; -1 = the preset's (0.8.12: CCC's 100, CCC SF's 115)
 		bool     dumpMenus{ true };     // log the dialogue menu's and HUD's layout once per session (testing aid)
 		bool     letterbox{ true };     // black bars while the camera films a conversation
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height

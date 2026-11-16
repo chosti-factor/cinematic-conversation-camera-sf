@@ -172,7 +172,9 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
   (prompt and auto-start, scenes one at a time, followed into the next, group shots,
   letterbox), your character's face, reworked reaction shots, holding on the answer after a
   persuasion, emotion close-ups by tier.
-- 0.9.x, polish and optimization:
+- 0.9.x, polish and optimization, in this order:
+  - Done in 0.9.0: the old INI names (from before the Npc/Player renames, and Stardust) no
+    longer read; `iCloseUpDistance` removed (every preset has its own lenses now).
   - Seated conversations: strong vertical jitter at the start (0.8.5 test, The Rock); in
     first person on a bar stool your full body isn't built, so you're kept out of frame;
     talking to a seated person from the side (about 90 degrees) leaves you out of the
@@ -183,11 +185,10 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
   - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
     shots.
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
-  - Release: the log's testing diagnostics and the testing messages off by default; the old
-    INI names (from before the Npc/Player renames, and Stardust) no longer read;
-    `iCloseUpDistance` removed (every preset has its own lenses now).
-  - If time allows: the brief flash at conversation starts; quest scenes recognised by
-    their quest rather than the scene's name.
+  - Compatibility testing with popular UI mods.
+  - If time allows: quest scenes recognised by their quest rather than the scene's name.
+  - Last, just before 1.0: the log's testing diagnostics and the testing messages off by
+    default (they stay on until then, for testing).
   - After 1.0: plants and other objects without collision (which the obstacle check can't
     see) in front of wide outdoor shots, and walls it passes through (beside Commander Tuala
     at the MAST, every check said clear); most settings also in the game's own Settings menu,
