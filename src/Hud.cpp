@@ -429,6 +429,7 @@ namespace CCC::Hud
 			bool success{ false };
 			bool fail{ false };
 			bool decided{ false };  // its success or failure animation played: the panel closing isn't another outcome
+			bool rounds{ false };   // a round's animation was seen in this persuasion (0.8.17)
 		} g_persuasion;
 
 		// Option tags whose answer gets the beat ([Persuade] itself starts the mini-game, whose
@@ -489,6 +490,7 @@ namespace CCC::Hud
 			const char* what = nullptr;
 			if (open && !g_persuasion.panel) {
 				g_persuasion.decided = false;
+				g_persuasion.rounds = false;
 			}
 			// Every round plays its own success or failure animation (0.7.2 log: four rounds,
 			// four beats). The last round is the one with no turns left; a win before that
@@ -512,12 +514,16 @@ namespace CCC::Hud
 				REX::INFO("HUD: persuasion round {}: turns left '{}', meter frame {:.0f} of {:.0f}", success ? "won" : "lost", turns, meterFrame, meterFrames);
 			}
 			const bool lastTurn = !turns.empty() && turns.find_first_not_of("0 ") == std::string::npos;
-			if (g_persuasion.panel && !open && !g_persuasion.decided) {
+			// 0.8.17: every round's answer gets the beat. The 0.8.16 test: the NPC answers each
+			// round, and gives the verdict ("You got yourself a deal.", "Sounds fair. I'm in."),
+			// while the panel is still open, after the round's animation; the panel closing came
+			// after it all, and put the beat on the line after ("Well then. Goodbye."). The
+			// panel closing counts only for a persuasion with no round animation seen.
+			if ((success && !g_persuasion.success) || (fail && !g_persuasion.fail)) {
+				what = lastTurn ? "persuasion round (the last)" : "persuasion round";
+				g_persuasion.rounds = true;
+			} else if (g_persuasion.panel && !open && !g_persuasion.decided && !g_persuasion.rounds) {
 				what = "persuasion panel closed";
-			} else if (((success && !g_persuasion.success) || (fail && !g_persuasion.fail)) && lastTurn) {
-				// The last round's own animation says nothing about the whole persuasion (0.7.4: a
-				// won last round, then "Then you're not hiring me"); the meter decides it.
-				what = "persuasion over (no turns left)";
 			}
 			if (open && !g_persuasion.panel) {
 				REX::INFO("HUD: persuasion panel open");
@@ -532,7 +538,8 @@ namespace CCC::Hud
 				}
 			}
 			const bool decided = g_persuasion.decided || ((success || fail) && lastTurn);
-			g_persuasion = { open, success, fail, open && decided };
+			const bool rounds = g_persuasion.rounds;
+			g_persuasion = { open, success, fail, open && decided, open && rounds };
 		}
 
 		bool g_firstLine = false;  // the NPC is speaking the conversation's first line (0.8.6)

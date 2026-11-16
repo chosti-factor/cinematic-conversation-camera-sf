@@ -1166,7 +1166,9 @@ namespace CCC::Director
 				gp.playerClose = false;
 				gp.shot.reset();
 			}
-			if (!a_frame.npcTalking || !a_frame.npcTurn || EmotionCloseUps() == 0) {
+			// A persuasion's answer gets its close-up whatever the preset's emotion close-ups (0.8.17:
+			// in Standard and Room, which have none, seated people never got one).
+			if (!a_frame.npcTalking || !a_frame.npcTurn || (EmotionCloseUps() == 0 && !a_frame.persuasionBeat)) {
 				if (gp.shot) {
 					REX::INFO("Director: emotion close-up over; back to the plain shot");
 				}
@@ -1183,6 +1185,12 @@ namespace CCC::Director
 					}
 					LogSkipped();
 				}
+			} else if (!gp.shot && a_frame.persuasionBeat) {
+				// The beat noticed a frame after the line started (0.8.17).
+				if (Placeable(ShotType::kCloseUp, a_frame)) {
+					begin(ShotType::kCloseUp, "persuasion beat", true);
+				}
+				LogSkipped();
 			} else if (!gp.shot && gp.intenseShown && a_frame.intenseLine) {
 				// Back from a reaction that interrupted the emotion close-up (0.8.3).
 				if (const auto shot = IntenseShot(a_frame)) {

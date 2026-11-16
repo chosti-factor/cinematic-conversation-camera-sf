@@ -36,8 +36,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
   NPC speaks (except during their first line, the greeting, where the game lets A choose
   one) and fade in when the line ends (`[Interface]`).
-- **Holding on the answer** after a persuasion's last round or a skill check: the NPC's
-  whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
+- **Holding on the answer** after each persuasion round (the verdict included) or a skill
+  check, seated people too: the NPC's whole reply stays on them: a close-up, pushing in, and in a long answer one wider shot of
   them, never a cut away (`bPersuasionBeatNpc`).
 - **Room shots** (Wide, Master, Distant): placed where the room around the two of you has
   space for them, measured with the game's collision check, on the conversation's side of

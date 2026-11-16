@@ -27,6 +27,12 @@ test build; "diagnostic" items only add information to the log for testing.
 - Seated NPCs: your body hid most of them. The plain shot looked down over your shoulder
   onto their lower head; it now stands wider and lower behind you
   (`fOverSeatedBehind`/`Side`/`Height`), so the line to them passes clear of you.
+- The persuasion beat landed on the wrong line: the NPC answers each round and gives the
+  verdict ("You got yourself a deal.") while the panel is still open, but the beat waited
+  for the panel to close and held the line after ("Well then. Goodbye."). Every round's
+  answer now gets it, the verdict included.
+- Seated people never got the persuasion beat in Standard and Room (no emotion close-ups
+  there); they get it now, in every preset, over their plain shot.
 - Camera sway in CCC's presets (Standard, Close, Room): CCC's camera doesn't sway, so
   they're on a tripod now (were 40).
 
