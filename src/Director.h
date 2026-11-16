@@ -80,19 +80,9 @@ namespace CCC::Director
 	// presets 45, CCC SF's 37.5); below 10 = the game's own.
 	[[nodiscard]] float WantedLens();
 
-	// The lens key (testing, 0.8.12): the angles' lenses converted from Skyrim's 4:3 measure
-	// (the default), as written, or the preset's one lens for every angle. Returns its name.
-	const char* NextLensMode();
 
-	// An angle's lens in the preset in use (0.8.12): the one its distance is worked out for,
-	// and the one drawn (the preset's one lens for angles without their own).
-	// Emotion close-ups and reaction shots in the preset in use (0.8.13): your setting, or the
-	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
-	[[nodiscard]] int  EmotionCloseUps();
-	[[nodiscard]] bool ReactionShots();
-
-	[[nodiscard]] float FramingLensFor(Shots::ShotType a_type);
-	[[nodiscard]] float DrawnLensFor(Shots::ShotType a_type);
+	// An angle's lens in the preset in use (0.8.12): its own, CCC's, or the preset's one lens.
+	[[nodiscard]] float LensFor(Shots::ShotType a_type);
 
 	// How far back room shots may stand, metres (0 = as far as CCC's framing wants): your
 	// fRoomShotMaxIndoors/Outdoors, or the preset's own.

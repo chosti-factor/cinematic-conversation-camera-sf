@@ -98,8 +98,7 @@ namespace CCC::Shots
 	{
 		RE::NiPoint3 npcHead{};
 		RE::NiPoint3 playerHead{};
-		float        lensDegrees{ 29.6f };  // horizontal: what the distance is worked out for
-		float        drawnLensDegrees{ 0.0f };  // horizontal: what's drawn, for composing (0 = lensDegrees), 0.8.12
+		float        lensDegrees{ 29.6f };  // horizontal
 		float        aspect{ 1.7778f };
 		float        closeUpScale{ 1.0f };  // close singles this much further back (iCloseUpDistance)
 		// Room shots (0.8): where the room measurement found space for Wide, Master and

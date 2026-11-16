@@ -31,42 +31,14 @@ namespace CCC::Director
 			return wanted < 10.0f ? kLens : wanted;
 		}
 
-		// 0.8.12, CCC's lens per angle. CCC's lenses are Skyrim's field of view, which (like
-		// Bethesda's other engines of its time) seems to be measured across a 4:3 frame, so a
-		// 16:9 screen shows more; Starfield's is measured across the frame as it is. CCC works
-		// out each angle's distance from its lens taken across the real frame (its
-		// DistanceForFill, ported here), so what Skyrim shows is: the camera where CCC's
-		// numbers put it, seen through the wider lens. The lens key (testing) switches between
-		// that, CCC's numbers as written, and one lens for everything, to compare by eye.
-		// 0.8.14: CCC's numbers as written are the default. Measured in two Skyrim clips (CCC's
-		// Close, Faralda and Tolfdir): close-ups, close-ups of you and extreme close-ups came out
-		// the size CCC's numbers give when Skyrim's lens is measured as Starfield's is (26%, 23%,
-		// 59% of the picture's height), not the 4:3 reading's (20%, 17%, 44%).
-		std::atomic<int>   g_lensMode{ 1 };        // 0 the 4:3 reading (wider), 1 as written, 2 the preset's one lens
-		std::atomic<float> g_shotLens{ 0.0f };     // the shot on screen's own lens, CCC's number (0 = the preset's)
+		// 0.8.12, CCC's lens per angle, as CCC wrote them (0.8.14: measured against Skyrim
+		// clips, Skyrim's lens is measured as Starfield's is: across the frame as it is).
+		std::atomic<float> g_shotLens{ 0.0f };  // the shot on screen's own lens (0 = the preset's)
 
-		bool OwnLenses()
+		// An angle's own lens, unless your fConversationLens sets one for everything (0 = none).
+		float OwnLens(float a_lens)
 		{
-			return Settings::Get().conversationLens < 0.0f && g_lensMode.load(std::memory_order_relaxed) != 2;
-		}
-
-		// The lens drawn for an angle with a lens of its own (0 = none).
-		float DrawnLens(float a_skyrim)
-		{
-			if (a_skyrim < 10.0f || !OwnLenses()) {
-				return 0.0f;
-			}
-			if (g_lensMode.load(std::memory_order_relaxed) == 1) {
-				return a_skyrim;
-			}
-			constexpr float kDeg = 3.14159265f / 180.0f;
-			return 2.0f * std::atan(std::tan(a_skyrim * 0.5f * kDeg) * (4.0f / 3.0f)) / kDeg;
-		}
-
-		// The lens its distance is worked out for (0 = none): CCC's number.
-		float FramingLens(float a_skyrim)
-		{
-			return a_skyrim < 10.0f || !OwnLenses() ? 0.0f : a_skyrim;
+			return a_lens < 10.0f || Settings::Get().conversationLens >= 0.0f ? 0.0f : a_lens;
 		}
 
 		struct Setup
@@ -401,9 +373,8 @@ namespace CCC::Director
 			Shots::Input in;
 			in.npcHead = a_frame.npcHead;
 			in.playerHead = a_frame.playerHead;
-			const float framing = FramingLens(a_setup.lens), drawn = DrawnLens(a_setup.lens);
-			in.lensDegrees = framing > 0.0f ? framing : Lens();
-			in.drawnLensDegrees = drawn > 0.0f ? drawn : in.lensDegrees;
+			const float own = OwnLens(a_setup.lens);
+			in.lensDegrees = own > 0.0f ? own : Lens();
 			in.maxDistance = g.maxDistance;
 			in.true180 = s.true180;
 			in.side = a_frame.side;
@@ -1226,7 +1197,7 @@ namespace CCC::Director
 		// lens key asked for one lens.
 		// (Worked out each time from CCC's number, so the lens key takes effect at once: 0.8.12
 		// kept the lens the last cut had worked out until the next cut.)
-		if (const float shot = DrawnLens(g_shotLens.load(std::memory_order_relaxed)); shot >= 10.0f) {
+		if (const float shot = OwnLens(g_shotLens.load(std::memory_order_relaxed)); shot >= 10.0f) {
 			return shot;
 		}
 		return PresetLens();
@@ -1269,24 +1240,10 @@ namespace CCC::Director
 		return mode >= 0 ? mode == 1 : !CccPreset();  // the preset's own: CCC's off (CCC's default), CCC SF's on
 	}
 
-	float FramingLensFor(Shots::ShotType a_type)
+	float LensFor(Shots::ShotType a_type)
 	{
-		const float own = FramingLens(g.setups[static_cast<std::size_t>(a_type)].lens);
+		const float own = OwnLens(g.setups[static_cast<std::size_t>(a_type)].lens);
 		return own > 0.0f ? own : Lens();
-	}
-
-	float DrawnLensFor(Shots::ShotType a_type)
-	{
-		const float own = DrawnLens(g.setups[static_cast<std::size_t>(a_type)].lens);
-		return own > 0.0f ? own : Lens();
-	}
-
-	const char* NextLensMode()
-	{
-		const int mode = (g_lensMode.load(std::memory_order_relaxed) + 1) % 3;
-		g_lensMode.store(mode, std::memory_order_relaxed);
-		g_presetSwitch.store(true);  // the angles' lenses are loaded again, converted or not
-		return mode == 0 ? "CCC, read as 4:3 (wider)" : mode == 1 ? "CCC, as written" : "one lens for all";
 	}
 
 	float RoomShotLimit(bool a_interior)

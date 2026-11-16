@@ -1383,11 +1383,11 @@ namespace CCC
 			const auto verticalOf = [](float a_lens) { return 2.0f * std::atan(std::tan(a_lens * 0.5f * std::numbers::pi_v<float> / 180.0f) / 1.7778f); };
 			Shots::ShotType current = Shots::ShotType::kWide;  // (set for each shot below)
 			const auto      share = [&](float a_distance) {  // of the frame's height, a person standing there
-                const float vertical = verticalOf(Director::DrawnLensFor(current));
+                const float vertical = verticalOf(Director::LensFor(current));
                 return a_distance > 0.1f ? kPeople / (2.0f * a_distance * std::tan(vertical * 0.5f)) : 1.0f;
 			};
 			const auto wants = [&](float a_fill) {  // distance for a 0.6 m extent filling a_fill (as Shots)
-				return 0.3f / std::tan(verticalOf(Director::FramingLensFor(current)) * a_fill * 0.5f);
+				return 0.3f / std::tan(verticalOf(Director::LensFor(current)) * a_fill * 0.5f);
 			};
 
 			const RE::NiPoint3 mid{ (a_npcHead.x + a_playerHead.x) * 0.5f, (a_npcHead.y + a_playerHead.y) * 0.5f, (a_npcHead.z + a_playerHead.z) * 0.5f };
@@ -4443,18 +4443,8 @@ namespace CCC
 				REX::INFO("Preset key: now {} (until the game is restarted; sPreset in the INI sets the one it starts with)", kOrder[next]);
 			}
 			wasDown = down;
-			// The lens key (testing, 0.8.12), during a conversation only.
-			static bool lensWasDown = false;
-			const bool  lensDown = s.lensKey > 0 && g_state.active && GameHasFocus() && (::GetAsyncKeyState(s.lensKey) & 0x8000) != 0;
-			static const char* lensMode = "CCC, as written";
-			if (lensDown && !lensWasDown) {
-				lensMode = Director::NextLensMode();
-				REX::INFO("Lens key: {}", lensMode);
-			}
-			lensWasDown = lensDown;
 			if (s.showMessages) {
-				const float lens = Director::WantedLens();
-				std::string label = std::format("PRESET: {}   LENS: {} ({})", Settings::Get().preset, lens >= 10.0f ? std::format("{:.0f}", lens) : std::string{ "GAME'S" }, lensMode);
+				std::string label = std::format("PRESET: {}", Settings::Get().preset);
 				std::ranges::transform(label, label.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
 				Hud::SetPresetLabel(label);
 			}
