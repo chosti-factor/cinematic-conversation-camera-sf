@@ -7,12 +7,36 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.8.14 - 2026-11-15
 
 ### Changed
+- CCC SF's presets rebuilt on CCC's lenses, each with a film flavour (Starfield's
+  "NASA-punk" influences), its own lenses, movement, cutting and camera sway:
+  - **Frontier**, a space western (*Firefly*, *The Expanse*), built on Standard: slightly
+    longer lenses (40-80), slow dolly-like drifts on the two-shot, three-quarters and
+    mediums, the room now and then, a touch of handheld (sway 50); a new angle every 2-4
+    lines and on a quarter of the turns.
+  - **Starborn**, Kubrick and *Interstellar*, built on Close: long, compressed lenses
+    (35-45), faces centred in the frame, very slow push-ins (12 s) held long, a locked-off
+    camera (sway 0), one slow crane up on the master as a reveal; a new angle every 4-7
+    lines, held 3.5 s at least.
+  - **Constellation**, a hard sci-fi documentary (*The Martian*, *Apollo 13*), built on
+    Room: watched from across the room on longer lenses (40-70; Room's go to 95), small
+    slow drifts everywhere, the most sway (70), cranes on the master and the long shots,
+    faces about a fifth of the time.
+  - **Nebula**, a trailer: every angle, every move bigger and quicker, lenses 40-95, a new
+    angle every 2-3 lines and on most turns, held 1.6 s at least.
+- Camera sway is each preset's own (`iCameraSway=-1`, the new default: 40 in CCC's and
+  Nebula); a number still sets one for all.
+- Close-ups stand at CCC's distance in every preset (`iCloseUpDistance=-1`), now that every
+  preset has its own lenses.
 - CCC's lenses are used as CCC wrote them. Measured in two Skyrim clips with CCC on Close
   (Faralda, Tolfdir): close-ups, close-ups of you and extreme close-ups fill 26%, 23% and
   53-65% of the picture's height, as CCC's numbers give when Skyrim's lens is measured the
   way Starfield's is; 0.8.12's reading of it as measured across a 4:3 frame gave 20%, 17%
   and 44%. CCC 1.5.0's shot table (fills, angles, heights), read from its DLL, is the same
-  as this port's. The lens key now starts on "as written".
+  as this port's.
+
+### Removed
+- The lens key (L) and its three ways of setting the lens: CCC's lenses as written is the
+  answer.
 
 ## 0.8.13 - 2026-11-15
 
