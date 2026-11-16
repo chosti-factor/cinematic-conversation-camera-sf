@@ -116,7 +116,7 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   source when it isn't installed.
 - After 1.0: most settings in the game's own Settings menu as Gameplay Options (GPOF records,
   added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
-  ESM; the plugin reads what each sets (to find: globals or otherwise). Choices, not free
+  ESM; the plugin reads what each sets (to find: globals or otherwise). Likely choices, not free
   values, so presets of each setting; the INI and the SFSE Menu Framework page stay.
 - 0.9.x: remove `iCloseUpDistance` (no longer needed: every angle has its own lens, so
   close-ups stand at CCC's distance; the default -1 already means 100%).
