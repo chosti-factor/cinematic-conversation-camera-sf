@@ -114,6 +114,10 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   1.16.244, xmake, C++23). Plugins use its MIT SDK (SFSE-MCP, single header or vcpkg) and
   register pages at kPostLoad; see its example mod repo. Optional: the INI stays the
   source when it isn't installed.
+- After 1.0: most settings in the game's own Settings menu as Gameplay Options (GPOF records,
+  added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
+  ESM; the plugin reads what each sets (to find: globals or otherwise). Choices, not free
+  values, so presets of each setting; the INI and the SFSE Menu Framework page stay.
 - 0.9.x: remove `iCloseUpDistance` (no longer needed: every angle has its own lens, so
   close-ups stand at CCC's distance; the default -1 already means 100%).
 - Before 1.0: drop every fallback for old INI names (renamed keys read under their old

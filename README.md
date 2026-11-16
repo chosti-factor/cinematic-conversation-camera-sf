@@ -189,7 +189,8 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
     their quest rather than the scene's name.
   - After 1.0: plants and other objects without collision (which the obstacle check can't
     see) in front of wide outdoor shots, and walls it passes through (beside Commander Tuala
-    at the MAST, every check said clear).
+    at the MAST, every check said clear); most settings also in the game's own Settings menu,
+    as Gameplay Options from a small ESM.
 - 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
   replacer, a dialogue menu replacer, a subtitle mod) and listing compatibility.
 - Later, maybe: your traits setting your face's temperament (Introvert subtler, Extrovert
