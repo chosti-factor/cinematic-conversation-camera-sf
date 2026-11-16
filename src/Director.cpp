@@ -576,6 +576,9 @@ namespace CCC::Director
 				if (g.current && type == *g.current) {
 					continue;  // a change of angle should change the angle
 				}
+				if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer) {
+					continue;  // only for the lines that call for one (0.8.15, as CCC)
+				}
 				if (Usable(type, a_frame)) {
 					const int weight = g.setups[i].weight;
 					pool.emplace_back(type, weight);
@@ -591,7 +594,7 @@ namespace CCC::Director
 				float                   bestLimit = 0.0f;
 				for (std::size_t i = 0; i < kCount; ++i) {
 					const auto type = static_cast<ShotType>(i);
-					if (!Usable(type, a_frame, false)) {
+					if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer || !Usable(type, a_frame, false)) {
 						continue;
 					}
 					const auto c = ClearanceFor(type, a_frame, g.setups[i]);
@@ -651,7 +654,9 @@ namespace CCC::Director
 			g.why = a_why;
 			g.currentNpcSide = a_frame.npcTurn;
 			g.cutAt = a_now;
-			if (a_newAngle) {
+			// An extreme close-up is never a person's usual angle (0.8.15, as CCC: it's reserved for
+			// the lines that call for it; the 0.8.14 test kept you on one for ten turns in Close).
+			if (a_newAngle && a_type != ShotType::kExtremeClose && a_type != ShotType::kExtremeClosePlayer) {
 				side.shot = a_type;
 				side.lines = 0;
 				side.linesTarget = NewLineTarget();

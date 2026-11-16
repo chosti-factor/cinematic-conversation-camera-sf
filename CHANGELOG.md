@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.15 - 2026-11-16
+
+### Fixed
+- Extreme close-ups became someone's usual angle: in Close the camera came back to an
+  extreme close-up of you on ten turns in a row (0.8.14 test), and the NPC's emotion
+  extreme close-up came back on later turns too. As in CCC, they're only for the lines that
+  call for one (the emotion close-ups): never picked as a regular angle, never kept as a
+  person's angle.
+- Filming people talking started again for a second after a scene had ended (0.8.14 test,
+  Amoli and Gerhard: a talking flag flickering), a flip to third person and back. It only
+  starts on its own on a line that began after it last stopped.
+
 ## 0.8.14 - 2026-11-15
 
 ### Changed

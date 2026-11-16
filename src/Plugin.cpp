@@ -4326,6 +4326,7 @@ namespace CCC
 			const void*                           scene{ nullptr };          // the scene being filmed
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
+			std::chrono::steady_clock::time_point stoppedAt{};   // when filming last stopped (0.8.15)
 			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
 			std::vector<std::uintptr_t>           infos;     // the lines filmed (by words and record), to notice repeats
 			std::uintptr_t                        lastSaid{ 0 };
@@ -4495,6 +4496,7 @@ namespace CCC
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			Camera::RestoreRender();
+			g_filmMain.stoppedAt = std::chrono::steady_clock::now();
 			REX::INFO("Filming people talking: stopped ({})", a_why);
 		}
 
@@ -4808,7 +4810,11 @@ namespace CCC
 			// 0.8.6: a scene starts it on its own even while you're moving (scenes are few, and
 			// moving ends it), but not one you've already walked away from or stopped.
 			const bool declined = scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s;
-			const bool autoStart = s.autoListen && conversation && !declined && a_now >= g_filmMain.autoBlockedUntil;
+			// Only on a line that started after filming last stopped (0.8.14 test: a talking
+			// flag flickering after Amoli and Gerhard's scene ended started it again for a
+			// second, a flip to third person and back).
+			const bool freshLine = pick->lastLine > g_filmMain.stoppedAt;
+			const bool autoStart = s.autoListen && conversation && !declined && freshLine && a_now >= g_filmMain.autoBlockedUntil;
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;

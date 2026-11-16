@@ -101,10 +101,11 @@ that shot. (Generated from the presets in the code.)
   merchants.
 - **Zooms are pushes.** Starfield's lens doesn't change during a shot, so a zoom in is done
   as a push in and a zoom out as a pull out.
-- **Extreme close-ups are rarer than in CCC.** CCC offers them on lines the writers marked
-  as intense; Starfield's lines carry no such strength, so their weight is cut from 75 to 12
-  in Close (and kept low in CCC SF's presets). Strong lines still get them through the
-  emotion close-ups.
+- **Extreme close-ups only for the lines that call for one.** As in CCC, which keeps them for
+  lines the writers marked as intense, they're never picked as a regular angle (0.8.15):
+  they come with the emotion close-ups (strong lines in Close, every tier in CCC SF's
+  presets), and in reactions when your face shows something. Their weights in the table
+  above only matter there.
 - **Your own mix.** The `[Shots]` section of the INI changes any preset: `CloseUp=60` sets a
   shot's weight (0 turns it off), `CloseUpMove=Push in`, `CloseUpMoveAmount=40`,
   `CloseUpMoveTime=6`. `fMaxCameraDistance`, `fMaxCameraDistanceExterior`,
