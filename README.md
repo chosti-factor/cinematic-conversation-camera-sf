@@ -175,7 +175,10 @@ shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
   - Seated conversations: strong vertical jitter at the start (0.8.5 test, The Rock); in
     first person on a bar stool your full body isn't built, so you're kept out of frame;
     talking to a seated person from the side (about 90 degrees) leaves you out of the
-    picture; a seated NPC hidden behind your body in the plain over-the-shoulder shot.
+    picture (0.8.17 moved the plain shot so a seated NPC isn't hidden behind your body).
+  - An in-game settings page through [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201)
+    (optional; F1): preset, reaction shots, emotion close-ups, sway and the rest, with the
+    INI still working without it.
   - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
     shots.
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).

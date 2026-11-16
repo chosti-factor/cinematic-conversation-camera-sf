@@ -109,6 +109,11 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   after, 9 am-1 pm Central. Outreach a few days before (machinima podcast, Starfield mod
   YouTubers, the Starfield Modding Discord). Be stable well before the Steam Winter Sale
   (2026-12-17).
+- 0.9.x: an in-game settings page through SFSE Menu Framework (QTR-Modding, Nexus 18201,
+  github.com/QTR-Modding/SFSE-Menu-Framework; a port of SKSE Menu Framework, targets
+  1.16.244, xmake, C++23). Plugins use its MIT SDK (SFSE-MCP, single header or vcpkg) and
+  register pages at kPostLoad; see its example mod repo. Optional: the INI stays the
+  source when it isn't installed.
 - 0.9.x: remove `iCloseUpDistance` (no longer needed: every angle has its own lens, so
   close-ups stand at CCC's distance; the default -1 already means 100%).
 - Before 1.0: drop every fallback for old INI names (renamed keys read under their old
