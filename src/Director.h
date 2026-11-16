@@ -18,7 +18,9 @@ namespace CCC::Director
 		bool         reaction{ false };    // a reaction shot of you: your regular shots only, never the room (0.8.3, as CCC)
 		int          npcLineSerial{ 0 };   // counts their lines, including ones that follow without a pause (0.8.3)
 		bool         persuasionBeat{ false };  // the NPC's answer to a persuasion's outcome: held close-up
-		bool         playerCloseUp{ false };   // this reaction is your emotion close-up
+		bool         playerCloseUp{ false };   // this reaction is your emotion close-up, or you chose a tagged option (0.8.16)
+		bool         playerChoice{ false };    // ... the tagged option (0.8.16)
+		bool         playerExtreme{ false };   // ... as an extreme close-up, whatever the roll (0.8.16)
 		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
 		std::array<float, 3> roomDistance{ 0.0f, 0.0f, 0.0f };  // room shots' space (Shots::Input)
 		float                roomRise{ 10.0f };
@@ -87,6 +89,10 @@ namespace CCC::Director
 	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
 	[[nodiscard]] int  EmotionCloseUps();
 	[[nodiscard]] bool ReactionShots();
+
+	// A close-up of you when you choose a tagged option (0.8.16): your setting, or the
+	// preset's own (CCC SF's presets; CCC doesn't).
+	[[nodiscard]] bool ChoiceCloseUps();
 
 	// Seconds of their talking without a cut to you before a reaction is due (0.8.15): your
 	// fReactionAfterSecondsPlayer, or the preset's own.

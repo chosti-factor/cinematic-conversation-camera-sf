@@ -79,6 +79,8 @@ namespace CCC
 			float                                 reactionHold{ 2.5f };      // seconds on you from the cut; < 0 = the rest of the line
 			bool                                  reactionShownLine{ false };  // a reaction was on screen during this line (0.8.10)
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
+			bool                                  choiceCloseUp{ false };    // you chose a tagged option: a close-up of you for it (0.8.16)
+			bool                                  choiceExtreme{ false };    // ... an extreme one
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			float                                 monoSeconds{ 0.0f };       // their talking since the camera last showed you (0.8.5)
 			int                                   npcLinesStarted{ 0 };      // their lines so far in this conversation (0.8.6)
@@ -2054,6 +2056,7 @@ namespace CCC
 					}
 				}
 				if (talkingNow && (!g_state.speakerWasTalking || newPart)) {
+					g_state.choiceCloseUp = false;  // their answer: your tagged choice's close-up is over (0.8.16)
 					g_lineSerial.fetch_add(1, std::memory_order_acq_rel);
 					++g_state.npcLinesStarted;
 					// An emotion close-up: a line tagged with one of sCloseUpEmotions, iCloseUpChance
@@ -2434,7 +2437,9 @@ namespace CCC
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
-				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
+				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
+				frame.playerChoice = g_state.choiceCloseUp;
+				frame.playerExtreme = g_state.choiceCloseUp && g_state.choiceExtreme;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;
 				frame.roomRise = g_state.roomRise;
@@ -2465,7 +2470,9 @@ namespace CCC
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
 				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
-				frame.playerCloseUp = g_state.reactionActive && g_state.reactionCloseUp;
+				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
+				frame.playerChoice = g_state.choiceCloseUp;
+				frame.playerExtreme = g_state.choiceCloseUp && g_state.choiceExtreme;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;
 				frame.roomRise = g_state.roomRise;
@@ -3683,6 +3690,26 @@ namespace CCC
 		// dialogue records, directly or one pointer away, and log each with its tag.
 		void OnOptionChosen(const std::string& a_text)
 		{
+			// A close-up of you for a tagged option (0.8.16; CCC SF's presets): every tag but a
+			// payment ([Pay 500 Credits] is a transaction). The confrontational skills always an
+			// extreme close-up; the others by iExtremeCloseUpChancePlayer, as the NPCs' are.
+			if (g_state.active && !g_state.handedBack && Director::ChoiceCloseUps()) {
+				const auto open = a_text.find('[');
+				const auto close = a_text.find(']');
+				if (open != std::string::npos && close != std::string::npos && close > open + 1 && open <= 3) {
+					std::string tag = a_text.substr(open + 1, close - open - 1);
+					std::ranges::transform(tag, tag.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (!tag.starts_with("pay")) {
+						bool extreme = false;
+						for (const std::string_view key : { "intimidat", "threat", "manipulat", "deceiv", "lie", "attack" }) {
+							extreme = extreme || tag.find(key) != std::string::npos;
+						}
+						g_state.choiceCloseUp = true;
+						g_state.choiceExtreme = extreme;
+						REX::INFO("Your choice '{}': a close-up of you{}", a_text.substr(0, close + 1), extreme ? " (extreme: a confrontational skill)" : "");
+					}
+				}
+			}
 			// Your face for an option with a skill tag (0.8).
 			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
 				auto        expression = Face::ForChoice(a_text);

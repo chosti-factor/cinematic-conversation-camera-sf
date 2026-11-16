@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.8.16 - 2026-11-16
+
+### Added
+- A close-up of you when you choose a tagged option, for the line you say (CCC SF's
+  presets; `bChoiceCloseUpsPlayer`, -1 the preset's own): every tag, skills, backgrounds and
+  traits ([Persuade], [Chef], [Ronin], [Wanted]...), but not [Pay ...]. An extreme close-up
+  for the confrontational skills (Intimidate, Threaten, Manipulate, Deceive, Lie, Attack);
+  the others extreme `iExtremeCloseUpChancePlayer` (40%) of the time, as the NPCs' are. With
+  your face already showing the tag's expression, and a persuasion's answer held on them,
+  it plays as a beat: your face makes the play, theirs answers.
+
 ## 0.8.15 - 2026-11-16
 
 ### Fixed

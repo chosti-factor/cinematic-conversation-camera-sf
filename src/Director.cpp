@@ -557,7 +557,7 @@ namespace CCC::Director
 		// expression, as a close-up of you; extreme as often as the NPC's.
 		std::optional<ShotType> PlayerCloseShot(const Frame& a_frame)
 		{
-			const bool extreme = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer;
+			const bool extreme = a_frame.playerExtreme || std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer;
 			if (extreme && Placeable(ShotType::kExtremeClosePlayer, a_frame)) {
 				return ShotType::kExtremeClosePlayer;
 			}
@@ -986,9 +986,10 @@ namespace CCC::Director
 				g.playerCloseDone = false;
 			} else if (!a_frame.npcTurn && !g.playerCloseDone) {
 				g.playerCloseDone = true;
-				const bool closeNow = g.current && (*g.current == ShotType::kClosePlayer || *g.current == ShotType::kExtremeClosePlayer);
+				const bool closeNow = g.current && (*g.current == ShotType::kExtremeClosePlayer ||
+				                                       (*g.current == ShotType::kClosePlayer && !a_frame.playerExtreme));
 				if (const auto shot = closeNow ? std::optional<ShotType>{} : PlayerCloseShot(a_frame)) {
-					Cut(*shot, a_frame, a_now, "reaction, your expression", false);
+					Cut(*shot, a_frame, a_now, a_frame.playerChoice ? "your tagged choice" : "reaction, your expression", false);
 					g.intenseSetup = IntenseSetup(*shot);
 				}
 			}
@@ -1313,6 +1314,12 @@ namespace CCC::Director
 	{
 		const int mode = g_swayMode.load(std::memory_order_relaxed);
 		return mode == 0 ? "AS SET" : mode == 1 ? "150%" : "HANDHELD";
+	}
+
+	bool ChoiceCloseUps()
+	{
+		const int mode = Settings::Get().choiceCloseUps;
+		return mode >= 0 ? mode == 1 : !CccPreset();
 	}
 
 	bool ReactionShots()

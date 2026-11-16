@@ -105,8 +105,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
   listener would), options with a skill, background or trait tag ([Persuade], [Space
   Scoundrel], [Wanted]...) and questions show on it, and your background colours neutral
-  moments. Close-ups of you when your face shows something (`[Face]`; tables in
-  [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
+  moments. Close-ups of you when your face shows something, and (CCC SF's presets) when you
+  choose a tagged option: an extreme close-up for the confrontational skills
+  (`bChoiceCloseUpsPlayer`, `[Face]`; tables in [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
   included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
   hold B on a controller) and/or starting on its own when a conversation begins near you,

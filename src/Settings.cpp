@@ -211,6 +211,7 @@ namespace CCC
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
 			a_s.enforceLine = ReadInt(a_path, L"Director", L"bEnforceLine", a_s.enforceLine ? 1 : 0) != 0;
 			a_s.followFace = ReadInt(a_path, L"Director", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
+			a_s.choiceCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bChoiceCloseUpsPlayer", a_s.choiceCloseUps), -1, 1);
 			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", ReadInt(a_path, L"Director", L"bReactionShots", a_s.reactionShots)), -1, 1);
 			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", ReadInt(a_path, L"Director", L"iReactionEvery", a_s.reactionEvery)), 1, 10);
 			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", ReadInt(a_path, L"Director", L"iReactionChance", a_s.reactionChance)), 0, 100);

@@ -175,6 +175,7 @@ namespace CCC
 		bool        true180{ false };
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
+		int         choiceCloseUps{ -1 };     // a close-up of you on a tagged option: -1 the preset's own (CCC SF's), 0 off, 1 on (0.8.16)
 		int         reactionShots{ -1 };      // one of the NPC's lines shown on you: -1 the preset's own (0.8.13: CCC's off, CCC SF's on), 0 off, 1 on
 		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
