@@ -100,7 +100,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   lens; the mod sets its own while it films. CCC's presets use CCC 1.5.0's own lens for
   every angle (Close 35-50 degrees, Standard 50-72, Room 45-95), as CCC wrote them (checked
   against Skyrim clips); CCC SF's presets have their own (Starborn's long and compressed,
-  Nebula's wide and long). `fConversationLens` sets one lens for everything (0, the default,
+  Nebula's wide and long). `fConversationLens` sets one lens for everything (-1, the default,
   keeps each angle's own; 30 is the game's).
 - **Your character's face:** the game keeps it neutral and your lines carry no expression
   tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a

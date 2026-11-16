@@ -41,7 +41,6 @@ namespace CCC
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height
 		float    letterboxFade{ 0.4f };     // seconds for the bars to slide in or out
 		bool     subtitlesInBars{ false };   // centre the conversation's subtitle in the bottom bar (Starfield's own spot is already at its top edge)
-		bool     fadeOptions{ true };       // the dialogue options fade in and out instead of popping
 		bool     hideOptionsWhileSpeaking{ true };  // the options fade out while the NPC speaks (not on their first line, 0.8.6)
 		float    optionsFade{ 0.0f };       // seconds (0 = no fade)
 		ShotMode shotMode{ ShotMode::kFollowSpeaker };

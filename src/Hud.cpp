@@ -673,7 +673,7 @@ namespace CCC::Hud
 					REX::INFO("HUD: {} {} ({}NPC speaking)", names[i], now ? "shown by the game" : "hidden by the game", a_npcTalking ? "" : "no ");
 				}
 				if (now && !g_options.wasVisible[i]) {
-					g_options.alpha[i] = s.fadeOptions ? 0.0f : 1.0f;
+					g_options.alpha[i] = s.optionsFade > 0.0f ? 0.0f : 1.0f;
 					if (a_dump && i == 0 && !g_options.listDumped) {
 						g_options.listDumped = true;
 						int count = 0;
@@ -688,7 +688,7 @@ namespace CCC::Hud
 				// where A chooses one rather than skipping the line; hidden, they were chosen unseen.
 				const float target = s.hideOptionsWhileSpeaking && a_npcTalking && !g_firstLine ? 0.0f : 1.0f;
 				const float before = g_options.alpha[i];
-				const float step = s.fadeOptions ? a_delta / (std::max)(s.optionsFade, 0.01f) : 1.0f;
+				const float step = s.optionsFade > 0.0f ? a_delta / s.optionsFade : 1.0f;
 				g_options.alpha[i] = before < target ? (std::min)(target, before + step) : (std::max)(target, before - step);
 				if (g_options.alpha[i] != before || g_options.alpha[i] < 1.0f) {
 					const float t = g_options.alpha[i];
@@ -1552,7 +1552,7 @@ namespace CCC::Hud
 				UpdatePrompt(a_delta);
 			}
 		}
-		if (g_broken || (!s.letterbox && !s.dumpMenus && !s.fadeOptions && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && s.optionsFade <= 0.0f && s.choiceCloseUps == 0 && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
 			g_msg.available = false;
 			return;
 		}
@@ -1592,7 +1592,7 @@ namespace CCC::Hud
 				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
 			}
 		}
-		if (dialogueOpen && !g_broken && (s.fadeOptions || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
+		if (dialogueOpen && !g_broken && (s.optionsFade > 0.0f || s.choiceCloseUps != 0 || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {

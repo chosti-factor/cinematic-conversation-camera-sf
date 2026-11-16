@@ -148,7 +148,7 @@ namespace CCC
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
 			a_s.conversationLens = ReadFloat(a_path, L"Camera", L"fConversationLens", a_s.conversationLens);
-			// 0 (or -1) = the preset's own lenses (0.9.0: 0 was the game's 30, which 30 still gives).
+			// -1 (or anything below 10) = the preset's own lenses; 30 = the game's own.
 			a_s.conversationLens = a_s.conversationLens < 10.0f ? -1.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
@@ -160,7 +160,6 @@ namespace CCC
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
 			a_s.letterboxFade = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxFade", a_s.letterboxFade), 0.0f, 3.0f);
-			a_s.fadeOptions = ReadInt(a_path, L"Interface", L"bFadeOptions", a_s.fadeOptions ? 1 : 0) != 0;
 			a_s.subtitlesInBars = ReadInt(a_path, L"Interface", L"bSubtitlesInBars", a_s.subtitlesInBars ? 1 : 0) != 0;
 			a_s.hideOptionsWhileSpeaking = ReadInt(a_path, L"Interface", L"bHideOptionsWhileSpeaking", a_s.hideOptionsWhileSpeaking ? 1 : 0) != 0;
 			a_s.optionsFade = std::clamp(ReadFloat(a_path, L"Interface", L"fOptionsFade", a_s.optionsFade), 0.0f, 1.5f);

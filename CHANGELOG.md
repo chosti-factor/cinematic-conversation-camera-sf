@@ -17,8 +17,11 @@ step before 1.0.
 - `iCloseUpChancePlayer`, unused since 0.8.5 (the Mild/Medium/Strong chances replaced it).
 
 ### Changed
-- `fConversationLens=0` (the default) now means each angle's own lens, as -1 did (which
-  still works); one lens for everything is 20-70, and the game's own is 30.
+- `fConversationLens`: -1 (the default) is each angle's own lens, as with every "the
+  preset's own" setting; 0 no longer means the game's lens (30 does); one lens for
+  everything is 20-70.
+- `bFadeOptions` merged into `fOptionsFade`: 0 = the options appear and go at once (the
+  default, as before), a number = they fade over that many seconds.
 - `sBeatTags`: Negotiation added ("Negotiate" didn't match the game's [Negotiation]).
 - The INI's comments brought up to date and tidied: each preset's cutting listed, the
   persuasion hold's two behaviours, starting filming not while running, the controller
