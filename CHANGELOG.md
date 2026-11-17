@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.5 - 2026-11-16
+
+### Fixed
+- First-person exits, still one frame of floor in 0.9.4: skipping the camera's entry step
+  didn't change it (0.9.4 log: its first update still set +C8/+CC to -68.13, a constant in
+  every exit, and pointed the camera root at the floor). With `iExitMode=3`, right after
+  that update those two values are put back, and the camera root is put on your view, in
+  case the frame is taken from them after the update. The log says which held.
+
 ## 0.9.4 - 2026-11-16
 
 ### Fixed

@@ -53,6 +53,8 @@ namespace CCC::Camera
 	// Writes the pose into the camera root node. Returns false if the pose was degenerate
 	// or the axis convention isn't known yet.
 	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta);
+	// The camera root itself moved to a pose, world and local, without an update (0.9.5).
+	bool SetRootPose(RE::NiAVObject* a_root, const Pose& a_pose);
 
 	// Moves only the rendered view (the world camera hanging off the camera root),
 	// leaving the game's logical camera where the game put it.

@@ -350,6 +350,22 @@ namespace CCC::Camera
 		bool g_loggedCameraSearch = false;
 	}
 
+	bool SetRootPose(RE::NiAVObject* a_root, const Pose& a_pose)
+	{
+		if (!a_root) {
+			return false;
+		}
+		const auto rot = BuildRotation(a_pose);
+		if (!rot) {
+			return false;
+		}
+		a_root->world.translate = a_pose.position;
+		a_root->world.rotate = *rot;
+		a_root->local.translate = a_pose.position;
+		a_root->local.rotate = *rot;
+		return true;
+	}
+
 	bool Apply(RE::NiAVObject* a_root, const Pose& a_pose, float a_delta)
 	{
 		if (!a_root) {

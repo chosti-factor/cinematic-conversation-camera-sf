@@ -3013,6 +3013,9 @@ namespace CCC
 			Camera::RestoreRender();
 		}
 
+		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)
+		bool  g_exitPitchKnown = false;
+
 		void BeforeExitUpdate(void* a_state)
 		{
 			if (!g_hooksSafe) {
@@ -3041,6 +3044,8 @@ namespace CCC
 			// iExitMode 3: mark it as already entered, so its first update is a normal one.
 			if (Settings::Get().exitMode == 3 && a_state) {
 				auto* bytes = static_cast<std::uint8_t*>(a_state);
+				g_exitPitchKnown = SafeCopy(g_exitPitchBefore, bytes + 0xC8, sizeof(g_exitPitchBefore)) && std::isfinite(g_exitPitchBefore[0]) &&
+				                   g_exitPitchBefore[0] > -90.0f && g_exitPitchBefore[0] < 90.0f;
 				std::uint8_t entered = 0, done = 0;
 				float        blend = 0.0f;
 				if (SafeCopy(&entered, bytes + 0xE0, 1) && SafeCopy(&done, bytes + 0xE2, 1) && SafeCopy(&blend, bytes + 0x68, 4) && entered == 1 && done == 0) {
@@ -3081,7 +3086,7 @@ namespace CCC
 			return true;
 		}
 
-		bool ExitToFirstPerson()
+		bool ExitToFirstPerson(void* a_state)
 		{
 			if (!g_hooksSafe) {
 				return false;
@@ -3100,6 +3105,24 @@ namespace CCC
 			End();
 			g_needVisibilityRestore = false;
 			Visibility::Restore(false);
+			// 0.9.4 log: skipping the entry step didn't help; that update still sets +C8/+CC to
+			// -68.13 (a constant, in every exit) and points the root at the floor, then the next
+			// update puts them back. Exit mode 3 now also puts them back, and the root on your
+			// view, right after that update, in case the frame is taken from them afterwards.
+			if (mode == 3) {
+				if (a_state && g_exitPitchKnown) {
+					auto* bytes = static_cast<std::uint8_t*>(a_state);
+					float now[2]{};
+					if (SafeCopy(now, bytes + 0xC8, sizeof(now)) && now[0] < g_exitPitchBefore[0] - 20.0f) {
+						std::memcpy(bytes + 0xC8, g_exitPitchBefore, sizeof(g_exitPitchBefore));
+						REX::INFO("Exit: first-person +C8/+CC were {:.2f}, put back to {:.2f}", now[0], g_exitPitchBefore[0]);
+					}
+				}
+				if (Camera::SetRootPose(camera->cameraRoot.get(), view)) {
+					REX::INFO("Exit: camera root put on your view after that update");
+				}
+			}
+			g_exitPitchKnown = false;
 			LogExitFrame(camera, 0);
 			g_exitLogFrames = 6;
 			// The game's first first-person frame looks at the floor (all exits since 0.8.17's
@@ -3171,7 +3194,7 @@ namespace CCC
 					FilmFrame();  // people talking near you, filmed (0.8)
 					return;
 				}
-				if (ExitToFirstPerson()) {
+				if (ExitToFirstPerson(a_state)) {
 					return;  // this frame is drawn from the saved view; don't learn from it
 				}
 				ExitMaskEnd();
