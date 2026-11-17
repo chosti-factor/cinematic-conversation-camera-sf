@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.8.17 (2026-11-16).
+Last updated: 0.9.2 (2026-11-16).
 
 ## At a glance
 
@@ -35,6 +35,31 @@ Last updated: 0.8.17 (2026-11-16).
 | Reaction shots of you | off | off | off | after 10 s of their talking | after 9 s | after 12 s | after 7 s |
 | Room shots go back | | As far as CCC's framing wants | As far as CCC's framing wants | Up to 9 m indoors, 12 m outdoors | The same | The same | The same |
 | Other shots, camera at most | 7 m indoors, 10.5 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors |
+
+## Opening shots from first person
+
+A conversation started in first person opens on a shot of the NPC alone, so your body is
+built off screen (it takes about a tenth of a second) and never pops into the picture.
+Close-ups are kept for emphasis, except in Close and Starborn, where they're the main
+shot. Third-person conversations can open on any of the preset's shots.
+
+| Preset | Openings | Shots (share, lens) |
+| --- | --- | --- |
+| Standard | 2 | Three-quarter (57%, 58°), medium (43%, 62°) |
+| Close | 2 | Close-up (50%, 50°), three-quarter (50%, 40°) |
+| Room | 2 | Three-quarter (53%, 72°), medium (47%, 70°) |
+| Frontier | 2 | Three-quarter (57%, 52°, drifting), medium (43%, 56°, drifting) |
+| Starborn | 2 | Close-up (50%, 45°, slow push-in), three-quarter (50%, 40°, centred) |
+| Constellation | 2 | Three-quarter (53%, 50°, drifting), medium (47%, 50°, drifting) |
+| Nebula | 3 | Three-quarter (47%, 58°), medium (35%, 62°), medium profile (18%, 60°) |
+
+- In Close and Starborn the three-quarter isn't one of the preset's own angles; it takes the
+  lens of their over-the-shoulder shot (40°).
+- If the NPC's first line carries a strong emotion, its emotion close-up can open instead
+  (where the preset uses emotion close-ups).
+- Merchants and seated people: the three-quarter (Close and Starborn: the close-up or the
+  three-quarter), or the medium if it's blocked; held for their turn.
+- Where walls block the preset's openings, the other one, or a close-up as a last resort.
 
 ## Shot by shot
 

@@ -614,8 +614,32 @@ namespace CCC::Director
 			}
 		}
 
+		// The opening single in Close and Starborn, which have no three-quarter or medium of
+		// their own: their close-up (their main shot rather than emphasis) or a three-quarter
+		// through the lens of their nearest angle, half the time each (0.9.2, for variety).
+		std::optional<ShotType> CloseOpening(const Frame& a_frame)
+		{
+			if (!PresetIs("close") && !PresetIs("starborn")) {
+				return std::nullopt;
+			}
+			const bool closeFirst = std::uniform_int_distribution<int>{ 0, 1 }(g.rng) == 0;
+			const auto first = closeFirst ? ShotType::kCloseUp : ShotType::kThreeQuarterNpc;
+			const auto second = closeFirst ? ShotType::kThreeQuarterNpc : ShotType::kCloseUp;
+			for (const auto type : { first, second, ShotType::kMediumNpc }) {
+				if (Placeable(type, a_frame)) {
+					return type;
+				}
+			}
+			return std::nullopt;
+		}
+
 		std::optional<ShotType> Pick(const Frame& a_frame)
 		{
+			if (a_frame.openingSingle) {
+				if (const auto shot = CloseOpening(a_frame)) {
+					return shot;
+				}
+			}
 			std::vector<std::pair<ShotType, int>> pool;
 			int                                   total = 0;
 			for (std::size_t i = 0; i < kCount; ++i) {
@@ -1235,11 +1259,16 @@ namespace CCC::Director
 			gp.shot.reset();
 		}
 		if (a_frame.openingSingle && a_frame.npcTurn && !gp.opening && !gp.shot) {
-			for (const auto type : { ShotType::kThreeQuarterNpc, ShotType::kMediumNpc, ShotType::kCloseUp }) {
-				if (Placeable(type, a_frame)) {
-					begin(type, "opening, you out of the picture", false);
-					gp.opening = gp.shot.has_value();
-					break;
+			if (const auto shot = CloseOpening(a_frame)) {
+				begin(*shot, "opening, you out of the picture", false);
+				gp.opening = gp.shot.has_value();
+			} else {
+				for (const auto type : { ShotType::kThreeQuarterNpc, ShotType::kMediumNpc, ShotType::kCloseUp }) {
+					if (Placeable(type, a_frame)) {
+						begin(type, "opening, you out of the picture", false);
+						gp.opening = gp.shot.has_value();
+						break;
+					}
 				}
 			}
 			LogSkipped();
