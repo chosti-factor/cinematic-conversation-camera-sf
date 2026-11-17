@@ -120,6 +120,11 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   1.16.244, xmake, C++23). Plugins use its MIT SDK (SFSE-MCP, single header or vcpkg) and
   register pages at kPostLoad; see its example mod repo. Optional: the INI stays the
   source when it isn't installed.
+  The user has the latest from Nexus (2026-11-16). SDK HEAD then: ea48af1 (2026-10-29); the
+  example pins abeee13. The SDK checks the host's exports at run time
+  (GetMenuFrameworkAPIVersion), and its header pulls in clib-utils-qtr's Signing headers
+  (Authenticode check of the host DLL): vendor both, MIT, with their notices. Settings
+  changed on the page go to the _user.ini (read before every conversation).
 - After 1.0: most settings in the game's own Settings menu as Gameplay Options (GPOF records,
   added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
   ESM; the plugin reads what each sets (to find: globals or otherwise). Likely choices, not free
