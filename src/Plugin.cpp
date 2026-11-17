@@ -149,6 +149,7 @@ namespace CCC
 			std::optional<RE::NiPoint3>           smoothPlayerFeet{};
 			std::chrono::steady_clock::time_point directLastSample{};
 			std::optional<RE::NiPoint3>           directLastHead{};
+			float                                 directStartHead{ 0.0f };  // head above feet when the rebuild was asked for (0.9.3)
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
 			int                                   framesSinceWaiting{ 0 };   // frames on a shot since your own view ended (0.8.18)
@@ -2990,6 +2991,27 @@ namespace CCC
 			}
 		}
 
+		// Diagnostic (0.9.3): the exit's first two first-person updates. Their first frame looks
+		// at the floor though your angles and the camera's aim just before it are right (0.9.2
+		// log), so the first-person camera's own state is dumped before and after the game's
+		// update on those two frames, to find what it starts from.
+		int g_exitDumps = 0;
+		bool ExitDumpWanted()
+		{
+			if (!Settings::Get().debugLog || g_conversationNumber > 12) {
+				return false;
+			}
+			auto lock = HookLock();
+			if (lock.owns_lock() && g_state.active && g_state.startedFirstPerson && g_state.holdingExit) {
+				g_exitDumps = 2;  // this one (frame 0) and the next
+			}
+			if (g_exitDumps <= 0) {
+				return false;
+			}
+			--g_exitDumps;
+			return true;
+		}
+
 		bool ExitToFirstPerson()
 		{
 			if (!g_hooksSafe) {
@@ -3067,7 +3089,14 @@ namespace CCC
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				BeforeExitUpdate();
+				const bool dumpExit = ExitDumpWanted();
+				if (dumpExit) {
+					DumpObject("exit first-person state, before the game's update", a_state, 0x200);
+				}
 				Hook(a_state, a_arg);
+				if (dumpExit) {
+					DumpObject("exit first-person state, after the game's update", a_state, 0x200);
+				}
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
 					return;
@@ -3319,6 +3348,7 @@ namespace CCC
 						g_state.directAt = a_now;
 						g_state.directStable = 0;
 						g_state.directLastHead.reset();
+						g_state.directStartHead = PlayerHeadAboveFeet();
 						g_state.directLastSample = a_now;
 						REX::INFO("Body rebuild (direct): 3D update requested with flags {} (head {:.2f} m above feet, {} ms into the conversation)",
 							Settings::Get().bodyUpdateFlags, PlayerHeadAboveFeet(), std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
@@ -3331,7 +3361,13 @@ namespace CCC
 						if (head && g_state.directLastHead) {
 							const float dx = head->x - g_state.directLastHead->x, dy = head->y - g_state.directLastHead->y, dz = head->z - g_state.directLastHead->z;
 							const bool  still = dx * dx + dy * dy + dz * dz < 0.0025f;
-							const bool  standing = head->z - player->GetPosition().z >= kStandingHeadHeight;
+							const float height = head->z - player->GetPosition().z;
+							// Seated (a bar stool, 0.9.2 test at the Viewport): the first-person body's
+							// head was at 1.09 m and the full body's at 1.55, short of standing height,
+							// so the body was never taken as built and you stayed hidden. Sitting, the
+							// first-person head starts well below standing height; built, it rises.
+							const bool  seated = g_state.directStartHead > 0.3f && g_state.directStartHead < kStandingHeadHeight - 0.25f;
+							const bool  standing = height >= kStandingHeadHeight || (seated && height > g_state.directStartHead + 0.2f && height < 2.2f);
 							g_state.directStable = still && standing ? g_state.directStable + 1 : 0;
 						}
 						g_state.directLastHead = head;

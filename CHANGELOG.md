@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.3 - 2026-11-16
+
+### Fixed
+- Sitting on a bar stool in first person, you were hidden the whole conversation (0.9.2
+  test, the Viewport): your full body's head sat at 1.55 m, short of standing height, so it
+  was never taken as built (then the older method failed the same way). A body that starts
+  seated is taken as built once its head has risen from the first-person body's.
+
+### Diagnostic
+- Exits to first person: 0.9.2's log ruled out your pitch (unchanged, and the camera aimed
+  right just before the first first-person update, at the floor just after it). The
+  first-person camera's own state is dumped before and after that update and the next, to
+  find what it starts from.
+
 ## 0.9.2 - 2026-11-16
 
 ### Changed
