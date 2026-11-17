@@ -153,6 +153,9 @@ namespace CCC
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
 			int                                   framesSinceWaiting{ 0 };   // frames on a shot since your own view ended (0.8.18)
+			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
+			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
+			std::chrono::steady_clock::time_point readySeenAt{};
 			bool                                  restoreFirstPerson{ false };
 			std::optional<Camera::Pose>           lastPose{};       // last shot we showed
 			bool                                  npcEverTalked{ false };
@@ -2664,7 +2667,16 @@ namespace CCC
 			// pop in third-person conversations). The main thread keeps it up afterwards.
 			// 0.8.17 (shown at once): two frames from inside your head. 0.8.18 (after three):
 			// one frame of the first shot without you, then you popped in. Two it is.
-			const bool shownYet = !g_state.startedFirstPerson || g_state.framesSinceWaiting > 1;
+			// 0.9.4: from first person you're shown only from the first cut after your body is
+			// built. The opening single can still have the edge of you in it (seated people, 0.9.3
+			// clip: you popped in at its right edge a few frames in); a cut hides the moment.
+			if (g_state.startedFirstPerson && g_state.bodyReady && !g_state.readySeen) {
+				g_state.readySeen = true;
+				g_state.cutsAtReady = Director::Cuts();
+				g_state.readySeenAt = now;
+			}
+			const bool shownYet = !g_state.startedFirstPerson ||
+			                      (g_state.readySeen && (Director::Cuts() > g_state.cutsAtReady || g_state.lastCut > g_state.readySeenAt));
 			g_wantRevealPlayer = s.revealPlayer && g_state.bodyReady && shownYet;
 			// While the first-person body is being rebuilt, keep the player hidden: the new
 			// head appears around the camera (0.3.31 showed one frame of the eyes from inside).

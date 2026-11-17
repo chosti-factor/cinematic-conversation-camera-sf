@@ -22,6 +22,9 @@ test build; "diagnostic" items only add information to the log for testing.
 - Starts (0.9.3 clips): the first frame or two were still drawn through the gameplay lens
   (94 degrees), so the first shot appeared wide and then zoomed to its own lens. Those
   frames are drawn through the shot's lens now.
+- From first person, you popped in at the edge of the opening shot of a seated person a few
+  frames in (0.9.3 clip), when your body was ready. You're shown from the first cut after
+  your body is built now, so you never appear mid-shot.
 - Starts in Close and Starborn: the opening three-quarter (an angle those presets don't
   list) was replaced by a close-up a frame later, a second cut at the start. It stays while
   it can be placed.
