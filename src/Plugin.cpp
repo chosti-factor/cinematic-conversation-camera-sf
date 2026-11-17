@@ -399,9 +399,29 @@ namespace CCC
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		// Where the game's dialogue camera sits relative to the player's eyes, as measured on
 		// earlier conversations: metres back from the NPC, and up. Lateral varies, so 0.
-		float g_learnedBack = 0.27f;
+		float g_learnedBack = 0.15f;  // 0.9.4 logs: 0.11-0.14
 		float g_learnedUp = 0.01f;
-		float g_learnedLateral = 0.18f;  // size of the sideways offset
+		float g_learnedLateral = 0.05f;  // size of the sideways offset (0.9.4 logs: 0.00-0.02)
+		// Where the dialogue camera looks compared with straight at the NPC's head (radians).
+		// 0.9.5: the 0.9.4 clips showed the first frame tilted and shifted; the game's
+		// dialogue camera looks about 4.8 degrees below the head, not at it.
+		float g_learnedPitch = -0.084f;
+		float g_learnedYaw = 0.0f;
+
+		// A point 5 m along the predicted dialogue camera's aim: towards the NPC's head, turned
+		// by the learned pitch and yaw.
+		RE::NiPoint3 PredictedAim(const RE::NiPoint3& a_from, const RE::NiPoint3& a_head)
+		{
+			const float dx = a_head.x - a_from.x, dy = a_head.y - a_from.y, dz = a_head.z - a_from.z;
+			const float h = std::sqrt(dx * dx + dy * dy);
+			if (h < 1e-3f) {
+				return a_head;
+			}
+			const float yaw = std::atan2(dy, dx) + g_learnedYaw;
+			const float pitch = std::atan2(dz, h) + g_learnedPitch;
+			const float c = std::cos(pitch);
+			return { a_from.x + 5.0f * c * std::cos(yaw), a_from.y + 5.0f * c * std::sin(yaw), a_from.z + 5.0f * std::sin(pitch) };
+		}
 		int   g_lateralVotes = 2;        // > = 0: offset to the negative side (seen most often)
 
 		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
@@ -2455,7 +2475,7 @@ namespace CCC
 					// four times in five, so predict the side seen most often.
 					const float lateral = g_lateralVotes >= 0 ? -std::abs(g_learnedLateral) : std::abs(g_learnedLateral);
 					p.position = { eye.x - hx * g_learnedBack + hy * lateral, eye.y - hy * g_learnedBack - hx * lateral, eye.z + g_learnedUp };
-					p.lookAt = *npcHead;
+					p.lookAt = PredictedAim(p.position, *npcHead);
 					startRoot = p;
 					if (s.debugLog) {
 						REX::INFO("Start frame {}: game still reports the gameplay camera; placing against the predicted dialogue camera ({:.2f} {:.2f} {:.2f})",
@@ -2472,9 +2492,27 @@ namespace CCC
 						if (back > 0.1f && back < 0.6f && std::abs(oz) < 0.3f && std::abs(lateral) < 0.4f) {
 							g_learnedBack = 0.5f * g_learnedBack + 0.5f * back;
 							g_learnedUp = 0.5f * g_learnedUp + 0.5f * oz;
+							// 0.9.5: learn the size every time; it only ever grew before (the 0.9.4
+							// log had it near 0 while the prediction kept 0.18 m to the side).
+							g_learnedLateral = 0.5f * std::abs(g_learnedLateral) + 0.5f * std::abs(lateral);
 							if (std::abs(lateral) > 0.05f) {
-								g_learnedLateral = 0.5f * std::abs(g_learnedLateral) + 0.5f * std::abs(lateral);
 								g_lateralVotes = std::clamp(g_lateralVotes + (lateral < 0.0f ? 1 : -1), -5, 5);
+							}
+						}
+						// Where it looks, compared with straight at the NPC's head from that spot.
+						const auto& r = *reported;
+						const float ax = r.lookAt.x - r.position.x, ay = r.lookAt.y - r.position.y, az = r.lookAt.z - r.position.z;
+						const float bx = npcHead->x - r.position.x, by = npcHead->y - r.position.y, bz = npcHead->z - r.position.z;
+						const float ah = std::sqrt(ax * ax + ay * ay), bh = std::sqrt(bx * bx + by * by);
+						if (ah > 1e-3f && bh > 1e-3f) {
+							const float pitchOff = std::atan2(az, ah) - std::atan2(bz, bh);
+							float       yawOff = std::atan2(ay, ax) - std::atan2(by, bx);
+							yawOff = std::remainder(yawOff, 2.0f * std::numbers::pi_v<float>);
+							REX::INFO("Start frame {}: its aim is {:+.1f} degrees up and {:+.1f} degrees across from the NPC's head (prediction used {:+.1f}, {:+.1f})",
+								g_state.framesThisConversation, pitchOff * 57.29578f, yawOff * 57.29578f, g_learnedPitch * 57.29578f, g_learnedYaw * 57.29578f);
+							if (std::abs(pitchOff) < 0.35f && std::abs(yawOff) < 0.35f) {
+								g_learnedPitch = 0.5f * g_learnedPitch + 0.5f * pitchOff;
+								g_learnedYaw = 0.5f * g_learnedYaw + 0.5f * yawOff;
 							}
 						}
 					} else if (g_state.framesThisConversation == 1) {

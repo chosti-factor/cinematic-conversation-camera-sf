@@ -11,7 +11,19 @@ test build; "diagnostic" items only add information to the log for testing.
   didn't change it (0.9.4 log: its first update still set +C8/+CC to -68.13, a constant in
   every exit, and pointed the camera root at the floor). With `iExitMode=3`, right after
   that update those two values are put back, and the camera root is put on your view, in
-  case the frame is taken from them after the update. The log says which held.
+  case the frame is taken from them after the update. The log says which held. (The 0.9.4
+  clip shows that frame looking up at the sky, not at the floor: -68 is upwards.)
+- Starts, first frame (0.9.4 clip): the first frame of the opening shot was tilted and
+  shifted a little, then settled on the next frame. While the game still reports its
+  gameplay camera, the shot is placed against where its dialogue camera will be, and that
+  guess aimed straight at the NPC's head and 0.18 m to one side. The game's camera looks
+  about 5 degrees lower and sits almost straight behind your eyes (0.9.4 log), so the guess
+  now does too, and keeps learning both from each start.
+
+### Known
+- Third person, first conversation after loading a save: the game took three frames instead
+  of one to switch to its dialogue camera, and two frames showed the opening shot from 1.6 m
+  further back (from behind you). Later conversations switched in one frame.
 
 ## 0.9.4 - 2026-11-16
 
