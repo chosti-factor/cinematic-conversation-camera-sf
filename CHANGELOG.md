@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.9 - 2026-11-17
+
+### Fixed
+- First-person exits: 0.9.8's held-back update worked, with no steep-up frame in any of the
+  seven exits checked (one held-back frame or two, same result). Two
+  smaller things showed instead:
+  - The held-back frame kept the last shot, and you were already gone from it (by then your
+    body is the first-person one, which is why the next frame is clean): one or two frames of
+    the shot without you. Your own view is drawn on that frame now, through your own lens.
+  - The first first-person frame came through the conversation lens (your view, zoomed in),
+    when the game's update ran before the mod's main-thread tick turned the lens off. The
+    lens goes off the moment the conversation ends now.
+- `iExitSkipFrames=2` held back only one frame: the conversation ends during that frame. One
+  is all it needs, so it stays at 1.
+
 ## 0.9.8 - 2026-11-17
 
 ### Found

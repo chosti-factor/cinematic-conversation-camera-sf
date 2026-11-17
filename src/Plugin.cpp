@@ -398,6 +398,11 @@ namespace CCC
 		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
+		// The conversation lens (see LensFor): kept on by the main thread while a conversation is
+		// filmed; turned off at once by End() too (0.9.9).
+		std::atomic<bool>  g_lensActive{ false };
+		std::atomic<float> g_lensWanted{ 0.0f };
+		std::atomic<int>   g_lensCalls{ 0 };
 		// Where the game's dialogue camera sits, as measured on earlier conversations (start
 		// at the 0.9.5 test values, then learned from each start).
 		float g_learnedDistance = 2.02f;  // from the NPC's head, towards your feet
@@ -775,6 +780,11 @@ namespace CCC
 						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
+				// 0.9.9: the conversation lens goes off now, not on the main thread's next tick: the
+				// 0.9.8 clips showed the first first-person frame after an exit drawn through it
+				// (your view, zoomed in) when the game's first update came before that tick.
+				// (Filming people talking turns it back on from the main thread if it's running.)
+				g_lensActive.store(false, std::memory_order_relaxed);
 				// Third person (0.9.4): the frame on which the game switches back to its third-person
 				// camera is drawn from where its dialogue camera stands (one frame of the game's own
 				// conversation shot in the 0.9.3 clips). Draw your third-person view on that frame
@@ -3086,9 +3096,15 @@ namespace CCC
 				return false;
 			}
 			++g_exitSkipped;
-			Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
-			REX::INFO("Exit: the first-person camera's update {} of {} held back; the last shot stays (iExitMode 5; your head {:.2f} m above your feet)",
-				g_exitSkipped, s.exitSkipFrames, PlayerHeadAboveFeet());
+			// 0.9.9: your own view, through your own lens, on the held-back frame. 0.9.8 kept the
+			// last shot, and the clips showed it a frame or two with you gone from it (your body
+			// is already the first-person one by then: that's why the frame is clean now).
+			const bool own = g_firstPersonView && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_firstPersonView);
+			if (!own) {
+				Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
+			}
+			REX::INFO("Exit: the first-person camera's update {} of {} held back; {} (iExitMode 5; your head {:.2f} m above your feet)",
+				g_exitSkipped, s.exitSkipFrames, own ? "your view drawn" : "the last shot stays", PlayerHeadAboveFeet());
 			return true;
 		}
 
@@ -3408,9 +3424,6 @@ namespace CCC
 		// wrote that value and the frustum directly, and the next frame's update put 30 back.
 		// Here the value is changed on its way into the set-FOV call, at all three of its
 		// callers, while this mod films a conversation (fConversationLens; 0 = the game's).
-		std::atomic<bool>  g_lensActive{ false };  // set on the main thread
-		std::atomic<float> g_lensWanted{ 0.0f };
-		std::atomic<int>   g_lensCalls{ 0 };
 
 		// The lens wanted, set from the camera thread right after the director's choice (the
 		// main thread keeps it current too).
