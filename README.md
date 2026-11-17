@@ -16,7 +16,7 @@ first showed it could be done. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.8.x)
+## Status: alpha (0.9.x, polish)
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 

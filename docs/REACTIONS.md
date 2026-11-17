@@ -8,7 +8,7 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.8.14 (2026-11-15). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.9.0 (2026-11-16). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -22,10 +22,13 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    `iExtremeCloseUpChanceNpc` (40%) makes it an extreme one. The camera cuts to a close-up
    (or extreme close-up) of them, pushing in slowly. If it's already on their close-up, it
    stays.
-2. **Persuasion answer?** After a persuasion's outcome or a chosen skill check, their whole
-   reply is held on them (`bPersuasionBeatNpc`): a close-up, pushing in; in a long answer
-   (over 10 s), once the push-in is done, one cut to a medium or three-quarter shot of them.
-   Never a reaction, and it doesn't count towards one.
+2. **Persuasion answer?** After each round of a persuasion (the verdict included) or a
+   chosen skill check, their answer is held on them (`bPersuasionBeatNpc`): a close-up,
+   pushing in; in a long answer (over 10 s), once the push-in is done, one cut to a medium
+   or three-quarter shot of them. In CCC's presets their whole reply stays on them, as CCC
+   does. In CCC SF's, the hold covers their answer and the next line (the verdict); the
+   line after that is a reaction shot of you, whatever its length or expression (0.8.18:
+   Sieghart's won persuasion stayed on him for 23 s). No other reaction cuts into the hold.
 3. **Wait** up to 0.8 s for the line's subtitle and your face's expression to be set.
 4. (Extreme close-ups are never cut away from during their line; each holds its own line
    only, 0.8.9: the next line goes to a regular close-up if it's an emotion line too,
