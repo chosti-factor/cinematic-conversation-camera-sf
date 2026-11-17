@@ -36,6 +36,8 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
     face.
   - docs/REACTIONS.md: every build that touches reaction shots or the persuasion beat.
   - docs/HANDOFF.md: at milestones, and whenever a test changes what we know.
+  - docs/TODO.md (the working list to 1.0): ticked as items are done, items added as they come
+    up; items moved to after 1.0 only on the user's call.
   - Each document has a "Last updated: version" line near the top; bump it whenever the
     document is checked against a build, even with nothing to change, so one that fell
     behind is easy to spot.
