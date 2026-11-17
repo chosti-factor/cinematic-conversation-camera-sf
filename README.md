@@ -204,14 +204,27 @@ How the camera starts and ends a conversation, frame by frame, with the measured
   - Last, just before 1.0: the log's testing diagnostics and the testing messages off by
     default (they stay on until then, for testing), then a full test round on the release
     candidate.
-  - After 1.0: plants and other objects without collision (which the obstacle check can't
-    see) in front of wide outdoor shots, and walls it passes through (beside Commander Tuala
-    at the MAST, every check said clear); most settings also in the game's own Settings menu,
-    as Gameplay Options from a small ESM.
 - 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
   replacer, a dialogue menu replacer, a subtitle mod) and listing compatibility.
-- Later, maybe: your traits setting your face's temperament (Introvert subtler, Extrovert
-  fuller, Empath mirrors more), and cautiously more of the text of your lines.
+
+### After 1.0
+
+Planned:
+- Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
+- Objects the obstacle check can't see: plants and other things without collision in front of
+  shots (the Viewport bar's plant), and walls it passes through (beside Commander Tuala at the
+  MAST, every check said clear).
+- More of the text of your lines for your face (and close-ups of you on strong ones): beyond
+  the skill, background and trait tags and a question mark, clear cues in the wording, such
+  as thanks, apologies, refusals, threats, jokes, condolences and goodbyes. High-confidence
+  cues only, built from a tally of the options actually picked in play (the log records each
+  one) and logged when they fire; English only, its own setting.
+
+Mulling (not decided):
+- Your traits setting your face's temperament (Introvert subtler, Extrovert fuller, Empath
+  mirroring more). Open questions: mods that unlock every trait (many traits at once), which
+  trait wins when several apply, and whether it should work only with the game's usual trait
+  limits; it would need its own setting.
 
 ## Requirements
 

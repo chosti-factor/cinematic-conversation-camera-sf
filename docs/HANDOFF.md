@@ -166,6 +166,11 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   (GetMenuFrameworkAPIVersion), and its header pulls in clib-utils-qtr's Signing headers
   (Authenticode check of the host DLL): vendor both, MIT, with their notices. Settings
   changed on the page go to the _user.ini (read before every conversation).
+- After 1.0, planned (see README "After 1.0"): Gameplay Options (below); objects the obstacle
+  check can't see; more of the text of your lines for your face (high-confidence cues from a
+  tally of real options, English only, own setting; moved from "maybe" to planned by the
+  user, 2026-11-17). Mulling, not decided: traits setting your face's temperament (trait
+  unlocking mods, precedence among several traits, a setting).
 - After 1.0: most settings in the game's own Settings menu as Gameplay Options (GPOF records,
   added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
   ESM; the plugin reads what each sets (to find: globals or otherwise). Likely choices, not free
