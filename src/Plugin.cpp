@@ -2692,6 +2692,12 @@ namespace CCC
 				ApplyHandheld(*pose, Director::Handheld(), now);
 			}
 			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
+			// The first frame or two of a conversation, the game still draws through the gameplay
+			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
+			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).
+			if (applied && wideFrame && !waitingView) {
+				Camera::SetRenderLens(g_lensWanted.load(std::memory_order_relaxed));
+			}
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
 			}

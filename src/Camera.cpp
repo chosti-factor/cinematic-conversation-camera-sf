@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include "Settings.h"
+#include <numbers>
 
 namespace CCC::Camera
 {
@@ -627,6 +628,23 @@ namespace CCC::Camera
 		if (frustum.right > 0.8f && frustum.top > 0.0f && !frustum.ortho) {  // wide: the gameplay lens
 			g_gameplayFrustum = frustum;
 		}
+	}
+
+	void SetRenderLens(float a_degrees)
+	{
+		if (!g_renderCam || !(a_degrees >= 10.0f && a_degrees <= 170.0f)) {
+			return;
+		}
+		auto& frustum = static_cast<RE::NiCamera*>(g_renderCam)->viewFrustum;
+		if (!(frustum.right > 0.0f && frustum.top > 0.0f) || frustum.ortho) {
+			return;
+		}
+		const float aspect = frustum.right / frustum.top;
+		const float right = std::tan(a_degrees * 0.5f * std::numbers::pi_v<float> / 180.0f);
+		frustum.left = -right;
+		frustum.right = right;
+		frustum.top = right / aspect;
+		frustum.bottom = -right / aspect;
 	}
 
 	bool ShowGameplayView(RE::NiAVObject* a_root, const Pose& a_view)

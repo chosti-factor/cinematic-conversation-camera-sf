@@ -1173,7 +1173,11 @@ namespace CCC::Director
 			} else if (!Usable(*g.current, a_frame, false) &&
 					   !((*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose || *g.current == ShotType::kClosePlayer ||
 						   *g.current == ShotType::kExtremeClosePlayer) &&
-						 Placeable(*g.current, a_frame, false))) {
+						 Placeable(*g.current, a_frame, false)) &&
+					   // A shot the preset doesn't list (the opening three-quarter in Close and
+					   // Starborn) still fits while it can be placed: 0.9.3's were replaced one
+					   // frame in, a second cut at the start (0.9.4).
+					   !(g.setups[static_cast<std::size_t>(*g.current)].weight <= 0 && Placeable(*g.current, a_frame, false))) {
 				if (const auto pick = Pick(a_frame)) {
 					Cut(*pick, a_frame, a_now, "shot no longer fits", true);
 				} else {

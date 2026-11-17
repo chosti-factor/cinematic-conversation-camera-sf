@@ -19,6 +19,12 @@ test build; "diagnostic" items only add information to the log for testing.
 - Third-person exits (0.9.3 clip): one frame of the game's own conversation camera between
   the last shot and your view. That frame is drawn from your third-person view now, through
   the gameplay lens (`iExitModeThirdPerson=1`; 0 = the game's).
+- Starts (0.9.3 clips): the first frame or two were still drawn through the gameplay lens
+  (94 degrees), so the first shot appeared wide and then zoomed to its own lens. Those
+  frames are drawn through the shot's lens now.
+- Starts in Close and Starborn: the opening three-quarter (an angle those presets don't
+  list) was replaced by a close-up a frame later, a second cut at the start. It stays while
+  it can be placed.
 
 ## 0.9.3 - 2026-11-16
 

@@ -75,6 +75,9 @@ namespace CCC::Camera
 	// The gameplay camera's frustum, kept from a conversation's first frame, and your view drawn
 	// through it on the render camera (the third-person exit's switch frame, 0.9.4).
 	void RememberGameplayFrustum(RE::NiAVObject* a_root);
+	// The render camera's lens set directly, horizontal degrees (a conversation's first frames,
+	// still drawn through the gameplay lens, 0.9.4).
+	void SetRenderLens(float a_degrees);
 	bool ShowGameplayView(RE::NiAVObject* a_root, const Pose& a_view);
 
 	// How far the picture the game last drew is from the shot we placed for it: nonzero
