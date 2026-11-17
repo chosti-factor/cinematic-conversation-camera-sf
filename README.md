@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.11 (2026-11-17).
+Last updated: 0.9.12 (2026-11-17).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -184,9 +184,10 @@ How the camera starts and ends a conversation, frame by frame, with the measured
     first person on a bar stool your full body isn't built, so you're kept out of frame;
     talking to a seated person from the side (about 90 degrees) leaves you out of the
     picture (0.8.17 moved the plain shot so a seated NPC isn't hidden behind your body).
-  - An in-game settings page through [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201)
-    (optional; F1): preset, reaction shots, emotion close-ups, sway and the rest, with the
-    INI still working without it.
+  - Built in 0.9.12, testing: an in-game settings page through
+    [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) (optional; F1):
+    preset, reaction shots, emotion close-ups, sway and the rest, with the INI still working
+    without it.
   - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
     shots.
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
@@ -218,7 +219,8 @@ Planned:
   the skill, background and trait tags and a question mark, clear cues in the wording, such
   as thanks, apologies, refusals, threats, jokes, condolences and goodbyes. High-confidence
   cues only, built from a tally of the options actually picked in play (the log records each
-  one) and logged when they fire; English only, its own setting.
+  one; since 0.9.12 the options offered and picked also go to their own file) and logged
+  when they fire; English only, its own setting.
 
 Mulling (not decided):
 - Your traits setting your face's temperament (Introvert subtler, Extrovert fuller, Empath
@@ -233,6 +235,8 @@ Mulling (not decided):
 - [Address Library for SFSE Plugins](https://www.nexusmods.com/starfield/mods/3256)
 - Keep Starfield's own dialogue camera setting **on** (this mod hooks into it)
 - Disable other dialogue camera mods
+- Optional: [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) for the
+  in-game settings page
 
 ## Install
 
@@ -267,11 +271,23 @@ apply without restarting the game.
 
 Each setting is explained in the INI itself.
 
+With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, most
+of them are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on five
+pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The page shows
+your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
+writes changes to the `_user.ini`; **Reset** beside a setting removes your change. Changes
+apply from the next conversation. Test switches, transitions, per-shot tweaks and the plain
+camera are in the INI only.
+
 ## Testing and logs
 
 The log is at
 `Documents\My Games\Starfield\SFSE\Logs\CinematicConversationCameraSF.log`. It records
 every shot the director chooses and why. Please include it with any report.
+
+While the detailed log is on (`bDebugLog=1`), the dialogue options you're offered and the one
+you pick are also added to `CinematicConversationCameraSF_YourLines.tsv` in the same folder,
+kept across sessions (delete it any time). It helps build the wording cues planned after 1.0.
 
 ## Building
 

@@ -3,8 +3,9 @@
 Running record of where Cinematic Conversation Camera SF's code and ideas come from.
 Kept up to date with each build; the Nexus credits page will be made from it at beta.
 
-Last updated: 0.9.11 (2026-11-17). Line counts are estimates over this project's own
-files (source, INI, build scripts): about 12,700 lines in total.
+Last updated: 0.9.12 (2026-11-17). Line counts are estimates over this project's own
+files (source, INI, build scripts): about 13,200 lines in total. Vendored third-party headers
+(`extern/`) aren't counted.
 
 ## Code by source
 
@@ -14,7 +15,8 @@ files (source, INI, build scripts): about 12,700 lines in total.
 | [Player Camera During Dialogue](https://github.com/rrrafau1337/player-camera-during-dialogue) by rrrafau | GPL-3.0-or-later | ~12 | <1% | Dialogue camera update location for Starfield 1.16.244; vtable slot of the hide/show function (`src/Plugin.cpp`, `src/Visibility.cpp`); the function that sets an actor's facial expression (ChangeAnimFaceArchetype) for your character's face (`src/Face.cpp`) |
 | [Cassiopeia Papyrus Extender](https://www.nexusmods.com/starfield/mods/10896) by LarannKiar | - | 0 | 0% | Ideas only (below) |
 | [Starvegas - Cinematic Killcam](https://www.nexusmods.com/starfield/mods/8859) | - | 0 | 0% | Ideas only (below) |
-| Written for this project | GPL-3.0-or-later | ~12,390 | ~98% | Everything else |
+| [SFSE Menu Framework SDK](https://github.com/QTR-Modding/SFSE-MCP) by QTR-Modding (Quantumyilmaz), with [CLibUtilsQTR](https://github.com/QTR-Modding/CLibUtilsQTR)'s signing headers (Quantumyilmaz, SkyrimThiago, RavenKZP) | MIT | vendored | - | Unmodified headers in `extern/`: the calls that add the in-game settings page to SFSE Menu Framework and check its DLL (`src/Menu.cpp` uses them) |
+| Written for this project | GPL-3.0-or-later | ~12,920 | ~98% | Everything else |
 
 ## Built on
 
@@ -28,6 +30,8 @@ These aren't part of this project's code, but nothing here would work without th
 - [CommonLibSF](https://github.com/Starfield-Reverse-Engineering/CommonLibSF) by the
   Starfield Reverse Engineering team: the game's structures, hooking and the Address Library
   lookups.
+- [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) by QTR-Modding
+  (optional): hosts the in-game settings page.
 
 ## Ideas and inspiration
 
@@ -43,7 +47,7 @@ These aren't part of this project's code, but nothing here would work without th
 ## Project work
 
 - **Testing and direction (chosti-factor):** tested every build; 60 fps recordings that exposed one- and two-frame glitches; pointed to Starvegas and Cassiopeia (both became fixes); kept the depth-of-field hunt going (the Starvegas lead, the console tests, the idea of controlling the sharp zone and blur radius); design decisions including the cutting styles and their names (0.4-0.9.7), then trading them for a pace that keeps each preset's rhythm, emotion-driven close-ups and the on-screen emotion messages, which emotions push in, interior/exterior camera distances, per-preset camera distances, the Stardust preset (now Frontier), the film flavours of CCC SF's presets, the sway test and its outcome, close-ups of you on tagged choices and persuasions, holding the persuasion's verdict and then showing you, filming people talking near you, the INI layout and transition polish; credited jedijosh920's Player Dialogue Camera as the proof of concept.
-- **Engineering (Claude):** render-camera-only placement so NPCs keep facing the player; Starfield camera math (metres, axis layout); player body rebuild (camera cycle, then direct refresh); conversation start/exit handling (frame prediction, learned dialogue camera position, clean first-person exit); thread-safety and crash fixes; finding the conversation blur's live settings (focus on the person in shot); reading each line's expression tag; merchant detection from the faction vendor flag; adapting CCC to Starfield's narrow dialogue lens (distance caps, over-the-shoulder swing-in, interior/exterior limits); cutting styles, then the relative cutting pace; small-speaker rule; obstacle detection (finding and calling the game's own dialogue-camera sphere cast, skipping or pulling in blocked shots, best-fit fallback); CCC 1.5.0's per-angle lenses read from its DLL and checked against Skyrim clips; room measurement; filming people talking (scenes, addressing, group shots); reading the chosen dialogue and persuasion options; settings; diagnostics.
+- **Engineering (Claude):** render-camera-only placement so NPCs keep facing the player; Starfield camera math (metres, axis layout); player body rebuild (camera cycle, then direct refresh); conversation start/exit handling (frame prediction, learned dialogue camera position, clean first-person exit); thread-safety and crash fixes; finding the conversation blur's live settings (focus on the person in shot); reading each line's expression tag; merchant detection from the faction vendor flag; adapting CCC to Starfield's narrow dialogue lens (distance caps, over-the-shoulder swing-in, interior/exterior limits); cutting styles, then the relative cutting pace; small-speaker rule; obstacle detection (finding and calling the game's own dialogue-camera sphere cast, skipping or pulling in blocked shots, best-fit fallback); CCC 1.5.0's per-angle lenses read from its DLL and checked against Skyrim clips; room measurement; filming people talking (scenes, addressing, group shots); reading the chosen dialogue and persuasion options; the tally of your lines; settings and the in-game settings page; diagnostics.
 
 ## Update log
 

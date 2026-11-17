@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.11 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.12 (2026-11-17). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -29,7 +29,10 @@ Wednesday the 25th, about two days earlier.
       HANDOFF.md (reactions on overhead, Constellation OTS 30 to 15, extreme close-up share per
       preset, Frontier two-shot one turn)
 - [ ] Large speakers (Vasco) blocking you in over-the-shoulder shots
-- [ ] SFSE Menu Framework settings page
+- [ ] SFSE Menu Framework settings page (built in 0.9.12; test: each page opens, a change
+      lands in the `_user.ini` and applies next conversation, Reset, a preset change, the
+      game without the framework)
+- [x] The tally of your lines started (0.9.12; while the detailed log is on)
 - [ ] Compatibility with UI mods (HUD replacer, dialogue menu replacer, subtitle mod), and
       auto-zoom back on as one check
 - [ ] The Ranger fading in at Neon (waiting on footage)
@@ -47,7 +50,8 @@ Wednesday the 25th, about two days earlier.
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back
       conversations); thread safety, crashes
 - [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper
-- [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page
+- [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
+      labels, help and ranges against the INI)
 
 ## 5. Release candidate (about 25 to 26 Nov)
 

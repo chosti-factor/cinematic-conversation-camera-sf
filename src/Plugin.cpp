@@ -14,6 +14,7 @@
 #include "Face.h"
 #include "Hud.h"
 #include "Settings.h"
+#include "Menu.h"
 #include "Visibility.h"
 
 #include <deque>
@@ -6093,6 +6094,15 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 
 	auto& settings = CCC::Settings::Get();
 	settings.Load();
+
+	// The in-game settings page, once every plugin is loaded (SFSE Menu Framework is optional).
+	if (const auto* messaging = SFSE::GetMessagingInterface()) {
+		messaging->RegisterListener([](SFSE::MessagingInterface::Message* a_msg) {
+			if (a_msg && a_msg->type == SFSE::MessagingInterface::kPostLoad) {
+				CCC::Menu::Register();
+			}
+		});
+	}
 
 	const auto runtime = a_sfse->RuntimeVersion();
 	if (runtime != CCC::kSupportedRuntime) {

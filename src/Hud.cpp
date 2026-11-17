@@ -2,6 +2,8 @@
 
 #include "Settings.h"
 
+#include <fstream>
+
 namespace CCC::Hud
 {
 	namespace
@@ -408,6 +410,7 @@ namespace CCC::Hud
 			float setAlpha[2]{ -1.0f, -1.0f };  // what we wrote last frame (-1 = nothing), to see whether the game keeps it
 			int   logs{ 0 };                     // log lines this session (capped)
 			std::string highlighted[2];          // the option under the cursor, to know which was chosen
+			std::vector<std::string> offered[2];  // every option in the list, for the tally of your lines (0.9.12)
 			std::string how[2];                  // how it was told apart (0.8.17), and every option's state, for the log
 			std::string states[2];
 			int         choiceLogs{ 0 };
@@ -435,6 +438,45 @@ namespace CCC::Hud
 		// Option tags whose answer gets the beat ([Persuade] itself starts the mini-game, whose
 		// outcome is caught from its panel). Case-insensitive; a tag starting with one of
 		// these counts ("Pay" matches "Pay 500 Credits").
+		// ---- The tally of your lines (0.9.12) -------------------------------------------------
+		// Every option the game offered you and which one you picked, appended to
+		// CinematicConversationCameraSF_YourLines.tsv beside the log, across sessions, while the
+		// detailed log is on. The raw material for reading your character's lines by their wording
+		// (after 1.0): which words mark a joke, a threat, a kind answer, and how often each comes up.
+		// Columns: local time, panel (dialogue or persuasion), chosen (1/0), how the pick was told
+		// apart, the option's text.
+		void TallyChoice(const std::vector<std::string>& a_offered, const std::string& a_chosen, bool a_persuasion, const std::string& a_how)
+		{
+			const auto logs = SFSE::log::log_directory();
+			if (!logs || a_offered.empty()) {
+				return;
+			}
+			const auto      path = *logs / L"CinematicConversationCameraSF_YourLines.tsv";
+			std::error_code ec;
+			const bool      fresh = !std::filesystem::exists(path, ec);
+			std::ofstream   out(path, std::ios::app | std::ios::binary);
+			if (!out) {
+				return;
+			}
+			if (fresh) {
+				out << "time\tpanel\tchosen\thow\ttext\r\n";
+			}
+			SYSTEMTIME now{};
+			::GetLocalTime(&now);
+			const auto stamp = std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond);
+			const auto clean = [](std::string a_text) {
+				std::ranges::replace_if(a_text, [](char c) { return c == '\t' || c == '\r' || c == '\n'; }, ' ');
+				return a_text;
+			};
+			for (const auto& text : a_offered) {
+				if (text.empty()) {
+					continue;
+				}
+				out << stamp << '\t' << (a_persuasion ? "persuasion" : "dialogue") << '\t' << (text == a_chosen ? 1 : 0) << '\t' << a_how << '\t' << clean(text)
+					<< "\r\n";
+			}
+		}
+
 		bool IsBeatTag(const std::string& a_tag)
 		{
 			std::string tag = a_tag;
@@ -637,6 +679,7 @@ namespace CCC::Hud
 						}
 						if (pick >= 0 && !texts[pick].empty()) {
 							g_options.highlighted[i] = texts[pick];
+							g_options.offered[i].assign(texts.begin(), texts.begin() + count);
 							g_options.how[i] = how;
 							std::string states;
 							for (int e = 0; e < count; ++e) {
@@ -649,6 +692,10 @@ namespace CCC::Hud
 				if (!now && g_options.wasVisible[i] && !g_options.highlighted[i].empty()) {
 					const std::string chosen = g_options.highlighted[i];
 					g_options.highlighted[i].clear();
+					if (s.debugLog) {
+						TallyChoice(g_options.offered[i], chosen, i == 1, g_options.how[i]);
+					}
+					g_options.offered[i].clear();
 					if (g_options.choiceLogs < 30) {
 						++g_options.choiceLogs;
 						REX::INFO("HUD: chose '{}'{} ({}; {})", chosen.substr(0, 60), i == 1 ? " in the persuasion" : "", g_options.how[i], g_options.states[i]);

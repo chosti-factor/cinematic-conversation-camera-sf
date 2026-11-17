@@ -4,6 +4,28 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.12 - 2026-11-17
+
+### Added
+- An in-game settings page through
+  [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) (optional): Mod Menu
+  (F1) → Cinematic Conversation Camera SF, five pages (Camera, Close-ups and reactions, You,
+  Screen, Filming people talking) with about 45 of the INI's settings, each with its
+  explanation on hover. It mirrors the INI: a setting shows your `_user.ini`'s value if you've
+  changed it, the main INI's otherwise; a change is written to
+  `CinematicConversationCameraSF_user.ini` and applies from the next conversation; Reset
+  removes your change. Choosing a preset there replaces one picked with the preset key.
+  Without the framework installed nothing changes. Test switches, transitions, per-shot
+  tweaks and the plain camera stay INI-only.
+- The tally of your lines: while the detailed log is on, every dialogue and persuasion option
+  the game offers you, and which one you pick, is appended to
+  `CinematicConversationCameraSF_YourLines.tsv` next to the log, across sessions. It's the
+  material for reading your character's lines by their wording after 1.0.
+
+### Credits
+- The SFSE Menu Framework SDK (MIT) and the signing headers it uses from CLibUtilsQTR (MIT),
+  both by QTR-Modding, vendored in `extern/`.
+
 ## 0.9.11 - 2026-11-17
 
 ### Fixed

@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.11, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.12, 2026-11-17; no change to starts or exits since 0.9.11).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
