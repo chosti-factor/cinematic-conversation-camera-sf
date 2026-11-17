@@ -3051,6 +3051,105 @@ namespace CCC
 		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)
 		bool  g_exitPitchKnown = false;
 
+		// Diagnostic (0.9.7): where the exit's -68.13 comes from. The 0.9.6 clip (controller
+		// only, no mouse) still showed that frame, and in the first-person camera only +C8/+CC
+		// change during that update. Copies of the objects around it are kept just before the
+		// update; right after it, the copies are searched for the new value (in degrees,
+		// radians, as a sine or cosine) and every value that changed is listed.
+		struct ExitSnap
+		{
+			const char*               name{};
+			const std::uint8_t*       base{};
+			std::vector<std::uint8_t> bytes;
+		};
+		std::vector<ExitSnap> g_exitSnaps;
+
+		void SnapExitObject(const char* a_name, const void* a_base, std::size_t a_size)
+		{
+			if (!a_base) {
+				return;
+			}
+			ExitSnap snap{ a_name, static_cast<const std::uint8_t*>(a_base), std::vector<std::uint8_t>(a_size) };
+			if (SafeCopy(snap.bytes.data(), a_base, a_size) == a_size) {
+				g_exitSnaps.push_back(std::move(snap));
+			}
+		}
+
+		void SnapExitObjects(void* a_state)
+		{
+			g_exitSnaps.clear();
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			SnapExitObject("first-person state", a_state, 0x200);
+			SnapExitObject("player camera", camera, 0x400);
+			if (camera) {
+				SnapExitObject("dialogue state", camera->cameraStates[RE::CameraState::kDialogue], 0x400);
+				SnapExitObject("third-person state", camera->cameraStates[RE::CameraState::kThirdPerson], 0x400);
+			}
+			SnapExitObject("player", RE::PlayerCharacter::GetSingleton(), 0x1000);
+			// Whatever the first-person state points at near its pitch fields.
+			if (a_state) {
+				static constexpr std::pair<std::size_t, const char*> pointers[] = {
+					{ 0x88, "first-person state +88 ->" }, { 0x90, "first-person state +90 ->" },
+					{ 0xB0, "first-person state +B0 ->" }, { 0xB8, "first-person state +B8 ->" }
+				};
+				for (const auto& [at, name] : pointers) {
+					void* target = nullptr;
+					if (SafeCopy(&target, static_cast<std::uint8_t*>(a_state) + at, sizeof(target)) && reinterpret_cast<std::uintptr_t>(target) > 0x10000) {
+						SnapExitObject(name, target, 0x400);
+					}
+				}
+			}
+		}
+
+		void SearchExitObjects(float a_degrees)
+		{
+			const float rad = a_degrees * 0.01745329f;
+			struct Want
+			{
+				const char* what;
+				float       value;
+				float       tolerance;
+			};
+			const Want wants[] = {
+				{ "degrees", a_degrees, 0.02f }, { "degrees, negated", -a_degrees, 0.02f },
+				{ "radians", rad, 0.0004f }, { "radians, negated", -rad, 0.0004f },
+				{ "sine", std::sin(rad), 0.0004f }, { "sine, negated", -std::sin(rad), 0.0004f },
+				{ "cosine", std::cos(rad), 0.0004f }, { "tangent", std::tan(rad), 0.002f },
+			};
+			for (const auto& snap : g_exitSnaps) {
+				std::vector<std::uint8_t> after(snap.bytes.size());
+				const bool  readable = SafeCopy(after.data(), snap.base, after.size()) == after.size();
+				std::string found, changed;
+				int         changes = 0;
+				for (std::size_t off = 0; off + 4 <= snap.bytes.size(); off += 4) {
+					float before = 0.0f, now = 0.0f;
+					std::memcpy(&before, snap.bytes.data() + off, 4);
+					const bool differs = readable && std::memcmp(snap.bytes.data() + off, after.data() + off, 4) != 0;
+					if (readable) {
+						std::memcpy(&now, after.data() + off, 4);
+					}
+					for (const auto& w : wants) {
+						if (std::isfinite(before) && std::abs(before - w.value) < w.tolerance) {
+							found += std::format(" +{:X}={:.4f} ({})", off, before, w.what);
+						}
+						if (differs && std::isfinite(now) && std::abs(now - w.value) < w.tolerance) {
+							found += std::format(" +{:X} became {:.4f} ({})", off, now, w.what);
+						}
+					}
+					if (differs && changes < 40) {
+						++changes;
+						std::uint32_t b = 0, a = 0;
+						std::memcpy(&b, snap.bytes.data() + off, 4);
+						std::memcpy(&a, after.data() + off, 4);
+						changed += std::format(" +{:X}: {:08X} ({:.4g}) -> {:08X} ({:.4g})", off, b, before, a, now);
+					}
+				}
+				REX::INFO("Exit search, {}: holds {:.2f} before the update:{}", snap.name, a_degrees, found.empty() ? " nowhere" : found);
+				REX::INFO("Exit search, {}: changed during the update:{}", snap.name, changed.empty() ? " nothing" : changed);
+			}
+			g_exitSnaps.clear();
+		}
+
 		void BeforeExitUpdate(void* a_state)
 		{
 			if (!g_hooksSafe) {
@@ -3077,7 +3176,10 @@ namespace CCC
 			// whatever you were looking at, clears the flag (+E2 = 1, +68 = 30), and the frame
 			// drawn looks at the floor; the next update puts your pitch back (-13 to -20 there).
 			// iExitMode 3: mark it as already entered, so its first update is a normal one.
-			if (Settings::Get().exitMode == 3 && a_state) {
+			if (Settings::Get().debugLog && g_conversationNumber <= 12) {
+				SnapExitObjects(a_state);
+			}
+			if (Settings::Get().exitMode >= 3 && a_state) {
 				auto* bytes = static_cast<std::uint8_t*>(a_state);
 				g_exitPitchKnown = SafeCopy(g_exitPitchBefore, bytes + 0xC8, sizeof(g_exitPitchBefore)) && std::isfinite(g_exitPitchBefore[0]) &&
 				                   g_exitPitchBefore[0] > -90.0f && g_exitPitchBefore[0] < 90.0f;
@@ -3144,7 +3246,14 @@ namespace CCC
 			// -68.13 (a constant, in every exit) and points the root at the floor, then the next
 			// update puts them back. Exit mode 3 now also puts them back, and the root on your
 			// view, right after that update, in case the frame is taken from them afterwards.
-			if (mode == 3) {
+			if (!g_exitSnaps.empty() && a_state) {
+				float after = 0.0f;
+				if (SafeCopy(&after, static_cast<std::uint8_t*>(a_state) + 0xC8, sizeof(after))) {
+					SearchExitObjects(after);
+				}
+				g_exitSnaps.clear();
+			}
+			if (mode >= 3) {
 				if (a_state && g_exitPitchKnown) {
 					auto* bytes = static_cast<std::uint8_t*>(a_state);
 					float now[2]{};
@@ -3163,6 +3272,9 @@ namespace CCC
 			// The game's first first-person frame looks at the floor (all exits since 0.8.17's
 			// log). Covering it from this hook didn't reach the screen (0.8.18: two frames of
 			// ceiling; 0.9.0: the floor frame unchanged), so mode 1 leaves it; it's logged.
+			// 0.9.7, mode 4: the 0.9.6 clip still showed that frame after mode 3's fixes (taken
+			// during the update), so mode 4 also draws your view over it, now that the root under
+			// it is right too (the 0.9.0 cover was drawn against a root aimed at the floor).
 			if (mode != 1 && mode != 3 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
 				g_exitCoverFrames = mode == 2 ? 3 : 1;

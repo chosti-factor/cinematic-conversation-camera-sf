@@ -4,6 +4,28 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.7 - 2026-11-17
+
+### Fixed (to confirm)
+- First-person exits: the 0.9.6 clip still showed one frame looking steeply up (sky, or a
+  tilted view of the ground and a wall) in all three exits, though the log showed the pitch
+  and the camera root put back right after the game's update: that frame's picture is
+  already taken during the update. `iExitMode=4` (the new default) also draws your view over
+  that frame, now on a camera root that's right (the 0.9.0 cover was drawn against a root
+  aimed at the floor). 3 is 0.9.6's behaviour.
+
+### Diagnostic
+- Where the exit's -68.13 comes from: it isn't saved-up mouse movement (the 0.9.6 tests used
+  only a controller), and only the two pitch fields change in the first-person camera during
+  that update. Just before it, copies are kept of the player camera, the dialogue,
+  first-person and third-person camera states, the player, and what the first-person state
+  points at; right after it, they're searched for the new value (degrees, radians, sine,
+  cosine) and every value that changed is listed ("Exit search" in the log).
+
+### Known
+- Third-person exits (0.9.6 clip): one frame of the last shot without its background blur,
+  then the third-person camera swings in from a closer side angle over two or three frames.
+
 ## 0.9.6 - 2026-11-16
 
 ### Fixed
