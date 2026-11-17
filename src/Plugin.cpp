@@ -2708,7 +2708,7 @@ namespace CCC
 			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
 			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).
 			if (applied && wideFrame && !waitingView) {
-				Camera::SetRenderLens(g_lensWanted.load(std::memory_order_relaxed));
+				Camera::SetRenderLens(Director::WantedLens());
 			}
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
