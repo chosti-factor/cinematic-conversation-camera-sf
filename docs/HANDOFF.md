@@ -137,6 +137,22 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 
+## CCC SF preset tweaks, to confirm with a long Sarah test (2026-11-16)
+
+Proposed from partial data (0.8.16 Constellation/Nebula extracts, 0.8.17 your-side shots);
+the user wants a long conversation with Sarah through the CCC SF presets first, then
+confirm or change each:
+1. Reactions never on overhead shots of you (Constellation reused PlayerOverhead for three
+   reactions in a row: reads as surveillance).
+2. Constellation: over-the-shoulder weight 30 -> 15 (a documentary rarely shoots over a
+   shoulder; more room for Distant, Master, Long).
+3. Extreme share of your reaction close-ups per preset: Constellation 0, Starborn 40,
+   Frontier 40, Nebula 50 (now 40 everywhere).
+4. Frontier: a two-shot as your angle for one turn only, then back to a single of you
+   (it held one for four of your turns; Constellation keeps long holds).
+5. Starborn and Nebula: nothing seen to change.
+(6, keeping the previous session's log, was done in 0.9.1.)
+
 ## Open observations from testing
 
 - Many lines are emotion close-ups (0.8.3: every expression but Neutral and Friendly, at
