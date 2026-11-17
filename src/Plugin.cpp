@@ -781,7 +781,7 @@ namespace CCC
 				// instead; the render camera goes back to the game just before the third-person
 				// camera's own first update.
 				bool tpExit = false;
-				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird == 1) {
+				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird >= 1) {
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
@@ -3048,6 +3048,15 @@ namespace CCC
 			}
 			g_tpExitPending = false;
 			Camera::RestoreRender();
+			// 0.9.8, iExitModeThirdPerson 2: the third-person camera eases out from where the camera
+			// stood on its first update (vanilla: from your eyes; here from the game's conversation
+			// camera, about 2 m from the NPC: one frame close and from the side, 0.9.7 clips). Put
+			// the camera root on your third-person view first, so the ease starts where it ends.
+			if (Settings::Get().exitModeThird == 2 && g_thirdPersonView) {
+				if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::SetRootPose(camera->cameraRoot.get(), *g_thirdPersonView)) {
+					REX::INFO("Exit: camera root put on your third-person view before the third-person camera's first update");
+				}
+			}
 		}
 
 		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)

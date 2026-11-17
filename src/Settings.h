@@ -155,7 +155,7 @@ namespace CCC
 		std::int32_t exitSkipFrames{ 1 };  // iExitMode 5: first-person updates held back
 		// iExitModeThirdPerson: 1 = your third-person view drawn on the switch frame (0.9.4),
 		// 0 = the game's (a frame of its own conversation camera).
-		std::int32_t exitModeThird{ 1 };
+		std::int32_t exitModeThird{ 2 };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;

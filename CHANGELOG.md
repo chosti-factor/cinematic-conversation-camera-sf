@@ -22,6 +22,10 @@ test build; "diagnostic" items only add information to the log for testing.
 - First-person exits, `iExitMode=5` (new default): the first-person camera's first update after
   the conversation is held back (`iExitSkipFrames`, default 1) with the last shot kept on screen,
   so the update that's drawn comes once the game has your first-person body back.
+- Third-person exits, `iExitModeThirdPerson=2` (new default): the third-person camera eases out
+  from where the camera stood on its first update (vanilla: your eyes; here the game's
+  conversation camera, so one frame close and from the side). The camera is put on your
+  third-person view just before that update, so the ease starts where it ends.
 
 ## 0.9.7 - 2026-11-17
 

@@ -261,7 +261,7 @@ namespace CCC
 
 			a_s.startMode = std::clamp(ReadInt(a_path, L"Transitions", L"iStartMode", a_s.startMode), 0, 2);
 			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);
-			a_s.exitModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iExitModeThirdPerson", a_s.exitModeThird), 0, 1);
+			a_s.exitModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iExitModeThirdPerson", a_s.exitModeThird), 0, 2);
 			a_s.exitMode = std::clamp(ReadInt(a_path, L"Transitions", L"iExitMode", a_s.exitMode), 0, 5);
 			a_s.exitSkipFrames = std::clamp(ReadInt(a_path, L"Transitions", L"iExitSkipFrames", a_s.exitSkipFrames), 1, 4);
 
