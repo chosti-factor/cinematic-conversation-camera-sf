@@ -709,10 +709,13 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
-			// The opening shot from the player's eyes was only needed while the camera cycle
-			// rebuilt the body. The direct refresh takes about 0.1 s (player hidden meanwhile),
-			// so first-person conversations open over the shoulder like third-person ones.
-			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
+			// From first person, the conversation opens on the NPC from just in front of your
+			// eyes (as the game's own camera does), with you out of frame while your body is
+			// built; the director's shots start with their next line, or your turn. 0.8.15 held
+			// your own view instead, and the 0.8.15-0.9.0 clips showed what that cost: a zoom,
+			// frames from inside your head, a frame of the game's camera slipping through, you
+			// popping in. 0.8.14 opened over the shoulder, with you popping in after 0.1 s.
+			g_state.povNpcShot = g_lastGameplayFirstPerson;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -2102,6 +2105,11 @@ namespace CCC
 						}
 					}
 					g_state.lineStart = now;
+					// The opening shot from your eyes ends with their next line once your body is
+					// built: a cut at the edge of a line, to the director's shot (0.9.1).
+					if (g_state.povNpcShot && g_state.bodyReady && g_state.lineStart - g_state.started > 300ms) {
+						g_state.povNpcShot = false;
+					}
 					g_state.lineBeat = false;
 					// 0.8.17 test: after the persuasion was won, Sieghart's whole 23 s reply stayed on
 					// him and you were barely seen. With reaction shots on (CCC SF's presets), the
@@ -2450,8 +2458,7 @@ namespace CCC
 			// From first person, until your full body is ready (about 0.15 s), your own view,
 			// with you hidden (0.8.14 test, the Ranger at Neon: the first shot began with you
 			// missing and you popped in a moment later). At most 0.6 s.
-			const bool bodyPending = g_state.startedFirstPerson && !g_state.bodyReady && now - g_state.started < 600ms;
-			if (gameplayView && (bodyPending || (startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
+			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
 				waitingView = *gameplayView;
 			}
 			// Your own view keeps your own field of view (0.8.18: the 0.8.17 clips from first
@@ -2953,31 +2960,12 @@ namespace CCC
 			Visibility::Restore(false);
 			LogExitFrame(camera, 0);
 			g_exitLogFrames = 6;
-			// The game's first first-person frame looks at the floor (0.8.17: in all ten exits it
-			// aimed 70-85 degrees down, a frame of carpet in the clips). With no cover (mode 1),
-			// that frame is still covered with your view whenever it points elsewhere.
-			bool wrongFrame = false;
-			if (const auto reported = Camera::PoseOf(camera->cameraRoot.get())) {
-				const auto dir = [](const Camera::Pose& a_p) {
-					RE::NiPoint3 d{ a_p.lookAt.x - a_p.position.x, a_p.lookAt.y - a_p.position.y, a_p.lookAt.z - a_p.position.z };
-					const float  n = std::sqrt(d.x * d.x + d.y * d.y + d.z * d.z);
-					return n > 1e-4f ? RE::NiPoint3{ d.x / n, d.y / n, d.z / n } : d;
-				};
-				const auto a = dir(*reported), b = dir(view);
-				wrongFrame = a.x * b.x + a.y * b.y + a.z * b.z < 0.94f;  // over 20 degrees apart
-			}
-			// Placed against the root as it's about to be (your view), not as it is on this frame
-			// (still pointing away): against that one, the 0.8.18 cover came out as two frames
-			// of ceiling once the game moved the root. Your own field of view, not the dialogue's.
-			if ((mode != 1 || wrongFrame) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, false, &view)) {
+			// The game's first first-person frame looks at the floor (all exits since 0.8.17's
+			// log). Covering it from this hook didn't reach the screen (0.8.18: two frames of
+			// ceiling; 0.9.0: the floor frame unchanged), so mode 1 leaves it; it's logged.
+			if (mode != 1 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
-				// 0.8.18 test: covering only this frame left two frames of ceiling in the clips:
-				// the cover has to be put back after the first-person camera's own first updates
-				// (ExitMaskEnd, on each of them), which a count of 1 never did.
-				g_exitCoverFrames = mode == 2 || wrongFrame ? 3 : 1;
-				if (mode == 1) {
-					REX::INFO("Exit: the game's first frame points away from your view; your view held over it for its first updates");
-				}
+				g_exitCoverFrames = mode == 2 ? 3 : 1;
 			}
 			return true;
 		}
@@ -3015,7 +3003,7 @@ namespace CCC
 				return;
 			}
 			if (--g_exitCoverFrames > 0 && camera && g_firstPersonView &&
-				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, false, &*g_firstPersonView)) {
+				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
 				return;  // keep covering
 			}
 			g_exitMasking = false;

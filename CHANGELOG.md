@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.1 - 2026-11-16
+
+### Changed
+- Conversations started in first person open on the NPC from just in front of your eyes,
+  as the game's own camera does, with you out of frame while your body is built; the
+  director's shots start with their next line or your turn. 0.8.15 to 0.9.0 held your own
+  view for that moment instead, and each clip showed a new flash from it (a zoom, frames
+  from inside your head, a frame of the game's camera slipping through, you popping in);
+  0.8.14 opened over your shoulder, with you popping in after a tenth of a second.
+
+### Fixed
+- First-person exits: the cover tried in 0.8.18 and 0.9.0 never reached the screen (two
+  frames of ceiling, then the game's floor frame unchanged); taken out. The one frame of
+  floor remains, as before 0.8.18, to be solved another way.
+
 ## 0.9.0 - 2026-11-16
 
 The start of 0.9.x, polish. Testing messages and the detailed log stay on until the last
