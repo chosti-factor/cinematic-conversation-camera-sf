@@ -192,8 +192,18 @@ How the camera starts and ends a conversation, frame by frame, with the measured
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Compatibility testing with popular UI mods.
   - If time allows: quest scenes recognised by their quest rather than the scene's name.
+  - Once feature complete, four passes, in this order:
+    1. Redundancy: code no longer in use and remnants of earlier versions taken out
+       (finished experiments, old exit covers, diagnostics that have served their purpose).
+    2. Debugging: looking for hidden bugs, such as a setting that doesn't do what the INI
+       says (`bEnabled=0` didn't turn the whole mod off until 0.9.11; `iMinLines` was
+       ignored until 0.9.8), and edge cases (loading or a menu mid-conversation, ships,
+       scenes, combat, quick conversations in a row).
+    3. Optimization: the cost of each frame and each scan measured, then made cheaper.
+    4. The INI and its defaults reviewed last, once the settings are final.
   - Last, just before 1.0: the log's testing diagnostics and the testing messages off by
-    default (they stay on until then, for testing).
+    default (they stay on until then, for testing), then a full test round on the release
+    candidate.
   - After 1.0: plants and other objects without collision (which the obstacle check can't
     see) in front of wide outdoor shots, and walls it passes through (beside Commander Tuala
     at the MAST, every check said clear); most settings also in the game's own Settings menu,

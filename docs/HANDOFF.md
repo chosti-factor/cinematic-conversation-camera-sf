@@ -170,6 +170,24 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   values, so presets of each setting; the INI and the SFSE Menu Framework page stay.
 - Done in 0.9.0: `iCloseUpDistance` removed; old INI names and `sPreset=Stardust` no
   longer read.
+- Final polish once feature complete (agreed 2026-11-17), in this order, each followed by a
+  build and a test round:
+  1. Redundancy pass: remove code no longer in use and remnants of earlier versions
+     (finished experiments such as the FOV experiment switch and exit modes 0-4 if 5 holds,
+     the exit value search and object dumps, test switches). First, so the later passes
+     review less code and dead paths can't hide bugs.
+  2. Debugging pass: every INI setting checked against what its comment says (bEnabled and
+     iMinLines were both wrong for a while); edge cases: a save loaded or a menu opened
+     mid-conversation, ships, scenes, combat, death, fast travel, conversations back to back,
+     the game paused; thread safety and lock order; anything that could crash.
+  3. Optimization pass: measure first (time spent in each hook per frame, per conversation,
+     with the debug log off); then the scans (nearby actors 10 times a second, bystanders 4),
+     per-frame string formatting and logging, allocations, obstacle casts per cut.
+     After debugging, so only correct code is tuned, and tuned code gets re-tested.
+  4. INI and defaults review: last, since the passes above may remove or rename settings;
+     comments, defaults, the _user.ini, the settings page matching the INI.
+  Then the very last step (testing messages and debug log off), then a full test round on
+  the release candidate.
 - 0.9.x order agreed 2026-11-16: seated conversations (start jitter, side-on framing, bar
   stool body), large speakers (Vasco), the SFSE Menu Framework page, UI-mod compatibility
   testing, then if time allows quest-scene recognition. The testing messages and the
