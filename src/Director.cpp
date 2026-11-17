@@ -137,6 +137,7 @@ namespace CCC::Director
 			bool                    intenseShown{ false };  // this line's emotion close-up was shown (to come back to after a reaction)
 			int                     serial{ 0 };            // the last line counter seen (0.8.3)
 			clock::time_point       lineAt{};               // when their current line started
+			bool                    opening{ false };       // the first shot from first person, you out of the picture (0.9.2)
 		} gp;
 
 		std::atomic<std::int64_t> g_emotionCutAt{ 0 };  // steady_clock ticks
@@ -597,6 +598,25 @@ namespace CCC::Director
 			return std::nullopt;
 		}
 
+		// A single of the speaker with no one else in the picture (no shoulder in the foreground,
+		// not the two of you): the conversation's first shot from first person, while your body
+		// is still being built (0.9.2).
+		bool CleanSingle(ShotType a_type)
+		{
+			switch (a_type) {
+			case ShotType::kCloseUp:
+			case ShotType::kThreeQuarterNpc:
+			case ShotType::kMediumNpc:
+			case ShotType::kCloseProfile:
+			case ShotType::kCloseLow:
+			case ShotType::kCloseHigh:
+			case ShotType::kMediumProfile:
+				return true;
+			default:
+				return false;
+			}
+		}
+
 		std::optional<ShotType> Pick(const Frame& a_frame)
 		{
 			std::vector<std::pair<ShotType, int>> pool;
@@ -606,6 +626,9 @@ namespace CCC::Director
 				if (g.current && type == *g.current) {
 					continue;  // a change of angle should change the angle
 				}
+				if (a_frame.openingSingle && !CleanSingle(type)) {
+					continue;
+				}
 				if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer) {
 					continue;  // only for the lines that call for one (0.8.15, as CCC)
 				}
@@ -613,6 +636,15 @@ namespace CCC::Director
 					const int weight = g.setups[i].weight;
 					pool.emplace_back(type, weight);
 					total += weight;
+				}
+			}
+			if (pool.empty() && a_frame.openingSingle) {
+				// The preset has no clean single of them that fits: its close-up anyway (drawn
+				// through the lens of its nearest angle), or a three-quarter.
+				for (const auto type : { ShotType::kCloseUp, ShotType::kThreeQuarterNpc, ShotType::kMediumNpc }) {
+					if (Placeable(type, a_frame)) {
+						return type;
+					}
 				}
 			}
 			if (pool.empty() && g.current && Usable(*g.current, a_frame)) {
@@ -1183,53 +1215,72 @@ namespace CCC::Director
 		// merchants too, shown on the plain shot of you otherwise).
 		// Your tagged choice's close-up too (0.8.17: the 0.8.16 test's persuasion was with a seated
 		// recruit, where it couldn't show: you don't speak, so it waited for an NPC line).
-		const bool playerClose = a_frame.playerCloseUp && !a_frame.npcTurn && (a_frame.npcTalking || a_frame.playerChoice);
-		if (playerClose) {
-			if (!gp.playerClose) {
-				gp.playerClose = true;
-				gp.shot.reset();
-				if (const auto shot = PlayerCloseShot(a_frame)) {
-					begin(*shot, a_frame.playerChoice ? "your tagged choice" : "reaction: your expression", false);
+		// From first person, while your body is built: their first shot is a single of them
+		// with you out of the picture (the plain shots have you in them), held for their turn
+		// (0.9.2).
+		if (gp.opening && !a_frame.npcTurn) {
+			gp.opening = false;
+			gp.shot.reset();
+		}
+		if (a_frame.openingSingle && a_frame.npcTurn && !gp.opening && !gp.shot) {
+			for (const auto type : { ShotType::kCloseUp, ShotType::kThreeQuarterNpc, ShotType::kMediumNpc }) {
+				if (Placeable(type, a_frame)) {
+					begin(type, "opening, you out of the picture", false);
+					gp.opening = gp.shot.has_value();
+					break;
 				}
-				LogSkipped();
 			}
-		} else {
-			if (gp.playerClose) {
-				gp.playerClose = false;
-				gp.shot.reset();
-			}
-			// A persuasion's answer gets its close-up whatever the preset's emotion close-ups (0.8.17:
-			// in Standard and Room, which have none, seated people never got one).
-			if (!a_frame.npcTalking || !a_frame.npcTurn || (EmotionCloseUps() == 0 && !a_frame.persuasionBeat)) {
-				if (gp.shot) {
-					REX::INFO("Director: emotion close-up over; back to the plain shot");
-				}
-				gp.shot.reset();
-				return std::nullopt;
-			}
-			if (started) {
-				gp.shot.reset();
-				gp.intenseShown = false;
-				if (a_frame.intenseLine || a_frame.persuasionBeat) {
-					if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
-						begin(*shot, a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up", true);
-						gp.intenseShown = a_frame.intenseLine;
+			LogSkipped();
+		}
+		if (!gp.opening) {
+			const bool playerClose = a_frame.playerCloseUp && !a_frame.npcTurn && (a_frame.npcTalking || a_frame.playerChoice);
+			if (playerClose) {
+				if (!gp.playerClose) {
+					gp.playerClose = true;
+					gp.shot.reset();
+					if (const auto shot = PlayerCloseShot(a_frame)) {
+						begin(*shot, a_frame.playerChoice ? "your tagged choice" : "reaction: your expression", false);
 					}
 					LogSkipped();
 				}
-			} else if (!gp.shot && a_frame.persuasionBeat) {
-				// The beat noticed a frame after the line started (0.8.17).
-				if (Placeable(ShotType::kCloseUp, a_frame)) {
-					begin(ShotType::kCloseUp, "persuasion beat", true);
+			} else {
+				if (gp.playerClose) {
+					gp.playerClose = false;
+					gp.shot.reset();
 				}
-				LogSkipped();
-			} else if (!gp.shot && gp.intenseShown && a_frame.intenseLine) {
-				// Back from a reaction that interrupted the emotion close-up (0.8.3).
-				if (const auto shot = IntenseShot(a_frame)) {
-					begin(*shot, "emotion close-up, back from the reaction", false);
+				// A persuasion's answer gets its close-up whatever the preset's emotion close-ups (0.8.17:
+				// in Standard and Room, which have none, seated people never got one).
+				if (!a_frame.npcTalking || !a_frame.npcTurn || (EmotionCloseUps() == 0 && !a_frame.persuasionBeat)) {
+					if (gp.shot) {
+						REX::INFO("Director: emotion close-up over; back to the plain shot");
+					}
+					gp.shot.reset();
+					return std::nullopt;
 				}
-				gp.intenseShown = false;
-				LogSkipped();
+				if (started) {
+					gp.shot.reset();
+					gp.intenseShown = false;
+					if (a_frame.intenseLine || a_frame.persuasionBeat) {
+						if (const auto shot = a_frame.persuasionBeat && Placeable(ShotType::kCloseUp, a_frame) ? std::optional<ShotType>{ ShotType::kCloseUp } : IntenseShot(a_frame)) {
+							begin(*shot, a_frame.persuasionBeat ? "persuasion beat" : "emotion close-up", true);
+							gp.intenseShown = a_frame.intenseLine;
+						}
+						LogSkipped();
+					}
+				} else if (!gp.shot && a_frame.persuasionBeat) {
+					// The beat noticed a frame after the line started (0.8.17).
+					if (Placeable(ShotType::kCloseUp, a_frame)) {
+						begin(ShotType::kCloseUp, "persuasion beat", true);
+					}
+					LogSkipped();
+				} else if (!gp.shot && gp.intenseShown && a_frame.intenseLine) {
+					// Back from a reaction that interrupted the emotion close-up (0.8.3).
+					if (const auto shot = IntenseShot(a_frame)) {
+						begin(*shot, "emotion close-up, back from the reaction", false);
+					}
+					gp.intenseShown = false;
+					LogSkipped();
+				}
 			}
 		}
 		if (!gp.shot) {

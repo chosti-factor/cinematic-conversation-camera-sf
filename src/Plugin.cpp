@@ -709,13 +709,14 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
-			// From first person, the conversation opens on the NPC from just in front of your
-			// eyes (as the game's own camera does), with you out of frame while your body is
-			// built; the director's shots start with their next line, or your turn. 0.8.15 held
-			// your own view instead, and the 0.8.15-0.9.0 clips showed what that cost: a zoom,
-			// frames from inside your head, a frame of the game's camera slipping through, you
-			// popping in. 0.8.14 opened over the shoulder, with you popping in after 0.1 s.
-			g_state.povNpcShot = g_lastGameplayFirstPerson;
+			// From first person, the conversation opens straight on the preset's first shot of
+			// them, as from third person, but one with no one else in the picture (a close-up, a
+			// three-quarter...), so your body is built off screen (0.9.2). 0.8.14 opened over your
+			// shoulder, with you popping in a tenth of a second later; 0.8.15-0.9.0 held your own
+			// view meanwhile (a zoom, frames from inside your head, a frame of the game's camera);
+			// 0.9.1 opened on a shot from your eyes, which looked like the game's own camera. The
+			// shot from your eyes is left to the older body method, the camera cycle.
+			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -2485,6 +2486,7 @@ namespace CCC
 				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
 				frame.playerChoice = g_state.choiceCloseUp;
 				frame.playerExtreme = g_state.choiceCloseUp && g_state.choiceExtreme;
+				frame.openingSingle = g_state.startedFirstPerson && !g_state.bodyReady;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;
 				frame.roomRise = g_state.roomRise;
@@ -2519,6 +2521,7 @@ namespace CCC
 				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
 				frame.playerChoice = g_state.choiceCloseUp;
 				frame.playerExtreme = g_state.choiceCloseUp && g_state.choiceExtreme;
+				frame.openingSingle = g_state.startedFirstPerson && !g_state.bodyReady;
 				frame.roomAngle = g_state.roomAngle;
 				frame.roomDistance = g_state.roomDistance;
 				frame.roomRise = g_state.roomRise;

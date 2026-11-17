@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.2 - 2026-11-16
+
+### Changed
+- Conversations started in first person open straight on the preset's first shot of the
+  NPC, as from third person, through its own lens: a single of them with no one else in
+  the picture (a close-up, a three-quarter or a medium; with merchants and seated people,
+  a close-up held for their turn), so your body is built off screen and never pops in.
+  0.9.1's opening from just in front of your eyes started cleanly but looked like the
+  game's own camera and set the wrong tone (0.9.1 test).
+
 ## 0.9.1 - 2026-11-16
 
 ### Changed

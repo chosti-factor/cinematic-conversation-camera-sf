@@ -21,6 +21,7 @@ namespace CCC::Director
 		bool         playerCloseUp{ false };   // this reaction is your emotion close-up, or you chose a tagged option (0.8.16)
 		bool         playerChoice{ false };    // ... the tagged option (0.8.16)
 		bool         playerExtreme{ false };   // ... as an extreme close-up, whatever the roll (0.8.16)
+		bool         openingSingle{ false };   // from first person, your body not built yet: their first shot leaves you out (0.9.2)
 		std::array<float, 3> roomAngle{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
 		std::array<float, 3> roomDistance{ 0.0f, 0.0f, 0.0f };  // room shots' space (Shots::Input)
 		float                roomRise{ 10.0f };
