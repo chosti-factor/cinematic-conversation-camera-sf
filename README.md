@@ -213,8 +213,10 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 Planned:
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
 - Objects the obstacle check can't see: plants and other things without collision in front of
-  shots (the Viewport bar's plant), and walls it passes through (beside Commander Tuala at the
-  MAST, every check said clear).
+  shots (the Viewport bar's plant), found by checking the bounding boxes of nearby objects
+  along the line from the camera to the face, as is already done for people standing in the
+  way; and walls it passes through (beside Commander Tuala at the MAST, every check said
+  clear).
 - More of the text of your lines for your face (and close-ups of you on strong ones): beyond
   the skill, background and trait tags and a question mark, clear cues in the wording, such
   as thanks, apologies, refusals, threats, jokes, condolences and goodbyes. High-confidence
@@ -227,10 +229,7 @@ Mulling (not decided):
   mirroring more). Open questions: mods that unlock every trait (many traits at once), which
   trait wins when several apply, and whether it should work only with the game's usual trait
   limits; it would need its own setting.
-- Plants and other objects without collision: checking the bounding boxes of nearby objects
-  along the line from the camera to the face, as is already done for people standing in the
-  way.
-- Walls the collision test passes through: a second check that the camera stands on walkable
+- For walls the collision test passes through: a second check that the camera stands on walkable
   floor (the navmesh, Starvegas's approach) connected to where the two of you stand. Looked at
   for 1.0 and not adopted for now: the collision test covers nearly every case, the floor
   check would turn down good spots (above a counter or a table), and reading the navmesh needs
