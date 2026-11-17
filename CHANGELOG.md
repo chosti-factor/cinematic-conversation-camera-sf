@@ -23,6 +23,10 @@ test build; "diagnostic" items only add information to the log for testing.
 - Close-ups over the plain shots (seated people, merchants) are drawn through the lens
   they're framed for (they used the general lens, a slightly different size).
 
+### Added
+- The previous game session's log is kept as `CinematicConversationCameraSF.prev.log`
+  (same folder) when the game starts, so a long test's log isn't lost to the next start.
+
 ### Fixed
 - First-person exits: the cover tried in 0.8.18 and 0.9.0 never reached the screen (two
   frames of ceiling, then the game's floor frame unchanged); taken out. The one frame of

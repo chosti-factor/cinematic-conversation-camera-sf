@@ -5612,8 +5612,28 @@ namespace CCC
 	}
 }
 
+namespace
+{
+	// The last session's log is kept as CinematicConversationCameraSF.prev.log before the new
+	// one starts (0.9.1: a long test's log was lost to the next game start). Before the log
+	// is opened, so nothing is logged here; any failure just skips it.
+	void KeepPreviousLog() noexcept
+	{
+		const auto logs = SFSE::log::log_directory();
+		if (!logs) {
+			return;
+		}
+		std::error_code ec;
+		const auto      log = *logs / L"CinematicConversationCameraSF.log";
+		if (std::filesystem::exists(log, ec) && std::filesystem::file_size(log, ec) > 0) {
+			std::filesystem::copy_file(log, *logs / L"CinematicConversationCameraSF.prev.log", std::filesystem::copy_options::overwrite_existing, ec);
+		}
+	}
+}
+
 SFSE_PLUGIN_PRELOAD(const SFSE::PreLoadInterface* a_sfse)
 {
+	KeepPreviousLog();
 	SFSE::Init(a_sfse, { .trampoline = true, .trampolineSize = 160 });
 	return true;
 }
