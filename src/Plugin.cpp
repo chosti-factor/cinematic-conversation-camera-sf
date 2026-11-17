@@ -398,6 +398,7 @@ namespace CCC
 		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
+		bool g_exitPendingThird = false;  // the pending exit (g_tpExitPending) is a third-person one (0.9.10)
 		float g_lastBuiltHead = 0.0f;  // your head above your feet when your full body was last built (0.9.9)
 		std::chrono::steady_clock::time_point g_lastBuiltAt{};  // and when it was last known built
 		// The conversation lens (see LensFor): kept on by the main thread while a conversation is
@@ -803,6 +804,21 @@ namespace CCC
 						REX::INFO("Exit: your third-person view drawn on the switch frame");
 					}
 				}
+				// First person, iExitMode 5 (0.9.10): the game's first first-person update was held
+				// back this frame with your view drawn, and the game's dialogue camera update ends the
+				// conversation on that same frame. Putting the render camera back here drew the
+				// game's dialogue camera on it (0.9.9 clips: one frame from your eyes through the
+				// conversation lens, which looked like your view zoomed in). Keep your view drawn
+				// until the first-person camera's own next update instead, as the third-person exit
+				// does.
+				if (!tpExit && g_state.startedFirstPerson && g_exitSkipped > 0 && g_firstPersonView) {
+					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_firstPersonView)) {
+						tpExit = true;
+						g_tpExitPending = true;
+						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
+					}
+				}
+				g_exitPendingThird = tpExit && !g_state.startedFirstPerson;
 				if (!tpExit) {
 					Camera::RestoreRender();
 				}
@@ -3075,7 +3091,7 @@ namespace CCC
 			// stood on its first update (vanilla: from your eyes; here from the game's conversation
 			// camera, about 2 m from the NPC: one frame close and from the side, 0.9.7 clips). Put
 			// the camera root on your third-person view first, so the ease starts where it ends.
-			if (Settings::Get().exitModeThird == 2 && g_thirdPersonView) {
+			if (g_exitPendingThird && Settings::Get().exitModeThird == 2 && g_thirdPersonView) {
 				if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::SetRootPose(camera->cameraRoot.get(), *g_thirdPersonView)) {
 					REX::INFO("Exit: camera root put on your third-person view before the third-person camera's first update");
 				}
@@ -3109,6 +3125,10 @@ namespace CCC
 				return false;
 			}
 			++g_exitSkipped;
+			// The conversation lens off before drawing (0.9.10: the game's lens update later in
+			// this frame would otherwise put it back on your view).
+			g_lensActive.store(false, std::memory_order_relaxed);
+			g_waitingLens.store(0.0f, std::memory_order_relaxed);
 			// 0.9.9: your own view, through your own lens, on the held-back frame. 0.9.8 kept the
 			// last shot, and the clips showed it a frame or two with you gone from it (your body
 			// is already the first-person one by then: that's why the frame is clean now).
@@ -5778,6 +5798,35 @@ namespace CCC
 				const auto       now = std::chrono::steady_clock::now();
 				auto*            camera = RE::PlayerCamera::GetSingleton();
 				const bool       repairing = g_repair.stage != RepairStage::kIdle;
+
+				// bEnabled=0 (0.9.10): the whole mod stands down, not only the conversation camera.
+				// Until now it only stopped the conversation shots; filming people talking, the
+				// nearby-people scans, the dialogue options, your face and the lens hook stayed on.
+				// The camera hooks stay installed (they can't be taken out while the game runs)
+				// but pass straight through: nothing in them acts without a conversation of ours.
+				// The INI is still read every couple of seconds, so bEnabled=1 brings it back.
+				if (!Settings::Get().enabled && !g_state.active && !g_needVisibilityRestore) {
+					static std::chrono::steady_clock::time_point nextReload{};
+					static bool loggedOff = false;
+					if (now >= nextReload) {
+						nextReload = now + 2s;
+						Settings::Get().Load();
+					}
+					g_lensActive.store(false, std::memory_order_relaxed);
+					g_waitingLens.store(0.0f, std::memory_order_relaxed);
+					if (FilmingActive()) {
+						StopFilming("the mod is off (bEnabled=0)");
+					}
+					if (g_blurRecordsChanged) {
+						PutBackBlurRecords();
+					}
+					Hud::Update(false, false, 0.05f);
+					if (!loggedOff) {
+						loggedOff = true;
+						REX::INFO("Off (bEnabled=0): the mod stands down until bEnabled=1");
+					}
+					return;
+				}
 
 				// Who's standing still near the conversation (bystanders the camera avoids).
 				{

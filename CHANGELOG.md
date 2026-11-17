@@ -4,6 +4,27 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.11 - 2026-11-17
+
+### Fixed
+- First-person exits (0.9.10 clips, all four exits): the frame after the held-back one still
+  showed the game's dialogue camera from your eyes through the conversation lens (it looked
+  like your view zoomed in). The game's dialogue camera update ends the conversation on the
+  held-back frame, and ending it put the render camera back to the game's dialogue camera.
+  Your view now stays drawn until the first-person camera's next update, and the lens goes off
+  before it's drawn.
+- `bEnabled=0` now turns the whole mod off, not only the conversation shots: filming people
+  talking, the nearby-people scans, the dialogue options and letterbox, your face, the blur
+  settings and the lens all stand down. The camera hooks stay installed (they can't be removed
+  while the game runs) but pass straight through. The INI is still read every couple of
+  seconds, so `bEnabled=1` brings it back. For a strict vanilla comparison, disable the mod in
+  the mod manager.
+
+### Known
+- First-person exits: one frame of the last shot with you already gone from it, just before
+  your view (your body is swapped back to the first-person one at the switch).
+- Third-person exits: one frame of the third-person camera close behind you as it eases out.
+
 ## 0.9.10 - 2026-11-17
 
 ### Fixed
