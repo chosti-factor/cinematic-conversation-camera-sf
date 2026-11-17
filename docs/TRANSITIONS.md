@@ -1,0 +1,207 @@
+# Starts and exits: how the camera is handled
+
+Technical reference for how a conversation's camera starts and ends, with the numbers
+measured in testing. Kept up to date with every build (last updated: 0.9.11, 2026-11-17).
+Version notes in brackets say when something was found or changed; the full story is in
+[CHANGELOG.md](../CHANGELOG.md).
+
+## The pieces
+
+### Camera modes (the game's camera states, as logged)
+
+| Mode | State |
+|---|---|
+| 0 | First person (also iron sights) |
+| 20 | Third person |
+| 17 | Dialogue (the game's conversation camera) |
+| 6 | Furniture (sitting) |
+| -1, -2 | Loading, menus |
+
+### Hooks
+
+- **Dialogue camera update:** the mod's shots are placed here, after the game's own update
+  each frame. This hook drives the whole conversation.
+- **First-person and third-person camera updates:** used only around exits, and for filming
+  people talking. Everything else in them passes straight through.
+- **Lens:** the three places that hand the field of view to the player camera's set-FOV
+  function (Address Library IDs 64682 +0xF43, 113316 +0x1FD and 113488 +0x498; set-FOV is
+  113443, which writes PlayerCamera +280 and the render frustum). While a conversation is
+  filmed, the value is swapped for the shot's lens. The game asks for 29.6 degrees
+  (`fDialogueCameraFailsafeFPFOV` = 30); gameplay is 94 degrees.
+
+### How a shot is drawn
+
+- **Render camera only.** The mod moves the render camera relative to the camera root (the
+  game's dialogue camera node). The root stays where the game puts it, so NPCs keep facing
+  you.
+- **Composition:** render camera world = local × parent (checked on the first frame of every
+  conversation).
+- **Lens on the render frustum:** right = tan(lens / 2), top = right / aspect.
+- **Frame timing (0.8.x–0.9.x):** the picture for a frame is largely set during the game's
+  own camera update. A write after that update may not reach that frame. So a cover drawn
+  after an update to hide that update's bad frame never works (0.8.18, 0.9.0, 0.9.7 all
+  failed). What does work: changing what the update starts from, or not running the update.
+
+## Starts
+
+### Frame 1: the game still reports its gameplay camera
+
+- **The switch:** on the conversation's first frame (rarely the first two or three), the game
+  still reports the gameplay camera's position, while the picture is drawn from where its
+  dialogue camera is about to be.
+- **How long:** one frame normally. Two or three on the first conversation after loading a
+  save (known: one frame from a different angle).
+- **The prediction:** the mod places the shot against where the dialogue camera will be.
+  Fitted from ten starts at 0.75–3.6 m, first and third person, seated, tall and raised NPCs
+  (0.9.5 test):
+  - **Position:** on the line from the NPC's head through your feet, **2.02 m from the NPC's
+    head**, and **0.07 m above it**. Your distance to them doesn't matter.
+  - **Shorter when blocked:** 1.76–1.84 m when something is in the way (a tall NPC, a
+    stool).
+  - **Aim:** **2.75 degrees below** the line from that spot to the NPC's head (measured
+    −2.7 to −2.8 in every start), and 0 degrees across.
+- **Learning from each start:**
+  - **Distance and height:** a quarter weight, only when within 0.12 m and 0.08 m of the
+    current value (a camera pulled in by something says nothing about the next start).
+  - **Aim:** a half weight, only within 20 degrees.
+- **Accuracy:** 0.9.6 test, every start within 4 cm and 0.1 degrees.
+- **Before 0.9.6:** an offset from your eyes, up to 1.9 m off when you stood close or far.
+- **First frames through the shot's lens (0.9.4):** while the game's frustum is still the
+  gameplay one, the render frustum is set from the shot's lens.
+- **Settings:** `iStartMode` (first person), `iStartModeThirdPerson`, both 1: the first shot,
+  placed against the prediction. 0 = your view first; 2 = your view, placed the same way.
+
+### From first person: your body
+
+- **Why:** the game shows only the first-person body (arms, no head), so the mod asks for a
+  model refresh while the dialogue camera is up, and the game builds the full body.
+  - The call: `Set3DUpdateFlag(63)`, `iBodyUpdateFlagsPlayer`.
+  - `iBodyRebuildMethodPlayer=1`, the direct method.
+- **When it counts as built:** sampled every 12 ms, three steady samples (head moved under
+  5 cm), and:
+  - head ≥ **1.58 m** above your feet (standing); or
+  - **seated:** the head started below 1.33 m (bar stool: 1.09 m first-person) and rose
+    more than 0.2 m (full body 1.55 m); or
+  - **picked up again (0.9.10):** within 5 s of your body last being built, at the same
+    height ± 0.08 m. For a conversation the mod ended and restarted, such as buying a drink,
+    which paused the game's dialogue camera for about a second.
+- **Timing:** usually built **109–145 ms** after the request. Asks again at 1.2 s, 1.5 s and
+  2.5 s if not. Falls back to the camera cycle at 2 s (4 s in a background scene).
+- **Meanwhile:**
+  - You're hidden.
+  - The opening shot is a clean single of the NPC: three-quarter, medium or medium profile;
+    in Close and Starborn, close-up or three-quarter, 50/50.
+  - You're shown only from the first cut after your body is built, never mid-shot (0.9.4).
+- **The camera cycle** (`iBodyRebuildMethodPlayer=0`, fallback): first person → third person
+  → dialogue camera. It shows on screen (0.9.7 test): two frames of a close-up of the NPC's
+  torso, then about 0.3 s of your own view. Not used by default.
+- **The rebuild's side effect at the exit:** see the first-person exit below.
+
+### From third person
+
+- **The opening:** placed against the prediction from frame 1 (`iStartModeThirdPerson=1`,
+  0.9.4).
+- **No close-ups** in the opening, except in Close and Starborn.
+
+### Shot choice at the start (all cases)
+
+- **Seated NPCs** (head under `fSeatedHeadHeight` = 1.35 m above their feet) and
+  **merchants** (vendor faction) get a plain over-the-shoulder shot instead of the shot
+  library.
+- **Seated NPC, you standing:** the over-the-shoulder stands 0.35 m behind, 0.6 m to the
+  side, 0.25 m lower (`fOverSeated*`).
+- **Starts are otherwise the same for standing, seated, merchant and bar-stool
+  conversations.**
+
+## During: the obstacle and bystander checks
+
+- **Obstacles:** the game's own sphere cast, 0.05 m wide (as the game's dialogue camera).
+  Plants and some props have no collision, so the cast can't see them (post-1.0).
+- **Bystanders:** people who haven't moved 0.25 m in 1.5 s (`fBystanderStill`), within 15 m.
+  One blocks a shot when either:
+  - their body (from 0.3 m above their feet to 0.2 m above their head) comes within 0.32 m
+    of the line from the subject to the camera; or
+  - they fill the picture: their middle within 1.7 m of the camera, or (0.9.10) their head
+    within 1.2 m, and within 0.30 rad (17 degrees) of the view axis. The head test is for
+    seated people, whose middle is out of the picture while their head is right in front of
+    the lens.
+- **When:** checked when a shot is chosen, not while it's held.
+
+## Exits
+
+### When the conversation ends
+
+- **The hold:** after the last line ("Speaker gone"), the game keeps its dialogue camera for
+  about **1.5 s** while the dialogue menu closes (letterbox and subtitles go away). The mod
+  holds the last shot through it, up to 3 s, until the game leaves its dialogue camera
+  (`fExitHoldSeconds` = 0.5 is the minimum).
+- **The mod also ends a conversation when:**
+  - the game leaves its dialogue camera, after 150 ms of grace for the first-person exit to
+    finish; or
+  - the dialogue camera stops updating for **250 ms** (a menu, such as the bar's drink).
+    When the camera comes back, a new conversation starts.
+
+### First person
+
+What happens on the switch:
+1. **The first first-person update after a conversation sets the camera's pitch to −68.13
+   degrees** (steeply up), but only when your full body was built for the conversation:
+   every exit with the direct rebuild, none with it off or with the camera cycle, none in
+   vanilla (0.9.7 tests).
+   - **The pitch fields:** FirstPersonState +C8 and +CC, in degrees (negative is up). The
+     update writes −68.13 there (−68.1265, a near-constant).
+   - **The entry flag** (+E0 = 1, +68 1.0 → 30) isn't the cause: clearing it changed nothing
+     (0.9.4).
+   - **Not stored anywhere:** the value wasn't found in the player camera, the camera states
+     or the player (0.9.7 search). Most likely it's computed from the third-person body's
+     pose.
+   - **The next update** puts your pitch back.
+2. **`iExitMode=5` (0.9.8, default):** that update is held back for one frame
+   (`iExitSkipFrames=1`; more doesn't help, since the conversation ends during that frame).
+   The update that's drawn then has your first-person body back. Measured: no steep-up frame
+   in any exit since.
+3. **On the held-back frame:**
+   - The conversation lens goes off (0.9.10).
+   - Your first-person view is drawn through the gameplay frustum (`ShowGameplayView`).
+4. **The game's dialogue camera update ends the conversation on that same frame.** Since
+   0.9.11, ending it keeps your view drawn and releases the render camera just before the
+   first-person camera's next update.
+   - **Before 0.9.11:** ending it restored the render camera, which drew one frame of the
+     game's dialogue camera from your eyes through the conversation lens (it looked like
+     your view zoomed in).
+5. **Known:** one frame of the last shot with you already gone from it, just before your view
+   (your body is swapped back at the switch). Proposed fix: end on a shot without you.
+
+Older modes:
+- **3:** the entry flag cleared, and the pitch and root put back after the update. That
+  doesn't reach the screen.
+- **4:** 3 plus your view drawn over the frame. Doesn't either.
+- **1:** nothing.
+- **0, 2:** older covers.
+
+### Third person
+
+- **The switch frame:** your saved third-person view is drawn through the gameplay frustum
+  (`iExitModeThirdPerson=1`, 0.9.4). The render camera goes back to the game just before the
+  third-person camera's own first update.
+- **Known: one frame** of the third-person camera close behind you (or to the side) as it
+  eases out to its distance.
+  - Vanilla has its own in-between frame: one from your eyes (0.9.7 test, but with the mod
+    loaded; to redo with it disabled in the mod manager).
+  - `iExitModeThirdPerson=2` (camera root put on your view first) didn't change it (0.9.8).
+
+## Off switch
+
+- **`bEnabled=0` (0.9.11):** the whole mod stands down: shots, filming, scans, dialogue
+  options and letterbox, face, blur, lens. The hooks stay installed but pass through. The INI
+  is still read every 2 s.
+- **Before 0.9.11:** it only stopped the shots.
+- **For a strict vanilla comparison,** disable the mod in the mod manager.
+
+## How exits and starts are checked
+
+- **Recording:** 60 fps clips.
+- **Finding the switches:** each frame's average brightness, looking for jumps.
+- **Checking:** strips of every frame around each start and exit, matched to the log by the
+  time between conversations.
+- **What to look for:** a frame that doesn't belong to either side of the cut.

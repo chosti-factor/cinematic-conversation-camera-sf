@@ -19,6 +19,9 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   history was re-authored this way on 2026-11-16, with the original dates kept.
 - Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change, and
   docs/EMOTIONS.md (the NPC expressions and your face's tables) with every build.
+- docs/TRANSITIONS.md, the technical reference for starts and exits (what the camera does on
+  each frame, the measured numbers, what was tried), is updated with every build (the
+  user's request, 2026-11-17). Read it before touching start or exit code.
 - A pure SFSE DLL, no .esp. Minor versions mark milestones (0.6 obstacle detection, 0.7 the
   interface, 0.8 room shots, the lens and filming people talking, 0.9 polish and
   optimization); 1.0 is the public beta.

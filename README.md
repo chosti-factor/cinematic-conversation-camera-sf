@@ -154,6 +154,8 @@ of your expressions.
 `iCameraSway` sets the sway for every preset instead of the preset's own (0 = tripod, 100 =
 fully handheld); `fConversationLens` sets one lens for every angle. Every preset's shots,
 shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
+How the camera starts and ends a conversation, frame by frame, with the measured numbers:
+[docs/TRANSITIONS.md](docs/TRANSITIONS.md).
 
 ### Differences from CCC, because of Starfield
 
