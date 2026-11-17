@@ -85,6 +85,10 @@ namespace CCC::Director
 	// An angle's lens in the preset in use (0.8.12): its own, CCC's, or the preset's one lens.
 	[[nodiscard]] float LensFor(Shots::ShotType a_type);
 
+	// A shot outside the director (the opening shot from your eyes, the plain shots): drawn
+	// through the lens of the preset's angle it's most like (0.9.1).
+	void UsePlainShotLens(Shots::ShotType a_like);
+
 	// Emotion close-ups and reaction shots in the preset in use (0.8.13): your setting, or the
 	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
 	[[nodiscard]] int  EmotionCloseUps();

@@ -14,6 +14,15 @@ test build; "diagnostic" items only add information to the log for testing.
   from inside your head, a frame of the game's camera slipping through, you popping in);
   0.8.14 opened over your shoulder, with you popping in after a tenth of a second.
 
+- Every shot is drawn through a lens from the preset, also shots the preset doesn't list:
+  the lens of the preset's nearest angle of the same person. The opening shot from your
+  eyes takes the preset's close-up lens (Standard 50, Close 50, Room 72, Frontier 45,
+  Starborn 45, Constellation 45, Nebula 50); the plain shots for seated people and merchants
+  their over-the-shoulder or three-quarter lens; a close-up in a preset without one, its
+  nearest single. Until now these fell back to one general lens per preset (45 or 37.5).
+- Close-ups over the plain shots (seated people, merchants) are drawn through the lens
+  they're framed for (they used the general lens, a slightly different size).
+
 ### Fixed
 - First-person exits: the cover tried in 0.8.18 and 0.9.0 never reached the screen (two
   frames of ceiling, then the game's floor frame unchanged); taken out. The one frame of

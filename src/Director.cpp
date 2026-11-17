@@ -3,6 +3,7 @@
 #include "Settings.h"
 
 #include <random>
+#include <span>
 
 // Shot choice ported from Cinematic Conversation Camera by hashhbbrown (src/Camera/
 // Director.cpp and Presets.cpp, GPL-3.0-or-later), reduced to what Starfield exposes.
@@ -328,6 +329,37 @@ namespace CCC::Director
 			}
 			for (const auto& e : a_entries) {
 				g.setups[static_cast<std::size_t>(e.type)] = Setup{ e.weight, e.move, e.amount, e.seconds, e.lens };
+			}
+		}
+
+		// Every angle gets a lens from the preset, also those the preset doesn't use (an
+		// emotion close-up in Room, the opening shot from your eyes, the plain shots for seated
+		// people and merchants): the lens of the preset's nearest angle of the same person, so
+		// each shot keeps the preset's feel (0.9.1; until then, one general lens per preset).
+		void FillMissingLenses()
+		{
+			using enum ShotType;
+			const auto lensOf = [](ShotType a_type) { return g.setups[static_cast<std::size_t>(a_type)].lens; };
+			for (std::size_t i = 0; i < kCount; ++i) {
+				auto& setup = g.setups[i];
+				if (setup.lens >= 10.0f) {
+					continue;
+				}
+				const auto type = static_cast<ShotType>(i);
+				static constexpr std::array kBoth{ kTwoShot, kProfile, kWide, kMaster, kDistant, kOverPlayerShoulder, kThreeQuarterNpc };
+				static constexpr std::array kNpcClose{ kCloseUp, kThreeQuarterNpc, kMediumNpc, kOverPlayerShoulder, kLongNpc, kDistant, kMaster };
+				static constexpr std::array kNpcOther{ kThreeQuarterNpc, kMediumNpc, kOverPlayerShoulder, kCloseUp, kLongNpc, kDistant, kMaster };
+				static constexpr std::array kYouClose{ kClosePlayer, kThreeQuarterPlayer, kMediumPlayer, kOverNpcShoulder, kLongPlayer, kDistant, kMaster };
+				static constexpr std::array kYouOther{ kThreeQuarterPlayer, kMediumPlayer, kOverNpcShoulder, kClosePlayer, kLongPlayer, kDistant, kMaster };
+				const std::span<const ShotType> order = Shots::Neutral(type) ? std::span<const ShotType>{ kBoth } :
+				                                        Shots::OnNpc(type)   ? (Shots::FollowsFace(type) ? std::span<const ShotType>{ kNpcClose } : std::span<const ShotType>{ kNpcOther }) :
+				                                                               (Shots::FollowsFace(type) ? std::span<const ShotType>{ kYouClose } : std::span<const ShotType>{ kYouOther });
+				for (const auto other : order) {
+					if (lensOf(other) >= 10.0f) {
+						setup.lens = lensOf(other);
+						break;
+					}
+				}
 			}
 		}
 
@@ -772,6 +804,7 @@ namespace CCC::Director
 				preset = "standard";
 			}
 			ApplyOverrides();
+			FillMissingLenses();
 			return preset;
 		}
 
@@ -1127,6 +1160,7 @@ namespace CCC::Director
 				return;
 			}
 			const auto clear = ClearanceFor(a_shot, a_frame, setup);
+			g_shotLens.store(setup.lens, std::memory_order_relaxed);  // drawn through its own lens too (0.9.1)
 			gp.shot = a_shot;
 			gp.cutAt = a_now;
 			++g.cuts;
@@ -1321,6 +1355,11 @@ namespace CCC::Director
 	{
 		const int mode = Settings::Get().reactionShots;
 		return mode >= 0 ? mode == 1 : !CccPreset();  // the preset's own: CCC's off (CCC's default), CCC SF's on
+	}
+
+	void UsePlainShotLens(Shots::ShotType a_like)
+	{
+		g_shotLens.store(g.setups[static_cast<std::size_t>(a_like)].lens, std::memory_order_relaxed);
 	}
 
 	float LensFor(Shots::ShotType a_type)

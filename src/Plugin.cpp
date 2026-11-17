@@ -2503,6 +2503,7 @@ namespace CCC
 				frame.npcSwayHead = npcSwayHead;
 				frame.playerSwayHead = playerSwayHead;
 				directed = Director::UpdatePlain(frame, now);
+				LensNow();
 			}
 			if (s.director && !waitingView && !pov && !g_state.plainShots) {
 				Director::Frame frame;
@@ -2557,6 +2558,14 @@ namespace CCC
 			// camera pulls it in; anything closer to the person in shot (a ladder in front of
 			// their face) swaps to the eye-line shot from just in front of the other one's eyes.
 			const bool plainPath = pose && !waitingView && !pov && !directed;
+			// Their lens: the preset's angle each is most like (0.9.1).
+			if (pov || plainPath) {
+				using enum Shots::ShotType;
+				const bool beside = nearSeated || s.shotStyle == 1 || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer);
+				Director::UsePlainShotLens(pov ? kCloseUp : subject == Subject::kNpc ? (beside ? kThreeQuarterNpc : kOverPlayerShoulder) :
+				                                                                     (beside ? kThreeQuarterPlayer : kOverNpcShoulder));
+				LensNow();
+			}
 			if (plainPath && s.obstacleCheck) {
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const bool  plainOverShoulder = !(nearSeated || s.shotStyle == 1 || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer));
