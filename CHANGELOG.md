@@ -4,6 +4,32 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.10 - 2026-11-17
+
+### Fixed
+- Someone sitting next to you could fill a shot with their head (0.9.8 test, the Viewport bar:
+  the person on the next stool's hair covered the opening shot of the bartender and the
+  shot of you over her shoulder). The check for bystanders in front of the camera measured
+  to the middle of their body, low and out of the picture for someone seated; it now also
+  measures to their head, and allows for hair above it.
+- A conversation that picks up again a moment after the last one (buying a drink paused the
+  game's conversation camera for a second, so the mod ended it and started a new one) began
+  with your full body already built, seated at 1.55 m: it was never taken as built, so you
+  were hidden and the game was asked to rebuild it twice more. Your last built height,
+  within the last few seconds, counts as built now.
+
+### Changed
+- Third-person exits: `iExitModeThirdPerson` back to 1. 2 (0.9.8) didn't remove the one frame
+  of the third-person camera easing in (it came from behind instead of the side); vanilla
+  has the same frame.
+
+### Confirmed (0.9.8 clips)
+- First-person exits: the 0.9.8 clips with seated people show the same two things 0.9.9
+  fixes (a frame of the last shot without you, then a frame through the conversation lens).
+- Seated people from first and third person: framing fine; sitting down and standing up
+  untouched by the mod. Shots of you through a plant at the bar: plants have no collision,
+  so the obstacle check can't see them (post-1.0).
+
 ## 0.9.9 - 2026-11-17
 
 ### Fixed

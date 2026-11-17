@@ -398,6 +398,8 @@ namespace CCC
 		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
+		float g_lastBuiltHead = 0.0f;  // your head above your feet when your full body was last built (0.9.9)
+		std::chrono::steady_clock::time_point g_lastBuiltAt{};  // and when it was last known built
 		// The conversation lens (see LensFor): kept on by the main thread while a conversation is
 		// filmed; turned off at once by End() too (0.9.9).
 		std::atomic<bool>  g_lensActive{ false };
@@ -780,6 +782,9 @@ namespace CCC
 						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
+				if (g_state.startedFirstPerson && g_state.bodyReady) {
+					g_lastBuiltAt = std::chrono::steady_clock::now();  // the body was still built when it ended (0.9.9)
+				}
 				// 0.9.9: the conversation lens goes off now, not on the main thread's next tick: the
 				// 0.9.8 clips showed the first first-person frame after an exit drawn through it
 				// (your view, zoomed in) when the game's first update came before that tick.
@@ -1379,7 +1384,7 @@ namespace CCC
 			}
 			float closest = -1.0f;
 			for (const auto& p : people) {
-				const RE::NiPoint3 top{ p.head.x, p.head.y, p.head.z + 0.12f };
+				const RE::NiPoint3 top{ p.head.x, p.head.y, p.head.z + 0.2f };  // 0.9.9: hair (was 0.12)
 				const RE::NiPoint3 bottom{ p.feet.x, p.feet.y, p.feet.z + 0.3f };
 				// Along the line from the subject, between them and the camera?
 				const RE::NiPoint3 mid{ (top.x + bottom.x) * 0.5f, (top.y + bottom.y) * 0.5f, (top.z + bottom.z) * 0.5f };
@@ -1395,10 +1400,18 @@ namespace CCC
 				} else {
 					// Or close enough to the camera to fill most of the picture (the lens is about
 					// 30 degrees wide: someone 0.6 m wide within 1.7 m of it takes up most of it).
-					const RE::NiPoint3 toMid{ mid.x - a_camera.x, mid.y - a_camera.y, mid.z - a_camera.z };
-					const float        d = std::sqrt(toMid.x * toMid.x + toMid.y * toMid.y + toMid.z * toMid.z);
-					const float        cosine = d > 1e-3f ? -(toMid.x * a_dir.x + toMid.y * a_dir.y + toMid.z * a_dir.z) / d : 0.0f;
-					blocks = d < 1.7f && cosine > std::cos(0.30f);
+					// 0.9.9: measured to their head as well as their middle. A seated bystander's
+					// middle is low, well out of the picture, while their head sits right in front
+					// of a camera at head height (0.9.8 test, the Viewport bar: the person on the
+					// next stool filled two shots with her hair; the line to the bartender passed
+					// just over her head).
+					const auto fills = [&](const RE::NiPoint3& a_point, float a_reach) {
+						const RE::NiPoint3 to{ a_point.x - a_camera.x, a_point.y - a_camera.y, a_point.z - a_camera.z };
+						const float        d = std::sqrt(to.x * to.x + to.y * to.y + to.z * to.z);
+						const float        cosine = d > 1e-3f ? -(to.x * a_dir.x + to.y * a_dir.y + to.z * a_dir.z) / d : 0.0f;
+						return d < a_reach && cosine > std::cos(0.30f);
+					};
+					blocks = fills(mid, 1.7f) || fills(p.head, 1.2f);
 				}
 				const float at = (std::max)(0.0f, along - 0.35f);  // just short of their body
 				if (blocks && (closest < 0.0f || at < closest)) {
@@ -3665,7 +3678,15 @@ namespace CCC
 							// so the body was never taken as built and you stayed hidden. Sitting, the
 							// first-person head starts well below standing height; built, it rises.
 							const bool  seated = g_state.directStartHead > 0.3f && g_state.directStartHead < kStandingHeadHeight - 0.25f;
-							const bool  standing = height >= kStandingHeadHeight || (seated && height > g_state.directStartHead + 0.2f && height < 2.2f);
+							// 0.9.9: a conversation that picks up again a moment after the last (0.9.8
+							// test, the Viewport bar: buying a drink paused the game's conversation
+							// camera for a second, so the mod ended it and started a new one) starts
+							// with the full body already built, seated at 1.55 m: never taken as built,
+							// so you were hidden and the game asked twice more. Your last built
+							// height, within the last few seconds, counts as built.
+							const bool  rebuiltJustNow = g_lastBuiltHead > 0.3f && std::chrono::steady_clock::now() - g_lastBuiltAt < 5s &&
+							                             std::abs(height - g_lastBuiltHead) < 0.08f;
+							const bool  standing = height >= kStandingHeadHeight || (seated && height > g_state.directStartHead + 0.2f && height < 2.2f) || rebuiltJustNow;
 							g_state.directStable = still && standing ? g_state.directStable + 1 : 0;
 						}
 						g_state.directLastHead = head;
@@ -3673,6 +3694,8 @@ namespace CCC
 					const auto waited = std::chrono::duration_cast<std::chrono::milliseconds>(a_now - g_state.directAt).count();
 					if (g_state.directStable >= 3) {
 						REX::INFO("Body rebuild (direct): full body ready after {} ms (head {:.2f} m above feet)", waited, PlayerHeadAboveFeet());
+						g_lastBuiltHead = PlayerHeadAboveFeet();
+						g_lastBuiltAt = std::chrono::steady_clock::now();
 						g_state.needsBodyRepair = false;
 						g_state.bodyReady = true;
 						g_state.bodyReadyAt = a_now;
