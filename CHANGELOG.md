@@ -14,6 +14,9 @@ test build; "diagnostic" items only add information to the log for testing.
   angle, half the time each; with merchants and seated people, held for their turn), so
   your body is built off screen and never pops in. The openings, preset by preset:
   docs/PRESETS.md.
+- A conversation's first shot, from third person too, is never a close-up: they're kept for
+  emphasis, and opening on one every time wore them out. Close and Starborn excepted (their
+  close-ups are their main shot); a strong first line's emotion close-up still can.
   0.9.1's opening from just in front of your eyes started cleanly but looked like the
   game's own camera and set the wrong tone (0.9.1 test).
 

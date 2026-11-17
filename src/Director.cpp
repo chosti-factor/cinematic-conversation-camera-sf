@@ -642,12 +642,19 @@ namespace CCC::Director
 			}
 			std::vector<std::pair<ShotType, int>> pool;
 			int                                   total = 0;
+			// The conversation's first shot is never a close-up (0.9.2: they're for emphasis;
+			// opening on one wears them out), except in Close and Starborn, where they're the
+			// main shot. (A strong first line's emotion close-up still can, as any line's.)
+			const bool noCloseUp = g.cuts == 0 && !PresetIs("close") && !PresetIs("starborn");
 			for (std::size_t i = 0; i < kCount; ++i) {
 				const auto type = static_cast<ShotType>(i);
 				if (g.current && type == *g.current) {
 					continue;  // a change of angle should change the angle
 				}
 				if (a_frame.openingSingle && !CleanSingle(type)) {
+					continue;
+				}
+				if (noCloseUp && Shots::FollowsFace(type)) {
 					continue;
 				}
 				if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer) {

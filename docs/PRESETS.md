@@ -41,7 +41,7 @@ Last updated: 0.9.2 (2026-11-16).
 A conversation started in first person opens on a shot of the NPC alone, so your body is
 built off screen (it takes about a tenth of a second) and never pops into the picture.
 Close-ups are kept for emphasis, except in Close and Starborn, where they're the main
-shot. Third-person conversations can open on any of the preset's shots.
+shot.
 
 | Preset | Openings | Shots (share, lens) |
 | --- | --- | --- |
@@ -60,6 +60,24 @@ shot. Third-person conversations can open on any of the preset's shots.
 - Merchants and seated people: the three-quarter (Close and Starborn: the close-up or the
   three-quarter), or the medium if it's blocked; held for their turn.
 - Where walls block the preset's openings, the other one, or a close-up as a last resort.
+
+## Opening shots from third person
+
+Your body is already there, so a third-person conversation can open on any of the preset's
+shots (over the shoulder, two-shot, room shots...), by the preset's weights, except a
+close-up: close-ups are kept for emphasis. Close and Starborn can open on their close-ups,
+their main shot. As from first person, a strong first line's emotion close-up can open
+instead.
+
+| Preset | Openings from third person |
+| --- | --- |
+| Standard | Any of its shots but the close-ups |
+| Close | Any of its shots but the extreme close-ups (never an opening, in any preset) |
+| Room | Any of its shots (it has no close-ups) |
+| Frontier | Any of its shots but the close-ups |
+| Starborn | Any of its shots but the extreme close-ups |
+| Constellation | Any of its shots but the close-ups |
+| Nebula | Any of its shots but the close-ups (its close profile, low and high close-ups too) |
 
 ## Shot by shot
 
