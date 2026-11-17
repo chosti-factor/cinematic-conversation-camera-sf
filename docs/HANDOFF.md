@@ -1,7 +1,7 @@
 # Handoff notes
 
 For picking this project up in a new Claude session (for example one linked to the gaming PC).
-Updated at milestones (each minor version), not every build. No personal folder paths here:
+Updated at milestones (each minor version) and whenever a test changes what we know. No personal folder paths here:
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
@@ -17,11 +17,22 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   `git config user.email 55879567+chosti-factor@users.noreply.github.com` (GitHub's private
   no-reply address). Claude is credited in each message's `Co-authored-by` line. All
   history was re-authored this way on 2026-11-16, with the original dates kept.
-- Keep CHANGELOG.md, README.md and CREDITS.md up to date with every change, and
-  docs/EMOTIONS.md (the NPC expressions and your face's tables) with every build.
-- docs/TRANSITIONS.md, the technical reference for starts and exits (what the camera does on
-  each frame, the measured numbers, what was tried), is updated with every build (the
-  user's request, 2026-11-17). Read it before touching start or exit code.
+- Documents (agreed 2026-11-17), updated in the same commit as the change they describe:
+  - CHANGELOG.md: every build.
+  - README.md: every build that changes what the mod does or its settings.
+  - CREDITS.md: every build that brings in someone's code or idea, or changes what a
+    credited part does; the line counts at milestones.
+  - docs/TRANSITIONS.md (the technical reference for starts and exits: what the camera does
+    on each frame, the measured numbers, what was tried): every build that touches a start
+    or an exit, without exception. Read it before touching start or exit code.
+  - docs/PRESETS.md: every build that touches presets, shots, lenses, moves or cutting.
+  - docs/EMOTIONS.md: every build that touches line expressions, emotion close-ups or your
+    face.
+  - docs/REACTIONS.md: every build that touches reaction shots or the persuasion beat.
+  - docs/HANDOFF.md: at milestones, and whenever a test changes what we know.
+  - Each document has a "Last updated: version" line near the top; bump it whenever the
+    document is checked against a build, even with nothing to change, so one that fell
+    behind is easy to spot.
 - A pure SFSE DLL, no .esp. Minor versions mark milestones (0.6 obstacle detection, 0.7 the
   interface, 0.8 room shots, the lens and filming people talking, 0.9 polish and
   optimization); 1.0 is the public beta.

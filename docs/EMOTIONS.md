@@ -2,7 +2,9 @@
 
 Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
-character's face. Kept up to date with every build.
+character's face. Kept up to date with every build that changes them.
+
+Last updated: 0.9.11 (2026-11-17; no change to expressions or close-ups since 0.9.0).
 
 ## The rules now (0.9.0)
 

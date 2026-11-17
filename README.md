@@ -18,6 +18,8 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
+Last updated: 0.9.11 (2026-11-17).
+
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ### From CCC

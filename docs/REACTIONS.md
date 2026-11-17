@@ -8,7 +8,7 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.9.0 (2026-11-16). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.9.11 (2026-11-17; no change to reactions since 0.9.0). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
