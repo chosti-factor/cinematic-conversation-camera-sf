@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.6 - 2026-11-16
+
+### Fixed
+- Starts, first frame: the 0.9.5 guess at where the game's dialogue camera would be was
+  still off by up to 1.9 m when you stood close or far (0.9.5 distance test, ten starts).
+  The test showed the rule the game uses: the camera sits on the line from the NPC's head
+  through you, 2.02 m from the NPC's head (a little less when something is in the way) and
+  0.07 m above it, whatever the distance between you; it looks 2.75 degrees below the line
+  to the head. The first frame is now placed with that rule, from first and third person,
+  for seated, tall and raised NPCs too, and the values keep adjusting from each start.
+
+### Diagnostic
+- The first-person exit in the 0.9.5 log: right after the camera's first update its pitch
+  fields were put back (from -68.13 to where you were looking) and the camera root reported
+  your view on that frame. To confirm in a clip.
+
 ## 0.9.5 - 2026-11-16
 
 ### Fixed

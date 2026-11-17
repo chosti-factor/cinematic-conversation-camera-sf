@@ -397,15 +397,14 @@ namespace CCC
 		bool g_exitMasking = false;
 		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
-		// Where the game's dialogue camera sits relative to the player's eyes, as measured on
-		// earlier conversations: metres back from the NPC, and up. Lateral varies, so 0.
-		float g_learnedBack = 0.15f;  // 0.9.4 logs: 0.11-0.14
-		float g_learnedUp = 0.01f;
-		float g_learnedLateral = 0.05f;  // size of the sideways offset (0.9.4 logs: 0.00-0.02)
+		// Where the game's dialogue camera sits, as measured on earlier conversations (start
+		// at the 0.9.5 test values, then learned from each start).
+		float g_learnedDistance = 2.02f;  // from the NPC's head, towards your feet
+		float g_learnedUp = 0.07f;        // above the NPC's head
 		// Where the dialogue camera looks compared with straight at the NPC's head (radians).
 		// 0.9.5: the 0.9.4 clips showed the first frame tilted and shifted; the game's
-		// dialogue camera looks about 4.8 degrees below the head, not at it.
-		float g_learnedPitch = -0.084f;
+		// dialogue camera looks 2.75 degrees below the line to the head, not at it.
+		float g_learnedPitch = -0.048f;  // 0.9.5 test: -2.7 to -2.8 degrees in all ten starts
 		float g_learnedYaw = 0.0f;
 
 		// A point 5 m along the predicted dialogue camera's aim: towards the NPC's head, turned
@@ -422,7 +421,6 @@ namespace CCC
 			const float c = std::cos(pitch);
 			return { a_from.x + 5.0f * c * std::cos(yaw), a_from.y + 5.0f * c * std::sin(yaw), a_from.z + 5.0f * std::sin(pitch) };
 		}
-		int   g_lateralVotes = 2;        // > = 0: offset to the negative side (seen most often)
 
 		// Diagnostic for the frames right after we ask for the dialogue camera back: where the
 	// game's camera really is, against where we assumed it would be.
@@ -2462,19 +2460,22 @@ namespace CCC
 					const float dx = reported->position.x - g.position.x, dy = reported->position.y - g.position.y, dz = reported->position.z - g.position.z;
 					stale = dx * dx + dy * dy + dz * dz < 0.03f * 0.03f;
 				}
-				RE::NiPoint3 eye = g_state.startedFirstPerson ? gameplayView->position : RE::NiPoint3{ playerHead->x, playerHead->y, playerHead->z + 0.06f };
-				float        hx = npcHead->x - eye.x, hy = npcHead->y - eye.y;
-				const float  hl = std::sqrt(hx * hx + hy * hy);
+				// Where the game puts its dialogue camera (0.9.5 test, ten starts at 0.75-3.6 m, in
+				// first and third person, a seated, a tall and a raised NPC): on the line from the
+				// NPC's head through your feet, a fixed distance from the NPC's head (2.02 m, or
+				// less when something is in the way), 0.07 m above it, whatever the distance
+				// between you. It isn't tied to your eyes: the old offset from them was up to 1.9 m
+				// off when you stood close or far.
+				const auto  feet = player->GetPosition();
+				float       hx = feet.x - npcHead->x, hy = feet.y - npcHead->y;
+				const float hl = std::sqrt(hx * hx + hy * hy);
 				if (hl > 1e-3f) {
 					hx /= hl;
 					hy /= hl;
 				}
 				if (stale) {
 					Camera::Pose p;
-					// Sideways the game picks either side; in testing it was the same side about
-					// four times in five, so predict the side seen most often.
-					const float lateral = g_lateralVotes >= 0 ? -std::abs(g_learnedLateral) : std::abs(g_learnedLateral);
-					p.position = { eye.x - hx * g_learnedBack + hy * lateral, eye.y - hy * g_learnedBack - hx * lateral, eye.z + g_learnedUp };
+					p.position = { npcHead->x + hx * g_learnedDistance, npcHead->y + hy * g_learnedDistance, npcHead->z + g_learnedUp };
 					p.lookAt = PredictedAim(p.position, *npcHead);
 					startRoot = p;
 					if (s.debugLog) {
@@ -2484,20 +2485,16 @@ namespace CCC
 				} else {
 					g_state.startRootCaughtUp = true;
 					if (reported && g_state.framesThisConversation > 1) {
-						const float ox = reported->position.x - eye.x, oy = reported->position.y - eye.y, oz = reported->position.z - eye.z;
-						const float back = -(ox * hx + oy * hy);
+						const float ox = reported->position.x - npcHead->x, oy = reported->position.y - npcHead->y, oz = reported->position.z - npcHead->z;
+						const float along = ox * hx + oy * hy;
 						const float lateral = ox * hy - oy * hx;
-						REX::INFO("Start frame {}: game now reports its dialogue camera: {:.2f} m back from the eyes, {:+.2f} m sideways, {:+.2f} m up (prediction used {:.2f} back, {:+.2f} up)",
-							g_state.framesThisConversation, back, lateral, oz, g_learnedBack, g_learnedUp);
-						if (back > 0.1f && back < 0.6f && std::abs(oz) < 0.3f && std::abs(lateral) < 0.4f) {
-							g_learnedBack = 0.5f * g_learnedBack + 0.5f * back;
-							g_learnedUp = 0.5f * g_learnedUp + 0.5f * oz;
-							// 0.9.5: learn the size every time; it only ever grew before (the 0.9.4
-							// log had it near 0 while the prediction kept 0.18 m to the side).
-							g_learnedLateral = 0.5f * std::abs(g_learnedLateral) + 0.5f * std::abs(lateral);
-							if (std::abs(lateral) > 0.05f) {
-								g_lateralVotes = std::clamp(g_lateralVotes + (lateral < 0.0f ? 1 : -1), -5, 5);
-							}
+						REX::INFO("Start frame {}: game now reports its dialogue camera: {:.2f} m from the NPC's head towards you, {:+.2f} m sideways, {:+.2f} m above it (prediction used {:.2f}, {:+.2f}); you were {:.2f} m apart",
+							g_state.framesThisConversation, along, lateral, oz, g_learnedDistance, g_learnedUp, hl);
+						// Only learn from starts close to the usual spot: a camera pulled in by
+						// something in the way says nothing about the next one.
+						if (std::abs(along - g_learnedDistance) < 0.12f && std::abs(oz - g_learnedUp) < 0.08f) {
+							g_learnedDistance = 0.75f * g_learnedDistance + 0.25f * along;
+							g_learnedUp = 0.75f * g_learnedUp + 0.25f * oz;
 						}
 						// Where it looks, compared with straight at the NPC's head from that spot.
 						const auto& r = *reported;
