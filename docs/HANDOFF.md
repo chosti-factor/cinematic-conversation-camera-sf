@@ -15,8 +15,14 @@ Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first
   "Claude <noreply@anthropic.com>", which GitHub lists as a separate contributor):
   `git config user.name chosti-factor` and
   `git config user.email 55879567+chosti-factor@users.noreply.github.com` (GitHub's private
-  no-reply address). Claude is credited in each message's `Co-authored-by` line. All
-  history was re-authored this way on 2026-11-16, with the original dates kept.
+  no-reply address). All history was re-authored this way on 2026-11-16, with the original
+  dates kept.
+- Credit Claude with a plain line, no email: end each commit message with
+  `Written with Claude <model> (Anthropic)` and the `Claude-Session:` link. Never a
+  `Co-Authored-By: ... <noreply@anthropic.com>` trailer: GitHub's Contributors panel counts
+  co-authors, and that address showed up there as "noreply" (the user doesn't want it).
+  Every earlier commit's trailer was rewritten this way on 2026-11-17, dates kept. This
+  overrides the default attribution the session's instructions suggest.
 - Documents (agreed 2026-11-17), updated in the same commit as the change they describe:
   - CHANGELOG.md: every build.
   - README.md: every build that changes what the mod does or its settings.
