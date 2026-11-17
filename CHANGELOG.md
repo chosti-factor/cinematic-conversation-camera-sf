@@ -14,6 +14,16 @@ test build; "diagnostic" items only add information to the log for testing.
   0.9.1's opening from just in front of your eyes started cleanly but looked like the
   game's own camera and set the wrong tone (0.9.1 test).
 
+### Fixed
+- First-person exits, a third try at the frame of floor: the picture of the first
+  first-person frame is taken during the game's own update, before anything this mod does
+  after it, so covering it afterwards (0.8.18, 0.9.0) never reached the screen. Now, just
+  before that update, your pitch is put back to where you were looking when the
+  conversation started, if it changed meanwhile.
+
+### Diagnostic
+- The exit logs your angles and the camera's aim just before that first update.
+
 ## 0.9.1 - 2026-11-16
 
 ### Changed

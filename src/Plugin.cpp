@@ -167,6 +167,8 @@ namespace CCC
 			std::chrono::steady_clock::time_point npcTalkStart{};
 			bool                                  loggedReturnPose{ false };
 			bool                                  holdingExit{ false };
+			RE::NiPoint3                          startAngle{};      // your angles (pitch, roll, yaw) when the conversation started (0.9.2)
+			bool                                  startAngleKnown{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
 		} g_state;
 
@@ -709,6 +711,10 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
+			if (auto* player = RE::PlayerCharacter::GetSingleton()) {
+				g_state.startAngle = player->GetAngle();
+				g_state.startAngleKnown = true;
+			}
 			// From first person, the conversation opens straight on the preset's first shot of
 			// them, as from third person, but one with no one else in the picture (a close-up, a
 			// three-quarter...), so your body is built off screen (0.9.2). 0.8.14 opened over your
@@ -2951,6 +2957,39 @@ namespace CCC
 				[&] { float f = 0.0f; SafeCopy(&f, reinterpret_cast<std::uint8_t*>(a_camera) + kPlayerCameraFovOffset, sizeof(float)); return f; }());
 		}
 
+		// The exit's first first-person update, before the game runs it (0.9.2). Its first frame
+		// has looked at the floor in every exit since 0.8.17's log, and covering it afterwards
+		// never reached the screen (0.8.18, 0.9.0): the picture is taken during the game's own
+		// update. If your pitch changed during the conversation, put it back first, so that
+		// update starts from where you were looking; log what it was either way.
+		void BeforeExitUpdate()
+		{
+			if (!g_hooksSafe) {
+				return;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || !g_state.active || !g_state.startedFirstPerson || !g_state.holdingExit || !g_state.startAngleKnown) {
+				return;
+			}
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player) {
+				return;
+			}
+			const auto now = player->GetAngle();
+			const bool restore = std::abs(now.x - g_state.startAngle.x) > 0.05f && std::isfinite(g_state.startAngle.x);
+			REX::INFO("Exit: your angles before the first first-person update: pitch {:.3f} (was {:.3f} when it started), yaw {:.3f} (was {:.3f}){}",
+				now.x, g_state.startAngle.x, now.z, g_state.startAngle.z, restore ? "; pitch put back" : "");
+			if (restore) {
+				player->data.angle.x = g_state.startAngle.x;
+			}
+			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
+				if (const auto root = Camera::PoseOf(camera->cameraRoot.get())) {
+					const RE::NiPoint3 d{ root->lookAt.x - root->position.x, root->lookAt.y - root->position.y, root->lookAt.z - root->position.z };
+					REX::INFO("Exit: camera root before that update: aim ({:.2f} {:.2f} {:.2f})", d.x / 5.0f, d.y / 5.0f, d.z / 5.0f);
+				}
+			}
+		}
+
 		bool ExitToFirstPerson()
 		{
 			if (!g_hooksSafe) {
@@ -3027,6 +3066,7 @@ namespace CCC
 		{
 			static void Thunk(void* a_state, void* a_arg)
 			{
+				BeforeExitUpdate();
 				Hook(a_state, a_arg);
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
