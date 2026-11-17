@@ -8,9 +8,11 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ### Changed
 - Conversations started in first person open straight on the preset's first shot of the
-  NPC, as from third person, through its own lens: a single of them with no one else in
-  the picture (a close-up, a three-quarter or a medium; with merchants and seated people,
-  a close-up held for their turn), so your body is built off screen and never pops in.
+  NPC, as from third person, through its own lens: a three-quarter or medium shot of them
+  with no one else in the picture (close-ups are kept for emphasis; in Close and Starborn,
+  which have neither, a three-quarter through the lens of their nearest angle; with
+  merchants and seated people, held for their turn), so your body is built off screen and
+  never pops in.
   0.9.1's opening from just in front of your eyes started cleanly but looked like the
   game's own camera and set the wrong tone (0.9.1 test).
 

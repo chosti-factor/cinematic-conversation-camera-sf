@@ -599,17 +599,14 @@ namespace CCC::Director
 		}
 
 		// A single of the speaker with no one else in the picture (no shoulder in the foreground,
-		// not the two of you): the conversation's first shot from first person, while your body
-		// is still being built (0.9.2).
+		// not the two of you), and not a close-up (they're for emphasis; opening on one every
+		// time would wear them out): the conversation's first shot from first person, while
+		// your body is still being built (0.9.2).
 		bool CleanSingle(ShotType a_type)
 		{
 			switch (a_type) {
-			case ShotType::kCloseUp:
 			case ShotType::kThreeQuarterNpc:
 			case ShotType::kMediumNpc:
-			case ShotType::kCloseProfile:
-			case ShotType::kCloseLow:
-			case ShotType::kCloseHigh:
 			case ShotType::kMediumProfile:
 				return true;
 			default:
@@ -639,9 +636,10 @@ namespace CCC::Director
 				}
 			}
 			if (pool.empty() && a_frame.openingSingle) {
-				// The preset has no clean single of them that fits: its close-up anyway (drawn
-				// through the lens of its nearest angle), or a three-quarter.
-				for (const auto type : { ShotType::kCloseUp, ShotType::kThreeQuarterNpc, ShotType::kMediumNpc }) {
+				// The preset has no three-quarter or medium of them that fits (Close, Starborn): one
+				// anyway, through the lens of the preset's nearest angle; a close-up only if
+				// nothing else can be placed.
+				for (const auto type : { ShotType::kThreeQuarterNpc, ShotType::kMediumNpc, ShotType::kCloseUp }) {
 					if (Placeable(type, a_frame)) {
 						return type;
 					}
@@ -1185,8 +1183,22 @@ namespace CCC::Director
 		gp.serial = a_frame.npcLineSerial;
 		gp.wasTalking = a_frame.npcTalking;
 		// Start a close-up over the plain shot: solve it once, hold its angle.
+		// The opening single moves as the preset moves that angle (locked if the preset doesn't
+		// use it); the close-ups push in as emotion close-ups do.
+		const auto plainSetup = [&](ShotType a_shot) {
+			if (!gp.opening && !(a_frame.openingSingle && a_frame.npcTurn && !gp.shot)) {
+				return IntenseSetup(a_shot);
+			}
+			auto setup = g.setups[static_cast<std::size_t>(a_shot)];
+			if (setup.weight <= 0) {
+				setup.move = Move::kLocked;
+				setup.amount = 0;
+				setup.seconds = 4.2f;
+			}
+			return setup;
+		};
 		auto begin = [&](ShotType a_shot, const char* a_why, bool a_npcEmotion) {
-			const auto setup = IntenseSetup(a_shot);
+			const auto setup = plainSetup(a_shot);
 			const auto solved = Shots::Solve(a_shot, InputFor(a_frame, setup, 0.0f));
 			if (!solved.ok) {
 				return;
@@ -1223,7 +1235,7 @@ namespace CCC::Director
 			gp.shot.reset();
 		}
 		if (a_frame.openingSingle && a_frame.npcTurn && !gp.opening && !gp.shot) {
-			for (const auto type : { ShotType::kCloseUp, ShotType::kThreeQuarterNpc, ShotType::kMediumNpc }) {
+			for (const auto type : { ShotType::kThreeQuarterNpc, ShotType::kMediumNpc, ShotType::kCloseUp }) {
 				if (Placeable(type, a_frame)) {
 					begin(type, "opening, you out of the picture", false);
 					gp.opening = gp.shot.has_value();
@@ -1286,7 +1298,7 @@ namespace CCC::Director
 		if (!gp.shot) {
 			return std::nullopt;
 		}
-		const auto  setup = IntenseSetup(*gp.shot);
+		const auto  setup = plainSetup(*gp.shot);
 		const float progress = std::chrono::duration<float>(a_now - gp.cutAt).count() / setup.seconds;
 		auto        in = InputFor(a_frame, setup, progress);
 		in.heldAngle = gp.heldAngle;
