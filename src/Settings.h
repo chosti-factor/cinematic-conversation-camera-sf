@@ -147,10 +147,14 @@ namespace CCC
 		// 3 (first person only) = the 0.3.33 opening: a shot from the player's eyes until the
 		// conversation's first cut.
 		std::int32_t startMode{ 1 };
-		std::int32_t startModeThird{ 2 };
+		std::int32_t startModeThird{ 1 };
 		// iExitMode (first person): 0 = cover the game's first first-person frame, 1 = no
-		// cover (best in testing), 2 = cover the first three first-person frames.
+		// cover, 2 = cover the first three first-person frames, 3 = skip the first-person
+		// camera's entry step (0.9.4).
 		std::int32_t exitMode{ 3 };
+		// iExitModeThirdPerson: 1 = your third-person view drawn on the switch frame (0.9.4),
+		// 0 = the game's (a frame of its own conversation camera).
+		std::int32_t exitModeThird{ 1 };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;

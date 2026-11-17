@@ -510,6 +510,7 @@ namespace CCC::Camera
 		// user's 0.3.14 recording). Remember the dialogue camera's frustum and put it back on
 		// those frames.
 		std::optional<RE::NiFrustum> g_dialogueFrustum;
+		std::optional<RE::NiFrustum> g_gameplayFrustum;  // the gameplay camera's, from a conversation's first frame (0.9.4)
 		bool                         g_loggedDialogueFrustum = false;
 		bool                         g_loggedGameplayFrustum = false;
 	}
@@ -612,6 +613,33 @@ namespace CCC::Camera
 			frustum.right = g_dialogueFrustum->right;
 			frustum.top = g_dialogueFrustum->top;
 			frustum.bottom = g_dialogueFrustum->bottom;
+		}
+		return true;
+	}
+
+	void RememberGameplayFrustum(RE::NiAVObject* a_root)
+	{
+		auto* cam = g_renderCam ? g_renderCam : FindRenderCamera(a_root, false);
+		if (!cam) {
+			return;
+		}
+		const auto& frustum = static_cast<RE::NiCamera*>(cam)->viewFrustum;
+		if (frustum.right > 0.8f && frustum.top > 0.0f && !frustum.ortho) {  // wide: the gameplay lens
+			g_gameplayFrustum = frustum;
+		}
+	}
+
+	bool ShowGameplayView(RE::NiAVObject* a_root, const Pose& a_view)
+	{
+		if (!ApplyRender(a_root, a_view, 0.0f, false) || !g_renderCam) {
+			return false;
+		}
+		if (g_gameplayFrustum) {
+			auto& frustum = static_cast<RE::NiCamera*>(g_renderCam)->viewFrustum;
+			frustum.left = g_gameplayFrustum->left;
+			frustum.right = g_gameplayFrustum->right;
+			frustum.top = g_gameplayFrustum->top;
+			frustum.bottom = g_gameplayFrustum->bottom;
 		}
 		return true;
 	}

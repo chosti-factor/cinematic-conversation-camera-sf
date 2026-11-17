@@ -13,6 +13,12 @@ test build; "diagnostic" items only add information to the log for testing.
   puts it back the next frame. That first frame is the one drawn. Now the flag is cleared
   just before that update, so it's a normal one, looking where you were looking
   (`iExitMode=3`, the new default; 1 brings the old behaviour back).
+- Third-person starts (0.9.3 clip): your view held for a few frames, then two frames of it
+  moved to where the game's camera would be, then the first shot. They now open straight
+  on the first shot, as first-person starts do (`iStartModeThirdPerson=1`, was 2).
+- Third-person exits (0.9.3 clip): one frame of the game's own conversation camera between
+  the last shot and your view. That frame is drawn from your third-person view now, through
+  the gameplay lens (`iExitModeThirdPerson=1`; 0 = the game's).
 
 ## 0.9.3 - 2026-11-16
 

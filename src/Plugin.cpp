@@ -307,6 +307,7 @@ namespace CCC
 		// touch from the dialogue camera hook's worker threads (0.2.0 froze doing that). The
 		// hook only records what it wants; the main-thread watchdog applies it.
 		bool g_wantRevealPlayer = false;
+		bool g_tpExitPending = false;  // the third-person exit's switch frame is drawn from your view (0.9.4)
 		std::atomic<float> g_waitingLens{ 0.0f };  // your own view's field of view while it's shown (0.8.18)
 		bool g_wantHidePlayer = false;
 		std::mt19937 g_reactionRng{ std::random_device{}() };
@@ -751,7 +752,22 @@ namespace CCC
 						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
-				Camera::RestoreRender();
+				// Third person (0.9.4): the frame on which the game switches back to its third-person
+				// camera is drawn from where its dialogue camera stands (one frame of the game's own
+				// conversation shot in the 0.9.3 clips). Draw your third-person view on that frame
+				// instead; the render camera goes back to the game just before the third-person
+				// camera's own first update.
+				bool tpExit = false;
+				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird == 1) {
+					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
+						tpExit = true;
+						g_tpExitPending = true;
+						REX::INFO("Exit: your third-person view drawn on the switch frame");
+					}
+				}
+				if (!tpExit) {
+					Camera::RestoreRender();
+				}
 				if (g_wantRevealPlayer || g_wantHidePlayer) {
 					g_needVisibilityRestore = true;
 				}
@@ -1775,6 +1791,7 @@ namespace CCC
 			SafeCopy(&gameFov, reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset, sizeof(float));
 			const bool wideFrame = gameFov > 60.0f && gameFov < 170.0f;
 			if (wideFrame && g_state.startFov <= 0.0f) {
+				Camera::RememberGameplayFrustum(camera->cameraRoot.get());
 				g_state.startFov = gameFov;
 			}
 			if (s.debugLog && g_conversationNumber <= 40 && g_state.framesThisConversation <= 12) {
@@ -2963,6 +2980,21 @@ namespace CCC
 		// never reached the screen (0.8.18, 0.9.0): the picture is taken during the game's own
 		// update. If your pitch changed during the conversation, put it back first, so that
 		// update starts from where you were looking; log what it was either way.
+		// The third-person exit's switch frame is over: the render camera goes back to the game
+		// before a gameplay camera's own update (0.9.4).
+		void ReleaseThirdPersonExit()
+		{
+			if (!g_tpExitPending || !g_hooksSafe) {
+				return;
+			}
+			auto lock = HookLock();
+			if (!lock.owns_lock() || !g_tpExitPending || g_state.active) {
+				return;
+			}
+			g_tpExitPending = false;
+			Camera::RestoreRender();
+		}
+
 		void BeforeExitUpdate(void* a_state)
 		{
 			if (!g_hooksSafe) {
@@ -3107,6 +3139,7 @@ namespace CCC
 		{
 			static void Thunk(void* a_state, void* a_arg)
 			{
+				ReleaseThirdPersonExit();
 				BeforeExitUpdate(a_state);
 				const bool dumpExit = ExitDumpWanted();
 				if (dumpExit) {
@@ -3190,6 +3223,7 @@ namespace CCC
 		{
 			static void Thunk(void* a_state, void* a_arg)
 			{
+				ReleaseThirdPersonExit();
 				Hook(a_state, a_arg);
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
