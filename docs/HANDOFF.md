@@ -183,7 +183,12 @@ Last updated: 0.9.12 (2026-11-17).
   user, 2026-11-17; the tally started in 0.9.12: Hud.cpp appends every offered option and
   the pick to `CinematicConversationCameraSF_YourLines.tsv` in the log folder, columns time,
   panel, chosen, how the pick was told apart, text; only while bDebugLog is on). Mulling, not decided: traits setting your face's temperament (trait
-  unlocking mods, precedence among several traits, a setting).
+  unlocking mods, precedence among several traits, a setting); objects without collision
+  (plants) by nearby objects' bounding boxes along the camera-to-face line, like the
+  bystander check; walls the sphere cast passes through (Tuala at the MAST) by a navmesh
+  check (Starvegas's walkable-floor snap). The navmesh was looked at for 1.0 and not adopted
+  for now (user, 2026-11-17): it can't see plants either, rejects good spots over counters
+  and tables, and its functions aren't mapped in CommonLibSF.
 - After 1.0: most settings in the game's own Settings menu as Gameplay Options (GPOF records,
   added to the game in 2024, shown when in a Gameplay Option Group), from a small (light)
   ESM; the plugin reads what each sets (to find: globals or otherwise). Likely choices, not free
