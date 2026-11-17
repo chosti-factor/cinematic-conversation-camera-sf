@@ -2963,7 +2963,7 @@ namespace CCC
 		// never reached the screen (0.8.18, 0.9.0): the picture is taken during the game's own
 		// update. If your pitch changed during the conversation, put it back first, so that
 		// update starts from where you were looking; log what it was either way.
-		void BeforeExitUpdate()
+		void BeforeExitUpdate(void* a_state)
 		{
 			if (!g_hooksSafe) {
 				return;
@@ -2982,6 +2982,25 @@ namespace CCC
 				now.x, g_state.startAngle.x, now.z, g_state.startAngle.z, restore ? "; pitch put back" : "");
 			if (restore) {
 				player->data.angle.x = g_state.startAngle.x;
+			}
+			// 0.9.3 log (every exit, dumped before and after the game's first two first-person
+			// updates): the first-person camera comes back with a "just entered" flag (+E0 = 1,
+			// +E2 = 0, +68 = 1.0). On that update it sets its pitch to -68.13 degrees (+C8/+CC)
+			// whatever you were looking at, clears the flag (+E2 = 1, +68 = 30), and the frame
+			// drawn looks at the floor; the next update puts your pitch back (-13 to -20 there).
+			// iExitMode 3: mark it as already entered, so its first update is a normal one.
+			if (Settings::Get().exitMode == 3 && a_state) {
+				auto* bytes = static_cast<std::uint8_t*>(a_state);
+				std::uint8_t entered = 0, done = 0;
+				float        blend = 0.0f;
+				if (SafeCopy(&entered, bytes + 0xE0, 1) && SafeCopy(&done, bytes + 0xE2, 1) && SafeCopy(&blend, bytes + 0x68, 4) && entered == 1 && done == 0) {
+					bytes[0xE0] = 0;
+					bytes[0xE2] = 1;
+					*reinterpret_cast<float*>(bytes + 0x68) = 30.0f;
+					REX::INFO("Exit: the first-person camera's entry step skipped (iExitMode 3; it had +68 {:.1f})", blend);
+				} else {
+					REX::INFO("Exit: the first-person camera wasn't in its entry state (+E0 {}, +E2 {}); left alone", entered, done);
+				}
 			}
 			if (auto* camera = RE::PlayerCamera::GetSingleton()) {
 				if (const auto root = Camera::PoseOf(camera->cameraRoot.get())) {
@@ -3036,7 +3055,7 @@ namespace CCC
 			// The game's first first-person frame looks at the floor (all exits since 0.8.17's
 			// log). Covering it from this hook didn't reach the screen (0.8.18: two frames of
 			// ceiling; 0.9.0: the floor frame unchanged), so mode 1 leaves it; it's logged.
-			if (mode != 1 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+			if (mode != 1 && mode != 3 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
 				g_exitCoverFrames = mode == 2 ? 3 : 1;
 			}
@@ -3088,7 +3107,7 @@ namespace CCC
 		{
 			static void Thunk(void* a_state, void* a_arg)
 			{
-				BeforeExitUpdate();
+				BeforeExitUpdate(a_state);
 				const bool dumpExit = ExitDumpWanted();
 				if (dumpExit) {
 					DumpObject("exit first-person state, before the game's update", a_state, 0x200);

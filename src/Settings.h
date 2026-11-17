@@ -150,7 +150,7 @@ namespace CCC
 		std::int32_t startModeThird{ 2 };
 		// iExitMode (first person): 0 = cover the game's first first-person frame, 1 = no
 		// cover (best in testing), 2 = cover the first three first-person frames.
-		std::int32_t exitMode{ 1 };
+		std::int32_t exitMode{ 3 };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;

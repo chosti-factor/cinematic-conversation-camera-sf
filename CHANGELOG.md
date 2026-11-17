@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.4 - 2026-11-16
+
+### Fixed
+- The frame of floor on the way back to first person, found in the 0.9.3 log: the
+  first-person camera comes back with a "just entered" flag, and on that first update it
+  sets its pitch to -68 degrees whatever you were looking at (-13 to -20 in the test), then
+  puts it back the next frame. That first frame is the one drawn. Now the flag is cleared
+  just before that update, so it's a normal one, looking where you were looking
+  (`iExitMode=3`, the new default; 1 brings the old behaviour back).
+
 ## 0.9.3 - 2026-11-16
 
 ### Fixed
