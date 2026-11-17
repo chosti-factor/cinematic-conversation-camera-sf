@@ -95,8 +95,7 @@ namespace CCC::Director
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
 			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
-			// The cutting rhythm in use (0.8.12): the preset's own (sCuttingStyle=Preset, as
-			// CCC's presets carry theirs), or the named style's.
+			// The cutting rhythm in use: the preset's own, nudged by iCuttingPace (0.9.8).
 			int   freshAngleChance{ 50 };
 			int   minLines{ 2 };
 			int   maxLines{ 5 };
@@ -797,16 +796,27 @@ namespace CCC::Director
 			presetOutdoor = 10.5f;
 			// The cutting rhythm: CCC 1.5.0's per preset (Standard a new angle every 2-3 lines,
 			// Close 3-6, Room 3-5; the turn never asks for one; held at least 2.4 s, Room 3 s);
-			// CCC SF's their own (0.8.14). A named sCuttingStyle overrides.
+			// CCC SF's their own (0.8.14). 0.9.8: iCuttingPace nudges it (the named styles that
+			// replaced it are gone); iMinLines, iMaxLines and fShortestHold override.
 			{
-				std::string style{ s.cuttingStyle };
-				std::ranges::transform(style, style.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-				const bool own = style.empty() || style == "preset";
-				const auto cut = [&](int a_fresh, int a_min, int a_max, float a_hold) {
-					g.freshAngleChance = own ? a_fresh : s.freshAngleChance;
-					g.minLines = own ? a_min : s.minLines;
-					g.maxLines = own ? a_max : s.maxLines;
-					g.shortestHold = own ? a_hold : s.shortestHold;
+				static constexpr float kLineScale[] = { 1.6f, 1.3f, 1.0f, 0.75f, 0.55f };
+				const int   pace = std::clamp(s.cuttingPace, -2, 2);
+				const float k = kLineScale[pace + 2];
+				const auto  cut = [&](int a_fresh, int a_min, int a_max, float a_hold) {
+                    g.freshAngleChance = std::clamp(a_fresh + 20 * pace, 0, 100);
+                    g.minLines = (std::max)(1, static_cast<int>(std::lround(a_min * k)));
+                    g.maxLines = (std::max)(g.minLines, static_cast<int>(std::lround(a_max * k)));
+                    g.shortestHold = (std::max)(1.0f, a_hold * k);
+                    if (s.minLines > 0) {
+                        g.minLines = s.minLines;
+                    }
+                    if (s.maxLines > 0) {
+                        g.maxLines = s.maxLines;
+                    }
+                    g.maxLines = (std::max)(g.maxLines, g.minLines);
+                    if (s.shortestHold > 0.0f) {
+                        g.shortestHold = s.shortestHold;
+                    }
 				};
 				if (preset == "close") {
 					cut(0, 3, 6, 2.4f);
@@ -936,8 +946,8 @@ namespace CCC::Director
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
-		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting style {} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
-			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingStyle, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
+		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+d} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
+			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingPace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", s.extremeCloseUpChance,
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
@@ -1370,6 +1380,11 @@ namespace CCC::Director
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
 		}
+	}
+
+	float ShortestHold()
+	{
+		return g.shortestHold;  // set once per conversation, at its start
 	}
 
 	float WantedLens()

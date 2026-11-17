@@ -163,15 +163,13 @@ namespace CCC
 		// [Director] CCC's shot library and cutting rules.
 		bool        director{ true };
 		std::string preset{ "Standard" };
-		// How lively the cutting is: Cinematic, Odyssey, SpaceWestern, Dogfight or SpaceOpera.
-		// Sets the three values below plus the chance of a fresh angle when the turn passes;
-		// any of the three given in the INI overrides the style's.
-		std::string cuttingStyle{ "Preset" };  // 0.8.12: the preset's own rhythm
-		int         freshAngleChance{ 50 };    // % chance of a new angle each time the turn passes
-		int         minLines{ 2 };             // new angle after this many lines...
-		int         maxLines{ 5 };             // ...up to this many (random in between)
+		// How lively the cutting is, relative to the preset's own rhythm (0.9.8; replaced the
+		// named cutting styles): -2 calmest .. 0 the preset's own .. +2 liveliest.
+		int         cuttingPace{ 0 };
+		int         minLines{ 0 };             // new angle after this many lines... (0 = the preset's)
+		int         maxLines{ 0 };             // ...up to this many, random in between (0 = the preset's)
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count
-		float       shortestHold{ 2.0f };      // never change angle sooner than this
+		float       shortestHold{ 0.0f };      // never change angle sooner than this (0 = the preset's)
 		float       maxCameraDistance{ 0.0f }; // metres from the person framed, indoors (0 = the preset's own)
 		float       maxCameraDistanceExterior{ 0.0f };  // outdoors (0 = the preset's own)
 		bool        obstacleCheck{ true };       // skip or pull in shots the game's collision says are blocked

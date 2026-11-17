@@ -18,6 +18,18 @@ test build; "diagnostic" items only add information to the log for testing.
   eyes) before the third-person camera settles; `iExitModeThirdPerson` 0 and 1 look the same.
 - The 0.9.7 cover (`iExitMode=4`) didn't reach the screen.
 
+### Changed
+- Cutting: the named cutting styles (`sCuttingStyle`: Cinematic, Odyssey, SpaceWestern,
+  Dogfight, SpaceOpera) are gone. Since each preset got its own rhythm they mostly repeated
+  that range, and a style replaced the preset's rhythm (Starborn with SpaceOpera cut on every
+  turn). `iCuttingPace` (-2 to +2, 0 = the preset as designed) nudges the preset's own rhythm
+  instead: each step makes the lines between new angles and the shortest hold about a
+  quarter longer or shorter (x1.3 and x1.6 calmer, x0.75 and x0.55 livelier) and a fresh
+  angle on the turn 20 points less or more likely. An `sCuttingStyle` left in an INI is
+  ignored.
+- `iMinLines`, `iMaxLines` and `fShortestHold` now override the preset's rhythm too (with the
+  old `sCuttingStyle=Preset` default they were ignored); 0 or left out = the preset's own.
+
 ### Changed (to confirm)
 - First-person exits, `iExitMode=5` (new default): the first-person camera's first update after
   the conversation is held back (`iExitSkipFrames`, default 1) with the last shot kept on screen,

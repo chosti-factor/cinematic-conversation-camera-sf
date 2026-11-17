@@ -156,5 +156,5 @@ that shot. (Generated from the presets in the code.)
   shot's weight (0 turns it off), `CloseUpMove=Push in`, `CloseUpMoveAmount=40`,
   `CloseUpMoveTime=6`. `fMaxCameraDistance`, `fMaxCameraDistanceExterior`,
   `fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` and `fConversationLens` set your own
-  distances and one lens for every angle; `iCameraSway`, `sCuttingStyle`,
+  distances and one lens for every angle; `iCameraSway`, `iCuttingPace` (nudges the preset's rhythm; -2 to +2),
   `bEmotionCloseUpsNpc` and `bReactionShotsPlayer` override the preset's own.

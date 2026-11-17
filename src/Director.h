@@ -82,6 +82,8 @@ namespace CCC::Director
 	// The conversation lens wanted, degrees: fConversationLens, or the preset's own (CCC's
 	// presets 45, CCC SF's 37.5); below 10 = the game's own.
 	[[nodiscard]] float WantedLens();
+	// The shortest time a shot stays on screen in this conversation (the preset's, paced).
+	[[nodiscard]] float ShortestHold();
 
 	// An angle's lens in the preset in use (0.8.12): its own, CCC's, or the preset's one lens.
 	[[nodiscard]] float LensFor(Shots::ShotType a_type);

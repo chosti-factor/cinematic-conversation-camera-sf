@@ -86,9 +86,10 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   library, whose angles often put the chair, the shop counter or the clutter around it in
   front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are recognised by
   the game's vendor flag on their faction, wherever the shop is.
-- **Cutting:** each preset has its own rhythm (`sCuttingStyle=Preset`); a named style sets
-  one for every preset, calmest to liveliest: Cinematic, Odyssey, SpaceWestern, Dogfight,
-  SpaceOpera.
+- **Cutting:** each preset has its own rhythm. `iCuttingPace` nudges it, from -2 (calmer: a
+  new angle after more lines, held longer, fewer fresh angles when the turn passes) to +2
+  (livelier), keeping the preset's character; 0 is the preset as designed. `iMinLines`,
+  `iMaxLines` and `fShortestHold` set exact values instead.
 - **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
   (Kubrick and *Interstellar*), Constellation (a hard sci-fi documentary) and Nebula (a
   trailer), with their own lenses, moves, cutting and sway (see Presets below).
@@ -225,7 +226,7 @@ apply without restarting the game.
 | Section | What's in it |
 |---|---|
 | `[General]` | On/off, extra logging |
-| `[Director]` | Preset, cutting style, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
+| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
 | `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height |
 | `[Body]` | Showing your character, building the full body from first person |

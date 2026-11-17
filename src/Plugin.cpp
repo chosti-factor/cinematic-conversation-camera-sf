@@ -2140,7 +2140,7 @@ namespace CCC
 						// so a due reaction can take it like any line.
 						// (monoSeconds > 0: no turn of yours or reaction since, which cut away.)
 						const bool wasCloseUp = g_state.lineIntense && !g_state.lineExtreme && g_state.monoSeconds > 0.0f &&
-						                        std::chrono::duration<float>(now - g_state.lineStart).count() >= s.shortestHold;
+						                        std::chrono::duration<float>(now - g_state.lineStart).count() >= Director::ShortestHold();
 						// An extreme close-up holds one line only (0.8.9): the line after one, on the
 						// camera without a cut since, is never an extreme one too.
 						const bool afterExtreme = g_state.lineIntense && g_state.lineExtreme && g_state.monoSeconds > 0.0f;
@@ -2248,7 +2248,7 @@ namespace CCC
 									// 0.8.5 test: the 7 s came 0.4 s into a close-up, a cut away at once.
 									// Within its minimum time on screen (fShortestHold), the reaction
 									// waits for the next line instead, as one already due does.
-									if (crossAt >= s.shortestHold && onYou >= s.reactionLineMin && onYou <= s.reactionLineMax &&
+									if (crossAt >= Director::ShortestHold() && onYou >= s.reactionLineMin && onYou <= s.reactionLineMax &&
 										std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.reactionChance) {
 										take(true, crossAt);
 									}
