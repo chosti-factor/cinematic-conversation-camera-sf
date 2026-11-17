@@ -397,6 +397,7 @@ namespace CCC
 		bool g_exitMasking = false;
 		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
+		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
 		// Where the game's dialogue camera sits, as measured on earlier conversations (start
 		// at the 0.9.5 test values, then learned from each start).
 		float g_learnedDistance = 2.02f;  // from the NPC's head, towards your feet
@@ -749,6 +750,7 @@ namespace CCC
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
+			g_exitSkipped = 0;
 			Settings::Get().Load();  // pick up INI edits made since the last conversation
 			++g_conversationNumber;
 			g_menusLogged = false;
@@ -3051,6 +3053,36 @@ namespace CCC
 		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)
 		bool  g_exitPitchKnown = false;
 
+		// 0.9.8, iExitMode 5: the 0.9.7 tests found the cause of the exit's steep-up frame: the
+		// first-person camera's first update after the conversation sets its pitch to -68.13
+		// only when your full body was rebuilt for the conversation (every exit with the direct
+		// rebuild, none with it off or with the older camera cycle); vanilla exits are clean. So
+		// that update runs while your third-person body is still loaded. Hold the game's first
+		// first-person update(s) back and keep the last shot on screen meanwhile, so the update
+		// that's drawn comes once the game has put your first-person body back.
+		float PlayerHeadAboveFeet();
+		bool  HoldExitUpdate()
+		{
+			if (!g_hooksSafe) {
+				return false;
+			}
+			auto lock = HookLock();
+			const auto& s = Settings::Get();
+			if (!lock.owns_lock() || s.exitMode != 5 || !g_state.active || !g_state.startedFirstPerson || !g_state.holdingExit ||
+				!g_state.bodyReady || !g_state.lastPose || g_exitSkipped >= s.exitSkipFrames) {
+				return false;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (!camera) {
+				return false;
+			}
+			++g_exitSkipped;
+			Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
+			REX::INFO("Exit: the first-person camera's update {} of {} held back; the last shot stays (iExitMode 5; your head {:.2f} m above your feet)",
+				g_exitSkipped, s.exitSkipFrames, PlayerHeadAboveFeet());
+			return true;
+		}
+
 		// Diagnostic (0.9.7): where the exit's -68.13 comes from. The 0.9.6 clip (controller
 		// only, no mouse) still showed that frame, and in the first-person camera only +C8/+CC
 		// change during that update. Copies of the objects around it are kept just before the
@@ -3275,7 +3307,7 @@ namespace CCC
 			// 0.9.7, mode 4: the 0.9.6 clip still showed that frame after mode 3's fixes (taken
 			// during the update), so mode 4 also draws your view over it, now that the root under
 			// it is right too (the 0.9.0 cover was drawn against a root aimed at the floor).
-			if (mode != 1 && mode != 3 && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
+			if ((mode == 0 || mode == 2 || mode == 4) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
 				g_exitMasking = true;
 				g_exitCoverFrames = mode == 2 ? 3 : 1;
 			}
@@ -3328,6 +3360,9 @@ namespace CCC
 			static void Thunk(void* a_state, void* a_arg)
 			{
 				ReleaseThirdPersonExit();
+				if (HoldExitUpdate()) {
+					return;  // the game's update held back this frame (iExitMode 5)
+				}
 				BeforeExitUpdate(a_state);
 				const bool dumpExit = ExitDumpWanted();
 				if (dumpExit) {

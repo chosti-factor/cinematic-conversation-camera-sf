@@ -151,7 +151,8 @@ namespace CCC
 		// iExitMode (first person): 0 = cover the game's first first-person frame, 1 = no
 		// cover, 2 = cover the first three first-person frames, 3 = skip the first-person
 		// camera's entry step (0.9.4).
-		std::int32_t exitMode{ 4 };
+		std::int32_t exitMode{ 5 };
+		std::int32_t exitSkipFrames{ 1 };  // iExitMode 5: first-person updates held back
 		// iExitModeThirdPerson: 1 = your third-person view drawn on the switch frame (0.9.4),
 		// 0 = the game's (a frame of its own conversation camera).
 		std::int32_t exitModeThird{ 1 };

@@ -4,6 +4,25 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.8 - 2026-11-17
+
+### Found
+- The first-person exit's one frame looking steeply up (sky) comes from building your full
+  body for the conversation. 0.9.7 tests, three conversations each, every exit checked frame
+  by frame: vanilla (`bEnabled=0`) clean; the mod with the director off, and with defaults,
+  the frame in every exit; with `bFixFirstPersonBodyPlayer=0`, or with the older camera-cycle
+  body method (`iBodyRebuildMethodPlayer=0`), no frame (and the log shows the camera's pitch
+  never set to -68.13). The camera-cycle method isn't the answer: its starts flash (two frames
+  of a close torso, then your own view for 0.3 s).
+- Third-person exits: vanilla has the same thing as the mod, one in-between frame (from your
+  eyes) before the third-person camera settles; `iExitModeThirdPerson` 0 and 1 look the same.
+- The 0.9.7 cover (`iExitMode=4`) didn't reach the screen.
+
+### Changed (to confirm)
+- First-person exits, `iExitMode=5` (new default): the first-person camera's first update after
+  the conversation is held back (`iExitSkipFrames`, default 1) with the last shot kept on screen,
+  so the update that's drawn comes once the game has your first-person body back.
+
 ## 0.9.7 - 2026-11-17
 
 ### Fixed (to confirm)
