@@ -340,7 +340,7 @@ namespace CCC::Director
 		{
 			using enum ShotType;
 			const auto lensOf = [](ShotType a_type) { return g.setups[static_cast<std::size_t>(a_type)].lens; };
-			for (std::size_t i = 0; i < kCount; ++i) {
+			for (std::size_t i = 0; i < g.setups.size(); ++i) {  // (kCount here is ShotType::kCount, from the using enum)
 				auto& setup = g.setups[i];
 				if (setup.lens >= 10.0f) {
 					continue;
