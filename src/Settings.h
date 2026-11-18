@@ -159,6 +159,12 @@ namespace CCC
 		// bExitLens (0.9.13): your gameplay lens put back on the first frame of your view at an
 		// exit (otherwise that frame is drawn through the conversation's lens, zoomed in).
 		bool         exitLens{ true };
+		// iExitStyle (0.9.14), how a conversation ends, for the hold after the last line:
+		// 0 = the last shot stays to the end; 1 = a closing shot of the NPC alone (you're out
+		// of the picture when the game swaps your body back); 2 = a cut back to your own view
+		// fExitCutSeconds after the last line (your body hidden from first person).
+		std::int32_t exitStyle{ 2 };
+		float        exitCutSeconds{ 0.4f };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;

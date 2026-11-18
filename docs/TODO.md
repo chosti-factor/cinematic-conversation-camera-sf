@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.13 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.14 (2026-11-17). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -17,8 +17,8 @@ Wednesday the 25th, about two days earlier.
 - [ ] First-person exits on 0.9.13: the zoomed frame gone
 - [ ] True vanilla with the mod disabled in Mod Organizer (one third-person and one
       first-person conversation, sit and stand once)
-- [ ] First-person exit: the last frame of the shot without you (if it's all that's left: end
-      first-person conversations on a shot without you; the user's style call)
+- [ ] Exit style (0.9.14, `iExitStyle`): compare 2 (cut back to your view) and 1 (closing
+      shot of the NPC alone) in first and third person; pick the default
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
 - [ ] Furniture camera swing when sitting and standing (only if vanilla doesn't do it)

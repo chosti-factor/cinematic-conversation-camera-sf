@@ -172,6 +172,9 @@ namespace CCC
 			std::chrono::steady_clock::time_point npcTalkStart{};
 			bool                                  loggedReturnPose{ false };
 			bool                                  holdingExit{ false };
+			bool                                  lastDirected{ false };  // the shot on screen came from the director, not the plain shot (0.9.14)
+			bool                                  closingDone{ false };   // iExitStyle 1: the closing shot decided for this hold
+			bool                                  exitCut{ false };       // iExitStyle 2: cut back to your view
 			RE::NiPoint3                          startAngle{};      // your angles (pitch, roll, yaw) when the conversation started (0.9.2)
 			bool                                  startAngleKnown{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
@@ -1772,6 +1775,53 @@ namespace CCC
 					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
 				}
 				const float held = std::chrono::duration<float>(now - g_state.holdStarted).count();
+				// iExitStyle 1 (0.9.14): when the game hands the camera back it swaps your body
+				// back and turns the blur off, and the last shot showed you gone from it for a frame
+				// or two (0.9.12 clips; the frame can't be drawn over: it's built before our hook
+				// runs). End on the NPC alone instead, cut to as the last line ends.
+				if (s.exitStyle == 1 && s.director && !g_state.closingDone) {
+					g_state.closingDone = true;
+					const char* name = nullptr;
+					float       distance = 0.0f;
+					if (const auto closing = Director::ClosingShot(!g_state.lastDirected, name, distance)) {
+						g_state.lastPose = *closing;
+						LensNow();
+						g_shotDistance.store(distance, std::memory_order_relaxed);
+						FocusOnShot(distance);
+						REX::INFO("Exit style 1: closing shot of them alone ({}, {:.1f} m)", name ? name : "?", distance);
+					} else {
+						REX::INFO("Exit style 1: no closing shot (the shot on screen shows them alone, or none fits)");
+					}
+				}
+				// iExitStyle 2 (0.9.14): cut back to your own view before the game takes over, so
+				// nothing is left to change on screen when it does: from first person your body is
+				// hidden first (as the game's own conversation view has it), your gameplay lens,
+				// no blur.
+				if (s.exitStyle == 2 && held >= s.exitCutSeconds && held < 3.0f) {
+					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
+					if (view) {
+						if (g_state.startedFirstPerson) {
+							g_wantRevealPlayer = false;
+							g_wantHidePlayer = true;
+							Visibility::HidePlayer();
+						}
+						const float lens = g_state.startFov >= 40.0f ? g_state.startFov :
+						                                                g_gameplayLens[g_state.startedFirstPerson ? 0 : 1].load(std::memory_order_relaxed);
+						if (lens >= 40.0f) {
+							g_waitingLens.store(lens, std::memory_order_relaxed);
+						}
+						g_shotDistance.store(0.0f, std::memory_order_relaxed);
+						FocusOnShot(0.0f);
+						if (Camera::ShowGameplayView(camera->cameraRoot.get(), *view)) {
+							if (!g_state.exitCut) {
+								g_state.exitCut = true;
+								REX::INFO("Exit style 2: cut to your {} view {:.2f} s after the last line (lens {:.1f})",
+									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens);
+							}
+							return;
+						}
+					}
+				}
 				// Keep the last shot until the game leaves its dialogue camera, then cut straight
 				// to the player's view: first person (the first-person hook cuts there) and, since
 				// 0.7.6, third person too (0.7.5 test: the saved third-person view shown meanwhile
@@ -2869,6 +2919,9 @@ namespace CCC
 			g_state.lastPose = *pose;
 			g_state.lastAppliedFrame = g_state.framesThisConversation;
 			g_state.holdingExit = false;
+			g_state.lastDirected = directed.has_value();
+			g_state.closingDone = false;
+			g_state.exitCut = false;
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");

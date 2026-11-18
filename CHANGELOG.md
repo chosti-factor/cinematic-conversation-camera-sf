@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.14 - 2026-11-17
+
+### Added
+- `iExitStyle` in `[Transitions]`, to compare two ways of ending a conversation. The 0.9.12
+  clips showed that the frame or two with you gone from the last shot can't be drawn over
+  (the game builds it before the mod's hook runs), so these make sure nothing visible
+  changes when the game takes the camera back:
+  - 2 (default): 0.4 s after the last line (`fExitCutSeconds`), a cut back to your own
+    view, first or third person, through your gameplay lens and without blur; from first
+    person your body is hidden first, as in the game's own conversation view.
+  - 1: as the last line ends, a closing shot of the NPC alone (medium, close-up or
+    three-quarter, the first that fits), if the shot on screen shows you.
+  - 0: the last shot to the end, as before.
+
 ## 0.9.13 - 2026-11-17
 
 ### Fixed

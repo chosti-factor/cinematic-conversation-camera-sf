@@ -85,6 +85,13 @@ namespace CCC::Director
 	// The shortest time a shot stays on screen in this conversation (the preset's, paced).
 	[[nodiscard]] float ShortestHold();
 
+	// iExitStyle 1 (0.9.14): the closing shot for the hold after the last line, the NPC
+	// alone (medium, close-up or three-quarter, the first one that fits), so you aren't in
+	// the picture when the game swaps your body back. nullopt when the shot on screen already
+	// shows them alone (and isn't the plain shot) or nothing fits. a_name: the angle's key;
+	// a_distance: camera to their head, m (for the focus).
+	[[nodiscard]] std::optional<Camera::Pose> ClosingShot(bool a_plainOnScreen, const char*& a_name, float& a_distance);
+
 	// An angle's lens in the preset in use (0.8.12): its own, CCC's, or the preset's one lens.
 	[[nodiscard]] float LensFor(Shots::ShotType a_type);
 

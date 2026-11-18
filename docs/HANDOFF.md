@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.13 (2026-11-17).
+Last updated: 0.9.14 (2026-11-17).
 
 ## Working rules
 
@@ -60,8 +60,10 @@ Last updated: 0.9.13 (2026-11-17).
   (`iExitMode=5` holds the first first-person update back one frame). The 0.9.12 clip (five
   exits) left two things: one zoomed frame, which is the game easing its lens from 30 back to
   94 degrees (about 60 on that frame; 0.9.13 keeps your lens through the ease, untested), and
-  one or two frames of the last shot without you (the proposed fix, ending on a shot without
-  you, is the user's style call).
+  one or two frames of the last shot without you. That frame is the held-back one, built
+  before our hook runs, so it can't be drawn over; 0.9.14 adds `iExitStyle` to compare two
+  ways round it (2: cut back to your view 0.4 s after the last line, default; 1: a closing
+  shot of the NPC alone). The user picks after testing both.
 - Third-person exit: one in-between frame. 0.9.13's lens fix applies there too; whether
   vanilla has a frame like it waits on the true-vanilla test (mod disabled in MO2).
 - In-game settings page (SFSE Menu Framework) and the tally of your lines: 0.9.12, the page

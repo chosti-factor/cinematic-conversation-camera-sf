@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.13, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.14, 2026-11-17).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -134,9 +134,25 @@ Version notes in brackets say when something was found or changed; the full stor
 ### When the conversation ends
 
 - **The hold:** after the last line ("Speaker gone"), the game keeps its dialogue camera for
-  about **1.5 s** while the dialogue menu closes (letterbox and subtitles go away). The mod
-  holds the last shot through it, up to 3 s, until the game leaves its dialogue camera
-  (`fExitHoldSeconds` = 0.5 is the minimum).
+  about **1.5 s** while the dialogue menu closes (letterbox and subtitles go away): measured
+  1.50-1.56 s in five exits and 0.75 s in one (0.9.12 logs). The mod holds the last shot
+  through it, up to 3 s, until the game leaves its dialogue camera (`fExitHoldSeconds` = 0.5
+  is the minimum).
+- **The exit style (0.9.14, `iExitStyle`), during that hold:**
+  - **2 (default): cut back to your view** `fExitCutSeconds` (0.4 s) after the last line:
+    your saved first- or third-person view (`ShowGameplayView`), your gameplay lens (the
+    lens hook's waiting value: the game's lens at the conversation's first frame), the blur
+    off (shot distance 0). From first person your body is hidden first (the game's own
+    first-person conversation view has none). When the game takes over, the picture already
+    matches it. Logged: "Exit style 2: cut to your ... view".
+  - **1: closing shot of the NPC alone**, as the last line ends: if the shot on screen shows
+    you (or is the plain shot), the director solves medium, close-up or three-quarter on the
+    NPC from the last frame it saw (locked, obstacle-checked, pulled in), with its own lens
+    and focus. Logged: "Exit style 1: closing shot ...". The blur still goes off at the
+    switch.
+  - **0:** the last shot to the end (up to 0.9.13).
+  - If a speaker comes back during the hold, the next shot resets all of it (body shown
+    again by the usual rule).
 - **The mod also ends a conversation when:**
   - the game leaves its dialogue camera, after 150 ms of grace for the first-person exit to
     finish; or
@@ -181,9 +197,12 @@ What happens on the switch:
      from), and for up to 6 lens updates or 0.25 s, the game's in-between values are swapped
      for it at all three callers, until the game asks for it itself. The log lists each
      swapped value ("Exit lens: ..."). Untested.
-6. **Known:** one or two frames of the last shot with you already gone from it (and its
-   background blur gone), just before your view (your body is swapped back at the switch).
-   Proposed fix: end on a shot without you.
+6. **One or two frames of the last shot with you already gone from it** (and its background
+   blur gone), just before your view (your body is swapped back at the switch). This is the
+   held-back frame itself: the view drawn on it never reaches the screen (built before our
+   hook runs; the frame-timing rule above). So the exit styles (0.9.14) avoid having
+   anything left to change on screen at the switch: style 2 is already on your view, style 1
+   on a shot without you.
 
 Older modes:
 - **3:** the entry flag cleared, and the pitch and root put back after the update. That

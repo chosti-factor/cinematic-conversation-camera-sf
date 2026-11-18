@@ -94,6 +94,7 @@ namespace CCC::Director
 			bool                      loggedEmpty{ false };
 			bool                      intensePending{ false };  // an intense line started; close-up owed
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
+			std::optional<Frame>      lastFrame;                // the last frame seen, for the closing shot (0.9.14)
 			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
 			// The cutting rhythm in use: the preset's own, nudged by iCuttingPace (0.9.8).
 			int   freshAngleChance{ 50 };
@@ -916,6 +917,7 @@ namespace CCC::Director
 		const auto  preset = ApplyPreset(presetIndoor, presetOutdoor);
 		g_presetSwitch.store(false);
 		g.current.reset();
+		g.lastFrame.reset();
 		g.npc = Side{};
 		g.player = Side{};
 		g.npc.linesTarget = NewLineTarget();
@@ -961,6 +963,7 @@ namespace CCC::Director
 
 	std::optional<Camera::Pose> Update(const Frame& a_frame, clock::time_point a_now)
 	{
+		g.lastFrame = a_frame;
 		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
 		bool        npcStarted = TrackLine(g.npcLine, g.npc, a_frame.npcTalking, a_now);
@@ -1215,6 +1218,7 @@ namespace CCC::Director
 
 	std::optional<Camera::Pose> UpdatePlain(const Frame& a_frame, clock::time_point a_now)
 	{
+		g.lastFrame = a_frame;
 		SwitchPresetNow(a_frame);
 		const auto& s = Settings::Get();
 		bool        started = a_frame.npcTalking && !gp.wasTalking;
@@ -1380,6 +1384,55 @@ namespace CCC::Director
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
 		}
+	}
+
+	std::optional<Camera::Pose> ClosingShot(bool a_plainOnScreen, const char*& a_name, float& a_distance)
+	{
+		// The angles on the NPC that leave you out of the picture.
+		const auto alone = [](ShotType a_type) {
+			switch (a_type) {
+			case ShotType::kCloseUp:
+			case ShotType::kMediumNpc:
+			case ShotType::kLowAngle:
+			case ShotType::kCloseProfile:
+			case ShotType::kCloseLow:
+			case ShotType::kCloseHigh:
+			case ShotType::kExtremeClose:
+			case ShotType::kThreeQuarterNpc:
+			case ShotType::kMediumProfile:
+			case ShotType::kLowProfile:
+				return true;
+			default:
+				return false;
+			}
+		};
+		if (!g.lastFrame || (!a_plainOnScreen && g.current && alone(*g.current))) {
+			return std::nullopt;
+		}
+		Frame frame = *g.lastFrame;
+		frame.npcTurn = true;
+		frame.reaction = false;
+		for (const auto type : { ShotType::kMediumNpc, ShotType::kCloseUp, ShotType::kThreeQuarterNpc }) {
+			if (!Placeable(type, frame)) {
+				continue;
+			}
+			const auto& setup = g.setups[static_cast<std::size_t>(type)];
+			auto        in = InputFor(frame, setup, 0.0f);
+			in.move = Move::kLocked;
+			const auto solved = Shots::Solve(type, in);
+			if (!solved.ok) {
+				continue;
+			}
+			auto pose = solved.pose;
+			Camera::PullIn(pose, frame.npcHead, ClearanceFor(type, frame, setup).limit);
+			g.current = type;
+			g_shotLens.store(setup.lens, std::memory_order_relaxed);
+			a_name = Shots::Key(type);
+			const float dx = pose.position.x - frame.npcHead.x, dy = pose.position.y - frame.npcHead.y, dz = pose.position.z - frame.npcHead.z;
+			a_distance = std::sqrt(dx * dx + dy * dy + dz * dz);
+			return pose;
+		}
+		return std::nullopt;
 	}
 
 	float ShortestHold()
