@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.14 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.15 (2026-11-17). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -12,14 +12,20 @@ Wednesday the 25th, about two days earlier.
 - [x] First-person exit: no steep-up frame (0.9.8)
 - [x] `bEnabled=0` turns the whole mod off (0.9.11)
 - [x] First-person exits on 0.9.12 (five, one clip): no steep-up frame, starts clean; one
-      zoomed frame from the game's lens ease (fixed in 0.9.13, to test), and one or two frames
-      of the last shot without you
-- [ ] First-person exits on 0.9.13: the zoomed frame gone
+      zoomed frame, and one or two frames of the last shot without you
+- [ ] The zoomed frame gone (0.9.13's fix didn't run; 0.9.15)
 - [x] True vanilla with the mod disabled in Mod Organizer: the sitting camera's swing is the
       game's; vanilla third-person exits have their own in-between frame; the first-person
       exit is clean
-- [ ] Exit style (0.9.14, `iExitStyle`): compare 2 (cut back to your view) and 1 (closing
-      shot of the NPC alone) in first and third person; pick the default
+- [x] Exit style compared (0.9.14 clips): 2, the cut back to your view, is "far superior"
+      (the user); the default
+- [ ] Exit style 2: the staged cut (0.9.15, `bExitCutStaged`): no odd frame before the cut,
+      no narrow first frame in third person; first person: never a frame from inside your head
+- [x] Settings page tested (0.9.14): works; found the options bug below
+- [ ] Dialogue options after F1 mid-conversation (fixed in 0.9.15): open F1 during a
+      conversation, change something, close it; the conversation carries on, options stay
+- [ ] Seen once (0.9.14 clip): a cut to over-the-shoulder showed the NPC without hair for
+      one frame (Muria); watch for it
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
 - [ ] Furniture camera swing when sitting and standing: vanilla does it too; try the game's

@@ -4,6 +4,34 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.15 - 2026-11-17
+
+### Changed
+- `iExitStyle=2` (the cut back to your view) stays the default: the user's pick after the
+  0.9.14 comparison.
+- Style 1's closing shot now comes as the dialogue menu closes: the game closes it (and the
+  letterbox, which lives in it) a couple of frames before it lets go of the speaker, and the
+  0.9.14 clip showed the last shot two frames without its bars before the cut.
+
+### Fixed
+- Dialogue options gone for the rest of the session (0.9.14 test, after opening the F1
+  menu mid-conversation; the cutting pace was a coincidence): the options list belongs to
+  the game's dialogue menu, which outlives a conversation, and if the game hid it while it was
+  faded out, it came back invisible every time after. Its visibility is now written each time
+  the game shows it.
+- Opening the F1 settings menu mid-conversation ended the conversation (the game's camera
+  stops while the menu is open) and started a new one on the same dialogue when it closed.
+  The conversation now waits.
+- Exit style 2: the frame before the cut to your view showed the last shot with you hidden
+  (first person) or through your wide lens (third person), and no blur; in third person the
+  first frame of your view came through a narrower lens. During the hold the camera move
+  lands a frame after those changes, so the cut is now staged: the camera on its first frame,
+  your body, the blur and your lens on the next (`bExitCutStaged`).
+- 0.9.13's exit lens fix never ran: the game's lens update isn't called outside
+  conversations, so the gameplay lens was never remembered (0.9.14 clips: the zoomed frame
+  at every exit, both styles). It now uses the game's lens at the conversation's first frame
+  and the camera seen during the conversation, and logs if it can't.
+
 ## 0.9.14 - 2026-11-17
 
 ### Added

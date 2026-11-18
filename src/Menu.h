@@ -8,4 +8,8 @@
 namespace CCC::Menu
 {
 	void Register();  // at SFSE's kPostLoad
+
+	// The framework's menu is open (0.9.15): the game's camera stops while it is, which isn't
+	// the end of a conversation.
+	[[nodiscard]] bool IsOpen();
 }

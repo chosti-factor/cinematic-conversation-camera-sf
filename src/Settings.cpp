@@ -222,6 +222,7 @@ namespace CCC
 			a_s.exitLens = ReadInt(a_path, L"Transitions", L"bExitLens", a_s.exitLens ? 1 : 0) != 0;
 			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Transitions", L"iExitStyle", a_s.exitStyle), 0, 2);
 			a_s.exitCutSeconds = std::clamp(ReadFloat(a_path, L"Transitions", L"fExitCutSeconds", a_s.exitCutSeconds), 0.0f, 1.0f);
+			a_s.exitCutStaged = ReadInt(a_path, L"Transitions", L"bExitCutStaged", a_s.exitCutStaged ? 1 : 0) != 0;
 
 			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
 			a_s.cameraTarget = std::clamp(ReadInt(a_path, L"Debug", L"iCameraTarget", a_s.cameraTarget), 0, 1);

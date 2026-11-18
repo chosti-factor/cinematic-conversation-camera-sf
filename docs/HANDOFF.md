@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.14 (2026-11-17).
+Last updated: 0.9.15 (2026-11-17).
 
 ## Working rules
 
@@ -63,7 +63,14 @@ Last updated: 0.9.14 (2026-11-17).
   one or two frames of the last shot without you. That frame is the held-back one, built
   before our hook runs, so it can't be drawn over; 0.9.14 adds `iExitStyle` to compare two
   ways round it (2: cut back to your view 0.4 s after the last line, default; 1: a closing
-  shot of the NPC alone). The user picks after testing both.
+  shot of the NPC alone). The 0.9.14 test: style 2 "far superior" (the user; the default).
+  Its clip: the hand-back is clean; the camera move lands a frame after the body, blur and
+  lens changes during the hold, so 0.9.15 stages the cut (`bExitCutStaged`).
+- The F1 menu mid-conversation (0.9.14 test): the game's camera stops, so the 250 ms rule
+  ended the conversation, and a restart on the same dialogue left the options list invisible
+  for the session (its alpha stuck at 0 in the persistent dialogue menu). 0.9.15: the rule
+  waits while `Menu::IsOpen()`, and the list's alpha is written each time it's shown. The exit lens fix only runs from 0.9.15 (the lens update isn't called
+  outside conversations).
 - Third-person exit: one in-between frame. 0.9.13's lens fix applies there too; whether
   vanilla has a frame like it waits on the true-vanilla test (mod disabled in MO2).
 - In-game settings page (SFSE Menu Framework) and the tally of your lines: 0.9.12, the page

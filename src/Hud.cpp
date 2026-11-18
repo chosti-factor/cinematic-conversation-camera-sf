@@ -721,6 +721,13 @@ namespace CCC::Hud
 				}
 				if (now && !g_options.wasVisible[i]) {
 					g_options.alpha[i] = s.optionsFade > 0.0f ? 0.0f : 1.0f;
+					// 0.9.15: written every time the game shows the list. The dialogue menu outlives
+					// a conversation, and a list the game hid while we had it faded out stayed
+					// invisible from then on (0.9.14 test: after the F1 menu was opened mid-
+					// conversation, no options in any later conversation until a restart).
+					const Value shown{ static_cast<double>(g_options.alpha[i]) };
+					SafeSet(&list, "alpha", &shown);
+					g_options.setAlpha[i] = g_options.alpha[i];
 					if (a_dump && i == 0 && !g_options.listDumped) {
 						g_options.listDumped = true;
 						int count = 0;

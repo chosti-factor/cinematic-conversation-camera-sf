@@ -175,6 +175,8 @@ namespace CCC
 			bool                                  lastDirected{ false };  // the shot on screen came from the director, not the plain shot (0.9.14)
 			bool                                  closingDone{ false };   // iExitStyle 1: the closing shot decided for this hold
 			bool                                  exitCut{ false };       // iExitStyle 2: cut back to your view
+			int                                   exitCutFrames{ 0 };     // ... frames since (0.9.15: staged)
+			bool                                  menuSeen{ false };      // the dialogue menu has been open in this conversation (0.9.15)
 			RE::NiPoint3                          startAngle{};      // your angles (pitch, roll, yaw) when the conversation started (0.9.2)
 			bool                                  startAngleKnown{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
@@ -415,7 +417,7 @@ namespace CCC
 		std::atomic<float> g_gameplayLens[2]{ 0.0f, 0.0f };
 		std::atomic<void*> g_lensCamera{ nullptr };
 		std::atomic<int>   g_exitLensFrames{ 0 };  // lens updates after an exit still to keep on your gameplay lens
-		std::atomic<int>   g_exitLensWhich{ 0 };
+		std::atomic<float> g_exitLensValue{ 0.0f };  // the lens kept on through this exit
 		std::atomic<std::int64_t> g_exitLensUntil{ 0 };  // and never past this (steady clock), a quarter of a second
 		void  PutGameplayLensBack(bool a_firstPerson);
 		float ExitLens(float a_fov, bool a_main);
@@ -1740,6 +1742,23 @@ namespace CCC
 			}
 		}
 
+		// iExitStyle 1: the closing shot of the NPC alone (0.9.14), taken once per hold.
+		void TakeClosingShot(const char* a_when)
+		{
+			g_state.closingDone = true;
+			const char* name = nullptr;
+			float       distance = 0.0f;
+			if (const auto closing = Director::ClosingShot(!g_state.lastDirected, name, distance)) {
+				g_state.lastPose = *closing;
+				LensNow();
+				g_shotDistance.store(distance, std::memory_order_relaxed);
+				FocusOnShot(distance);
+				REX::INFO("Exit style 1: closing shot of them alone ({}, {:.1f} m), {}", name ? name : "?", distance, a_when);
+			} else {
+				REX::INFO("Exit style 1: no closing shot (the shot on screen shows them alone, or none fits), {}", a_when);
+			}
+		}
+
 		void DirectFrame()
 		{
 			const auto& s = Settings::Get();
@@ -1767,6 +1786,25 @@ namespace CCC
 			// a second before returning to gameplay. Hold our last shot through that instead of
 			// flashing the vanilla dialogue view; the main thread ends the conversation the
 			// moment the game leaves its dialogue camera.
+			// 0.9.15: the game closes its dialogue menu (and the letterbox with it, which lives in
+			// that menu) a couple of frames before it lets go of the speaker; the 0.9.14 clip showed
+			// the last shot two frames without its bars before the closing shot. So the closing shot
+			// comes as the menu closes, once it has been open in this conversation.
+			if (g_state.active && g_state.lastPose && inDialogueState && s.cameraTarget == 1 && s.exitStyle == 1 && s.director) {
+				static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
+				auto*                          ui = RE::UI::GetSingleton();
+				const bool                     open = ui && ui->IsMenuOpen(dialogueMenu);
+				if (open) {
+					g_state.menuSeen = true;
+				} else if (g_state.menuSeen && speaker) {
+					if (!g_state.closingDone) {
+						TakeClosingShot("as the dialogue menu closed");
+					}
+					if (Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+						return;
+					}
+				}
+			}
 			if (!speaker && g_state.active && g_state.lastPose && inDialogueState && s.cameraTarget == 1) {
 				const auto now = std::chrono::steady_clock::now();
 				if (!g_state.holdingExit) {
@@ -1780,18 +1818,7 @@ namespace CCC
 				// or two (0.9.12 clips; the frame can't be drawn over: it's built before our hook
 				// runs). End on the NPC alone instead, cut to as the last line ends.
 				if (s.exitStyle == 1 && s.director && !g_state.closingDone) {
-					g_state.closingDone = true;
-					const char* name = nullptr;
-					float       distance = 0.0f;
-					if (const auto closing = Director::ClosingShot(!g_state.lastDirected, name, distance)) {
-						g_state.lastPose = *closing;
-						LensNow();
-						g_shotDistance.store(distance, std::memory_order_relaxed);
-						FocusOnShot(distance);
-						REX::INFO("Exit style 1: closing shot of them alone ({}, {:.1f} m)", name ? name : "?", distance);
-					} else {
-						REX::INFO("Exit style 1: no closing shot (the shot on screen shows them alone, or none fits)");
-					}
+					TakeClosingShot("as the speaker went");
 				}
 				// iExitStyle 2 (0.9.14): cut back to your own view before the game takes over, so
 				// nothing is left to change on screen when it does: from first person your body is
@@ -1800,23 +1827,37 @@ namespace CCC
 				if (s.exitStyle == 2 && held >= s.exitCutSeconds && held < 3.0f) {
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
 					if (view) {
-						if (g_state.startedFirstPerson) {
-							g_wantRevealPlayer = false;
-							g_wantHidePlayer = true;
-							Visibility::HidePlayer();
-						}
 						const float lens = g_state.startFov >= 40.0f ? g_state.startFov :
 						                                                g_gameplayLens[g_state.startedFirstPerson ? 0 : 1].load(std::memory_order_relaxed);
-						if (lens >= 40.0f) {
-							g_waitingLens.store(lens, std::memory_order_relaxed);
+						// 0.9.15, staged: the 0.9.14 clip showed the camera move landing a frame after
+						// the body, blur and lens changes during the hold. So on the cut's first frame
+						// only the camera moves; the rest follows on the next.
+						const bool cameraOnly = s.exitCutStaged && g_state.exitCutFrames == 0;
+						if (!cameraOnly) {
+							if (g_state.startedFirstPerson) {
+								g_wantRevealPlayer = false;
+								g_wantHidePlayer = true;
+								Visibility::HidePlayer();
+							}
+							if (lens >= 40.0f) {
+								g_waitingLens.store(lens, std::memory_order_relaxed);
+							}
+							g_shotDistance.store(0.0f, std::memory_order_relaxed);
+							FocusOnShot(0.0f);
 						}
-						g_shotDistance.store(0.0f, std::memory_order_relaxed);
-						FocusOnShot(0.0f);
-						if (Camera::ShowGameplayView(camera->cameraRoot.get(), *view)) {
+						const bool drawn = cameraOnly ? Camera::ApplyRender(camera->cameraRoot.get(), *view, 0.0f, false) :
+						                                Camera::ShowGameplayView(camera->cameraRoot.get(), *view);
+						if (drawn) {
+							if (!cameraOnly && lens >= 40.0f) {
+								Camera::SetRenderLens(lens);  // not the frustum saved at the start (0.9.14: a narrower one, third person)
+							}
+							++g_state.exitCutFrames;
 							if (!g_state.exitCut) {
 								g_state.exitCut = true;
-								REX::INFO("Exit style 2: cut to your {} view {:.2f} s after the last line (lens {:.1f})",
-									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens);
+								REX::INFO("Exit style 2: cut to your {} view {:.2f} s after the last line (lens {:.1f}{})",
+									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens, cameraOnly ? "; the camera first, the rest next frame" : "");
+							} else if (g_state.exitCutFrames == 2) {
+								REX::INFO("Exit style 2: {}, no blur, your lens", g_state.startedFirstPerson ? "your body hidden" : "your view");
 							}
 							return;
 						}
@@ -2922,6 +2963,7 @@ namespace CCC
 			g_state.lastDirected = directed.has_value();
 			g_state.closingDone = false;
 			g_state.exitCut = false;
+			g_state.exitCutFrames = 0;
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
@@ -3569,6 +3611,7 @@ namespace CCC
 		{
 			static void Thunk(void* a_camera, float a_fov)
 			{
+				g_lensCamera.store(a_camera, std::memory_order_relaxed);  // 0.9.15: in conversations too (it isn't called outside them)
 				RememberGameplayLens(a_camera, a_fov);
 				Hook(a_camera, ExitLens(LensFor(a_fov), true));
 			}
@@ -3585,15 +3628,25 @@ namespace CCC
 		// values are replaced by it, until the game asks for it itself.
 		void PutGameplayLensBack(bool a_firstPerson)
 		{
-			const int   which = a_firstPerson ? 0 : 1;
-			const float fov = g_gameplayLens[which].load(std::memory_order_relaxed);
-			void*       camera = g_lensCamera.load(std::memory_order_relaxed);
+			const int which = a_firstPerson ? 0 : 1;
+			// 0.9.15: the lens update isn't called outside conversations (0.9.14 log: nothing was
+			// ever remembered, so this never ran); the game's lens on the conversation's first
+			// frame is your gameplay lens.
+			float fov = g_gameplayLens[which].load(std::memory_order_relaxed);
+			if (fov < 40.0f) {
+				fov = g_state.startFov;
+			}
+			void* camera = g_lensCamera.load(std::memory_order_relaxed);
 			if (fov < 40.0f || !camera || !Settings::Get().exitLens) {
+				static int missed = 0;
+				if (missed++ < 5) {
+					REX::INFO("Exit lens: not put back (lens {:.1f}, camera {}, bExitLens {})", fov, camera ? "known" : "unknown", Settings::Get().exitLens);
+				}
 				return;
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			g_waitingLens.store(0.0f, std::memory_order_relaxed);
-			g_exitLensWhich.store(which, std::memory_order_relaxed);
+			g_exitLensValue.store(fov, std::memory_order_relaxed);
 			g_exitLensUntil.store((std::chrono::steady_clock::now() + std::chrono::milliseconds(250)).time_since_epoch().count(), std::memory_order_relaxed);
 			if (g_exitLensFrames.exchange(6, std::memory_order_relaxed) == 0) {
 				LensHookMain::Hook(camera, fov);
@@ -3611,7 +3664,7 @@ namespace CCC
 				g_exitLensFrames.store(0, std::memory_order_relaxed);
 				return a_fov;
 			}
-			const float fov = g_gameplayLens[g_exitLensWhich.load(std::memory_order_relaxed)].load(std::memory_order_relaxed);
+			const float fov = g_exitLensValue.load(std::memory_order_relaxed);
 			if (!a_main) {
 				REX::INFO("Exit lens (other caller): the game asked for {:.1f} degrees; {:.1f} instead", a_fov, fov);
 				return fov;
@@ -6165,7 +6218,17 @@ namespace CCC
 					REX::INFO("Game left its dialogue camera; restoring camera");
 					End();
 				}
-				if (g_state.active && !repairing && now - g_lastHookTime > 250ms) {
+				// 0.9.15: not while the SFSE Menu Framework menu is open (or just after): the game's
+				// camera stops then, and the 0.9.14 test ended the conversation and started a new one
+				// on the same dialogue when it closed.
+				static std::chrono::steady_clock::time_point menuPauseUntil{};
+				if (g_state.active && Menu::IsOpen()) {
+					if (now >= menuPauseUntil) {
+						REX::INFO("Settings menu open mid-conversation; the conversation waits");
+					}
+					menuPauseUntil = now + 500ms;
+				}
+				if (g_state.active && !repairing && now - g_lastHookTime > 250ms && now >= menuPauseUntil) {
 					REX::INFO("Dialogue camera stopped updating; restoring camera");
 					End();
 				}

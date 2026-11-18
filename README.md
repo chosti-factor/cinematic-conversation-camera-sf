@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.14 (2026-11-17).
+Last updated: 0.9.15 (2026-11-17).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -129,9 +129,9 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   bar (`bShowMessages`, `fMessageSeconds`).
 - **Preset key:** U switches to the next preset on the fly, even mid-conversation
   (`iPresetKey`).
-- **How a conversation ends** (`iExitStyle`, testing): a cut back to your own view just
-  before the game hands the camera back (the default), or a closing shot of the NPC alone,
-  or the last shot to the end.
+- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
+  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
+  menu closes, or the last shot to the end.
 - Clean exits in both perspectives, and starts with at most a brief flash. Small speakers
   (robots) and quest scenes you take part in (someone walks up and starts talking, several
   people taking turns) keep the game's own camera.

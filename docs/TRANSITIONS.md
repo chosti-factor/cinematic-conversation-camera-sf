@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.14, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.15, 2026-11-17).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -139,17 +139,31 @@ Version notes in brackets say when something was found or changed; the full stor
   through it, up to 3 s, until the game leaves its dialogue camera (`fExitHoldSeconds` = 0.5
   is the minimum).
 - **The exit style (0.9.14, `iExitStyle`), during that hold:**
-  - **2 (default): cut back to your view** `fExitCutSeconds` (0.4 s) after the last line:
+  - **2 (default; the user's pick after the 0.9.14 comparison): cut back to your view** `fExitCutSeconds` (0.4 s) after the last line:
     your saved first- or third-person view (`ShowGameplayView`), your gameplay lens (the
     lens hook's waiting value: the game's lens at the conversation's first frame), the blur
     off (shot distance 0). From first person your body is hidden first (the game's own
     first-person conversation view has none). When the game takes over, the picture already
     matches it. Logged: "Exit style 2: cut to your ... view".
-  - **1: closing shot of the NPC alone**, as the last line ends: if the shot on screen shows
+  - **1: closing shot of the NPC alone**: if the shot on screen shows
     you (or is the plain shot), the director solves medium, close-up or three-quarter on the
     NPC from the last frame it saw (locked, obstacle-checked, pulled in), with its own lens
-    and focus. Logged: "Exit style 1: closing shot ...". The blur still goes off at the
-    switch.
+    and focus. Logged: "Exit style 1: closing shot ...". The blur still goes off on its last
+    frame (0.9.14 clip, every exit).
+    - **When (0.9.15):** as the dialogue menu closes, once it has been open in this
+      conversation. The menu (and the letterbox, which lives in it) closes a couple of frames
+      before the game lets go of the speaker: 0.9.14 cut at "Speaker gone", and the clip
+      showed the last shot two frames without its bars first. The shot is held from then
+      on.
+    - **Staged (0.9.15, `bExitCutStaged=1`):** the 0.9.14 clip showed, during the hold,
+      the camera move landing one frame after the body, blur and lens changes: the frame
+      before the cut was the last shot with you hidden (first person) or through your 94
+      degree lens (third person), no blur; and in third person the first frame of your view
+      came through the narrower frustum saved at the start, then 94. So on the cut's first
+      frame only the camera moves (`ApplyRender`, frustum untouched); from the next, your
+      body is hidden, the blur goes off, the lens hook passes your lens and the frustum is
+      set from it (`SetRenderLens`, not the saved frustum). The hand-back itself was clean
+      in that clip (first person: your view straight through, the HUD back, no jump).
   - **0:** the last shot to the end (up to 0.9.13).
   - If a speaker comes back during the hold, the next shot resets all of it (body shown
     again by the usual rule).
@@ -157,7 +171,8 @@ Version notes in brackets say when something was found or changed; the full stor
   - the game leaves its dialogue camera, after 150 ms of grace for the first-person exit to
     finish; or
   - the dialogue camera stops updating for **250 ms** (a menu, such as the bar's drink).
-    When the camera comes back, a new conversation starts.
+    When the camera comes back, a new conversation starts. Not while the SFSE Menu Framework
+    menu (F1) is open, or for 0.5 s after it closes (0.9.15): the camera stops then too.
 
 ### First person
 
@@ -200,7 +215,11 @@ What happens on the switch:
      from), and for up to 6 lens updates or 0.25 s, the game's in-between values are swapped
      for it at all three callers, until the game asks for it itself. That covers both
      causes; the log lists each swapped value ("Exit lens: ..."), which tells them apart.
-     Untested.
+   - **0.9.13 and 0.9.14: it never ran.** It took the gameplay lens from the lens update
+     outside conversations, and that update isn't called there (no "Exit lens" line in the
+     0.9.14 log; the zoomed frame at every exit). From 0.9.15 the lens is the game's on the
+     conversation's first frame (`startFov`) and the camera is the one the lens update sees
+     during the conversation; "Exit lens: not put back" is logged if either is missing.
 6. **One or two frames of the last shot with you already gone from it** (and its background
    blur gone), just before your view (your body is swapped back at the switch). This is the
    held-back frame itself: the view drawn on it never reaches the screen (built before our

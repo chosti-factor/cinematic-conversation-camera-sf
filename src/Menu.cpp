@@ -394,6 +394,12 @@ namespace CCC::Menu
 		void __stdcall DrawFilming() { DrawPage("Filming people talking"); }
 	}
 
+	bool IsOpen()
+	{
+		static const bool installed = SFSEMenuFramework::IsInstalled();
+		return installed && SFSEMenuFramework::IsAnyBlockingWindowOpen();
+	}
+
 	void Register()
 	{
 		if (!SFSEMenuFramework::IsInstalled()) {
