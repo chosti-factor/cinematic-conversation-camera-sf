@@ -16,6 +16,15 @@ test build; "diagnostic" items only add information to the log for testing.
   ones that are just people talking can keep this mod's camera after 1.0. The action types
   are read from the game's own class names, with no new addresses and every read guarded.
 
+### Documentation
+- README: the features are now in three lists, From CCC, Changed from CCC (what CCC also
+  does, done differently, with Starfield's reasons in place) and New in CCC SF, checked
+  against CCC 1.5.0's own changelog and usage notes. CCC already had obstacle checks (Keep
+  Subject Visible, off by default), avoiding bystanders, filming other people's
+  conversations, a depth-of-field blur, player expressions and a settings page, so those
+  moved to Changed. The separate "because of Starfield" list is merged in; its "no in-game
+  settings menu" line was out of date since 0.9.12.
+
 ## 0.9.19 - 2026-11-18
 
 ### Changed

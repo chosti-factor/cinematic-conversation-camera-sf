@@ -49,92 +49,113 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   12 m outdoors, the others closer in proportion
   (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` to set your own).
 
-### New or distinct in CCC SF
+### Changed from CCC
 
-- **Your character in shot from first person:** your full body is built at the start of
-  the conversation (about a tenth of a second), including with seated NPCs, and you're
-  back in first person when it ends.
-- **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera
-  is at your eyes.
-- **Focus on the person in shot:** the game's conversation blur is refocused on every
-  shot onto whoever is in it, so they're sharp and the background stays softly blurred,
-  even on longer outdoor shots (`bFocusOnSubject`). Two focus styles (`sFocusStyle`):
-  Cinematic (more background blur) and Wide (deeper sharp zone, softer background blur).
-  Shots from more than 8 m away have no blur.
-- **Obstacle detection:** before each cut, the game's own camera collision test checks the
-  line from the person in shot to the camera. A wall behind the camera pulls it in; a
-  ladder or pillar in front of the person skips the shot for another angle; when nothing
-  is fully clear, the angle with the most room is used (`bObstacleCheck`).
+What CCC also does, done differently here; where Starfield is the reason, the bullet says so.
+
+- **A lens per angle, as CCC,** with a Starfield difference: Starfield films conversations
+  through a narrow 30 degree lens; the mod sets its own while it films. CCC's presets use
+  CCC 1.5.0's own lens for every angle (Close 35-50 degrees, Standard 50-72, Room 45-95), as
+  CCC wrote them (checked against Skyrim clips); CCC SF's presets have their own (Starborn's
+  long and compressed, Nebula's wide and long). `fConversationLens` sets one lens for
+  everything (-1, the default, keeps each angle's own; 30 is the game's).
 - **Emotion close-ups** (every tier in Frontier, Starborn and Nebula; strong lines only in
-  Constellation and, of CCC's, Close): lines the game tags with an expression push in to a close-up of the speaker, 40%
-  of them extreme close-ups (each for its own line only). The expressions come in three
-  tiers with their own chances: mild (Amused, Confident, Thinking...) 25%, medium
-  (Concerned, Serious, Smirk...) 40%, strong (Angry, Afraid, Shocked, Somber...) always;
-  Neutral and Friendly never (`sCloseUpEmotions...Npc`, `iCloseUpChance...Npc`). About one
-  line in five, more with emotional characters. CCC does this with lines Skyrim's writers
-  marked as intense; Starfield has no such mark, so the expression decides. Each line's
-  expression can be shown on screen while testing (`bShowMessages`). Tables:
-  [docs/EMOTIONS.md](docs/EMOTIONS.md).
-- **Reaction shots, reworked** (CCC SF's presets; CCC's have them off, as CCC ships): to
-  break the monotony of a long stretch, after 7 to 12 s of their talking without a cut to
-  you (each preset its own),
-  their next line of 2.5 to 8 s is shown on you from its start to its end; a longer line,
-  its first 4 s (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the
-  7 s, and a regular one can be cut away from when they're reached. A reaction is an insert:
-  the camera goes back to exactly the speaker's shot. It's you listening, or a close-up of
-  your expression, by its tier like theirs: mild 25%, medium 40%, strong always
+  Constellation and, of CCC's, Close): lines the game tags with an expression push in to a
+  close-up of the speaker, 40% of them extreme close-ups (each for its own line only). The
+  expressions come in three tiers with their own chances: mild (Amused, Confident,
+  Thinking...) 25%, medium (Concerned, Serious, Smirk...) 40%, strong (Angry, Afraid,
+  Shocked, Somber...) always; Neutral and Friendly never (`sCloseUpEmotions...Npc`,
+  `iCloseUpChance...Npc`). About one line in five, more with emotional characters. CCC does
+  this with lines Skyrim's writers marked as intense; because Starfield's lines carry no
+  such mark, the expression decides. Each line's expression can be shown on screen while
+  testing (`bShowMessages`). Tables: [docs/EMOTIONS.md](docs/EMOTIONS.md).
+- **Reaction shots, reworked** (CCC SF's presets; CCC's have them off, as CCC ships, and CCC
+  rolls a chance after every few lines instead): to break the monotony of a long stretch,
+  after 7 to 12 s of their talking without a cut to you (each preset its own), their next
+  line of 2.5 to 8 s is shown on you from its start to its end; a longer line, its first 4 s
+  (`fReactionAfterSecondsPlayer`). Their emotion close-ups count towards the 7 s, and a
+  regular one can be cut away from when they're reached. A reaction is an insert: the camera
+  goes back to exactly the speaker's shot. It's you listening, or a close-up of your
+  expression, by its tier like theirs: mild 25%, medium 40%, strong always
   (`iCloseUpChance...Player`). Details: [docs/REACTIONS.md](docs/REACTIONS.md).
+- **Cutting:** CCC's line counts, with each preset's own rhythm. `iCuttingPace` nudges it,
+  from -2 (calmer: a new angle after more lines, held longer, fewer fresh angles when the
+  turn passes) to +2 (livelier), keeping the preset's character; 0 is the preset as
+  designed. `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead.
+- **Per-preset camera distances,** matched to each preset's widest shot: the camera stands
+  where CCC's numbers put it, and each preset lets it go as far as its widest shot needs
+  (Standard: 7 m indoors, 10.5 m outdoors); obstacle detection pulls it in or picks another
+  angle where walls are closer.
+- **Obstacle detection,** on by default (CCC's Keep Subject Visible is off by default):
+  before each cut, the game's own camera collision test checks the line from the person in
+  shot to the camera. A wall behind the camera pulls it in; a ladder or pillar in front of
+  the person skips the shot for another angle; when nothing is fully clear, the angle with
+  the most room is used (`bObstacleCheck`).
+- **Bystanders** (as CCC's Avoid Framing Bystanders): someone standing still who'd fill the
+  shot or hide a face is avoided like a wall; people walking through stay in.
+- **Focus on the person in shot:** CCC has an optional depth-of-field blur over the picture;
+  here the game's conversation blur is refocused on every shot onto whoever is in it, so
+  they're sharp and the background stays softly blurred, even on longer outdoor shots
+  (`bFocusOnSubject`). Two focus styles (`sFocusStyle`): Cinematic (more background blur)
+  and Wide (deeper sharp zone, softer background blur). Shots from more than 8 m away have
+  no blur.
+- **Your character in shot from first person** (because of Starfield: its first-person view
+  has no full body to film, where CCC switches Skyrim to third person): your full body is
+  built at the start of the conversation (about a tenth of a second), including with seated
+  NPCs, and you're back in first person when it ends.
+- **Your character's face** (CCC's Responsive Expressions read the English wording of your
+  lines; here the expression tags and option tags lead): the game keeps it neutral and your
+  lines carry no expression tags, so the mod sets it: your face answers each NPC line's
+  expression (mirrored or as a listener would), options with a skill, background or trait
+  tag ([Persuade], [Space Scoundrel], [Wanted]...) and questions show on it, and your
+  background colours neutral moments. Close-ups of you when your face shows something, and
+  (CCC SF's presets) when you choose a tagged option: an extreme close-up for the
+  confrontational skills (`bChoiceCloseUpsPlayer`, `[Face]`; tables in
+  [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
+- **People talking near you** (CCC 1.5.0 films them by key, or once you stand still; here
+  also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
+  addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
+  conversation. Press N", or hold B on a controller) and/or starting on its own when a
+  conversation begins near you, even as you walk past; moving ends it once you've come to a
+  stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
+  Only for the game's conversation scenes, not barks; one scene at a time, the nearest
+  first, then the next one nearby; followed into the game's next scene with the same people,
+  handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
+  three-quarters, shoulders), with a two-shot or a group shot now and then when three or
+  more are talking. From first person, the view is third person while it films, with you
+  hidden, and back to first person after.
+- **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu
+  Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional
+  here, and the INI works without it (see Settings below).
+
+### New in CCC SF
+
+What CCC doesn't do.
+
+- **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera is
+  at your eyes.
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
   library, whose angles often put the chair, the shop counter or the clutter around it in
-  front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are recognised by
-  the game's vendor flag on their faction, wherever the shop is.
-- **Cutting:** each preset has its own rhythm. `iCuttingPace` nudges it, from -2 (calmer: a
-  new angle after more lines, held longer, fewer fresh angles when the turn passes) to +2
-  (livelier), keeping the preset's character; 0 is the preset as designed. `iMinLines`,
-  `iMaxLines` and `fShortestHold` set exact values instead.
+  front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are
+  recognised by the game's vendor flag on their faction, wherever the shop is.
 - **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
   (Kubrick and *Interstellar*), Constellation (a hard sci-fi documentary) and Nebula (a
   trailer), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn
   locked off, Constellation handheld), or `iCameraSway` sets one.
-- **Per-preset camera distances**, matched to each preset's widest shot.
-- **A lens per angle, as CCC:** Starfield films conversations through a narrow 30 degree
-  lens; the mod sets its own while it films. CCC's presets use CCC 1.5.0's own lens for
-  every angle (Close 35-50 degrees, Standard 50-72, Room 45-95), as CCC wrote them (checked
-  against Skyrim clips); CCC SF's presets have their own (Starborn's long and compressed,
-  Nebula's wide and long). `fConversationLens` sets one lens for everything (-1, the default,
-  keeps each angle's own; 30 is the game's).
-- **Your character's face:** the game keeps it neutral and your lines carry no expression
-  tags, so the mod sets it: your face answers each NPC line's expression (mirrored or as a
-  listener would), options with a skill, background or trait tag ([Persuade], [Space
-  Scoundrel], [Wanted]...) and questions show on it, and your background colours neutral
-  moments. Close-ups of you when your face shows something, and (CCC SF's presets) when you
-  choose a tagged option: an extreme close-up for the confrontational skills
-  (`bChoiceCloseUpsPlayer`, `[Face]`; tables in [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
-- **People talking near you:** NPC-to-NPC conversations are noticed, who's addressing whom
-  included, and filmed: a prompt on screen ("Listen in on nearby conversation. Press N", or
-  hold B on a controller) and/or starting on its own when a conversation begins near you,
-  even as you walk past; moving ends it once you've come to a stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no
-  prompt while it starts on its own). Only for the game's conversation scenes,
-  not barks; one scene at a time, the nearest first, then the next one nearby; followed into
-  the game's next scene with the same people, handed back when it only repeats itself.
-  Letterboxed; two people filmed close (close-ups, three-quarters, shoulders), with a
-  two-shot or a group shot now and then when three or more are talking. From first person, the view
-  is third person while it films, with you hidden, and back to first person after.
-- **Bystanders:** someone standing still who'd fill the shot or hide a face is avoided like
-  a wall; people walking through stay in.
+- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
+  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
+  menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
+  most a brief flash.
+- **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
+  you take part in (someone walks up and starts talking, several people taking turns) keep
+  the game's own camera.
+- **Preset key:** U switches to the next preset on the fly, even mid-conversation
+  (`iPresetKey`).
 - **Testing messages:** each line's expression, your face's answer and the shot used, with
   why, in the top bar while a conversation is filmed, and the preset in use in the bottom
   bar (`bShowMessages`, `fMessageSeconds`).
-- **Preset key:** U switches to the next preset on the fly, even mid-conversation
-  (`iPresetKey`).
-- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
-  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
-  menu closes, or the last shot to the end.
-- Clean exits in both perspectives, and starts with at most a brief flash. Small speakers
-  (robots) and quest scenes you take part in (someone walks up and starts talking, several
-  people taking turns) keep the game's own camera.
 
 ### Presets
 
@@ -161,17 +182,6 @@ fully handheld); `fConversationLens` sets one lens for every angle. Every preset
 shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
 How the camera starts and ends a conversation, frame by frame, with the measured numbers:
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md).
-
-### Differences from CCC, because of Starfield
-
-- Starfield films conversations through a narrow 30 degree lens; the mod sets each angle's
-  own lens while it films, as CCC does (CCC's own numbers in CCC's presets, measured
-  against Skyrim clips), and stands the camera where CCC's numbers put it; each preset lets
-  the camera go as far as its widest shot needs (Standard: 7 m indoors, 10.5 m outdoors),
-  and obstacle detection pulls it in or picks another angle where walls are closer.
-- Starfield has no emotion strength on its lines (Skyrim's writers set one), so emotion
-  close-ups are chosen from the line's expression tag instead.
-- There's no in-game settings menu; everything is in the INI.
 
 ### Planned, roughly in order
 
