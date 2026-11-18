@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.20 - 2026-11-18
+
+### Added
+- Diagnostic: the "Scene check" line lists what a quest scene is made of, its actions counted
+  by type (Dialogue, PlayerDialogue, Camera, Timeline, Move and so on), and says whether it
+  "directs a camera" (has a Camera or Timeline action) or has "no camera actions". The first
+  Camera and Timeline action of each scene is also dumped once. Nothing changes on screen:
+  every quest scene you take part in still goes to the game's camera. The aim is to learn,
+  from testing and the beta, which quest scenes really direct their own shots, so that the
+  ones that are just people talking can keep this mod's camera after 1.0. The action types
+  are read from the game's own class names, with no new addresses and every read guarded.
+
 ## 0.9.19 - 2026-11-18
 
 ### Changed

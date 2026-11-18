@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.19 (2026-11-18).
+Last updated: 0.9.20 (2026-11-18).
 
 ## Working rules
 
@@ -237,7 +237,10 @@ Last updated: 0.9.19 (2026-11-18).
   the release candidate.
 - 0.9.x order agreed 2026-11-16: seated conversations (start jitter, side-on framing, bar
   stool body), large speakers (Vasco), the SFSE Menu Framework page, UI-mod compatibility
-  testing, then if time allows quest-scene recognition. The testing messages and the
+  testing. Quest scenes (2026-11-18): 0.9.20 only logs each scene's actions by type and
+  whether it directs a camera (Camera or Timeline action; types read from the game's class
+  names through the vtable's run-time type information, no address IDs); using that to keep
+  this mod's camera on scenes that are just talking moved to after 1.0. The testing messages and the
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 

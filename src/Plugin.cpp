@@ -1191,8 +1191,91 @@ namespace CCC
 			}
 		}
 
+		// The class name the compiler recorded for an object with a vtable (its run-time type
+		// information: the vtable's entry before the first points at a record that names the
+		// class), e.g. "BGSSceneActionCamera". Read under guards and with no address IDs, so an
+		// unexpected object only gives an empty name. 0.9.20.
+		std::string ClassName(std::uintptr_t a_object)
+		{
+			if (a_object < 0x10000 || a_object > 0x7FFFFFFFFFFF || (a_object & 7) != 0) {
+				return {};
+			}
+			std::uintptr_t vtable = 0, locator = 0;
+			if (!SafeCopy(&vtable, reinterpret_cast<const void*>(a_object), sizeof(vtable)) || vtable < 0x10000 || vtable > 0x7FFFFFFFFFFF ||
+				!SafeCopy(&locator, reinterpret_cast<const void*>(vtable - 8), sizeof(locator)) || locator < 0x10000 || locator > 0x7FFFFFFFFFFF) {
+				return {};
+			}
+			struct Locator
+			{
+				std::uint32_t signature, offset, cdOffset, typeDescriptor, classDescriptor, self;
+			} l{};
+			if (!SafeCopy(&l, reinterpret_cast<const void*>(locator), sizeof(l)) || l.signature != 1 || l.self == 0 || l.self > locator) {
+				return {};
+			}
+			std::array<char, 96> raw{};
+			if (!SafeCopy(raw.data(), reinterpret_cast<const void*>(locator - l.self + l.typeDescriptor + 0x10), raw.size() - 1)) {
+				return {};
+			}
+			std::string name(raw.data());
+			if (!name.starts_with(".?AV") && !name.starts_with(".?AU")) {
+				return {};
+			}
+			name = name.substr(4);
+			return name.substr(0, name.find("@@"));
+		}
+
+		// What a scene is made of (0.9.20, logging only): its list of actions, counted by type
+		// (Dialogue, PlayerDialogue, Camera, Timeline, Move...), to learn which quest scenes
+		// direct a camera of their own and which are just people talking. Found by looking for
+		// a list among the scene's first values whose entries are scene actions; the list's
+		// size sits just before it. The first Camera and Timeline action of each scene are
+		// dumped once, to learn their layout.
+		std::string SceneActions(const std::array<std::uintptr_t, 0x40>& a_words)
+		{
+			static std::unordered_set<const void*> dumped;
+			std::string                             out;
+			for (std::size_t k = 1; k < a_words.size(); ++k) {
+				const auto data = a_words[k];
+				if (data < 0x10000 || data > 0x7FFFFFFFFFFF || (data & 7) != 0) {
+					continue;
+				}
+				std::uintptr_t first = 0;
+				if (!SafeCopy(&first, reinterpret_cast<const void*>(data), sizeof(first)) || !ClassName(first).starts_with("BGSSceneAction")) {
+					continue;
+				}
+				const auto size = static_cast<std::uint32_t>(a_words[k - 1]);
+				const auto capacity = static_cast<std::uint32_t>(a_words[k - 1] >> 32);
+				const bool sizeKnown = size > 0 && size <= capacity && size <= 256;
+				std::map<std::string, int> counts;
+				std::uint32_t              n = 0;
+				for (; n < (sizeKnown ? size : 64u); ++n) {
+					std::uintptr_t action = 0;
+					if (!SafeCopy(&action, reinterpret_cast<const void*>(data + n * 8), sizeof(action))) {
+						break;
+					}
+					auto type = ClassName(action);
+					if (!type.starts_with("BGSSceneAction")) {
+						break;
+					}
+					type = type.substr(14);
+					if ((type == "Camera" || type == "Timeline") && counts[type] == 0 && dumped.size() < 200 && dumped.insert(reinterpret_cast<const void*>(action)).second) {
+						DumpObject(std::format("scene action {} #{}", type, n).c_str(), reinterpret_cast<const void*>(action), 0x80);
+					}
+					++counts[type.empty() ? "?" : type];
+				}
+				std::string list;
+				for (const auto& [type, count] : counts) {
+					list += std::format("{}{} {}", list.empty() ? "" : ", ", count, type);
+				}
+				out += std::format("; actions at scene +{:X}: {} of {}{} ({})", k * 8, n, sizeKnown ? size : 0u, sizeKnown ? "" : " (size not found)", list);
+				const bool camera = counts.contains("Camera") || counts.contains("Timeline");
+				out += camera ? ", directs a camera" : ", no camera actions";
+			}
+			return out.empty() ? "; actions not found" : out;
+		}
+
 		// The quest scene this reference is playing a part in, if any.
-		std::string SceneLabel(RE::TESObjectREFR* a_ref, bool& a_inScene)
+		std::string SceneLabel(RE::TESObjectREFR* a_ref, bool& a_inScene, bool a_actions = false)
 		{
 			a_inScene = false;
 			auto* scene = a_ref ? CurrentSceneUnsafe(a_ref) : nullptr;
@@ -1221,7 +1304,10 @@ namespace CCC
 					}
 				}
 			}
-			return std::format("in scene {:08X} '{}'{}", id, editorId ? editorId : "", quest.empty() ? "; quest not found" : quest);
+			// The actions go last: the hand-back check reads the scene's name as everything
+			// before "; quest".
+			return std::format("in scene {:08X} '{}'{}{}", id, editorId ? editorId : "", quest.empty() ? "; quest not found" : quest,
+				a_actions ? SceneActions(words) : std::string{});
 		}
 
 		// A merchant, judged by the speaker's factions (the game's vendor factions are named
@@ -2054,8 +2140,11 @@ namespace CCC
 				// Quest scenes (someone walks up and starts talking, several people taking turns):
 				// the game directs its own camera there, so leave it to the game from the start.
 				bool        speakerInScene = false, playerInScene = false;
-				const auto  speakerScene = SceneLabel(speaker, speakerInScene);
-				const auto  playerScene = SceneLabel(player, playerInScene);
+				// The scene's actions are listed once: for your scene, and for the speaker's when
+				// it's a different one (0.9.20, logging only).
+				const bool  sameScene = CurrentSceneUnsafe(speaker) == CurrentSceneUnsafe(player);
+				const auto  speakerScene = SceneLabel(speaker, speakerInScene, !sameScene);
+				const auto  playerScene = SceneLabel(player, playerInScene, true);
 				const char* name = speaker->GetDisplayFullName();
 				REX::INFO("Scene check: speaker '{}' {:08X}: {}; you: {}", name ? name : "", speaker->formID, speakerScene, playerScene);
 				// Only quest scenes the player takes part in. Everyday background scenes (people

@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.19 (2026-11-18).
+Last updated: 0.9.20 (2026-11-18).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -195,7 +195,8 @@ How the camera starts and ends a conversation, frame by frame, with the measured
     narrower shots of you (those keep to wider angles now).
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Compatibility testing with popular UI mods.
-  - If time allows: quest scenes recognised by their quest rather than the scene's name.
+  - Quest scenes: logged in 0.9.20, what each one is made of (its actions, and whether it
+    directs a camera of its own), to prepare the change planned after 1.0.
   - Once feature complete, four passes, in this order:
     1. Redundancy: code no longer in use and remnants of earlier versions taken out
        (finished experiments, old exit covers, diagnostics that have served their purpose).
@@ -214,6 +215,11 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 ### After 1.0
 
 Planned:
+- Quest scenes that are just people talking filmed by this mod: today every quest scene you
+  take part in goes to the game's camera, the safe choice, because some direct their own
+  shots. Scenes with no camera actions of their own would keep this mod's camera, and later
+  the game's camera would take over only while a scene's camera action runs. Built on the
+  scene logs gathered from 0.9.20 on.
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
 - Large speakers measured by their actual size (the actor's bounds) rather than by height,
   so the shots of you clear any bulky speaker by exactly as much as they need to.

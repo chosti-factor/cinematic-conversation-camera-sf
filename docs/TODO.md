@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.19 (2026-11-18). Dates assume the Friday 27 November release; for
+Last updated: 0.9.20 (2026-11-18). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -61,7 +61,9 @@ Wednesday the 25th, about two days earlier.
 - [ ] Compatibility with UI mods (HUD replacer, dialogue menu replacer, subtitle mod), and
       auto-zoom back on as one check
 - [ ] The Ranger fading in at Neon (waiting on footage)
-- [ ] If time allows: quest scenes recognised by their quest
+- [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
+      whether it directs a camera). Using it to keep this mod's camera on quest scenes that
+      are just people talking moved to after 1.0
 - [ ] Optional: `iCuttingPace` +2/-2 feel test; seated over-the-shoulder side 0.6 to 0.75
 
 ## 3. Feature freeze (about 21 to 22 Nov)
@@ -95,4 +97,7 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
-(Nothing yet.)
+- Quest scenes that are just people talking keep this mod's camera (decided 2026-11-18):
+  first per scene (a scene with no Camera or Timeline action keeps ours), later per phase
+  (the game's camera only while a camera action runs). Needs the 0.9.20 logs from many
+  quest scenes first, to confirm the Camera action is what takes the camera over.
