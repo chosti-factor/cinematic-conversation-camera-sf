@@ -30,9 +30,9 @@ Wednesday the 25th, about two days earlier.
       one frame (Muria); watch for it
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
-- [ ] Furniture camera swing when sitting and standing: vanilla does it too; the game's
-      `bDisableFurnitureCamera` doesn't stop it (0.9.15 test). Leave it, or look for a fix after
-      1.0 (the user's call)
+- [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
+      `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
+      user, 2026-11-17)
 - [x] Seated next to someone at a bar, third person (0.9.12, twice): their head didn't block
       you; the tally of your lines works
 - [ ] Check the 0.9.10 fix in first person: the bar stool with the drink (your body after the

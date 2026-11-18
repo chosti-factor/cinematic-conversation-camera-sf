@@ -232,6 +232,9 @@ Mulling (not decided):
   mirroring more). Open questions: mods that unlock every trait (many traits at once), which
   trait wins when several apply, and whether it should work only with the game's usual trait
   limits; it would need its own setting.
+- The game's sitting camera: sitting down and standing up, it swings round to your face and
+  drifts while it settles (vanilla too; the game's `bDisableFurnitureCamera` doesn't stop it).
+  Whether the mod should steady it, since it's outside conversations.
 - For walls the collision test passes through: a second check that the camera stands on walkable
   floor (the navmesh, Starvegas's approach) connected to where the two of you stand. Looked at
   for 1.0 and not adopted for now: the collision test covers nearly every case, the floor

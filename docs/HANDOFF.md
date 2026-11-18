@@ -201,7 +201,9 @@ Last updated: 0.9.16 (2026-11-17).
   user, 2026-11-17; the tally started in 0.9.12: Hud.cpp appends every offered option and
   the pick to `CinematicConversationCameraSF_YourLines.tsv` in the log folder, columns time,
   panel, chosen, how the pick was told apart, text; only while bDebugLog is on). Mulling, not decided: traits setting your face's temperament (trait
-  unlocking mods, precedence among several traits, a setting); walls the sphere cast passes through (Tuala at the MAST) by a navmesh
+  unlocking mods, precedence among several traits, a setting); the game's sitting camera
+  (swings round to your face sitting down and standing up, vanilla too, not stopped by
+  `bDisableFurnitureCamera`; whether to steady it, outside conversations); walls the sphere cast passes through (Tuala at the MAST) by a navmesh
   check (Starvegas's walkable-floor snap). The navmesh was looked at for 1.0 and not adopted
   for now (user, 2026-11-17): it can't see plants either, rejects good spots over counters
   and tables, and its functions aren't mapped in CommonLibSF.
