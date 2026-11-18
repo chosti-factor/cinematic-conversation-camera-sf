@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.17 (2026-11-17).
+Last updated: 0.9.18 (2026-11-17).
 
 ## Working rules
 
@@ -77,8 +77,10 @@ Last updated: 0.9.17 (2026-11-17).
   outside conversations).
 - Third-person exit: one in-between frame. 0.9.13's lens fix applies there too; whether
   vanilla has a frame like it waits on the true-vanilla test (mod disabled in MO2).
-- In-game settings page (SFSE Menu Framework) and the tally of your lines: 0.9.12, the page
-  registers (44 settings); its test is next.
+- In-game settings page (SFSE Menu Framework) and the tally of your lines: 0.9.12, tested.
+- The 0.9.17 session: starts and exits clean ("probably good for release", the user; smoother
+  transition styles after 1.0). A crash before talking to Vasco was Favorites Banks
+  (FavoritesBanks.dll on the game's IO thread), not this mod.
 - Cutting styles retired; `iCuttingPace` (-2..+2) nudges the preset's own rhythm.
 - Sitting down/standing up on stools: the mod doesn't touch the camera (furniture state).
 - Still to do in 0.9.x: the long Sarah test for CCC SF preset tweaks (below), the bar-stool

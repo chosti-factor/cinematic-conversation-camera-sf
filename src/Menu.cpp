@@ -126,6 +126,12 @@ namespace CCC::Menu
 				"When you stop near a conversation; otherwise with the listen key." },
 			{ "Filming people talking", "People talking near you", "Overhear", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Filming people talking", "People talking near you", "Overhear", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f", nullptr },
+			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmStopDistance", "Distance that ends it (m)", Kind::kFloat, 0.1f, 2.0f, "%.2f",
+				"Once you've stood still, moving this far from that spot ends the filming." },
+			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmStopSeconds", "Standing still first (s)", Kind::kFloat, 0.1f, 2.0f, "%.2f",
+				"How long you stand still before the distance above applies." },
+			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmWalkOnDistance", "Walking on before you stop (m)", Kind::kFloat, 0.5f, 10.0f, "%.1f",
+				"If filming starts as you walk up, walking on this far from where it started ends it (time to let go of the stick)." },
 		};
 
 		// ---- Reading and writing the INI ----------------------------------------------------

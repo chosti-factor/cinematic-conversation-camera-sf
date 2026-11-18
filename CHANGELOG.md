@@ -4,6 +4,23 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.18 - 2026-11-17
+
+### Changed
+- Filming people talking: no more shaking when it starts while you're still walking (0.9.17
+  test, on a controller: the shots shook until you let go of the stick). The shots are placed
+  against the game's camera, which follows you, and the mod's placement reaches the screen a
+  frame behind it; the game camera is now held where it was when filming started. It still
+  starts while you walk (not while you sprint), as before.
+- Once you've stopped, moving ends filming more readily: after standing still
+  `fFilmStopSeconds` (0.3 s; 0.4 before), moving `fFilmStopDistance` (0.25 m; 0.5 before)
+  ends it. Walking up is unchanged: walking on `fFilmWalkOnDistance` (3 m) before you've
+  stopped. All three are now in the INI (`[Overhear]`) and on the settings page.
+- Seated in third person, a conversation now ends on its last shot and the game's camera
+  takes over in one cut. Your view from before the conversation isn't where the game's
+  seated camera comes back to, so the cut back to it was followed a moment later by a second
+  cut (0.9.17 test at the bar).
+
 ## 0.9.17 - 2026-11-17
 
 ### Fixed

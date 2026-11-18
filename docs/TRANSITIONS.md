@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.17, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.18, 2026-11-17).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -186,6 +186,12 @@ Version notes in brackets say when something was found or changed; the full stor
       drink) never sees your gameplay lens at its start; the cut and the exit lens fix use
       the last one seen at a conversation start (0.9.15 clip: your view half a second
       through the conversation lens, then a jump at the hand-back).
+  - **Seated in third person (0.9.18):** no cut to your view, and nothing drawn on the
+    switch frame: the last shot stays and the game's camera takes over (with your lens put
+    back). The 0.9.17 test at the bar: your saved view (from before the conversation) and
+    the game's seated camera after it differ, so the cut back was followed by a second cut
+    (lower, closer) a moment after the hand-back. Seated is read from your process's
+    occupied furniture at the start. Seated in first person keeps the cut (clean there).
   - **0:** the last shot to the end (up to 0.9.13).
   - If a speaker comes back during the hold, the next shot resets all of it (body shown
     again by the usual rule).

@@ -178,6 +178,7 @@ namespace CCC
 			std::chrono::steady_clock::time_point exitCutAt{};
 			int                                   exitCutFrames{ 0 };     // ... frames since (0.9.15: staged)
 			bool                                  menuSeen{ false };      // the dialogue menu has been open in this conversation (0.9.15)
+			bool                                  seatedAtStart{ false }; // you were sitting on something when it started (0.9.18)
 			RE::NiPoint3                          startAngle{};      // your angles (pitch, roll, yaw) when the conversation started (0.9.2)
 			bool                                  startAngleKnown{ false };
 			std::chrono::steady_clock::time_point holdStarted{};
@@ -755,6 +756,16 @@ namespace CCC
 		constexpr std::size_t kRenderCameraFrustumOffset = 0x1C0;
 		bool                  g_fovLogged = false;
 
+		// You're sitting on something (a chair, a bar stool): your process's occupied furniture.
+		bool PlayerOnFurniture()
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player || !player->currentProcess || !player->currentProcess->middleHigh) {
+				return false;
+			}
+			return static_cast<bool>(player->currentProcess->middleHigh->occupiedFurniture.get());
+		}
+
 		void Begin()
 		{
 			g_exitLensFrames.store(0, std::memory_order_relaxed);
@@ -764,6 +775,7 @@ namespace CCC
 			g_state.lastFrame = std::chrono::steady_clock::now();
 			g_state.started = g_state.lastFrame;
 			g_state.startedFirstPerson = g_lastGameplayFirstPerson;
+			g_state.seatedAtStart = PlayerOnFurniture();
 			if (auto* player = RE::PlayerCharacter::GetSingleton()) {
 				g_state.startAngle = player->GetAngle();
 				g_state.startAngleKnown = true;
@@ -819,7 +831,7 @@ namespace CCC
 				// instead; the render camera goes back to the game just before the third-person
 				// camera's own first update.
 				bool tpExit = false;
-				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird >= 1) {
+				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird >= 1 && !g_state.seatedAtStart) {
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
@@ -843,6 +855,10 @@ namespace CCC
 					}
 				}
 				g_exitPendingThird = tpExit && !g_state.startedFirstPerson;
+				if (!tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
+					PutGameplayLensBack(false);
+					REX::INFO("Exit: seated in third person; the game's seated camera takes over (0.9.18)");
+				}
 				if (!tpExit) {
 					Camera::RestoreRender();
 				}
@@ -1831,7 +1847,12 @@ namespace CCC
 				// nothing is left to change on screen when it does: from first person your body is
 				// hidden first (as the game's own conversation view has it), your gameplay lens,
 				// no blur.
-				if (s.exitStyle == 2 && held >= s.exitCutSeconds && held < 3.0f) {
+				// 0.9.18: not seated in third person. Your view from before the conversation isn't
+				// where the game's seated camera comes back (0.9.17 test at the bar: a second cut,
+				// lower and closer, a moment after the hand-back), so the last shot stays and the
+				// game's camera takes over in one cut.
+				const bool seatedThird = g_state.seatedAtStart && !g_state.startedFirstPerson;
+				if (s.exitStyle == 2 && !seatedThird && held >= s.exitCutSeconds && held < 3.0f) {
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
 					const int   which = g_state.startedFirstPerson ? 0 : 1;
 					float       lens = g_state.startFov;
@@ -5160,6 +5181,7 @@ namespace CCC
 			std::vector<std::uint32_t>            group;     // the scene's people lately, for group shots (0.8.10)
 			bool                                  groupShot{ false };  // this line's shot is the group shot
 			std::uint32_t                         lastGroupLine{ 0 };
+			std::optional<Camera::Pose>           rootPin;   // the game camera's root, held where filming started (0.9.18)
 		} g_film;
 
 		struct FilmMain  // main thread only
@@ -5351,6 +5373,7 @@ namespace CCC
 				g_film.smoothSpeaker.reset();
 				g_film.smoothListener.reset();
 				g_film.pose.reset();
+				g_film.rootPin.reset();
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			Camera::RestoreRender();
@@ -5569,18 +5592,21 @@ namespace CCC
 				const auto feet = player->GetPosition();
 				// It can start while you're walking (0.8.6). Moving ends it only once you've come to
 				// a stop (0.8.17: the 0.8.16 test ran on into a TerraBrew conversation and ended it
-				// 1.3 s in, on momentum): until you've stood still for 0.4 s, where you stand follows
-				// you. Walking on 3 m without stopping ends it too.
+				// 1.3 s in, on momentum): until you've stood still fFilmStopSeconds, where you stand
+				// follows you. Walking on fFilmWalkOnDistance without stopping ends it too. 0.9.18:
+				// from the INI, and more eager once you've stopped (0.4 s and 0.5 m until then; the
+				// user: only after the stop, the walking-up leeway unchanged).
+				const auto stopFor = std::chrono::duration<float>(s.filmStopSeconds);
 				if (!g_filmMain.settled) {
 					if (FlatDistance(feet, g_filmMain.playerAt) > 0.05f) {
 						g_filmMain.playerAt = feet;
 						g_filmMain.stopSince = a_now;
-					} else if (a_now - g_filmMain.startedAt >= 1s && a_now - g_filmMain.stopSince >= 400ms) {
+					} else if (a_now - g_filmMain.startedAt >= 1s && a_now - g_filmMain.stopSince >= stopFor) {
 						g_filmMain.settled = true;
 					}
 				}
-				const float moved = g_filmMain.settled ? FlatDistance(feet, g_filmMain.playerAt) :
-				                    FlatDistance(feet, g_filmMain.startFeet) > 3.0f ? 1.0f : 0.0f;
+				const float moved = g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
+				                    FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
 				if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
@@ -5700,6 +5726,7 @@ namespace CCC
 				g_film.listener = listener;
 				g_film.line = 1;
 				g_film.applied = false;
+				g_film.rootPin.reset();
 				g_filmMain.playerAt = player->GetPosition();
 				g_filmMain.startFeet = g_filmMain.playerAt;
 				g_filmMain.settled = false;
@@ -5948,6 +5975,18 @@ namespace CCC
 			g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 			Camera::Pose pose = *g_film.pose;
 			pose.lookAt = { g_film.anchor.x + g_film.lookOffset.x, g_film.anchor.y + g_film.lookOffset.y, g_film.anchor.z + g_film.lookOffset.z };
+			// 0.9.18: the game camera's root held where filming started. The shot is placed
+			// against the root, which follows you; walking on (filming starts even while you
+			// move), the shot landed a frame's walk off, a little differently each frame: it shook
+			// until you let go of the stick (0.9.17 test). The third-person camera's update sets
+			// the root afresh every frame, so holding it here doesn't build up, and it lets go
+			// as filming stops.
+			if (!g_film.rootPin) {
+				g_film.rootPin = Camera::PoseOf(camera->cameraRoot.get());
+			}
+			if (g_film.rootPin) {
+				Camera::SetRootPose(camera->cameraRoot.get(), *g_film.rootPin);
+			}
 			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
 				g_film.applied = true;
 				REX::INFO("Filming people talking: {} on {}", g_film.groupShot ? std::format("group shot ({} people)", groupHeads.size()) : std::string{ Shots::Key(g_film.shot) },

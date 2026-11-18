@@ -100,6 +100,9 @@ namespace CCC
 			a_s.filmEndSeconds = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsNpc", a_s.filmEndSeconds), 0.1f, 10.0f);
 			a_s.filmEndSecondsScene = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsSceneNpc", a_s.filmEndSecondsScene), a_s.filmEndSeconds, 15.0f);
 			a_s.autoListenAfter = std::clamp(ReadFloat(a_path, L"Overhear", L"fAutoListenAfter", a_s.autoListenAfter), 0.5f, 30.0f);
+			a_s.filmStopSeconds = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmStopSeconds", a_s.filmStopSeconds), 0.1f, 2.0f);
+			a_s.filmStopDistance = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmStopDistance", a_s.filmStopDistance), 0.1f, 2.0f);
+			a_s.filmWalkOnDistance = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmWalkOnDistance", a_s.filmWalkOnDistance), 0.5f, 10.0f);
 			a_s.roomShotMinRoom = std::clamp(ReadInt(a_path, L"Director", L"iRoomShotMinRoom", a_s.roomShotMinRoom), 30, 100);
 			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
 			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Director", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
