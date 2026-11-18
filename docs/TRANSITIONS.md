@@ -189,14 +189,18 @@ What happens on the switch:
 5. **The frame after: the game's lens ease (0.9.12 clip, all five exits).** The first frame
    once the game has its camera back showed your view zoomed in: the right place and aim, but
    magnified about **1.85 times** about the centre, a lens of about **60 degrees**, the same
-   after every last shot. That's about halfway from 29.6 to 94: the game eases its lens back
-   from the conversation's over a few frames. (It isn't the held-back frame: that one already
+   after every last shot. Two possible causes: the game easing its lens back from the
+   conversation's (60 is about halfway from 29.6 to 94), or the camera keeping our last lens
+   until the game sets it again. The vanilla clip (0.9.14 test, mod disabled) argues for the
+   second: its first-person exit goes from the 30 degree close-up straight to your 94 degree
+   view, with no in-between frame at 60 fps. (It isn't the held-back frame: that one already
    uses the gameplay frustum saved at the conversation's start.)
    - **Since 0.9.13 (`bExitLens=1`):** at the exit your gameplay lens is put on the camera at
      once through set-FOV (which also writes PlayerCamera +280, which the ease may start
      from), and for up to 6 lens updates or 0.25 s, the game's in-between values are swapped
-     for it at all three callers, until the game asks for it itself. The log lists each
-     swapped value ("Exit lens: ..."). Untested.
+     for it at all three callers, until the game asks for it itself. That covers both
+     causes; the log lists each swapped value ("Exit lens: ..."), which tells them apart.
+     Untested.
 6. **One or two frames of the last shot with you already gone from it** (and its background
    blur gone), just before your view (your body is swapped back at the switch). This is the
    held-back frame itself: the view drawn on it never reaches the screen (built before our
@@ -222,8 +226,9 @@ Older modes:
     frame is your third-person view, already in place, magnified, like the first-person
     one. 0.9.13 keeps your third-person lens through the ease (`bExitLens`); untested.
   - Just before it, one frame of the last shot with its background blur gone.
-  - Vanilla has its own in-between frame: one from your eyes (0.9.7 test, but with the mod
-    loaded; to redo with it disabled in the mod manager).
+  - **Vanilla has its own in-between frame** (0.9.14 test, mod disabled in Mod Organizer,
+    two exits): one frame without the HUD from a wider spot across the room, then the
+    third-person camera behind you. A different frame from ours, but not clean either.
   - `iExitModeThirdPerson=2` (camera root put on your view first) didn't change it (0.9.8).
 
 ## Sitting down and standing up (furniture, mode 6)
@@ -234,10 +239,12 @@ Older modes:
   is empty by default).
 - **What it does:** the game's furniture camera swings round to your face from the front and
   drifts while it settles; standing up starts with one black frame (the camera inside
-  something). Its settings: `bDisableFurnitureCamera:Camera` (false), `fFurnitureCameraAngle`
+  something). **Vanilla does the same** (0.9.14 test, mod disabled, twice): the swing to your
+  face sitting down and standing up, and standing up starts with one bright frame and about
+  ten dark ones. Its settings: `bDisableFurnitureCamera:Camera` (false), `fFurnitureCameraAngle`
   (0.39 rad), `fFurnitureCameraZoom` (3.57).
-- **To compare:** the true-vanilla test (mod disabled in Mod Organizer), and
-  `bDisableFurnitureCamera:Camera=1` under `[GameSettings]` in the `_user.ini`.
+- **To try:** `bDisableFurnitureCamera:Camera=1` under `[GameSettings]` in the `_user.ini`
+  (the game's own switch for that camera).
 
 ## Off switch
 

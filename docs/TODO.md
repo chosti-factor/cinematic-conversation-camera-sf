@@ -15,13 +15,15 @@ Wednesday the 25th, about two days earlier.
       zoomed frame from the game's lens ease (fixed in 0.9.13, to test), and one or two frames
       of the last shot without you
 - [ ] First-person exits on 0.9.13: the zoomed frame gone
-- [ ] True vanilla with the mod disabled in Mod Organizer (one third-person and one
-      first-person conversation, sit and stand once)
+- [x] True vanilla with the mod disabled in Mod Organizer: the sitting camera's swing is the
+      game's; vanilla third-person exits have their own in-between frame; the first-person
+      exit is clean
 - [ ] Exit style (0.9.14, `iExitStyle`): compare 2 (cut back to your view) and 1 (closing
       shot of the NPC alone) in first and third person; pick the default
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
-- [ ] Furniture camera swing when sitting and standing (only if vanilla doesn't do it)
+- [ ] Furniture camera swing when sitting and standing: vanilla does it too; try the game's
+      `bDisableFurnitureCamera`, and decide whether to offer it as an option
 - [x] Seated next to someone at a bar, third person (0.9.12, twice): their head didn't block
       you; the tally of your lines works
 - [ ] Check the 0.9.10 fix in first person: the bar stool with the drink (your body after the
