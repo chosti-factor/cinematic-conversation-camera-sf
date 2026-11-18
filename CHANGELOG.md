@@ -12,8 +12,8 @@ test build; "diagnostic" items only add information to the log for testing.
   back from the conversation's 30 degrees to your 94 over a few frames, and its first
   in-between frame (about 60 degrees) came straight after ours. Now your gameplay lens goes
   on the camera at the exit and is kept through the game's ease (a quarter of a second at
-  most). Third-person exits get the same. `bExitLens` in `[Transitions]` turns it off, to
-  compare.
+  most). Third-person exits get the same: the 0.9.12 bar clips show their in-between frame
+  is the same zoomed view. `bExitLens` in `[Transitions]` turns it off, to compare.
 
 ### Known
 - First-person exits: one or two frames of the last shot with you gone from it, just before

@@ -22,8 +22,10 @@ Wednesday the 25th, about two days earlier.
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
 - [ ] Furniture camera swing when sitting and standing (only if vanilla doesn't do it)
-- [ ] Check the 0.9.10 fixes in first person: the bar stool with the drink (your body after the
-      conversation picks up again), someone seated next to you (their head)
+- [x] Seated next to someone at a bar, third person (0.9.12, twice): their head didn't block
+      you; the tally of your lines works
+- [ ] Check the 0.9.10 fix in first person: the bar stool with the drink (your body after the
+      conversation picks up again)
 - [ ] Optional: the extra frame on the first conversation after loading a save
 
 ## 2. Remaining features and tests (about 18 to 21 Nov)

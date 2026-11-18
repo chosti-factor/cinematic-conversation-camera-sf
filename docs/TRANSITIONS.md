@@ -199,11 +199,26 @@ Older modes:
   third-person camera's own first update.
 - **Known: one frame** of the third-person camera close behind you (or to the side) as it
   eases out to its distance.
-  - 0.9.13 puts your third-person lens back the same way as first person (`bExitLens`). If
-    the game's lens ease is part of that frame, it should look different; untested.
+  - **The 0.9.12 clips (two exits from a bar stool) show it's the lens ease:** the in-between
+    frame is your third-person view, already in place, magnified, like the first-person
+    one. 0.9.13 keeps your third-person lens through the ease (`bExitLens`); untested.
+  - Just before it, one frame of the last shot with its background blur gone.
   - Vanilla has its own in-between frame: one from your eyes (0.9.7 test, but with the mod
     loaded; to redo with it disabled in the mod manager).
   - `iExitModeThirdPerson=2` (camera root put on your view first) didn't change it (0.9.8).
+
+## Sitting down and standing up (furniture, mode 6)
+
+- **The mod doesn't touch it:** while sitting down (6.45 s) and standing up (3.25 s) the log
+  has nothing from the mod but the nearby-people scan (0.9.12 bar test, twice each; the same
+  durations each time, the game's animations). No game setting is changed (`[GameSettings]`
+  is empty by default).
+- **What it does:** the game's furniture camera swings round to your face from the front and
+  drifts while it settles; standing up starts with one black frame (the camera inside
+  something). Its settings: `bDisableFurnitureCamera:Camera` (false), `fFurnitureCameraAngle`
+  (0.39 rad), `fFurnitureCameraZoom` (3.57).
+- **To compare:** the true-vanilla test (mod disabled in Mod Organizer), and
+  `bDisableFurnitureCamera:Camera=1` under `[GameSettings]` in the `_user.ini`.
 
 ## Off switch
 
