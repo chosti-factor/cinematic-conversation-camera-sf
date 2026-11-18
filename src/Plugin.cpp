@@ -423,6 +423,7 @@ namespace CCC
 		std::atomic<float> g_exitLensValue{ 0.0f };  // the lens kept on through this exit
 		std::atomic<std::int64_t> g_exitLensUntil{ 0 };  // and never past this (steady clock), a quarter of a second
 		void  PutGameplayLensBack(bool a_firstPerson);
+		void  SetGameLens(float a_degrees);
 		float ExitLens(float a_fov, bool a_main);
 		// Where the game's dialogue camera sits, as measured on earlier conversations (start
 		// at the 0.9.5 test values, then learned from each start).
@@ -1872,7 +1873,10 @@ namespace CCC
 							drawn = Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f, false);
 							if (drawn && lens >= 40.0f) {
 								g_cutOwnsLens.store(true, std::memory_order_relaxed);
-								Camera::SetRenderLens(lens);
+								// 0.9.17: through the game's own set-FOV, not our frustum maths: 0.9.16's
+								// SetRenderLens(94) came out much narrower than the game's 94 (the clip:
+								// your view zoomed in about 1.8 times, then widening at the hand-back).
+								SetGameLens(lens);
 							}
 							if (k >= 1) {
 								g_shotDistance.store(0.0f, std::memory_order_relaxed);
@@ -3484,6 +3488,7 @@ namespace CCC
 			const int mode = Settings::Get().exitMode;
 			REX::INFO("Exit: cutting from the last shot straight to first person (exit mode {})", mode);
 			const auto view = *g_firstPersonView;
+			PutGameplayLensBack(true);  // 0.9.17: this path too (0.9.16, after the drink menu: it didn't)
 			End();
 			g_needVisibilityRestore = false;
 			Visibility::Restore(false);
@@ -3706,6 +3711,16 @@ namespace CCC
 			LensHookMain::Hook(camera, fov);
 			if (g_exitLensFrames.exchange(6, std::memory_order_relaxed) == 0) {
 				REX::INFO("Exit: your {} lens ({:.1f} degrees) put on the camera", a_firstPerson ? "first-person" : "third-person", fov);
+			}
+		}
+
+		// The game's own set-FOV, now (0.9.17): it writes PlayerCamera +280 and the render frustum.
+		void SetGameLens(float a_degrees)
+		{
+			if (void* camera = g_lensCamera.load(std::memory_order_relaxed)) {
+				LensHookMain::Hook(camera, a_degrees);
+			} else {
+				Camera::SetRenderLens(a_degrees);
 			}
 		}
 
@@ -3964,8 +3979,11 @@ namespace CCC
 							// camera for a second, so the mod ended it and started a new one) starts
 							// with the full body already built, seated at 1.55 m: never taken as built,
 							// so you were hidden and the game asked twice more. Your last built
-							// height, within the last few seconds, counts as built.
-							const bool  rebuiltJustNow = g_lastBuiltHead > 0.3f && std::chrono::steady_clock::now() - g_lastBuiltAt < 5s &&
+							// height, within the last minute, counts as built (0.9.17: 5 s until then;
+							// the 0.9.16 test spent 6 s in the drink menu and you stayed hidden, and
+							// the exit took the older path). Sitting, the first-person body's head is
+							// far below the full body's, so the height alone tells them apart.
+							const bool  rebuiltJustNow = g_lastBuiltHead > 0.3f && std::chrono::steady_clock::now() - g_lastBuiltAt < 60s &&
 							                             std::abs(height - g_lastBuiltHead) < 0.08f;
 							const bool  standing = height >= kStandingHeadHeight || (seated && height > g_state.directStartHead + 0.2f && height < 2.2f) || rebuiltJustNow;
 							g_state.directStable = still && standing ? g_state.directStable + 1 : 0;

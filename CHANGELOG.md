@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.17 - 2026-11-17
+
+### Fixed
+- Exit style 2: your view came up zoomed in (about 1.8 times) and widened at the hand-back
+  (0.9.16 clip, every first-person exit): the cut set its lens with the mod's own frustum
+  maths, which doesn't match the game's idea of the same angle. It now goes through the
+  game's own lens function, still with the camera move.
+- After a vendor or bartender menu (0.9.16 test, 6 s buying a drink): your body wasn't taken
+  as built when the conversation picked up again, so you stayed hidden and the exit took the
+  older path, showing your back for a few frames. A conversation picking up within a minute
+  (5 s until now) with your last built height counts as built; that older exit path also
+  puts your lens back now.
+
 ## 0.9.16 - 2026-11-17
 
 ### Fixed

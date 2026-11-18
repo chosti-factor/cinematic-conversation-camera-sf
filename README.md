@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.15 (2026-11-17).
+Last updated: 0.9.17 (2026-11-17).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -215,6 +215,9 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 
 Planned:
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
+- Smoother starts and exits, as a matter of style: easing into the first shot and out of
+  the last (a short push-in or settle, a fade, a match cut to your view) instead of the
+  clean cuts used in 1.0.
 - Objects the obstacle check can't see: plants and other things without collision in front of
   shots (the Viewport bar's plant), found by checking the bounding boxes of nearby objects
   along the line from the camera to the face, as is already done for people standing in the

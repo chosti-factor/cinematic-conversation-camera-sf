@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.16 (2026-11-17).
+Last updated: 0.9.17 (2026-11-17).
 
 ## Working rules
 
@@ -194,7 +194,8 @@ Last updated: 0.9.16 (2026-11-17).
   override. Registered at SFSE kPostLoad; returns quietly without the framework. The SDK is in
   `extern/` (xmake adds its include dirs and `_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING`).
   Keep its ranges in step with Settings.cpp's clamps (the lens is 20-70).
-- After 1.0, planned (see README "After 1.0"): Gameplay Options (below); objects the obstacle
+- After 1.0, planned (see README "After 1.0"): smoother start and exit styles (the user,
+  2026-11-17: 1.0's clean cuts are good for release); Gameplay Options (below); objects the obstacle
   check can't see (plants by nearby objects' bounding boxes along the camera-to-face line,
   like the bystander check; planned by the user, 2026-11-17); more of the text of your lines for your face (high-confidence cues from a
   tally of real options, English only, own setting; moved from "maybe" to planned by the

@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.16 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.17 (2026-11-17). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -19,9 +19,10 @@ Wednesday the 25th, about two days earlier.
       exit is clean
 - [x] Exit style compared (0.9.14 clips): 2, the cut back to your view, is "far superior"
       (the user); the default
-- [ ] Exit style 2's cut (0.9.16, `bExitCutStaged`): no odd frame before the cut in first or
-      third person, no narrow frames, the hand-back still clean; and after the bar's drink
-      (0.9.15 staging still had one odd frame; the order varies)
+- [x] Exit style 2's cut (0.9.16 clip): clean at the cut in first and third person, starts
+      clean; "probably good for release" (the user). Smoother transition styles: after 1.0
+- [ ] 0.9.17: no zoom at the hand-back (0.9.16's lens maths), and after a vendor or bartender
+      menu your body there and a clean exit
 - [x] Settings page tested (0.9.14): works; found the options bug below
 - [x] F1 mid-conversation (0.9.15): the conversation waits and carries on, options stay
 - [x] First person on a bar stool with a drink (0.9.15): your body there after the drink, the
