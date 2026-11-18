@@ -271,8 +271,10 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 8, 7.0f, 50.0f },
 			PresetEntry{ ShotType::kOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
 			PresetEntry{ ShotType::kPlayerOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
-			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kDrift, 6, 7.0f, 50.0f },
-			PresetEntry{ ShotType::kOverNpcShoulder, 30, Move::kDrift, 6, 7.0f, 50.0f },
+			// 0.9.19: 30 -> 15 (a documentary rarely shoots over a shoulder; more room for the
+			// distant, master and long shots).
+			PresetEntry{ ShotType::kOverPlayerShoulder, 15, Move::kDrift, 6, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kOverNpcShoulder, 15, Move::kDrift, 6, 7.0f, 50.0f },
 			PresetEntry{ ShotType::kCloseUp, 20, Move::kPushIn, 10, 6.0f, 45.0f },
 			PresetEntry{ ShotType::kClosePlayer, 20, Move::kPushIn, 10, 6.0f, 45.0f },
 			PresetEntry{ ShotType::kExtremeClose, 4, Move::kPushIn, 15, 7.0f, 40.0f },
@@ -518,6 +520,24 @@ namespace CCC::Director
 			return result;
 		}
 
+		// 0.9.18: a large speaker (Vasco: head 1.75 m above his feet; people 1.61-1.62) between
+		// the camera and you hides you in the narrower shots of you (0.9.18 test: at 22-27
+		// degrees off the line his back filled the close-ups; at 34 you were half behind him; at
+		// 40 clear). The obstacle check leaves the near person out on purpose (their shoulder
+		// is part of an over-the-shoulder shot), so with a large speaker the shots of you keep
+		// to wider angles.
+		constexpr float kLargeSpeakerHead = 1.70f;      // m, head above feet
+		constexpr float kLargeSpeakerMinAngle = 38.0f;  // degrees off the line, for shots of you
+
+		bool HiddenBehindLargeSpeaker(ShotType a_type, const Frame& a_frame, const Shots::Result& a_solved)
+		{
+			const bool onYou = Shots::Neutral(a_type) ? !a_frame.npcTurn : !Shots::OnNpc(a_type);
+			if (!onYou || !a_frame.feetValid || a_frame.npcHead.z - a_frame.npcFeet.z < kLargeSpeakerHead) {
+				return false;
+			}
+			return std::abs(a_solved.angle) < kLargeSpeakerMinAngle;
+		}
+
 		bool Usable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)
 		{
 			const auto& setup = g.setups[static_cast<std::size_t>(a_type)];
@@ -535,10 +555,15 @@ namespace CCC::Director
 			if (a_frame.reaction && Shots::Neutral(a_type)) {
 				return false;
 			}
+			// 0.9.19: nor from overhead (Constellation reused it for three reactions in a row: it
+			// read as surveillance, the 0.8.16 test).
+			if (a_frame.reaction && a_type == ShotType::kPlayerOverhead) {
+				return false;
+			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
 			// A framing that wants the camera far beyond the cap would become a different
 			// shot entirely (a full figure turned into a close-up); leave it out.
-			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f) {
+			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
 				return false;
 			}
 			return !a_checkObstacles || ClearanceFor(a_type, a_frame, setup).usable;
@@ -552,7 +577,7 @@ namespace CCC::Director
 				return false;
 			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, g.setups[static_cast<std::size_t>(a_type)], 0.0f));
-			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f) {
+			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
 				return false;
 			}
 			return !a_checkObstacles || ClearanceFor(a_type, a_frame, IntenseSetup(a_type)).usable;
@@ -586,9 +611,22 @@ namespace CCC::Director
 
 		// Your emotion close-up (0.7.11): a reaction shot on a line your face answers with an
 		// expression, as a close-up of you; extreme as often as the NPC's.
+		// 0.9.19: how many of your close-ups are extreme, -1 in the INI = the preset's own:
+		// Constellation 0 (the documentary doesn't go that close), Nebula 50 (the trailer),
+		// the others 40.
+		int ExtremeChancePlayer()
+		{
+			const int mine = Settings::Get().extremeCloseUpChancePlayer;
+			if (mine >= 0) {
+				return mine;
+			}
+			return PresetIs("constellation") ? 0 : PresetIs("nebula") ? 50 : 40;
+		}
+
 		std::optional<ShotType> PlayerCloseShot(const Frame& a_frame)
 		{
-			const bool extreme = a_frame.playerExtreme || std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer;
+			// (A confrontational choice is always extreme, in every preset.)
+			const bool extreme = a_frame.playerExtreme || std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= ExtremeChancePlayer();
 			if (extreme && Placeable(ShotType::kExtremeClosePlayer, a_frame)) {
 				return ShotType::kExtremeClosePlayer;
 			}
@@ -950,6 +988,7 @@ namespace CCC::Director
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+d} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingPace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
+		REX::INFO("Settings in effect: close-ups of you {}% extreme ({})", ExtremeChancePlayer(), s.extremeCloseUpChancePlayer < 0 ? "the preset's own" : "iExtremeCloseUpChancePlayer");
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", s.extremeCloseUpChance,
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
@@ -1122,6 +1161,11 @@ namespace CCC::Director
 				// The reverse: back to this person's own setup, unless they're due a new one.
 				// Each of your turns counts as one of your lines (0.8.17).
 				if (!a_frame.npcTurn && side.shot && ++side.lines >= side.linesTarget) {
+					side.changeDue = true;
+				}
+				// 0.9.19: Frontier's two-shot as your angle for one turn only, then a single of you
+				// (the 0.8.17 test held it for four of your turns).
+				if (!a_frame.npcTurn && side.shot && *side.shot == ShotType::kTwoShot && side.lines >= 1 && PresetIs("frontier")) {
 					side.changeDue = true;
 				}
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= g.freshAngleChance;

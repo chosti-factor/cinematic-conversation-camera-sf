@@ -8,7 +8,7 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.9.11 (2026-11-17; no change to reactions since 0.9.0). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.9.19 (2026-11-18). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -57,7 +57,8 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    - Your face shows an expression on that line: a close-up of you, pushing in, by the
      expression's tier (the same lists as theirs): mild 25%, medium 40%, strong always
      (`iCloseUpChanceMildPlayer`, `...MediumPlayer`, `...StrongPlayer`);
-     `iExtremeCloseUpChancePlayer` (40%) of those an extreme one.
+     `iExtremeCloseUpChancePlayer` of those an extreme one: the preset's own by default
+     (0.9.19: Constellation none, Nebula 50%, the others 40%).
    - Otherwise, you listening, in the preset's angle of you: your regular shots (shoulder,
      three-quarter, medium, close, long...), never the room, the two-shot or the profile of
      you both.
@@ -85,7 +86,9 @@ it.
 Nothing about how often. They change what you see:
 
 - A listening reaction uses the preset's regular angles of you (Standard: a shoulder,
-  three-quarter or medium of you; Room: possibly a long or overhead shot of you).
+  three-quarter or medium of you; Room: possibly a long shot of you), never the overhead
+  shot of you (0.9.19: Constellation reused it for three reactions in a row, which read as
+  surveillance).
 - Emotion close-ups and close-ups of you are the same close-up shots in every preset, even
   in Room, which has none of its own; their push-in is the same too (8 s, 9 s for the
   extreme ones).

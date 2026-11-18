@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.17 (2026-11-17).
+Last updated: 0.9.19 (2026-11-18).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -191,8 +191,8 @@ How the camera starts and ends a conversation, frame by frame, with the measured
     [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) (optional; F1):
     preset, reaction shots, emotion close-ups, sway and the rest, with the INI still working
     without it.
-  - Large speakers such as Vasco, whose bigger body can block you in over-the-shoulder
-    shots.
+  - Done in 0.9.19: large speakers such as Vasco, whose bigger body blocked you in the
+    narrower shots of you (those keep to wider angles now).
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Compatibility testing with popular UI mods.
   - If time allows: quest scenes recognised by their quest rather than the scene's name.
@@ -215,6 +215,8 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 
 Planned:
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
+- Large speakers measured by their actual size (the actor's bounds) rather than by height,
+  so the shots of you clear any bulky speaker by exactly as much as they need to.
 - Smoother starts and exits, as a matter of style: easing into the first shot and out of
   the last (a short push-in or settle, a fade, a match cut to your view) instead of the
   clean cuts used in 1.0.
@@ -292,7 +294,9 @@ of them are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera 
 pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
 writes changes to the `_user.ini`; **Reset** beside a setting removes your change. Changes
-apply from the next conversation. Test switches, transitions, per-shot tweaks and the plain
+apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
+Mod Organizer it lands in Mod Organizer's `overwrite` folder (`overwrite\SFSE\Plugins`),
+where the game still reads it. Test switches, transitions, per-shot tweaks and the plain
 camera are in the INI only.
 
 ## Testing and logs

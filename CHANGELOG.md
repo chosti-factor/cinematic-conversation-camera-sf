@@ -4,6 +4,29 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.19 - 2026-11-18
+
+### Changed
+- CCC SF preset tweaks (proposed after the 0.8.16-0.8.17 tests; to confirm with a long
+  conversation):
+  - Reactions never use the overhead shot of you (Constellation used it for three reactions
+    in a row: it read as surveillance).
+  - Constellation: over-the-shoulder weight 30 to 15 (a documentary rarely shoots over a
+    shoulder; more of the distant, master and long shots).
+  - The extreme share of the close-ups of you is the preset's own by default
+    (`iExtremeCloseUpChancePlayer=-1`): Constellation none, Nebula 50%, the others 40% as
+    before. A confrontational choice is still always an extreme close-up.
+  - Frontier: a two-shot as your angle lasts one turn, then a single of you (it held one for
+    four of your turns).
+
+### Fixed
+- Large speakers (Vasco) hid you in the narrower shots of you (0.9.18 test: in close-ups at
+  22-27 degrees off the line his back filled the picture; at 34 you were half behind him; at
+  40 clear). With a speaker whose head is 1.70 m or more above their feet (people are about
+  1.62, Vasco 1.75), the shots of you keep to 38 degrees or wider. The obstacle check leaves
+  the person nearest the camera out on purpose, since their shoulder belongs in an
+  over-the-shoulder shot.
+
 ## 0.9.18 - 2026-11-17
 
 ### Changed

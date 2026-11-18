@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.18 (2026-11-17).
+Last updated: 0.9.19 (2026-11-18).
 
 ## Working rules
 
@@ -197,7 +197,8 @@ Last updated: 0.9.18 (2026-11-17).
   `extern/` (xmake adds its include dirs and `_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING`).
   Keep its ranges in step with Settings.cpp's clamps (the lens is 20-70).
 - After 1.0, planned (see README "After 1.0"): smoother start and exit styles (the user,
-  2026-11-17: 1.0's clean cuts are good for release); Gameplay Options (below); objects the obstacle
+  2026-11-17: 1.0's clean cuts are good for release); large speakers measured from the
+  actor's bounds rather than head height (the user, 2026-11-18); Gameplay Options (below); objects the obstacle
   check can't see (plants by nearby objects' bounding boxes along the camera-to-face line,
   like the bystander check; planned by the user, 2026-11-17); more of the text of your lines for your face (high-confidence cues from a
   tally of real options, English only, own setting; moved from "maybe" to planned by the
@@ -240,7 +241,7 @@ Last updated: 0.9.18 (2026-11-17).
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 
-## CCC SF preset tweaks, to confirm with a long Sarah test (2026-11-16)
+## CCC SF preset tweaks, to confirm with a long Sarah test (2026-11-16; built in 0.9.19)
 
 Proposed from partial data (0.8.16 Constellation/Nebula extracts, 0.8.17 your-side shots);
 the user wants a long conversation with Sarah through the CCC SF presets first, then
@@ -261,5 +262,6 @@ confirm or change each:
 - Many lines are emotion close-ups (0.8.3: every expression but Neutral and Friendly, at
   50%; reactions may interrupt them after their minimum time), which take priority over
   reactions; maybe let a reaction win now and then.
-- Large speakers (Vasco) can block you in over-the-shoulder shots: size the near-body check
-  from the actor's bounds.
+- Large speakers (Vasco): 0.9.19 keeps the shots of you to 38 degrees or wider when the
+  speaker's head is 1.70 m or more above their feet (Vasco 1.75; the 0.9.18 clip: hidden at
+  22-27, half at 34, clear at 40). A check from the actor's bounds is planned after 1.0.

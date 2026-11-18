@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.11 (2026-11-17).
+Last updated: 0.9.19 (2026-11-18).
 
 ## At a glance
 
@@ -28,10 +28,12 @@ Last updated: 0.9.11 (2026-11-17).
 | Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 50, a touch of handheld | 0, locked off | 70 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces centred, no room in the direction they look | | |
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-3 lines and most turns, 1.6 s |
-| Faces (close-ups and closer) | 26% | 67% | none | 22% | 59% | 7% | 24% |
-| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 8% | 11% | 54% | 19% |
+| Faces (close-ups and closer) | 26% | 67% | none | 22% | 59% | 8% | 24% |
+| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 8% | 11% | 57% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |
 | Close-up of you on a tagged option | no | no | no | yes | yes | yes | yes |
+| Extreme share of the close-ups of you (`iExtremeCloseUpChancePlayer`, 0.9.19) | 40% | 40% | 40% | 40% | 40% | none | 50% |
+| A two-shot as your angle | for as many turns as any angle | | for as many turns as any angle | one turn, then a single of you (0.9.19) | | for as many turns as any angle | for as many turns as any angle |
 | Reaction shots of you | off | off | off | after 10 s of their talking | after 9 s | after 12 s | after 7 s |
 | Room shots go back | | As far as CCC's framing wants | As far as CCC's framing wants | Up to 9 m indoors, 12 m outdoors | The same | The same | The same |
 | Other shots, camera at most | 7 m indoors, 10.5 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors | 5 m | 7 m indoors, 13 m outdoors | 7 m indoors, 13 m outdoors |
@@ -87,8 +89,8 @@ that shot. (Generated from the presets in the code.)
 
 | Shot | Standard | Close | Room | Frontier | Starborn | Constellation | Nebula |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Over your shoulder | 16% still, 55° | 25% still, 40° |  | 15% still, 50° | 18% still, 40° | 5% drift, 50° | 7% push in, 50° |
-| Over the NPC's shoulder | 16% still, 55° |  |  | 15% still, 50° | 12% still, 40° | 5% drift, 50° | 7% push in, 50° |
+| Over your shoulder | 16% still, 55° | 25% still, 40° |  | 15% still, 50° | 18% still, 40° | 2% drift, 50° | 7% push in, 50° |
+| Over the NPC's shoulder | 16% still, 55° |  |  | 15% still, 50° | 12% still, 40° | 2% drift, 50° | 7% push in, 50° |
 | Over your shoulder, low |  |  |  |  |  |  | 2% push in, 55° |
 | Over your shoulder, high |  |  |  |  |  |  | 2% tilt down, 55° |
 | Over your shoulder, wide |  |  |  |  |  |  | 2% pull out, 65° |
@@ -107,8 +109,8 @@ that shot. (Generated from the presets in the code.)
 | Extreme close-up (you) |  | 9% push in, 35° |  | 1% push in, 40° | 5% push in, 35° | 1% push in, 40° | 1% push in, 40° |
 | Three-quarter (NPC) | 10% still, 58° |  | 6% still, 72° | 9% drift, 52° |  | 6% drift, 50° | 5% drift, 58° |
 | Three-quarter (you) | 10% still, 58° |  | 6% still, 72° | 9% drift, 52° |  | 6% drift, 50° | 5% drift, 58° |
-| Medium (NPC) | 7% still, 62° |  | 6% still, 70° | 7% drift, 56° |  | 5% drift, 50° | 4% drift, 62° |
-| Medium (you) | 7% still, 62° |  | 6% still, 70° | 7% drift, 56° |  | 5% drift, 50° | 4% drift, 62° |
+| Medium (NPC) | 7% still, 62° |  | 6% still, 70° | 7% drift, 56° |  | 6% drift, 50° | 4% drift, 62° |
+| Medium (you) | 7% still, 62° |  | 6% still, 70° | 7% drift, 56° |  | 6% drift, 50° | 4% drift, 62° |
 | Medium profile (NPC) |  |  |  |  |  |  | 2% drift, 60° |
 | Profile (you) |  |  |  |  |  |  | 2% drift, 60° |
 | Low profile (NPC) |  |  |  |  |  |  | 1% tilt up, 60° |
@@ -117,12 +119,12 @@ that shot. (Generated from the presets in the code.)
 | High angle (you) |  |  |  |  |  |  | 2% crane down, 65° |
 | Profile (both, side on) | 2% still, 60° |  |  | 2% still, 55° |  |  | 2% drift, 60° |
 | Two-shot | 4% drift, 72° |  | 7% drift, 80° | 6% drift, 65° |  | 7% drift, 60° | 4% drift, 72° |
-| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 8% crane up, 55° | 3% crane up, 80° |
-| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 8% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
 | Overhead (NPC) |  |  | 6% still, 85° |  |  | 4% crane down, 70° | 2% crane down, 85° |
 | Overhead (you) |  |  | 6% still, 85° |  |  | 4% crane down, 70° | 2% crane down, 85° |
-| Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 8% drift, 60° | 3% pull out, 88° |
-| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 6% still, 40° | 11% drift, 45° | 2% pull out, 45° |
+| Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 9% drift, 60° | 3% pull out, 88° |
+| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 6% still, 40° | 12% drift, 45° | 2% pull out, 45° |
 | Distant, low (room shot) |  |  |  |  |  |  | 2% drift, 45° |
 | Master (room shot) |  |  | 13% crane up, 95° |  | 5% crane up, 60° | 11% crane up, 70° | 3% crane up, 95° |
 

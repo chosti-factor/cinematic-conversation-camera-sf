@@ -168,7 +168,7 @@ namespace CCC
 			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
 			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
 			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
-			a_s.extremeCloseUpChancePlayer = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChancePlayer", a_s.extremeCloseUpChancePlayer), 0, 100);
+			a_s.extremeCloseUpChancePlayer = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChancePlayer", a_s.extremeCloseUpChancePlayer), -1, 100);
 			a_s.plainShotsSeated = ReadInt(a_path, L"Director", L"bPlainShotsSeatedNpc", a_s.plainShotsSeated ? 1 : 0) != 0;
 			a_s.plainShotsMerchants = ReadInt(a_path, L"Director", L"bPlainShotsMerchantsNpc", a_s.plainShotsMerchants ? 1 : 0) != 0;
 			a_s.cameraMoves = ReadInt(a_path, L"Director", L"bCameraMoves", a_s.cameraMoves ? 1 : 0) != 0;

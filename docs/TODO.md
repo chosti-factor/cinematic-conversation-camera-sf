@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.18 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.19 (2026-11-18). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -24,9 +24,9 @@ Wednesday the 25th, about two days earlier.
 - [x] 0.9.17: no zoom at the hand-back; after a bartender's menu (8 s) your body there and the
       exit on the normal path; seated third person: a second cut from the game's seated camera
       (0.9.18: the game's camera takes those exits)
-- [ ] 0.9.18: a seated third-person exit in one cut; filming people talking started while you
-      walk, no shaking; once stopped, moving ends it more readily (0.25 m after 0.3 s still;
-      walking on before you stop unchanged, 3 m; all three in the INI and on the settings page)
+- [x] 0.9.18 (test): a seated third-person exit in one cut; filming people talking started
+      while you walk, no shaking; once stopped, moving ends it more readily (all three in the
+      INI and on the settings page)
 - [x] Settings page tested (0.9.14): works; found the options bug below
 - [x] F1 mid-conversation (0.9.15): the conversation waits and carries on, options stay
 - [x] First person on a bar stool with a drink (0.9.15): your body there after the drink, the
@@ -49,13 +49,14 @@ Wednesday the 25th, about two days earlier.
 - [x] Filming people talking (0.9.17 test): starts on its own, cuts between them, skips
       blocked angles, stops when they stop or you move; shook when started on momentum (0.9.18: the game camera's
       root held while filming; starting while you walk stays, the user's call)
-- [ ] The long Sarah conversation through the CCC SF presets, then the preset tweaks in
-      HANDOFF.md (reactions on overhead, Constellation OTS 30 to 15, extreme close-up share per
-      preset, Frontier two-shot one turn)
-- [ ] Large speakers (Vasco) blocking you in over-the-shoulder shots
-- [ ] SFSE Menu Framework settings page (built in 0.9.12; test: each page opens, a change
-      lands in the `_user.ini` and applies next conversation, Reset, a preset change, the
-      game without the framework)
+- [x] The preset tweaks in HANDOFF.md built in 0.9.19 (reactions never overhead,
+      Constellation OTS 30 to 15, extreme close-up share per preset, Frontier two-shot one turn)
+- [ ] The long Sarah conversation through the CCC SF presets, to confirm them
+- [x] Large speakers (Vasco): his back hid you in the narrower shots of you (0.9.18 clip);
+      0.9.19 keeps those to 38 degrees or wider with a large speaker. To check in the next
+      round
+- [x] SFSE Menu Framework settings page (0.9.12; tested 0.9.14-0.9.18: pages, writes to the
+      `_user.ini` (with Mod Organizer, in its overwrite folder), Reset, F1 mid-conversation)
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
 - [ ] Compatibility with UI mods (HUD replacer, dialogue menu replacer, subtitle mod), and
       auto-zoom back on as one check

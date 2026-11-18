@@ -97,7 +97,8 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "You", "Director", "iReactionChancePlayer", "Reaction chance", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
-			{ "Close-ups and reactions", "You", "Director", "iExtremeCloseUpChancePlayer", "Extreme close-ups of you", Kind::kInt, 0, 100, "%d%%", nullptr },
+			{ "Close-ups and reactions", "You", "Director", "iExtremeCloseUpChancePlayer", "Extreme close-ups of you", Kind::kOwnInt, 0, 100, "%d%%",
+				"Of the close-ups of you, how many are extreme. The preset's own: Constellation none, Nebula half, the others 40%." },
 
 			// ---- You ----
 			{ "You", "Your character", "Body", "bRevealPlayer", "Show your character", Kind::kBool, 0, 1, nullptr,
