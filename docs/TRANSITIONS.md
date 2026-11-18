@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.15, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.16, 2026-11-17).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -164,6 +164,23 @@ Version notes in brackets say when something was found or changed; the full stor
       body is hidden, the blur goes off, the lens hook passes your lens and the frustum is
       set from it (`SetRenderLens`, not the saved frustum). The hand-back itself was clean
       in that clip (first person: your view straight through, the HUD back, no jump).
+    - **The 0.9.15 clips** (staged as above): still one frame of the last shot with you
+      hidden and no blur (first person, every exit); in third person one exit had the last
+      shot a frame through 94, another your view two frames through the narrow lens. **The
+      order in which these reach the screen varies by a frame** (the hook runs on a
+      different worker thread each frame), so no fixed staging can line them up.
+    - **Order-proof (0.9.16, `bExitCutStaged=1`):** the lens is set on the render camera
+      with the move (`SetRenderLens` right after `ApplyRender`), and the game's lens update
+      is kept off the camera meanwhile (the lens hooks skip set-FOV while `g_cutOwnsLens`),
+      so camera and lens arrive together. From first person the camera lands **12 cm ahead
+      of your eyes** and eases back over **0.25 s**; your body is hidden from the cut's
+      **third frame**: while it's still there the camera is in front of your face, and the
+      hiding can't show on the last shot. The blur goes off from the **second frame**.
+      `End()` and the exit lens fix hand the lens back to the game.
+    - **Lens fallback (0.9.16):** a conversation picked up again after a menu (the bar's
+      drink) never sees your gameplay lens at its start; the cut and the exit lens fix use
+      the last one seen at a conversation start (0.9.15 clip: your view half a second
+      through the conversation lens, then a jump at the hand-back).
   - **0:** the last shot to the end (up to 0.9.13).
   - If a speaker comes back during the hold, the next shot resets all of it (body shown
     again by the usual rule).
@@ -262,8 +279,8 @@ Older modes:
   face sitting down and standing up, and standing up starts with one bright frame and about
   ten dark ones. Its settings: `bDisableFurnitureCamera:Camera` (false), `fFurnitureCameraAngle`
   (0.39 rad), `fFurnitureCameraZoom` (3.57).
-- **To try:** `bDisableFurnitureCamera:Camera=1` under `[GameSettings]` in the `_user.ini`
-  (the game's own switch for that camera).
+- **The game's own switch,** `bDisableFurnitureCamera:Camera=1`, doesn't stop it (0.9.15 test:
+  applied, and the camera still swung round to your face, from first person too).
 
 ## Off switch
 

@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.15 (2026-11-17).
+Last updated: 0.9.16 (2026-11-17).
 
 ## Working rules
 
@@ -65,7 +65,11 @@ Last updated: 0.9.15 (2026-11-17).
   ways round it (2: cut back to your view 0.4 s after the last line, default; 1: a closing
   shot of the NPC alone). The 0.9.14 test: style 2 "far superior" (the user; the default).
   Its clip: the hand-back is clean; the camera move lands a frame after the body, blur and
-  lens changes during the hold, so 0.9.15 stages the cut (`bExitCutStaged`).
+  lens changes during the hold, so 0.9.15 stages the cut (`bExitCutStaged`). The 0.9.15
+  clips: the order varies by a frame from exit to exit (one exit lens first, another camera
+  first), so 0.9.16 makes the cut order-proof (lens with the camera and the game's lens
+  update kept off; first person 12 cm ahead easing back, body hidden from frame 3; blur off
+  from frame 2).
 - The F1 menu mid-conversation (0.9.14 test): the game's camera stops, so the 250 ms rule
   ended the conversation, and a restart on the same dialogue left the options list invisible
   for the session (its alpha stuck at 0 in the persistent dialogue menu). 0.9.15: the rule

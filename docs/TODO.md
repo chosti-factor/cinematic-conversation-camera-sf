@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.15 (2026-11-17). Dates assume the Friday 27 November release; for
+Last updated: 0.9.16 (2026-11-17). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -19,17 +19,20 @@ Wednesday the 25th, about two days earlier.
       exit is clean
 - [x] Exit style compared (0.9.14 clips): 2, the cut back to your view, is "far superior"
       (the user); the default
-- [ ] Exit style 2: the staged cut (0.9.15, `bExitCutStaged`): no odd frame before the cut,
-      no narrow first frame in third person; first person: never a frame from inside your head
+- [ ] Exit style 2's cut (0.9.16, `bExitCutStaged`): no odd frame before the cut in first or
+      third person, no narrow frames, the hand-back still clean; and after the bar's drink
+      (0.9.15 staging still had one odd frame; the order varies)
 - [x] Settings page tested (0.9.14): works; found the options bug below
-- [ ] Dialogue options after F1 mid-conversation (fixed in 0.9.15): open F1 during a
-      conversation, change something, close it; the conversation carries on, options stay
+- [x] F1 mid-conversation (0.9.15): the conversation waits and carries on, options stay
+- [x] First person on a bar stool with a drink (0.9.15): your body there after the drink, the
+      person next to you didn't block you
 - [ ] Seen once (0.9.14 clip): a cut to over-the-shoulder showed the NPC without hair for
       one frame (Muria); watch for it
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
-- [ ] Furniture camera swing when sitting and standing: vanilla does it too; try the game's
-      `bDisableFurnitureCamera`, and decide whether to offer it as an option
+- [ ] Furniture camera swing when sitting and standing: vanilla does it too; the game's
+      `bDisableFurnitureCamera` doesn't stop it (0.9.15 test). Leave it, or look for a fix after
+      1.0 (the user's call)
 - [x] Seated next to someone at a bar, third person (0.9.12, twice): their head didn't block
       you; the tally of your lines works
 - [ ] Check the 0.9.10 fix in first person: the bar stool with the drink (your body after the

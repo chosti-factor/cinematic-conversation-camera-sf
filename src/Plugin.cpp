@@ -175,6 +175,7 @@ namespace CCC
 			bool                                  lastDirected{ false };  // the shot on screen came from the director, not the plain shot (0.9.14)
 			bool                                  closingDone{ false };   // iExitStyle 1: the closing shot decided for this hold
 			bool                                  exitCut{ false };       // iExitStyle 2: cut back to your view
+			std::chrono::steady_clock::time_point exitCutAt{};
 			int                                   exitCutFrames{ 0 };     // ... frames since (0.9.15: staged)
 			bool                                  menuSeen{ false };      // the dialogue menu has been open in this conversation (0.9.15)
 			RE::NiPoint3                          startAngle{};      // your angles (pitch, roll, yaw) when the conversation started (0.9.2)
@@ -417,6 +418,8 @@ namespace CCC
 		std::atomic<float> g_gameplayLens[2]{ 0.0f, 0.0f };
 		std::atomic<void*> g_lensCamera{ nullptr };
 		std::atomic<int>   g_exitLensFrames{ 0 };  // lens updates after an exit still to keep on your gameplay lens
+		std::atomic<bool>  g_cutOwnsLens{ false };  // exit style 2's cut sets the lens itself, with the camera (0.9.16)
+		float              g_lastStartFov[2]{ 0.0f, 0.0f };  // the gameplay lens at the last conversation start seen, first/third person
 		std::atomic<float> g_exitLensValue{ 0.0f };  // the lens kept on through this exit
 		std::atomic<std::int64_t> g_exitLensUntil{ 0 };  // and never past this (steady clock), a quarter of a second
 		void  PutGameplayLensBack(bool a_firstPerson);
@@ -753,6 +756,8 @@ namespace CCC
 
 		void Begin()
 		{
+			g_exitLensFrames.store(0, std::memory_order_relaxed);
+			g_cutOwnsLens.store(false, std::memory_order_relaxed);
 			g_state = State{};
 			g_state.active = true;
 			g_state.lastFrame = std::chrono::steady_clock::now();
@@ -791,6 +796,7 @@ namespace CCC
 
 		void End()
 		{
+			g_cutOwnsLens.store(false, std::memory_order_relaxed);  // the game's lens update back on the camera (0.9.16)
 			if (g_state.active) {
 				if (Settings::Get().debugLog) {
 					LogHeadMotion("conversation end");
@@ -1826,14 +1832,58 @@ namespace CCC
 				// no blur.
 				if (s.exitStyle == 2 && held >= s.exitCutSeconds && held < 3.0f) {
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
+					const int   which = g_state.startedFirstPerson ? 0 : 1;
+					float       lens = g_state.startFov;
+					if (lens < 40.0f) {
+						lens = g_lastStartFov[which];  // 0.9.16: picked up again after a menu (the bar's drink): never saw it
+					}
+					if (lens < 40.0f) {
+						lens = g_gameplayLens[which].load(std::memory_order_relaxed);
+					}
 					if (view) {
-						const float lens = g_state.startFov >= 40.0f ? g_state.startFov :
-						                                                g_gameplayLens[g_state.startedFirstPerson ? 0 : 1].load(std::memory_order_relaxed);
-						// 0.9.15, staged: the 0.9.14 clip showed the camera move landing a frame after
-						// the body, blur and lens changes during the hold. So on the cut's first frame
-						// only the camera moves; the rest follows on the next.
-						const bool cameraOnly = s.exitCutStaged && g_state.exitCutFrames == 0;
-						if (!cameraOnly) {
+						const int k = g_state.exitCutFrames;
+						if (k == 0) {
+							g_state.exitCutAt = now;
+						}
+						bool drawn = false;
+						if (s.exitCutStaged) {
+							// 0.9.16: the 0.9.15 clips showed the order in which the camera move, the lens,
+							// the blur and your body's hiding reach the screen varies by a frame from exit
+							// to exit, so the cut is built to look right in any order:
+							// - the lens is set on the camera with the move, and the game's lens update
+							//   kept off it meanwhile (they can't land on different frames);
+							// - from first person the camera lands 12 cm in front of your eyes and eases
+							//   back over a quarter of a second, and your body is hidden from the third
+							//   frame: while it's there, the camera is in front of your face;
+							// - the blur goes off from the second frame (your view a frame soft at most,
+							//   rather than the last shot a frame sharp).
+							Camera::Pose pose = *view;
+							if (g_state.startedFirstPerson) {
+								const float t = std::clamp(std::chrono::duration<float>(now - g_state.exitCutAt).count() / 0.25f, 0.0f, 1.0f);
+								const float ahead = 0.12f * (1.0f - t * t * (3.0f - 2.0f * t));
+								RE::NiPoint3 dir{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, pose.lookAt.z - pose.position.z };
+								const float  len = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+								if (len > 1e-4f && ahead > 0.0f) {
+									const RE::NiPoint3 step{ dir.x / len * ahead, dir.y / len * ahead, dir.z / len * ahead };
+									pose.position = { pose.position.x + step.x, pose.position.y + step.y, pose.position.z + step.z };
+									pose.lookAt = { pose.lookAt.x + step.x, pose.lookAt.y + step.y, pose.lookAt.z + step.z };
+								}
+							}
+							drawn = Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f, false);
+							if (drawn && lens >= 40.0f) {
+								g_cutOwnsLens.store(true, std::memory_order_relaxed);
+								Camera::SetRenderLens(lens);
+							}
+							if (k >= 1) {
+								g_shotDistance.store(0.0f, std::memory_order_relaxed);
+								FocusOnShot(0.0f);
+							}
+							if (g_state.startedFirstPerson && k >= 2) {
+								g_wantRevealPlayer = false;
+								g_wantHidePlayer = true;
+								Visibility::HidePlayer();
+							}
+						} else {
 							if (g_state.startedFirstPerson) {
 								g_wantRevealPlayer = false;
 								g_wantHidePlayer = true;
@@ -1844,20 +1894,15 @@ namespace CCC
 							}
 							g_shotDistance.store(0.0f, std::memory_order_relaxed);
 							FocusOnShot(0.0f);
+							drawn = Camera::ShowGameplayView(camera->cameraRoot.get(), *view);
 						}
-						const bool drawn = cameraOnly ? Camera::ApplyRender(camera->cameraRoot.get(), *view, 0.0f, false) :
-						                                Camera::ShowGameplayView(camera->cameraRoot.get(), *view);
 						if (drawn) {
-							if (!cameraOnly && lens >= 40.0f) {
-								Camera::SetRenderLens(lens);  // not the frustum saved at the start (0.9.14: a narrower one, third person)
-							}
 							++g_state.exitCutFrames;
 							if (!g_state.exitCut) {
 								g_state.exitCut = true;
 								REX::INFO("Exit style 2: cut to your {} view {:.2f} s after the last line (lens {:.1f}{})",
-									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens, cameraOnly ? "; the camera first, the rest next frame" : "");
-							} else if (g_state.exitCutFrames == 2) {
-								REX::INFO("Exit style 2: {}, no blur, your lens", g_state.startedFirstPerson ? "your body hidden" : "your view");
+									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens,
+									s.exitCutStaged ? (g_state.startedFirstPerson ? "; 12 cm ahead easing back, body hidden from frame 3, blur off from frame 2" : "; blur off from frame 2") : "");
 							}
 							return;
 						}
@@ -1865,8 +1910,7 @@ namespace CCC
 				}
 				// Keep the last shot until the game leaves its dialogue camera, then cut straight
 				// to the player's view: first person (the first-person hook cuts there) and, since
-				// 0.7.6, third person too (0.7.5 test: the saved third-person view shown meanwhile
-				// rested on the NPC's middle for a second before the game's camera took over).
+				// 0.7.6, third person too.
 				const bool holdToEnd = held < 3.0f && (g_state.startedFirstPerson ? g_firstPersonView.has_value() : true);
 				if ((held < s.exitHoldSeconds || holdToEnd) && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
 					return;
@@ -1958,6 +2002,7 @@ namespace CCC
 			if (wideFrame && g_state.startFov <= 0.0f) {
 				Camera::RememberGameplayFrustum(camera->cameraRoot.get());
 				g_state.startFov = gameFov;
+				g_lastStartFov[g_state.startedFirstPerson ? 0 : 1] = gameFov;
 			}
 			if (s.debugLog && g_conversationNumber <= 40 && g_state.framesThisConversation <= 12) {
 				REX::INFO("FOV frame {} (+{} ms): game's field of view {:.2f}{}", g_state.framesThisConversation,
@@ -2964,6 +3009,7 @@ namespace CCC
 			g_state.closingDone = false;
 			g_state.exitCut = false;
 			g_state.exitCutFrames = 0;
+			g_cutOwnsLens.store(false, std::memory_order_relaxed);
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
@@ -3612,6 +3658,9 @@ namespace CCC
 			static void Thunk(void* a_camera, float a_fov)
 			{
 				g_lensCamera.store(a_camera, std::memory_order_relaxed);  // 0.9.15: in conversations too (it isn't called outside them)
+				if (g_cutOwnsLens.load(std::memory_order_relaxed)) {
+					return;  // 0.9.16: exit style 2's cut sets the frustum itself, with the camera
+				}
 				RememberGameplayLens(a_camera, a_fov);
 				Hook(a_camera, ExitLens(LensFor(a_fov), true));
 			}
@@ -3632,9 +3681,13 @@ namespace CCC
 			// 0.9.15: the lens update isn't called outside conversations (0.9.14 log: nothing was
 			// ever remembered, so this never ran); the game's lens on the conversation's first
 			// frame is your gameplay lens.
+			g_cutOwnsLens.store(false, std::memory_order_relaxed);
 			float fov = g_gameplayLens[which].load(std::memory_order_relaxed);
 			if (fov < 40.0f) {
 				fov = g_state.startFov;
+			}
+			if (fov < 40.0f) {
+				fov = g_lastStartFov[which];  // 0.9.16: a conversation picked up again (after the bar's drink menu) never saw it
 			}
 			void* camera = g_lensCamera.load(std::memory_order_relaxed);
 			if (fov < 40.0f || !camera || !Settings::Get().exitLens) {
@@ -3648,8 +3701,10 @@ namespace CCC
 			g_waitingLens.store(0.0f, std::memory_order_relaxed);
 			g_exitLensValue.store(fov, std::memory_order_relaxed);
 			g_exitLensUntil.store((std::chrono::steady_clock::now() + std::chrono::milliseconds(250)).time_since_epoch().count(), std::memory_order_relaxed);
+			// 0.9.16: every time (0.9.15 only when the counter was at 0, and outside conversations
+			// nothing counts it down, so only the first exit of a session got it).
+			LensHookMain::Hook(camera, fov);
 			if (g_exitLensFrames.exchange(6, std::memory_order_relaxed) == 0) {
-				LensHookMain::Hook(camera, fov);
 				REX::INFO("Exit: your {} lens ({:.1f} degrees) put on the camera", a_firstPerson ? "first-person" : "third-person", fov);
 			}
 		}
@@ -3657,11 +3712,14 @@ namespace CCC
 		float ExitLens(float a_fov, bool a_main)
 		{
 			const int left = g_exitLensFrames.load(std::memory_order_relaxed);
-			if (left <= 0 || g_lensActive.load(std::memory_order_relaxed)) {
+			if (left <= 0) {
 				return a_fov;
 			}
 			if (std::chrono::steady_clock::now().time_since_epoch().count() > g_exitLensUntil.load(std::memory_order_relaxed)) {
 				g_exitLensFrames.store(0, std::memory_order_relaxed);
+				return a_fov;
+			}
+			if (g_lensActive.load(std::memory_order_relaxed)) {
 				return a_fov;
 			}
 			const float fov = g_exitLensValue.load(std::memory_order_relaxed);
@@ -3681,12 +3739,22 @@ namespace CCC
 
 		struct LensHook2
 		{
-			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, ExitLens(LensFor(a_fov), false)); }
+			static void Thunk(void* a_camera, float a_fov)
+			{
+				if (!g_cutOwnsLens.load(std::memory_order_relaxed)) {
+					Hook(a_camera, ExitLens(LensFor(a_fov), false));
+				}
+			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens2", REL::EHookStep::None, REL::ID(113316), 0x1FD, Thunk };
 		};
 		struct LensHook3
 		{
-			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, ExitLens(LensFor(a_fov), false)); }
+			static void Thunk(void* a_camera, float a_fov)
+			{
+				if (!g_cutOwnsLens.load(std::memory_order_relaxed)) {
+					Hook(a_camera, ExitLens(LensFor(a_fov), false));
+				}
+			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens3", REL::EHookStep::None, REL::ID(113488), 0x498, Thunk };
 		};
 

@@ -165,9 +165,10 @@ namespace CCC
 		// fExitCutSeconds after the last line (your body hidden from first person).
 		std::int32_t exitStyle{ 2 };
 		float        exitCutSeconds{ 0.4f };
-		// bExitCutStaged (0.9.15): style 2's cut in two steps, the camera on its first frame and
-		// the rest (your body hidden, no blur, your lens) from the next (0.9.14 clip: during the
-		// hold, the camera move shows a frame after those).
+		// bExitCutStaged (0.9.16): style 2's cut built to look right whatever order its parts
+		// reach the screen in: the lens set with the camera, from first person the camera 12 cm
+		// ahead of your eyes easing back and your body hidden from the third frame, the blur off
+		// from the second. 0 = everything at once.
 		bool         exitCutStaged{ true };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.

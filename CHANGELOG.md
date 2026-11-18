@@ -4,6 +4,27 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.16 - 2026-11-17
+
+### Fixed
+- Exit style 2, after the bar's drink menu (0.9.15 clip): your view came up through the
+  narrow conversation lens for about half a second, then jumped at the hand-back. A
+  conversation picked up again after a menu never sees your gameplay lens at its start; it
+  now uses the last one seen.
+- The exit lens fix only ran on the first exit of a session (a counter that nothing counts
+  down outside conversations).
+- Exit style 2's cut: the 0.9.15 clips still had a frame of the last shot with you hidden
+  (first person) or through the wrong lens (third person). The order in which the camera
+  move, the lens, the blur and your body's hiding reach the screen varies by a frame from
+  exit to exit, so the cut no longer depends on it: the lens is set with the camera (and the
+  game's lens update kept off it meanwhile); from first person the camera lands 12 cm ahead
+  of your eyes and eases back over a quarter of a second, with your body hidden from the
+  third frame, so neither order shows; the blur goes off from the second frame.
+
+### Known
+- `bDisableFurnitureCamera:Camera=1` (the game's own switch) doesn't stop the sitting
+  camera's swing, from first or third person (0.9.15 test).
+
 ## 0.9.15 - 2026-11-17
 
 ### Changed
