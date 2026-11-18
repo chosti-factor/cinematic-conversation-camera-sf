@@ -156,6 +156,9 @@ namespace CCC
 		// iExitModeThirdPerson: 1 = your third-person view drawn on the switch frame (0.9.4),
 		// 0 = the game's (a frame of its own conversation camera).
 		std::int32_t exitModeThird{ 1 };
+		// bExitLens (0.9.13): your gameplay lens put back on the first frame of your view at an
+		// exit (otherwise that frame is drawn through the conversation's lens, zoomed in).
+		bool         exitLens{ true };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;

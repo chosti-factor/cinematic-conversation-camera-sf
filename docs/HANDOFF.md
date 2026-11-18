@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.12 (2026-11-17).
+Last updated: 0.9.13 (2026-11-17).
 
 ## Working rules
 
@@ -49,23 +49,27 @@ Last updated: 0.9.12 (2026-11-17).
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-17, 0.9.8)
+## Where things stand (2026-11-17, 0.9.13)
 
 - Starts: the first frame is placed against a prediction of the game's dialogue camera,
   fitted in the 0.9.5 distance test: on the line from the NPC's head through your feet,
   2.02 m from the head (less when something's in the way), 0.07 m above it, aimed 2.75
-  degrees below the head; learned further from each start. Clean in the 0.9.6 clip. The first
-  conversation after a load can take 2-3 frames to switch (known).
-- First-person exit, one frame looking steeply up: caused by the direct body rebuild (the
-  first first-person update runs with your third-person body and sets pitch -68.13). Vanilla,
-  rebuild off and the camera-cycle method are clean; the camera cycle flashes at starts.
-  0.9.8 `iExitMode=5` holds that update back one frame (`iExitSkipFrames`): to confirm.
-- Third-person exit: one in-between frame, as vanilla. 0.9.8 `iExitModeThirdPerson=2` puts the
-  camera root on your view before the third-person camera's first update: to confirm.
+  degrees below the head; learned further from each start. Clean in the 0.9.6 and 0.9.12
+  clips. The first conversation after a load can take 2-3 frames to switch (known).
+- First-person exit (full detail in docs/TRANSITIONS.md): the steep-up frame is gone
+  (`iExitMode=5` holds the first first-person update back one frame). The 0.9.12 clip (five
+  exits) left two things: one zoomed frame, which is the game easing its lens from 30 back to
+  94 degrees (about 60 on that frame; 0.9.13 keeps your lens through the ease, untested), and
+  one or two frames of the last shot without you (the proposed fix, ending on a shot without
+  you, is the user's style call).
+- Third-person exit: one in-between frame. 0.9.13's lens fix applies there too; whether
+  vanilla has a frame like it waits on the true-vanilla test (mod disabled in MO2).
+- In-game settings page (SFSE Menu Framework) and the tally of your lines: 0.9.12, the page
+  registers (44 settings); its test is next.
 - Cutting styles retired; `iCuttingPace` (-2..+2) nudges the preset's own rhythm.
 - Sitting down/standing up on stools: the mod doesn't touch the camera (furniture state).
 - Still to do in 0.9.x: the long Sarah test for CCC SF preset tweaks (below), the bar-stool
-  and filming tests, Vasco, the SFSE Menu Framework page, UI-mod compatibility, and the
+  and filming tests, Vasco, UI-mod compatibility, and the
   last step (testing messages and debug log off).
 
 ## Earlier (2026-11-16, 0.8.17)

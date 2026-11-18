@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.12, 2026-11-17; no change to starts or exits since 0.9.11).
+measured in testing. Kept up to date with every build (last updated: 0.9.13, 2026-11-17).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -27,7 +27,9 @@ Version notes in brackets say when something was found or changed; the full stor
   function (Address Library IDs 64682 +0xF43, 113316 +0x1FD and 113488 +0x498; set-FOV is
   113443, which writes PlayerCamera +280 and the render frustum). While a conversation is
   filmed, the value is swapped for the shot's lens. The game asks for 29.6 degrees
-  (`fDialogueCameraFailsafeFPFOV` = 30); gameplay is 94 degrees.
+  (`fDialogueCameraFailsafeFPFOV` = 30); gameplay is 94 degrees. Outside conversations the
+  hook remembers the lens the game asks for in first person (mode 0) and third person
+  (mode 20), for the exits (0.9.13).
 
 ### How a shot is drawn
 
@@ -167,10 +169,21 @@ What happens on the switch:
    0.9.11, ending it keeps your view drawn and releases the render camera just before the
    first-person camera's next update.
    - **Before 0.9.11:** ending it restored the render camera, which drew one frame of the
-     game's dialogue camera from your eyes through the conversation lens (it looked like
-     your view zoomed in).
-5. **Known:** one frame of the last shot with you already gone from it, just before your view
-   (your body is swapped back at the switch). Proposed fix: end on a shot without you.
+     game's dialogue camera from your eyes through the conversation lens.
+5. **The frame after: the game's lens ease (0.9.12 clip, all five exits).** The first frame
+   once the game has its camera back showed your view zoomed in: the right place and aim, but
+   magnified about **1.85 times** about the centre, a lens of about **60 degrees**, the same
+   after every last shot. That's about halfway from 29.6 to 94: the game eases its lens back
+   from the conversation's over a few frames. (It isn't the held-back frame: that one already
+   uses the gameplay frustum saved at the conversation's start.)
+   - **Since 0.9.13 (`bExitLens=1`):** at the exit your gameplay lens is put on the camera at
+     once through set-FOV (which also writes PlayerCamera +280, which the ease may start
+     from), and for up to 6 lens updates or 0.25 s, the game's in-between values are swapped
+     for it at all three callers, until the game asks for it itself. The log lists each
+     swapped value ("Exit lens: ..."). Untested.
+6. **Known:** one or two frames of the last shot with you already gone from it (and its
+   background blur gone), just before your view (your body is swapped back at the switch).
+   Proposed fix: end on a shot without you.
 
 Older modes:
 - **3:** the entry flag cleared, and the pitch and root put back after the update. That
@@ -186,6 +199,8 @@ Older modes:
   third-person camera's own first update.
 - **Known: one frame** of the third-person camera close behind you (or to the side) as it
   eases out to its distance.
+  - 0.9.13 puts your third-person lens back the same way as first person (`bExitLens`). If
+    the game's lens ease is part of that frame, it should look different; untested.
   - Vanilla has its own in-between frame: one from your eyes (0.9.7 test, but with the mod
     loaded; to redo with it disabled in the mod manager).
   - `iExitModeThirdPerson=2` (camera root put on your view first) didn't change it (0.9.8).

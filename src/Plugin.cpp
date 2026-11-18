@@ -407,6 +407,15 @@ namespace CCC
 		std::atomic<bool>  g_lensActive{ false };
 		std::atomic<float> g_lensWanted{ 0.0f };
 		std::atomic<int>   g_lensCalls{ 0 };
+		// 0.9.13: the lens the game last set outside conversations, first person [0] and third
+		// person [1], and the camera it set it on, to put it back ourselves at an exit.
+		std::atomic<float> g_gameplayLens[2]{ 0.0f, 0.0f };
+		std::atomic<void*> g_lensCamera{ nullptr };
+		std::atomic<int>   g_exitLensFrames{ 0 };  // lens updates after an exit still to keep on your gameplay lens
+		std::atomic<int>   g_exitLensWhich{ 0 };
+		std::atomic<std::int64_t> g_exitLensUntil{ 0 };  // and never past this (steady clock), a quarter of a second
+		void  PutGameplayLensBack(bool a_firstPerson);
+		float ExitLens(float a_fov, bool a_main);
 		// Where the game's dialogue camera sits, as measured on earlier conversations (start
 		// at the 0.9.5 test values, then learned from each start).
 		float g_learnedDistance = 2.02f;  // from the NPC's head, towards your feet
@@ -802,6 +811,7 @@ namespace CCC
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
+						PutGameplayLensBack(false);
 						REX::INFO("Exit: your third-person view drawn on the switch frame");
 					}
 				}
@@ -816,6 +826,7 @@ namespace CCC
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_firstPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
+						PutGameplayLensBack(true);
 						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
 					}
 				}
@@ -3134,7 +3145,9 @@ namespace CCC
 			// last shot, and the clips showed it a frame or two with you gone from it (your body
 			// is already the first-person one by then: that's why the frame is clean now).
 			const bool own = g_firstPersonView && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_firstPersonView);
-			if (!own) {
+			if (own) {
+				PutGameplayLensBack(true);
+			} else {
 				Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
 			}
 			REX::INFO("Exit: the first-person camera's update {} of {} held back; {} (iExitMode 5; your head {:.2f} m above your feet)",
@@ -3482,19 +3495,92 @@ namespace CCC
 			return wanted;
 		}
 
+		// The lens the game sets in gameplay, remembered for the exits (0.9.13).
+		void RememberGameplayLens(void* a_camera, float a_fov)
+		{
+			if (g_lensActive.load(std::memory_order_relaxed) || g_exitLensFrames.load(std::memory_order_relaxed) > 0 || a_fov < 40.0f || a_fov > 170.0f) {
+				return;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			if (!camera) {
+				return;
+			}
+			const int which = camera->QCameraEquals(static_cast<RE::CameraState>(0)) ? 0 : camera->QCameraEquals(static_cast<RE::CameraState>(20)) ? 1 : -1;
+			if (which >= 0) {
+				g_gameplayLens[which].store(a_fov, std::memory_order_relaxed);
+				g_lensCamera.store(a_camera, std::memory_order_relaxed);
+			}
+		}
+
 		struct LensHookMain
 		{
-			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static void Thunk(void* a_camera, float a_fov)
+			{
+				RememberGameplayLens(a_camera, a_fov);
+				Hook(a_camera, ExitLens(LensFor(a_fov), true));
+			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_LensMain", REL::EHookStep::None, REL::ID(64682), 0xF43, Thunk };
 		};
+
+		// 0.9.13: the first frame of your view after an exit came out zoomed in (the 0.9.12 clip:
+		// every first-person exit, the view magnified about 1.85 times about the centre, a lens of
+		// about 60 degrees whatever the last shot's). That's about halfway from the conversation's
+		// 30 degrees to your 94: the game eases its lens back over a few frames, and the first of
+		// them comes right after the held-back frame drawn through your own lens. So at an exit,
+		// your gameplay lens goes on the camera at once (set-FOV writes PlayerCamera +280, which
+		// the ease may start from), and for the next few lens updates the game's in-between
+		// values are replaced by it, until the game asks for it itself.
+		void PutGameplayLensBack(bool a_firstPerson)
+		{
+			const int   which = a_firstPerson ? 0 : 1;
+			const float fov = g_gameplayLens[which].load(std::memory_order_relaxed);
+			void*       camera = g_lensCamera.load(std::memory_order_relaxed);
+			if (fov < 40.0f || !camera || !Settings::Get().exitLens) {
+				return;
+			}
+			g_lensActive.store(false, std::memory_order_relaxed);
+			g_waitingLens.store(0.0f, std::memory_order_relaxed);
+			g_exitLensWhich.store(which, std::memory_order_relaxed);
+			g_exitLensUntil.store((std::chrono::steady_clock::now() + std::chrono::milliseconds(250)).time_since_epoch().count(), std::memory_order_relaxed);
+			if (g_exitLensFrames.exchange(6, std::memory_order_relaxed) == 0) {
+				LensHookMain::Hook(camera, fov);
+				REX::INFO("Exit: your {} lens ({:.1f} degrees) put on the camera", a_firstPerson ? "first-person" : "third-person", fov);
+			}
+		}
+
+		float ExitLens(float a_fov, bool a_main)
+		{
+			const int left = g_exitLensFrames.load(std::memory_order_relaxed);
+			if (left <= 0 || g_lensActive.load(std::memory_order_relaxed)) {
+				return a_fov;
+			}
+			if (std::chrono::steady_clock::now().time_since_epoch().count() > g_exitLensUntil.load(std::memory_order_relaxed)) {
+				g_exitLensFrames.store(0, std::memory_order_relaxed);
+				return a_fov;
+			}
+			const float fov = g_gameplayLens[g_exitLensWhich.load(std::memory_order_relaxed)].load(std::memory_order_relaxed);
+			if (!a_main) {
+				REX::INFO("Exit lens (other caller): the game asked for {:.1f} degrees; {:.1f} instead", a_fov, fov);
+				return fov;
+			}
+			if (std::abs(a_fov - fov) < 0.5f) {
+				g_exitLensFrames.store(0, std::memory_order_relaxed);
+				REX::INFO("Exit lens: the game is back on {:.1f} degrees itself", a_fov);
+				return a_fov;
+			}
+			g_exitLensFrames.store(left - 1, std::memory_order_relaxed);
+			REX::INFO("Exit lens: the game asked for {:.1f} degrees; {:.1f} instead", a_fov, fov);
+			return fov;
+		}
+
 		struct LensHook2
 		{
-			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, ExitLens(LensFor(a_fov), false)); }
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens2", REL::EHookStep::None, REL::ID(113316), 0x1FD, Thunk };
 		};
 		struct LensHook3
 		{
-			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, LensFor(a_fov)); }
+			static void Thunk(void* a_camera, float a_fov) { Hook(a_camera, ExitLens(LensFor(a_fov), false)); }
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens3", REL::EHookStep::None, REL::ID(113488), 0x498, Thunk };
 		};
 

@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.13 - 2026-11-17
+
+### Fixed
+- First-person exits (0.9.12 clip, all five exits): one frame of your view zoomed in, after
+  the clean held-back frame. The camera was right; the lens wasn't: the game eases its lens
+  back from the conversation's 30 degrees to your 94 over a few frames, and its first
+  in-between frame (about 60 degrees) came straight after ours. Now your gameplay lens goes
+  on the camera at the exit and is kept through the game's ease (a quarter of a second at
+  most). Third-person exits get the same. `bExitLens` in `[Transitions]` turns it off, to
+  compare.
+
+### Known
+- First-person exits: one or two frames of the last shot with you gone from it, just before
+  your view.
+
 ## 0.9.12 - 2026-11-17
 
 ### Added
