@@ -255,7 +255,7 @@ close-up up to 28 s in every preset.
 Decisions so far (to build together once every preset is discussed):
 - B, all presets: a cap on how long one close-up holds over a run of emotional lines, then a
   cut to a three-quarter or medium of them (or a reaction of you); a value per preset, to be
-  settled preset by preset. Frontier: proposed 12 s.
+  settled preset by preset. Frontier: proposed 12 s. Starborn: 18 s (the user).
 - C, Frontier: listening reactions in mediums and three-quarters, not close-ups; close-ups
   of you kept for when your face shows an expression. Other presets: to discuss.
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
