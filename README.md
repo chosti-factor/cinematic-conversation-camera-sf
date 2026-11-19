@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.24 (2026-11-18).
+Last updated: 0.9.25 (2026-11-18).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -181,7 +181,7 @@ of your expressions.
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes on the wide ones (lenses 45-95) | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants |
 | Frontier | CCC SF (Standard) | Standard on slightly longer lenses, slow dolly-like drifts on the two-shot, three-quarters and mediums, singles with a shoulder edging in, heroic low angles, the room now and then, a touch of handheld | A space western (*Firefly*, *The Expanse*): Akila, Neon, the outposts | Up to 9 m indoors, 12 m outdoors |
 | Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses, singles with a shoulder edging in, a close profile, faces half off-centre, a light handheld touch, still shots with push-ins on the emotional lines, a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
-| Constellation | CCC SF (Room) | Watched from across the room on longer lenses, past people's shoulders and side on, small slow drifts everywhere, the most handheld sway, cranes on the master and long shots, faces now and then | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
+| Constellation | CCC SF (Room) | Watched from across the room on longer lenses, past people's shoulders and side on, small slow drifts everywhere (the master too), the most handheld sway, cranes on the long shots, faces now and then | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
 | Nebula | CCC SF | Every angle in the library, every move CCC has, bold and varied: heroic low angles, high angles, profiles, group shots | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) | Up to 9 m indoors, 12 m outdoors |
 
 While testing there's an eighth preset, `NebulaTest`: Nebula with its low angles as half the

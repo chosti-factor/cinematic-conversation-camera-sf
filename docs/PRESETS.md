@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.24 (2026-11-18; the review after the 2026-11-18 run: Starborn towards
+Last updated: 0.9.25 (2026-11-18; the review after the 2026-11-18 run: Starborn towards
 *Interstellar*, Nebula a space opera, close-up limits, and the rest below; 0.9.24: more shots
 in Frontier, Starborn and Constellation).
 
@@ -25,7 +25,7 @@ in Frontier, Starborn and Constellation).
 | From | CCC | CCC | CCC | CCC SF, built on Standard | CCC SF, built on Close | CCC SF, built on Room | CCC SF |
 | Feels like | A TV drama: classic shot / reverse shot | A film-noir conversation | A classic western or a stage play | A space western (*Firefly*, *The Expanse*) | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | A hard sci-fi documentary (*The Martian*, *Apollo 13*) | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) |
 | The look | Shoulders, close-ups, three-quarters and mediums on both sides | Shoulders, tight close-ups and extreme close-ups | Wide and full-figure shots | Standard on slightly longer lenses, with the room now and then; singles with a shoulder edging in, heroic low angles, wide over-the-shoulders | Close-ups and shoulders, faces half off-centre, singles with a shoulder edging in, a close profile, now and then a medium; a wide shot for scale every few minutes | Watched from across the room, past people's shoulders and side on; faces now and then | Every angle in the library |
-| Camera movement | Mostly still; close-ups push in; the two-shot drifts | Pushes and zooms on every close-up | Cranes and pull-outs on the wide shots, the rest still | Slow drifts on the two-shot, three-quarters and mediums, as on a dolly; close-ups push in | Regular shots held still; the emotion close-ups push in; a slow crane up on the master; nothing drifts | Small, slow drifts everywhere, as an operator following along; cranes on the master and long shots | Every move, bold and varied; the low angles push in with a little tilt up |
+| Camera movement | Mostly still; close-ups push in; the two-shot drifts | Pushes and zooms on every close-up | Cranes and pull-outs on the wide shots, the rest still | Slow drifts on the two-shot, three-quarters and mediums, as on a dolly; close-ups push in | Regular shots held still; the emotion close-ups push in; a slow crane up on the master; nothing drifts | Small, slow drifts everywhere (the master too, since 0.9.25), as an operator following along; cranes on the long shots | Every move, bold and varied; the low angles push in with a little tilt up |
 | Lenses (degrees, per angle) | 50-72 | 35-50 | 45-95 | 40-80 | 40-60 | 40-70 | 40-95 |
 | Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 50, a touch of handheld | 30, a lighter touch | 60 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces half off-centre: half the usual room in the direction they look | | |
@@ -136,7 +136,7 @@ that shot. (Generated from the presets in the code.)
 | Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 7% drift, 60° | 3% pull out, 88° |
 | Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 10% drift, 45° | 2% pull out, 45° |
 | Distant, low (room shot) |  |  |  |  |  |  | 2% drift, 45° |
-| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 9% crane up, 70° | 3% crane up, 95° |
+| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 9% drift, 70° | 3% crane up, 95° |
 
 ## Notes
 

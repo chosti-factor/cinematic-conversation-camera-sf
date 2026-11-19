@@ -4,6 +4,12 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.25 - 2026-11-18
+
+### Changed
+- Constellation's master shot drifts instead of craning up: the documentary operator is on
+  the floor with the people (the user). Its long shots still crane up.
+
 ## 0.9.24 - 2026-11-18
 
 ### Changed

@@ -300,7 +300,7 @@ namespace CCC::Director
 		// shots to show the space and the work; faces now and then (about a fifth).
 		constexpr std::array kConstellation{
 			PresetEntry{ ShotType::kDistant, 75, Move::kDrift, 8, 9.0f, 45.0f },
-			PresetEntry{ ShotType::kMaster, 70, Move::kCraneUp, 25, 10.0f, 70.0f },
+			PresetEntry{ ShotType::kMaster, 70, Move::kDrift, 10, 10.0f, 70.0f },  // 0.9.25: drifts (was a crane up; an operator on the floor)
 			PresetEntry{ ShotType::kWide, 55, Move::kDrift, 10, 9.0f, 60.0f },
 			PresetEntry{ ShotType::kLongNpc, 55, Move::kCraneUp, 15, 9.0f, 55.0f },
 			PresetEntry{ ShotType::kLongPlayer, 55, Move::kCraneUp, 15, 9.0f, 55.0f },

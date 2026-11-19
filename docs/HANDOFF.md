@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.24 (2026-11-18).
+Last updated: 0.9.25 (2026-11-18).
 
 ## Working rules
 
@@ -306,8 +306,8 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   singles (25), profile of you both (25), medium profile (20), drifting. Out again if testing
   doesn't pan out.
 - Considered and kept for now (the user, 2026-11-18): removing Constellation's two overhead
-  shots (a documentary operator isn't above people; they read as surveillance) and turning
-  its crane moves into drifts. Revisit only if the test shows them out of place.
+  shots (a documentary operator isn't above people; they read as surveillance). Its master
+  drifts instead of craning up since 0.9.25 (the user); its long shots still crane.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
