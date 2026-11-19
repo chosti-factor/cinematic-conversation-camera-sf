@@ -64,7 +64,6 @@ Wednesday the 25th, about two days earlier.
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
 - [ ] Compatibility with UI mods (HUD replacer, dialogue menu replacer, subtitle mod), and
       auto-zoom back on as one check
-- [ ] The Ranger fading in at Neon (waiting on footage)
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
       are just people talking moved to after 1.0
@@ -102,6 +101,7 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
+- The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
 - Replace the large-speaker height rule (decided 2026-11-18; it stays until then) with a
   check of the speaker's actual body: width and bulk, not only height (robots like Vasco are
   wide and bulky). The line from the camera to your face tested against the speaker's body

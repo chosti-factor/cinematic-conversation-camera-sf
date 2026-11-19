@@ -100,8 +100,8 @@ Last updated: 0.9.26 (2026-11-19).
 - Seated NPC, you standing: the plain shot stands wider and lower behind you.
 - Filming others: ends on a move only after you've stopped.
 - To test in 0.8.17: tagged choices and persuasion close-ups, seated framing, your angle
-  changing in Standard/Starborn/Constellation. Waiting on the user's footage of the Neon
-  ranger fading in before any change there.
+  changing in Standard/Starborn/Constellation. The Neon ranger fading in moved to
+  after 1.0 Planned (the user, 2026-11-19: very infrequent).
 
 ## Earlier (2026-11-15, 0.8.14)
 

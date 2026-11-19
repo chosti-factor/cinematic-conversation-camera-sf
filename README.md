@@ -239,6 +239,8 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 ### After 1.0
 
 Planned:
+- NPCs now and then fading in a moment after a conversation starts (seen once, the Ranger at
+  Neon, from first person): rare enough to look into after 1.0, with footage.
 - Quest scenes that are just people talking filmed by this mod: today every quest scene you
   take part in goes to the game's camera, the safe choice, because some direct their own
   shots. Scenes with no camera actions of their own would keep this mod's camera, and later
