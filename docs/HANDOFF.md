@@ -268,6 +268,12 @@ Decisions so far (to build together once every preset is discussed):
      minutes instead of one in ten); the crane-up reveal stays on the Master.
   5. Close-up lenses one step wider: close-up of them 45 -> 50, of you 40 -> 45, extreme
      close-ups 40 -> 45 and 35 -> 40. The user isn't sold yet: to judge in the test.
+- Bug, all presets (fix approved): 22 shots in the run lasted under 0.2 s (mostly one frame):
+  two decisions on the same frame (a fresh angle, then a reaction or an emotion close-up at a
+  line's start) cut twice. Settle the final shot before cutting.
+- Constellation: the faces share (21% measured, 7% designed) is fine with the user ("dialogue
+  is not a real sci-fi documentary"); a little lower at most, never down to 7%. Its B value
+  and the rest still to settle.
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 
