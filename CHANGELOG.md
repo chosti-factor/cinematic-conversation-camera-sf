@@ -4,12 +4,11 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
-## 0.9.25 - 2026-11-18
+## 0.9.25 - 2026-11-19
 
 ### Changed
 - Constellation's master shot drifts instead of craning up: the documentary operator is on
   the floor with the people (the user). Its long shots still crane up.
-
 - From the 0.9.24 test (the user):
   - Starborn overshot a little towards *Interstellar*: sway 30 to 15, faces a quarter
     off-centre (half before), and its close-up lenses half of 0.9.23's step wider than the
@@ -22,10 +21,21 @@ test build; "diagnostic" items only add information to the log for testing.
     (38 still showed part of Vasco when you stood close); `fLargeSpeakerPlainAnglePlayer`, in
     the INI and on the settings page.
 
+### Removed
+- The temporary NebulaTest preset: the low angles' new move is judged (the user: "they all
+  looked great"), so it's done its job.
+
 ### Fixed
 - The last one-frame flashes (3 in the 0.9.24 test, down from 22): an emotion close-up in the
   middle of their turn, then a reaction on the next frame. It now waits for the line's
   reaction to be decided too.
+- Settings page: the longest close-up can be set to 0 (no limit); the slider showed 0 as "the
+  preset's own".
+
+### Documentation
+- README: New in CCC SF now comes before Changed from CCC; the Presets section rewritten for
+  where the CCC SF presets stand after tonight's tuning (each one's sway, lenses, extreme
+  share, close-up limit and new shots); the settings overview lists the new settings.
 
 ## 0.9.24 - 2026-11-18
 

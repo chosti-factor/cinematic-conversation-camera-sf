@@ -29,10 +29,6 @@ namespace CCC::Director
 		{
 			std::string preset{ Settings::Get().preset };
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-			// 0.9.23: the temporary Nebula test preset is Nebula in everything but its low angles.
-			if (preset == "nebulatest" && std::string_view{ a_name } == "nebula") {
-				return true;
-			}
 			return preset == a_name;
 		}
 
@@ -946,7 +942,7 @@ namespace CCC::Director
 					cut(0, 4, 7, 3.5f);    // long holds, few cuts
 				} else if (preset == "constellation") {
 					cut(25, 3, 5, 2.8f);   // an observer's rhythm
-				} else if (preset == "nebula" || preset == "nebulatest") {
+				} else if (preset == "nebula") {
 					cut(75, 2, 3, 1.6f);   // quick
 				} else {
 					cut(0, 2, 3, 2.4f);    // Standard
@@ -973,7 +969,7 @@ namespace CCC::Director
 				presetIndoor = presetOutdoor = 5.0f;
 				g.roomIndoor = 9.0f;
 				g.roomOutdoor = 12.0f;
-			} else if (preset == "nebula" || preset == "nebulatest") {
+			} else if (preset == "nebula") {
 				LoadPreset(kNebula);
 				presetIndoor = 7.0f;
 				presetOutdoor = 13.0f;
@@ -993,28 +989,6 @@ namespace CCC::Director
 				preset = "standard";
 			}
 			ApplyOverrides();
-			// The temporary Nebula test preset (0.9.23, out before 1.0): Nebula with its low
-			// angles (pushing in with a third of a tilt) as half of the angles picked on each side.
-			if (preset == "nebulatest") {
-				using enum ShotType;
-				int theirs = 0, yours = 0;
-				for (std::size_t i = 0; i < g.setups.size(); ++i) {
-					const auto type = static_cast<ShotType>(i);
-					if (type == kExtremeClose || type == kExtremeClosePlayer || type == kLowAngle || type == kLowProfile || type == kPlayerLow) {
-						continue;  // (extreme close-ups aren't picked as angles)
-					}
-					const int w = g.setups[i].weight;
-					if (Shots::Neutral(type) || Shots::OnNpc(type)) {
-						theirs += w;
-					}
-					if (Shots::Neutral(type) || !Shots::OnNpc(type)) {
-						yours += w;
-					}
-				}
-				g.setups[static_cast<std::size_t>(kLowAngle)].weight = (std::max)(1, theirs / 2);
-				g.setups[static_cast<std::size_t>(kLowProfile)].weight = (std::max)(1, theirs / 2);
-				g.setups[static_cast<std::size_t>(kPlayerLow)].weight = (std::max)(1, yours);
-			}
 			FillMissingLenses();
 			return preset;
 		}
@@ -1586,7 +1560,7 @@ namespace CCC::Director
 			}
 			std::string preset{ s.preset };
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" || preset == "nebulatest" ? 37.5f : 45.0f;
+			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
 		}
 	}
 

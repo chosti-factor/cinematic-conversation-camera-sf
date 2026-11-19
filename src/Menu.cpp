@@ -42,7 +42,7 @@ namespace CCC::Menu
 			std::span<const char* const> choices{};
 		};
 
-		constexpr const char* kPresets[]{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula", "NebulaTest" };
+		constexpr const char* kPresets[]{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
 		constexpr const char* kFocusStyles[]{ "Wide", "Cinematic" };
 
 		// The player-facing settings. Test switches, transitions and the plain camera's offsets
@@ -53,7 +53,7 @@ namespace CCC::Menu
 				"Off: the whole mod stands down and conversations use the game's own camera." },
 			{ "Camera", "Look", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
-				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's. NebulaTest is for testing only.",
+				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
 				kPresets },
 			{ "Camera", "Look", "Director", "iCuttingPace", "Cutting pace", Kind::kInt, -2, 2, "%+d",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest." },
@@ -96,8 +96,8 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceStrongNpc", "Strong lines", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iExtremeCloseUpChanceNpc", "Extreme close-ups", Kind::kOwnInt, 0, 100, "%d%%",
 				"Of those close-ups, how many are extreme. The preset's own: Frontier 20%, the others 40%." },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 4.0f, 60.0f, "%.0f",
-				"One close-up of them at most this long, then a wider shot of them. The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
+			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 0.0f, 60.0f, "%.0f",
+				"One close-up of them at most this long, then a wider shot of them; 0 = no limit (below 4 counts as 4). The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,

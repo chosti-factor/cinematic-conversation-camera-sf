@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.25 (2026-11-18).
+Last updated: 0.9.25 (2026-11-19).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -48,6 +48,35 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   as CCC's framing wants; in CCC SF's the furthest of them (Master) up to 9 m indoors and
   12 m outdoors, the others closer in proportion
   (`fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` to set your own).
+
+### New in CCC SF
+
+What CCC doesn't do.
+
+- **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera is
+  at your eyes.
+- **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
+  library, whose angles often put the chair, the shop counter or the clutter around it in
+  front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are
+  recognised by the game's vendor flag on their faction, wherever the shop is.
+- **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
+  (*Interstellar* with a touch of Kubrick), Constellation (a hard sci-fi documentary) and
+  Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).
+- **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
+  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
+  there, Constellation handheld), or `iCameraSway` sets one.
+- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
+  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
+  menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
+  most a brief flash.
+- **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
+  you take part in (someone walks up and starts talking, several people taking turns) keep
+  the game's own camera.
+- **Preset key:** U switches to the next preset on the fly, even mid-conversation
+  (`iPresetKey`).
+- **Testing messages:** each line's expression, your face's answer and the shot used, with
+  why, in the top bar while a conversation is filmed, and the preset in use in the bottom
+  bar (`bShowMessages`, `fMessageSeconds`).
 
 ### Changed from CCC
 
@@ -136,61 +165,34 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional
   here, and the INI works without it (see Settings below).
 
-### New in CCC SF
-
-What CCC doesn't do.
-
-- **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera is
-  at your eyes.
-- **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
-  library, whose angles often put the chair, the shop counter or the clutter around it in
-  front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are
-  recognised by the game's vendor flag on their faction, wherever the shop is.
-- **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
-  (*Interstellar* with a touch of Kubrick), Constellation (a hard sci-fi documentary) and
-  Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).
-- **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
-  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
-  there, Constellation handheld), or `iCameraSway` sets one.
-- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
-  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
-  menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
-  most a brief flash.
-- **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
-  you take part in (someone walks up and starts talking, several people taking turns) keep
-  the game's own camera.
-- **Preset key:** U switches to the next preset on the fly, even mid-conversation
-  (`iPresetKey`).
-- **Testing messages:** each line's expression, your face's answer and the shot used, with
-  why, in the top bar while a conversation is filmed, and the preset in use in the bottom
-  bar (`bShowMessages`, `fMessageSeconds`).
-
 ### Presets
 
-Choose one with `sPreset`. CCC's three are as faithful to CCC 1.5.0 as Starfield allows:
-its angles, frequencies, moves, each angle's own lens and each preset's cutting, from CCC's
-own exported presets, without this mod's additions (no reaction shots; emotion close-ups
-only in Close, on strong lines). CCC SF's four each have a film flavour drawn from
-Starfield's "NASA-punk" influences, their own lenses, moves, cutting and camera sway, and
-everything this mod adds: emotion close-ups on every tier, reaction shots of you, close-ups
-of your expressions.
+Choose one with `sPreset` (or switch on the fly with U while testing). CCC's three are as
+faithful to CCC 1.5.0 as Starfield allows: its angles, frequencies, moves, each angle's own
+lens and each preset's cutting, from CCC's own exported presets, without this mod's additions
+(no reaction shots; emotion close-ups only in Close, on strong lines; no close-up limit).
+CCC SF's four each have a film flavour drawn from Starfield's "NASA-punk" influences, their
+own lenses, moves, cutting and camera sway, and everything this mod adds: emotion close-ups,
+reaction shots of you, close-ups of your expressions and choices, and a limit on how long
+one close-up of them holds. They were last tuned from long test conversations with Sarah,
+Sam, Barrett, Andreja and Muria (0.9.23-0.9.25).
 
 | Preset | From | The look | Feels like | Room shots go back |
 | --- | --- | --- | --- | --- |
 | Standard | CCC | Shoulders, close-ups, three-quarters and mediums on both sides, mostly still (lenses 50-72) | A TV drama: classic shot / reverse shot, calm and readable | (none) |
 | Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in (lenses 35-50) | A film-noir conversation: faces fill the screen, every flicker of an expression counts | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes on the wide ones (lenses 45-95) | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants |
-| Frontier | CCC SF (Standard) | Standard on slightly longer lenses, slow dolly-like drifts on the two-shot, three-quarters and mediums, singles with a shoulder edging in, heroic low angles, the room now and then, a touch of handheld | A space western (*Firefly*, *The Expanse*): Akila, Neon, the outposts | Up to 9 m indoors, 12 m outdoors |
-| Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses, singles with a shoulder edging in, a close profile, faces a little off-centre, a barely-there handheld touch, still shots with push-ins on the emotional lines, a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
-| Constellation | CCC SF (Room) | Watched from across the room on longer lenses, past people's shoulders and side on, small slow drifts everywhere (the master too), the most handheld sway, cranes on the long shots, faces now and then | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
-| Nebula | CCC SF | Every angle in the library, every move CCC has, bold and varied: heroic low angles, high angles, profiles, group shots | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) | Up to 9 m indoors, 12 m outdoors |
+| Frontier | CCC SF (Standard) | Standard on slightly longer lenses (40-80): slow dolly-like drifts on the two-shot, three-quarters and mediums, singles with a shoulder edging in, heroic low angles, wide over-the-shoulders, the room now and then, a touch of handheld (sway 50). Emotion close-ups on every tier but rarely extreme (20%); one close-up of them at most 12 s; you listening in mediums and three-quarters | A space western (*Firefly*, *The Expanse*): Akila, Neon, the outposts | Up to 9 m indoors, 12 m outdoors |
+| Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses (37.5-60), singles with a shoulder edging in, a close profile, now and then a medium; faces a little off-centre, a barely-there handheld (sway 15), still shots that push in only on emotional lines, slow holds (one close-up at most 18 s), a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
+| Constellation | CCC SF (Room) | Watched from across the room on longer lenses (40-70), past people's shoulders and side on; small slow drifts everywhere (the master too), the most handheld sway (60, with a slow wander), cranes on the long shots; faces now and then, emotion close-ups on strong lines only (at most 14 s), never an extreme close-up of you | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
+| Nebula | CCC SF | Every angle in the library and every move CCC has, bold and varied: heroic low angles that push in with a little tilt, high angles, profiles, group shots, now and then an overhead; quick cutting (sway 40; one close-up at most 12 s) | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) | Up to 9 m indoors, 12 m outdoors |
 
-While testing there's an eighth preset, `NebulaTest`: Nebula with its low angles as half the
-angles it picks, to judge their new push-in with a little tilt (it comes out before 1.0).
-
-`iCameraSway` sets the sway for every preset instead of the preset's own (0 = tripod, 100 =
-fully handheld); `fConversationLens` sets one lens for every angle. Every preset's shots,
-shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
+In every preset a room or shared shot (the two of you, the room) stays your angle for 2 of
+your turns at most, and a reaction is never the overhead shot of you. `iCameraSway` sets the
+sway for every preset instead of the preset's own (0 = tripod, 100 = fully handheld);
+`fConversationLens` sets one lens for every angle; `fCloseUpLimitSecondsNpc` and
+`iExtremeCloseUpChanceNpc` set the close-up limit and the extreme share for every preset.
+Every preset's shots, shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
 How the camera starts and ends a conversation, frame by frame, with the measured numbers:
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md).
 
@@ -308,9 +310,9 @@ apply without restarting the game.
 | Section | What's in it |
 |---|---|
 | `[General]` | On/off, extra logging |
-| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
+| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups (their tiers, the extreme share, the longest one close-up holds), room shots, reaction shots (listening close-ups or not), close-ups of you on tagged options (and how long), persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height, large speakers |
+| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height, large speakers (from what height, how far round the shots of you stay, the plain shot's angle) |
 | `[Body]` | Showing your character, building the full body from first person |
 | `[Transitions]` | How the first and last frames of a conversation are handled |
 | `[PlainCamera]` | The simple over-the-shoulder shots used when the director is off |

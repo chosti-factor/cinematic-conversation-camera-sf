@@ -5435,8 +5435,7 @@ namespace CCC
 				down = !(ui && ui->IsMenuOpen(console));
 			}
 			if (down && !wasDown) {
-				// (NebulaTest: temporary, for judging Nebula's low angles; out before 1.0.)
-				constexpr std::array<const char*, 8> kOrder{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula", "NebulaTest" };
+				constexpr std::array<const char*, 7> kOrder{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
 				std::string current{ s.preset };
 				std::ranges::transform(current, current.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				std::size_t next = 0;
