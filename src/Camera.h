@@ -22,6 +22,10 @@ namespace CCC::Camera
 	// Over-the-shoulder shot: camera behind `a_near`'s head, looking at `a_far`'s face.
 	// a_sideSign -1 puts it over the other shoulder (the side of the line being staged on).
 	std::optional<Pose> OverShoulder(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_sideSign = 1.0f);
+	// The plain over-the-shoulder shot swung round the person in shot (the far one) to at
+	// least a_degrees off the line between the two, at the same distance from them (0.9.22:
+	// a large speaker's body otherwise fills the shot of you).
+	std::optional<Pose> OverShoulderAt(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_sideSign, float a_degrees);
 
 	// Which way a character's face points, from their head bone (close-ups follow the face,
 	// as CCC's FaceFrame). The head bone's forward axis isn't named by the game, so it's

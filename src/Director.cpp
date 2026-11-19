@@ -524,16 +524,16 @@ namespace CCC::Director
 		// 40 clear). The obstacle check leaves the near person out on purpose (their shoulder
 		// is part of an over-the-shoulder shot), so with a large speaker the shots of you keep
 		// to wider angles.
-		constexpr float kLargeSpeakerHead = 1.70f;      // m, head above feet
-		constexpr float kLargeSpeakerMinAngle = 38.0f;  // degrees off the line, for shots of you
-
+		// (0.9.22: fLargeSpeakerHeightNpc, 1.70 m, head above feet; fLargeSpeakerAnglePlayer,
+		// 38 degrees off the line, for shots of you.)
 		bool HiddenBehindLargeSpeaker(ShotType a_type, const Frame& a_frame, const Shots::Result& a_solved)
 		{
-			const bool onYou = Shots::Neutral(a_type) ? !a_frame.npcTurn : !Shots::OnNpc(a_type);
-			if (!onYou || !a_frame.feetValid || a_frame.npcHead.z - a_frame.npcFeet.z < kLargeSpeakerHead) {
+			const auto& s = Settings::Get();
+			const bool  onYou = Shots::Neutral(a_type) ? !a_frame.npcTurn : !Shots::OnNpc(a_type);
+			if (!onYou || !a_frame.feetValid || s.largeSpeakerHeight <= 0.0f || a_frame.npcHead.z - a_frame.npcFeet.z < s.largeSpeakerHeight) {
 				return false;
 			}
-			return std::abs(a_solved.angle) < kLargeSpeakerMinAngle;
+			return std::abs(a_solved.angle) < s.largeSpeakerAngle;
 		}
 
 		bool Usable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)

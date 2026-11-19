@@ -64,6 +64,7 @@ namespace CCC
 			std::uint64_t                         framesAtRepairEnd{ 0 };
 			bool                                  startRootCaughtUp{ false };
 			bool                                  smallSpeaker{ false };
+			bool                                  largeSpeaker{ false };  // 0.9.22: head at fLargeSpeakerHeightNpc or above
 			bool                                  handedBack{ false };       // quest scene: leave it to the game
 			bool                                  plainShots{ false };       // seated speaker or merchant: plain over-the-shoulder shot
 			bool                                  merchant{ false };         // speaker is a merchant (faction vendor flag)
@@ -2132,6 +2133,11 @@ namespace CCC
 			if (g_state.framesThisConversation == 1) {
 				const float height = npcHead->z - speaker->GetPosition().z;
 				g_state.smallSpeaker = !Camera::HasHeadBone(speaker) || height < s.minSpeakerHeight;
+				g_state.largeSpeaker = !g_state.smallSpeaker && s.largeSpeakerHeight > 0.0f && height >= s.largeSpeakerHeight;
+				if (g_state.largeSpeaker) {
+					REX::INFO("Large speaker: head {:.2f} m above their feet (fLargeSpeakerHeightNpc {:.2f}); shots of you keep to {:.0f} degrees off the line or wider, the plain one included",
+						height, s.largeSpeakerHeight, s.largeSpeakerAngle);
+				}
 				if (g_state.smallSpeaker) {
 					REX::INFO("Speaker {} (head bone {}, {:.2f} m tall); leaving the game's camera on this conversation",
 						Camera::HasHeadBone(speaker) ? "is short" : "has no head bone", Camera::HasHeadBone(speaker) ? "found" : "missing", height);
@@ -2920,6 +2926,8 @@ namespace CCC
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide * plainSign, s.vendorHeight) :
 			                   farSeated ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, s.overSeatedBehind, s.overSeatedSide * (plainSign < 0.0f ? -1.0f : 1.0f), s.overSeatedHeight) :
+			                   subject == Subject::kPlayer && g_state.largeSpeaker ?
+			                   Camera::OverShoulderAt(nearHeadRef, farHeadRef, plainSign, s.largeSpeakerAngle) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef, plainSign);
 			// Obstacles on the plain shot (seated people, merchants, or nothing in the preset
 			// fits): checked when the camera turns to the other person. A wall behind the

@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.21 (2026-11-18). Dates assume the Friday 27 November release; for
+Last updated: 0.9.22 (2026-11-18). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -53,8 +53,9 @@ Wednesday the 25th, about two days earlier.
       the user decides on each proposed tweak in HANDOFF.md. (0.9.19 built them without
       that decision; 0.9.21 took them back out.)
 - [x] Large speakers (Vasco): his back hid you in the narrower shots of you (0.9.18 clip);
-      0.9.19 keeps those to 38 degrees or wider with a large speaker. To check in the next
-      round
+      0.9.19 keeps those to 38 degrees or wider with a large speaker. 0.9.21 test: still hidden
+      in Starborn, by the plain over-the-shoulder shot it fell back on (no Starborn shot of you
+      was wide enough); 0.9.22 swings that one out too, settings in the INI and F1. To check
 - [x] SFSE Menu Framework settings page (0.9.12; tested 0.9.14-0.9.18: pages, writes to the
       `_user.ini` (with Mod Organizer, in its overwrite folder), Reset, F1 mid-conversation)
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)

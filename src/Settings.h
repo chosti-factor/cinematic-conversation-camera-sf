@@ -237,6 +237,11 @@ namespace CCC
 		// Leave the game's camera alone for speakers this short (head above feet, metres)
 		// or without a head bone (small robots).
 		float minSpeakerHeight{ 1.0f };
+		// Large speakers (0.9.19; settings 0.9.22): a speaker whose head is this high above
+		// their feet (Vasco 1.75; people 1.58-1.63) hides you in the narrower shots of you, so
+		// the shots of you keep to largeSpeakerAngle degrees off the line or wider. 0 = off.
+		float largeSpeakerHeight{ 1.70f };
+		float largeSpeakerAngle{ 38.0f };
 		bool  gameCameraInScenes{ true };
 		// Focus on the person in shot (0.5.0): the game's conversation blur is focused at the
 		// distance from the camera to whoever is in shot. Focus style (0.5.1): Cinematic = the

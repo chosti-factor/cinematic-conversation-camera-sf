@@ -95,6 +95,32 @@ namespace CCC::Camera
 		return Shot(a_nearHead, a_farHead, s.distanceBehind, s.sideOffset * (a_sideSign < 0.0f ? -1.0f : 1.0f), s.heightOffset);
 	}
 
+	std::optional<Pose> OverShoulderAt(const RE::NiPoint3& a_nearHead, const RE::NiPoint3& a_farHead, float a_sideSign, float a_degrees)
+	{
+		auto base = OverShoulder(a_nearHead, a_farHead, a_sideSign);
+		const auto flat = Normalized({ a_farHead.x - a_nearHead.x, a_farHead.y - a_nearHead.y, 0.0f });
+		if (!base || !flat) {
+			return base;
+		}
+		const RE::NiPoint3 up{ 0.0f, 0.0f, 1.0f };
+		const auto         right = Cross(*flat, up);
+		// Where the plain shot stands, seen from the person in shot, on the ground plane.
+		const float dx = base->position.x - a_farHead.x, dy = base->position.y - a_farHead.y;
+		const float along = -(dx * flat->x + dy * flat->y);  // towards the near person
+		const float across = std::abs(dx * right.x + dy * right.y);
+		const float distance = std::sqrt(dx * dx + dy * dy);
+		const float wanted = a_degrees * 3.14159265f / 180.0f;
+		if (distance < 1e-3f || std::atan2(across, along) >= wanted) {
+			return base;
+		}
+		const float sign = a_sideSign < 0.0f ? -1.0f : 1.0f;
+		Pose pose;
+		pose.position = Add(a_farHead, Add(Scale(*flat, -distance * std::cos(wanted)),
+		                                   Add(Scale(right, sign * distance * std::sin(wanted)), Scale(up, base->position.z - a_farHead.z))));
+		pose.lookAt = base->lookAt;
+		return pose;
+	}
+
 	void PullIn(Pose& a_pose, const RE::NiPoint3& a_subject, float a_limit)
 	{
 		const RE::NiPoint3 d{ a_pose.position.x - a_subject.x, a_pose.position.y - a_subject.y, a_pose.position.z - a_subject.z };

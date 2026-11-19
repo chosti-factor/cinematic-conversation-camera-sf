@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.22 - 2026-11-18
+
+### Fixed
+- Large speakers (Vasco) still hid you in Starborn (0.9.21 test): none of Starborn's shots of
+  you is wide enough with a large speaker, so the mod fell back on its plain over-the-shoulder
+  shot, which the 0.9.19 rule didn't cover; his back filled the frame. With a large speaker
+  that shot now swings round you to the same angle as the rest (38 degrees off the line), at
+  the same distance and with the preset's lens.
+
+### Added
+- Settings for large speakers, in the INI (`[Camera]`) and on the F1 page (Camera, Staging):
+  `fLargeSpeakerHeightNpc` (1.70 m head above feet; Vasco 1.75, people 1.58-1.63 in the logs;
+  0 = off) and `fLargeSpeakerAnglePlayer` (38 degrees). The log names each speaker it applies
+  to ("Large speaker: head ... m above their feet").
+
 ## 0.9.21 - 2026-11-18
 
 ### Changed

@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.21 (2026-11-18).
+Last updated: 0.9.22 (2026-11-18).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -201,8 +201,9 @@ How the camera starts and ends a conversation, frame by frame, with the measured
     [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) (optional; F1):
     preset, reaction shots, emotion close-ups, sway and the rest, with the INI still working
     without it.
-  - Done in 0.9.19: large speakers such as Vasco, whose bigger body blocked you in the
-    narrower shots of you (those keep to wider angles now).
+  - Done in 0.9.19 and 0.9.22: large speakers such as Vasco, whose bigger body blocked you in
+    the narrower shots of you (those keep to wider angles now, the plain fallback shot too;
+    `fLargeSpeakerHeightNpc`, `fLargeSpeakerAnglePlayer`).
   - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
   - Compatibility testing with popular UI mods.
   - Quest scenes: logged in 0.9.20, what each one is made of (its actions, and whether it
@@ -293,7 +294,7 @@ apply without restarting the game.
 | `[General]` | On/off, extra logging |
 | `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups, close-up distance, room shots, reaction shots, persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height |
+| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height, large speakers |
 | `[Body]` | Showing your character, building the full body from first person |
 | `[Transitions]` | How the first and last frames of a conversation are handled |
 | `[PlainCamera]` | The simple over-the-shoulder shots used when the director is off |
