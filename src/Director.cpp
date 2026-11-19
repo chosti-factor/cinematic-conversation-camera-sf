@@ -1329,9 +1329,11 @@ namespace CCC::Director
 				} else {
 					g.cutAt = a_now;  // nothing wider fits: try again after another stretch
 				}
-			} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && heldNow() >= 0.7f) {
+			} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && heldNow() >= 0.7f && a_frame.lineDecided) {
 				// An intense line in the middle of their turn: push in (not within 0.7 s of the
-				// last cut, so a turn cut and this one never come back to back).
+				// last cut, so a turn cut and this one never come back to back). 0.9.25: once the
+				// line's reaction is decided (the 0.9.24 test: three one-frame close-ups, each
+				// taken over by a reaction on the next frame).
 				if (const auto shot = IntenseShot(a_frame)) {
 					Cut(*shot, a_frame, a_now, "intense line", true);
 					g.intenseSetup = IntenseSetup(*shot);

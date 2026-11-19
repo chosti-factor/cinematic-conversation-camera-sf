@@ -10,6 +10,11 @@ test build; "diagnostic" items only add information to the log for testing.
 - Constellation's master shot drifts instead of craning up: the documentary operator is on
   the floor with the people (the user). Its long shots still crane up.
 
+### Fixed
+- The last one-frame flashes (3 in the 0.9.24 test, down from 22): an emotion close-up in the
+  middle of their turn, then a reaction on the next frame. It now waits for the line's
+  reaction to be decided too.
+
 ## 0.9.24 - 2026-11-18
 
 ### Changed
