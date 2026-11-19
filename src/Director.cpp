@@ -1666,9 +1666,9 @@ namespace CCC::Director
 	int ExtremeCloseUpChanceNpc()
 	{
 		const int mine = Settings::Get().extremeCloseUpChance;
-		// The preset's own: Frontier 20 (the 0.9.24 test: four of nine in the Andreja and
+		// The preset's own: Frontier 25 (the 0.9.24 test: four of nine in the Andreja and
 		// Barrett conversations looked too many for the western), the others 40.
-		return mine >= 0 ? mine : PresetIs("frontier") ? 20 : 40;
+		return mine >= 0 ? mine : PresetIs("frontier") ? 25 : 40;
 	}
 
 	float ReactionAfterSeconds()

@@ -312,7 +312,7 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   angle on them: a sixth of the tilt in 0.9.25); Starborn overshot (sway 15, faces a quarter
   off-centre and close-up lenses halfway back in 0.9.25: each from its own original, close-up
   of them 45 -> 47.5, of you 40 -> 42.5, extreme 42.5 and 37.5); Vasco's plain shot of you to 45 degrees ("good enough for 1.0"); Frontier's
-  extreme close-ups 20%. Muria's blocked shots were inside a ship and looked good.
+  extreme close-ups 25% (20 first, then 25, the user). Muria's blocked shots were inside a ship and looked good.
   NebulaTest taken out in 0.9.25 (the user). Still to see in the game: the tagged option's
   close-up as you pick it.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a

@@ -15,8 +15,8 @@ test build; "diagnostic" items only add information to the log for testing.
     original (their close-up 47.5 degrees, yours 42.5, the extreme ones 42.5 and 37.5).
   - The low angle on them (the lowest camera of the three) tilts a sixth of the old tilt, not
     a third; it was still a bit much next to the others.
-  - Frontier's extreme close-ups of them are rarer: 20% of its emotion close-ups (4 of 9 in the
-    test). `iExtremeCloseUpChanceNpc` is now -1, the preset's own (Frontier 20, the others 40).
+  - Frontier's extreme close-ups of them are rarer: 25% of its emotion close-ups (4 of 9 in the
+    test). `iExtremeCloseUpChanceNpc` is now -1, the preset's own (Frontier 25, the others 40).
   - With a large speaker, the plain over-the-shoulder shot of you swings round to 45 degrees
     (38 still showed part of Vasco when you stood close); `fLargeSpeakerPlainAnglePlayer`, in
     the INI and on the settings page.

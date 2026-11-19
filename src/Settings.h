@@ -221,7 +221,7 @@ namespace CCC
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
 		int         emotionCloseUps{ -1 };    // -1 the preset's own (0.8.13: Standard and Room none, Close strong lines only, CCC SF's every tier), 0 off, 1 every tier
-		int         extremeCloseUpChance{ -1 };  // % of emotion close-ups that are extreme close-ups; -1 = the preset's own (0.9.25: Frontier 20, the rest 40)
+		int         extremeCloseUpChance{ -1 };  // % of emotion close-ups that are extreme close-ups; -1 = the preset's own (0.9.25: Frontier 25, the rest 40)
 		int         extremeCloseUpChancePlayer{ 40 };  // % of close-ups of you that are extreme (0.8.3)
 		// Emotion close-ups by tier (0.8.6): each list with its own chance (%).
 		std::string closeUpEmotionsMild{ "Amused,Confident,Thinking,Grateful,Question,Impressed,Tired,Concentrating,Relieved" };

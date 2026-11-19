@@ -33,7 +33,7 @@ in Frontier, Starborn and Constellation).
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
 | Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 47% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |
-| Extreme share of their emotion close-ups (`iExtremeCloseUpChanceNpc`) | | 40% | | 20% | 40% | 40% | 40% |
+| Extreme share of their emotion close-ups (`iExtremeCloseUpChanceNpc`) | | 40% | | 25% | 40% | 40% | 40% |
 | Close-up of you on a tagged option | no | no | no | yes | yes | yes | yes |
 | Reaction shots of you | off | off | off | after 10 s of their talking | after 9 s | after 12 s | after 7 s |
 | Listening reactions (`bListeningCloseUpsPlayer`) | | | | Mediums and three-quarters; close-ups of you only for your expressions | Any of its shots of you | Any of its shots of you | Any of its shots of you |

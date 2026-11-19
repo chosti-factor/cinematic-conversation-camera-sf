@@ -104,7 +104,7 @@ namespace CCC::Director
 	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
 	[[nodiscard]] int  EmotionCloseUps();
 	// The share of their emotion close-ups that are extreme (0.9.25): iExtremeCloseUpChanceNpc,
-	// or the preset's own (Frontier 20%, the others 40%).
+	// or the preset's own (Frontier 25%, the others 40%).
 	[[nodiscard]] int  ExtremeCloseUpChanceNpc();
 	[[nodiscard]] bool ReactionShots();
 

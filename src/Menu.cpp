@@ -95,7 +95,7 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceMediumNpc", "Medium lines", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceStrongNpc", "Strong lines", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iExtremeCloseUpChanceNpc", "Extreme close-ups", Kind::kOwnInt, 0, 100, "%d%%",
-				"Of those close-ups, how many are extreme. The preset's own: Frontier 20%, the others 40%." },
+				"Of those close-ups, how many are extreme. The preset's own: Frontier 25%, the others 40%." },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 0.0f, 60.0f, "%.0f",
 				"One close-up of them at most this long, then a wider shot of them; 0 = no limit (below 4 counts as 4). The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
