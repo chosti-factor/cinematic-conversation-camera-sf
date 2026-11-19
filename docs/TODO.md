@@ -73,6 +73,7 @@ Wednesday the 25th, about two days earlier.
 
 ## 4. Final polish passes (about 22 to 25 Nov), a build and a test round after each
 
+- [ ] Take out the temporary "Nebula test" preset (added for judging the low-angle hybrid)
 - [ ] Redundancy: dead code, finished experiments, old exit modes, spent diagnostics
 - [ ] Debugging: every INI setting against its comment; edge cases (loading or a menu
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back

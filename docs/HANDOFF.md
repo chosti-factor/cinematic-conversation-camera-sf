@@ -290,7 +290,9 @@ Decisions so far (to build together once every preset is discussed):
   person to the bottom of the frame under the subtitles (3 cuts in the run, up to 9.5 s).
   Hybrid approved by the user: a push-in at Nebula's strength plus about a third
   of the old tilt (about 0.13 m instead of 0.4), with a guard that stops the tilt once their
-  eyes reach the lower third of the frame.
+  eyes reach the lower third of the frame. To judge it: a temporary "Nebula test" preset
+  (the user chose this over a testing setting or [Shots] weights): Nebula with the three low
+  angles making half of the angles picked; sPreset and the U key. Taken out before 1.0.
 - Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user). In every
   preset, the overhead of you is never used for a reaction (the user; old proposal 1).
 - Bug, all presets: the close-up of you for a tagged choice ([Commerce] in the run) came one
