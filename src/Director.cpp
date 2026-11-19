@@ -616,6 +616,13 @@ namespace CCC::Director
 			return !PresetIs("constellation");
 		}
 
+		// A shot whose framing wants the camera more than 2.5 times the preset's cap away; room
+		// shots excepted (0.9.26, see Usable).
+		bool TooFarForCap(ShotType a_type, const Shots::Result& a_solved)
+		{
+			return Shots::AnchorOf(a_type) != Shots::Anchor::kScene && a_solved.wantedDistance > g.maxDistance * 2.5f;
+		}
+
 		bool Usable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)
 		{
 			const auto& setup = g.setups[static_cast<std::size_t>(a_type)];
@@ -644,8 +651,11 @@ namespace CCC::Director
 			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
 			// A framing that wants the camera far beyond the cap would become a different
-			// shot entirely (a full figure turned into a close-up); leave it out.
-			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
+			// shot entirely (a full figure turned into a close-up); leave it out. Not the room
+			// shots (0.9.26): they have their own limit and the room measurement's checks, and
+			// this one left out Starborn's and Close's distant shot (16.5 m wanted against a
+			// 12.5 m line) and Starborn's master (12.7 m) every time.
+			if (!solved.ok || TooFarForCap(a_type, solved) || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
 				return false;
 			}
 			return !a_checkObstacles || ClearanceFor(a_type, a_frame, setup).usable;
@@ -659,7 +669,7 @@ namespace CCC::Director
 				return false;
 			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, g.setups[static_cast<std::size_t>(a_type)], 0.0f));
-			if (!solved.ok || solved.wantedDistance > g.maxDistance * 2.5f || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
+			if (!solved.ok || TooFarForCap(a_type, solved) || HiddenBehindLargeSpeaker(a_type, a_frame, solved)) {
 				return false;
 			}
 			return !a_checkObstacles || ClearanceFor(a_type, a_frame, IntenseSetup(a_type)).usable;

@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.26 - 2026-11-19
+
+### Fixed
+- Starborn never showed its wide shots, and CCC's Close never showed its distant shot. Every
+  shot is left out when its framing wants the camera more than 2.5 times the preset's distance
+  cap away, and that check also caught the room shots, which have their own limit: Starborn's
+  and Close's cap is 5 m (a 12.5 m line), and their distant shot on a 40-degree lens wants
+  16.5 m, Starborn's master 12.7 m. Room shots now skip that check and keep their own (room on
+  the conversation's side, both faces in view, enough of the distance they want). The other
+  presets' room shots want 14.6 m at most against a 17.5 m line, so nothing changes for them.
+  (0.9.24-0.9.25 tests: no Starborn wide shot in 11 fresh angles, where about 2 were due.)
+
 ## 0.9.25 - 2026-11-19
 
 ### Changed

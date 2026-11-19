@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.25 (2026-11-19).
+Last updated: 0.9.26 (2026-11-19).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 

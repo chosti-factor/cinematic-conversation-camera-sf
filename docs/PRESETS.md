@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.25 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
+Last updated: 0.9.26 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
 *Interstellar*, Nebula a space opera, close-up limits, and the rest below; 0.9.24: more shots
 in Frontier, Starborn and Constellation).
 
@@ -145,6 +145,8 @@ that shot. (Generated from the presets in the code.)
   (0.9.23) that's the only push-in: its regular close-ups are held still, and an emotional line
   on a close-up already on screen starts the push-in from there.
 
+- **Until 0.9.26 Starborn's and Close's room shots never came up** (a distance check meant
+  for other shots left them out); the shares below are what they get now.
 - **Shares are before the room has its say.** Room shots (Wide, Distant, Distant low,
   Master) stand only where the room measurement finds space for them on the conversation's
   side with both faces in view (`iRoomShotMinRoom`). Where it doesn't, the preset picks from

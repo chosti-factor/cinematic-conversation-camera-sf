@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.25 (2026-11-19).
+Last updated: 0.9.26 (2026-11-19).
 
 ## Working rules
 
@@ -315,6 +315,11 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   extreme close-ups 25% (20 first, then 25, the user). Muria's blocked shots were inside a ship and looked good.
   NebulaTest taken out in 0.9.25 (the user). Still to see in the game: the tagged option's
   close-up as you pick it.
+- Starborn's and Close's wide shots were never picked until 0.9.26: the 2.5x-cap check (meant
+  for a framing that would turn into another shot) also caught the room shots; Starborn's and
+  Close's 5 m cap gives a 12.5 m line, and their Distant (40-degree lens) wants 16.5 m,
+  Starborn's Master 12.7 m. Room shots skip it now. Found by the user's doubt about the odds
+  (11 fresh angles, no wide shot). Reactions left as they are (the user, 2026-11-19).
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
