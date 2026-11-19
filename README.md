@@ -308,6 +308,13 @@ Mulling (not decided):
 2. Copy its `Data` folder into your Starfield folder (or install the zip with your
    mod manager).
 
+## Compatibility
+
+What works with CCC SF, what doesn't, and what's still to be tested:
+[docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). In short: other dialogue camera mods don't mix
+with it; UI mods work as long as the dialogue options list and the subtitle keep their usual
+places in the game's menus.
+
 ## Settings
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini`. Put your own changes in

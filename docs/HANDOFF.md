@@ -38,6 +38,8 @@ Last updated: 0.9.27 (2026-11-19).
     face.
   - docs/REACTIONS.md: every build that touches reaction shots or the persuasion beat.
   - docs/HANDOFF.md: at milestones, and whenever a test changes what we know.
+  - docs/COMPATIBILITY.md (the Nexus page's compatibility list, 2026-11-19): whenever a mod is
+    tested or a report comes in.
   - docs/TODO.md (the working list to 1.0): ticked as items are done, items added as they come
     up; items moved to after 1.0 only on the user's call.
   - Each document has a "Last updated: version" line near the top; bump it whenever the

@@ -62,8 +62,9 @@ Wednesday the 25th, about two days earlier.
 - [x] SFSE Menu Framework settings page (0.9.12; tested 0.9.14-0.9.18: pages, writes to the
       `_user.ini` (with Mod Organizer, in its overwrite folder), Reset, F1 mid-conversation)
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
-- [ ] Compatibility with UI mods (HUD replacer, dialogue menu replacer, subtitle mod), and
-      auto-zoom back on as one check
+- [ ] Compatibility with UI mods: the testing pool of five in docs/COMPATIBILITY.md (rbtUI2
+      already works; Enhanced Dialogue Interface, Enhanced Subtitles, Venworks HUD, StarUI HUD),
+      and AutoZoom on as one check
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
       are just people talking moved to after 1.0
