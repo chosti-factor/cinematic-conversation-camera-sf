@@ -244,6 +244,23 @@ Last updated: 0.9.22 (2026-11-18).
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 
+## CCC SF preset review from the 2026-11-18 run (in progress; nothing built yet)
+
+Data: 0.9.21, the Lodge, about 10 minutes per preset with Muria, Sam, Barrett and Andreja.
+Reaction timing is fine in every preset (the user). Room bounds limited almost nothing (every
+obstacle check clear; room shots got 97-99% of the distance they wanted). Companions are very
+expressive (Frontier: 54 of 74 NPC lines tagged), and runs of emotional lines held one
+close-up up to 28 s in every preset.
+
+Decisions so far (to build together once every preset is discussed):
+- B, all presets: a cap on how long one close-up holds over a run of emotional lines, then a
+  cut to a three-quarter or medium of them (or a reaction of you); a value per preset, to be
+  settled preset by preset. Frontier: proposed 12 s.
+- C, Frontier: listening reactions in mediums and three-quarters, not close-ups; close-ups
+  of you kept for when your face shows an expression. Other presets: to discuss.
+- Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
+  emotions) and D (Frontier's two-shot of you for one turn: not seen again).
+
 ## CCC SF preset tweaks, proposals only, waiting on the long Sarah test (2026-11-16)
 
 Not to be built until the user has seen the data and decided on each one. 0.9.19 built them
