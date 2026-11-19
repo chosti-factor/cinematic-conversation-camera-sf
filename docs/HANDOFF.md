@@ -305,6 +305,9 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   Starborn dirty singles (10), close profile (8), mediums (6), all still; Constellation dirty
   singles (25), profile of you both (25), medium profile (20), drifting. Out again if testing
   doesn't pan out.
+- Considered and kept for now (the user, 2026-11-18): removing Constellation's two overhead
+  shots (a documentary operator isn't above people; they read as surveillance) and turning
+  its crane moves into drifts. Revisit only if the test shows them out of place.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
