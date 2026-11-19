@@ -67,7 +67,7 @@ Wednesday the 25th, about two days earlier.
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
       are just people talking moved to after 1.0
-- [ ] Optional: `iCuttingPace` +2/-2 feel test; seated over-the-shoulder side 0.6 to 0.75
+- [ ] Optional: `fCuttingPace` +2/-2 feel test (half steps since 0.9.26); seated over-the-shoulder side 0.6 to 0.75
 
 ## 3. Feature freeze (about 21 to 22 Nov)
 

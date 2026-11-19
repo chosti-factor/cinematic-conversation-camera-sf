@@ -55,7 +55,7 @@ namespace CCC::Menu
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
 				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
 				kPresets },
-			{ "Camera", "Look", "Director", "iCuttingPace", "Cutting pace", Kind::kInt, -2, 2, "%+d",
+			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest." },
 			{ "Camera", "Look", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
 				"0 a tripod, 100 fully handheld." },
@@ -305,6 +305,9 @@ namespace CCC::Menu
 				{
 					float value = std::clamp(AsFloat(v.text, e.min), e.min, e.max);
 					ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.2f");
+					if (std::string_view{ e.key } == "fCuttingPace") {
+						value = std::round(value * 2.0f) / 2.0f;  // in steps of 0.5 (0.9.26)
+					}
 					Help(e);
 					if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 						Write(a_index, std::format("{:.2f}", value));

@@ -128,7 +128,10 @@ namespace CCC
 			// 0.9.8: the named cutting styles (sCuttingStyle) are gone; iCuttingPace nudges the
 			// preset's own rhythm instead of replacing it. The fine-tuning keys override it (0 =
 			// the preset's own).
-			a_s.cuttingPace = std::clamp(ReadInt(a_path, L"Director", L"iCuttingPace", a_s.cuttingPace), -2, 2);
+			// 0.9.26: fCuttingPace, in steps of 0.5; an older iCuttingPace line is still read.
+			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"iCuttingPace", a_s.cuttingPace);
+			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"fCuttingPace", a_s.cuttingPace);
+			a_s.cuttingPace = std::clamp(std::round(a_s.cuttingPace * 2.0f) / 2.0f, -2.0f, 2.0f);
 			a_s.minLines = std::clamp(ReadInt(a_path, L"Director", L"iMinLines", a_s.minLines), 0, 20);
 			a_s.maxLines = std::clamp(ReadInt(a_path, L"Director", L"iMaxLines", a_s.maxLines), 0, 20);
 			a_s.shortLineSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fShortLineSeconds", a_s.shortLineSeconds), 0.0f, 10.0f);

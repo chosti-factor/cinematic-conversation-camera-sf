@@ -113,10 +113,10 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   (`iCloseUpChance...Player`). Never the overhead shot of you; in Frontier you listening is
   a medium or three-quarter, with close-ups of you kept for your expressions
   (`bListeningCloseUpsPlayer`). Details: [docs/REACTIONS.md](docs/REACTIONS.md).
-- **Cutting:** CCC's line counts, with each preset's own rhythm. `iCuttingPace` nudges it,
+- **Cutting:** CCC's line counts, with each preset's own rhythm. `fCuttingPace` nudges it,
   from -2 (calmer: a new angle after more lines, held longer, fewer fresh angles when the
-  turn passes) to +2 (livelier), keeping the preset's character; 0 is the preset as
-  designed. `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead. A room or
+  turn passes) to +2 (livelier), in steps of 0.5, keeping the preset's character; 0 is the
+  preset as designed. `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead. A room or
   shared shot (the two of you, the room) stays your angle for 2 of your turns at most.
 - **Per-preset camera distances,** matched to each preset's widest shot: the camera stands
   where CCC's numbers put it, and each preset lets it go as far as its widest shot needs

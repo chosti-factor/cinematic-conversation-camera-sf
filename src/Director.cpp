@@ -924,10 +924,14 @@ namespace CCC::Director
 			// replaced it are gone); iMinLines, iMaxLines and fShortestHold override.
 			{
 				static constexpr float kLineScale[] = { 1.6f, 1.3f, 1.0f, 0.75f, 0.55f };
-				const int   pace = std::clamp(s.cuttingPace, -2, 2);
-				const float k = kLineScale[pace + 2];
+				// 0.9.26: half steps too, between the whole steps' scales.
+				const float pace = std::clamp(s.cuttingPace, -2.0f, 2.0f);
+				const float at = pace + 2.0f;
+				const int   lo = std::clamp(static_cast<int>(std::floor(at)), 0, 4);
+				const int   hi = (std::min)(lo + 1, 4);
+				const float k = kLineScale[lo] + (kLineScale[hi] - kLineScale[lo]) * (at - static_cast<float>(lo));
 				const auto  cut = [&](int a_fresh, int a_min, int a_max, float a_hold) {
-                    g.freshAngleChance = std::clamp(a_fresh + 20 * pace, 0, 100);
+                    g.freshAngleChance = std::clamp(a_fresh + static_cast<int>(std::lround(20.0f * pace)), 0, 100);
                     g.minLines = (std::max)(1, static_cast<int>(std::lround(a_min * k)));
                     g.maxLines = (std::max)(g.minLines, static_cast<int>(std::lround(a_max * k)));
                     g.shortestHold = (std::max)(1.0f, a_hold * k);
@@ -1074,7 +1078,7 @@ namespace CCC::Director
 		g.clearance = {};
 		g.skipped.clear();
 		gp = PlainIntense{};
-		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+d} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
+		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+.1f} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingPace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", ExtremeCloseUpChanceNpc(),

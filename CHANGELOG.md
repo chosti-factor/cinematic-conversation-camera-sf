@@ -10,6 +10,9 @@ test build; "diagnostic" items only add information to the log for testing.
 - Nebula is the default preset (was Standard; the user's favourite after the tests), and its
   pace a little calmer: a fresh angle on 60% of the turns (75%), a new angle every 2 to 4
   lines (2 to 3), each shot held 2 s at least (1.6 s).
+- The cutting pace goes in half steps: `fCuttingPace`, -2 to +2 in steps of 0.5 (was
+  `iCuttingPace`, whole steps; an `iCuttingPace` line in your `_user.ini` is still read, and
+  `fCuttingPace` wins if both are there). On the settings page the slider moves in 0.5 steps.
 
 ### Fixed
 - Starborn never showed its wide shots, and CCC's Close never showed its distant shot. Every
