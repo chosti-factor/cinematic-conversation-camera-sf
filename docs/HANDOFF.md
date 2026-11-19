@@ -288,7 +288,7 @@ Decisions so far (to build together once every preset is discussed):
   space opera in README and PRESETS.
 - Nebula's low angles (low angle on them, low profile, low angle on you): the tilt-up sank the
   person to the bottom of the frame under the subtitles (3 cuts in the run, up to 9.5 s).
-  Hybrid proposed (awaiting the user's OK): a push-in at Nebula's strength plus about a third
+  Hybrid approved by the user: a push-in at Nebula's strength plus about a third
   of the old tilt (about 0.13 m instead of 0.4), with a guard that stops the tilt once their
   eyes reach the lower third of the frame.
 - Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user). In every
