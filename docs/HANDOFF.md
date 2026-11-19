@@ -281,6 +281,13 @@ Decisions so far (to build together once every preset is discussed):
   of your turns at most; the next turn gets another angle (for that turn; the room shot can
   come back later). Over-the-shoulder, close-ups, mediums and three-quarters keep each
   preset's rhythm (the user: room shots only).
+- Nebula: no longer "a trailer" but a space opera (Guardians of the Galaxy, The Fifth
+  Element, Valerian, the original Star Wars): the variety of angles is its identity, not
+  trailer pacing; the user likes its pacing, so cutting stays. B: 12 s proposed (trims the
+  17-28 s holds only). Extreme share of close-ups of you stays 40% (the user). Describe it as
+  space opera in README and PRESETS.
+- Idea, not decided (proposed for after 1.0): a new angle of you once you've spent about 10 s
+  choosing a reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 
