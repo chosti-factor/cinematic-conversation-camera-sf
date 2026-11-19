@@ -303,11 +303,23 @@ namespace CCC::Menu
 				}
 			case Kind::kFloat:
 				{
+					// The cutting pace moves in half steps (0.9.26). As a whole-number slider of
+					// half steps (0.9.27): a float slider rounded to 0.5 never moved with a
+					// controller, whose nudges (0.1) were rounded straight back.
+					if (std::string_view{ e.key } == "fCuttingPace") {
+						int        halves = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, 0.0f), e.min, e.max) * 2.0f));
+						const auto shown = std::format("{:+.1f}", halves / 2.0f);
+						ImGuiMCP::SliderInt(e.label, &halves, static_cast<int>(e.min * 2.0f), static_cast<int>(e.max * 2.0f), shown.c_str());
+						Help(e);
+						if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
+							Write(a_index, std::format("{:.1f}", halves / 2.0f));
+						} else if (ImGuiMCP::IsItemActive()) {
+							v.text = std::format("{:.1f}", halves / 2.0f);
+						}
+						break;
+					}
 					float value = std::clamp(AsFloat(v.text, e.min), e.min, e.max);
 					ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.2f");
-					if (std::string_view{ e.key } == "fCuttingPace") {
-						value = std::round(value * 2.0f) / 2.0f;  // in steps of 0.5 (0.9.26)
-					}
 					Help(e);
 					if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 						Write(a_index, std::format("{:.2f}", value));

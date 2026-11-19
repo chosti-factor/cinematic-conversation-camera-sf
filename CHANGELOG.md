@@ -14,6 +14,11 @@ test build; "diagnostic" items only add information to the log for testing.
   master 70 to 85, the long shots 55 to 65, the three-quarters 40 to 25 and the mediums 35 to
   20. Wide and full-figure shots 47% to 55% of its weights; faces unchanged.
 
+### Fixed
+- Settings page: the cutting pace couldn't be moved with a controller (only with the mouse).
+  Its half steps were made by rounding a decimal slider, and a controller's nudges (0.1) were
+  rounded straight back; it's a slider of half steps now. The other sliders weren't affected.
+
 ## 0.9.26 - 2026-11-19
 
 ### Changed
