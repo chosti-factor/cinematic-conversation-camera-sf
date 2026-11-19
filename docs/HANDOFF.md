@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.23 (2026-11-18).
+Last updated: 0.9.24 (2026-11-18).
 
 ## Working rules
 
@@ -300,6 +300,11 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   as long as you took to pick (2.75 s and 2.05 s), a flick to your face and back. Fix (the
   user, option 1): the close-up of you right when you pick, about 2 s over the start of their
   answer, then their shot; with a skill check, then the persuasion beat.
+- 0.9.24 (the user): more shots at low weights, as proposed: Frontier dirty singles (30 each),
+  low angles on them and you (20, the push-in-and-tilt move), wide over-the-shoulders (20);
+  Starborn dirty singles (10), close profile (8), mediums (6), all still; Constellation dirty
+  singles (25), profile of you both (25), medium profile (20), drifting. Out again if testing
+  doesn't pan out.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of

@@ -256,6 +256,15 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kLongPlayer, 15, Move::kCraneUp, 20, 8.0f, 70.0f },
 			PresetEntry{ ShotType::kWide, 15, Move::kPullOut, 14, 8.0f, 80.0f },
 			PresetEntry{ ShotType::kDistant, 10, Move::kLocked, 0, 4.2f, 45.0f },
+			// 0.9.24: singles with a shoulder edging in (Firefly, The Expanse), the western's
+			// heroic low angle (pushing in with a little tilt, as Nebula's), and the wide
+			// over-the-shoulder; all wider than a close-up.
+			PresetEntry{ ShotType::kDirtyNpc, 30, Move::kDrift, 8, 6.0f, 50.0f },
+			PresetEntry{ ShotType::kDirtyPlayer, 30, Move::kDrift, 8, 6.0f, 50.0f },
+			PresetEntry{ ShotType::kLowAngle, 20, Move::kPushTiltUp, 22, 5.0f, 56.0f },
+			PresetEntry{ ShotType::kPlayerLow, 20, Move::kPushTiltUp, 22, 5.0f, 56.0f },
+			PresetEntry{ ShotType::kOverPlayerShoulderWide, 20, Move::kLocked, 0, 4.2f, 62.0f },
+			PresetEntry{ ShotType::kOverNpcShoulderWide, 20, Move::kLocked, 0, 4.2f, 62.0f },
 		};
 		// Starborn, Kubrick and Interstellar: the Unity, the artifacts, the uncanny. Built on
 		// Close: long, compressed lenses (35-45), faces centred in the frame (no look room,
@@ -276,6 +285,13 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kLocked, 0, 12.0f, 40.0f },
 			PresetEntry{ ShotType::kDistant, 25, Move::kLocked, 0, 4.2f, 40.0f },
 			PresetEntry{ ShotType::kMaster, 20, Move::kCraneUp, 30, 12.0f, 60.0f },
+			// 0.9.24: Interstellar's cockpit singles with a shoulder in the foreground, the close
+			// profile (Nolan's and Kubrick's both), and now and then a medium, room to breathe.
+			PresetEntry{ ShotType::kDirtyNpc, 10, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kDirtyPlayer, 10, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kCloseProfile, 8, Move::kLocked, 0, 4.2f, 45.0f },
+			PresetEntry{ ShotType::kMediumNpc, 6, Move::kLocked, 0, 4.2f, 45.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 6, Move::kLocked, 0, 4.2f, 45.0f },
 		};
 		// Constellation, a hard sci-fi documentary (The Martian, Apollo 13): the Lodge, labs,
 		// ships. Built on Room, watched from across the room on longer lenses (45-70, Room's
@@ -301,6 +317,12 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kClosePlayer, 20, Move::kPushIn, 10, 6.0f, 45.0f },
 			PresetEntry{ ShotType::kExtremeClose, 4, Move::kPushIn, 15, 7.0f, 40.0f },
 			PresetEntry{ ShotType::kExtremeClosePlayer, 4, Move::kPushIn, 15, 7.0f, 40.0f },
+			// 0.9.24: the observer shooting past people (singles with a shoulder edging in) and
+			// catching them side on (the profile of you both, their medium profile).
+			PresetEntry{ ShotType::kDirtyNpc, 25, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kDirtyPlayer, 25, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kProfile, 25, Move::kDrift, 8, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kMediumProfile, 20, Move::kDrift, 8, 7.0f, 50.0f },
 		};
 		// Nebula, a trailer: every angle in the library, every move CCC has (cranes, tilts,
 		// drifts, pushes, pulls) at bigger amounts over shorter times, wide and long lenses

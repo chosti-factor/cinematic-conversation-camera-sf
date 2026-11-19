@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.24 - 2026-11-18
+
+### Changed
+- More of the shot library in three of CCC SF's presets, at low weights, each in its film's
+  style (the user's call; anything that doesn't work out in testing comes out again):
+  - Frontier: singles with a shoulder edging in (*Firefly*, *The Expanse*), the western's
+    heroic low angle on them and on you (with the push in and little tilt tested on Nebula),
+    and the wide over-the-shoulders. All wider than a close-up: faces 22% to 19% of its
+    weights.
+  - Starborn: *Interstellar*'s cockpit singles with a shoulder in the foreground, a close
+    profile of them, and now and then a medium of each of you; all held still.
+  - Constellation: singles with a shoulder edging in (the observer shooting past people),
+    the profile of you both and their medium profile, drifting. Its medium profile can also
+    open a conversation from first person.
+
 ## 0.9.23 - 2026-11-18
 
 From the review of the 2026-11-18 run (0.9.21, the Lodge, about ten minutes per CCC SF
