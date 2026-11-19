@@ -98,6 +98,11 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
+- Replace the large-speaker height rule (decided 2026-11-18; it stays until then) with a
+  check of the speaker's actual body: width and bulk, not only height (robots like Vasco are
+  wide and bulky). The line from the camera to your face tested against the speaker's body
+  shapes, as CCC 1.5.0's Keep Subject Visible does (head and torso capsules, sized from
+  each actor's bound against the player's).
 - Quest scenes that are just people talking keep this mod's camera (decided 2026-11-18):
   first per scene (a scene with no Camera or Timeline action keeps ours), later per phase
   (the game's camera only while a camera action runs). Needs the 0.9.20 logs from many

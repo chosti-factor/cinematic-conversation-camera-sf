@@ -232,8 +232,11 @@ Planned:
   the game's camera would take over only while a scene's camera action runs. Built on the
   scene logs gathered from 0.9.20 on.
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
-- Large speakers measured by their actual size (the actor's bounds) rather than by height,
-  so the shots of you clear any bulky speaker by exactly as much as they need to.
+- Large speakers measured by their actual body, replacing the height rule (height is only
+  part of it: robots like Vasco are wide and bulky too). The line from the camera to your
+  face is checked against the speaker's body, its width and bulk as well as its height (as
+  CCC's Keep Subject Visible does, with each body as shapes sized from its bounds), so the
+  shots of you clear any bulky speaker by exactly as much as they need to, and no more.
 - Smoother starts and exits, as a matter of style: easing into the first shot and out of
   the last (a short push-in or settle, a fade, a match cut to your view) instead of the
   clean cuts used in 1.0.

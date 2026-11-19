@@ -272,7 +272,9 @@ confirm or change each:
   reactions; maybe let a reaction win now and then.
 - Large speakers (Vasco): 0.9.19 keeps the shots of you to 38 degrees or wider when the
   speaker's head is 1.70 m or more above their feet (Vasco 1.75; the 0.9.18 clip: hidden at
-  22-27, half at 34, clear at 40). A check from the actor's bounds is planned after 1.0
+  22-27, half at 34, clear at 40). The user (2026-11-18): the height rule stays for 1.0 but
+  must be REPLACED after 1.0, since height is only part of the problem: robots are wide and
+  bulky. A check from the actor's bounds is planned after 1.0
   (CCC 1.5.0's Keep Subject Visible does it that way: every actor's head and torso as capsules,
   bulkier actors' scaled by their bound against the player's). 0.9.21 test: Starborn still
   hid you, through the plain over-the-shoulder fallback, which skipped the rule; 0.9.22 swings
