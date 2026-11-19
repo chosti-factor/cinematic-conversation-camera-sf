@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.21 - 2026-11-18
+
+### Changed
+- The CCC SF preset tweaks of 0.9.19 are taken back out: they were proposals waiting on a long
+  conversation through the presets as they were, and the decision on each is the user's.
+  Back as in 0.9.18: reactions may use the overhead shot of you; Constellation's
+  over-the-shoulder weight 30; `iExtremeCloseUpChancePlayer=40` for every preset (no
+  "preset's own" value); Frontier's two-shot of you held as long as any angle. The large
+  speaker fix of 0.9.19 (Vasco) and the 0.9.20 scene logging stay.
+
 ## 0.9.20 - 2026-11-18
 
 ### Added

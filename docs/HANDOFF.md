@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.20 (2026-11-18).
+Last updated: 0.9.21 (2026-11-18).
 
 ## Working rules
 
@@ -244,7 +244,10 @@ Last updated: 0.9.20 (2026-11-18).
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 
-## CCC SF preset tweaks, to confirm with a long Sarah test (2026-11-16; built in 0.9.19)
+## CCC SF preset tweaks, proposals only, waiting on the long Sarah test (2026-11-16)
+
+Not to be built until the user has seen the data and decided on each one. 0.9.19 built them
+without that decision (a mistake); 0.9.21 took them back out, so the presets are as in 0.9.18.
 
 Proposed from partial data (0.8.16 Constellation/Nebula extracts, 0.8.17 your-side shots);
 the user wants a long conversation with Sarah through the CCC SF presets first, then

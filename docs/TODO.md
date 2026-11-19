@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.20 (2026-11-18). Dates assume the Friday 27 November release; for
+Last updated: 0.9.21 (2026-11-18). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -49,9 +49,9 @@ Wednesday the 25th, about two days earlier.
 - [x] Filming people talking (0.9.17 test): starts on its own, cuts between them, skips
       blocked angles, stops when they stop or you move; shook when started on momentum (0.9.18: the game camera's
       root held while filming; starting while you walk stays, the user's call)
-- [x] The preset tweaks in HANDOFF.md built in 0.9.19 (reactions never overhead,
-      Constellation OTS 30 to 15, extreme close-up share per preset, Frontier two-shot one turn)
-- [ ] The long Sarah conversation through the CCC SF presets, to confirm them
+- [ ] The long Sarah conversation through the CCC SF presets as they are (data first); then
+      the user decides on each proposed tweak in HANDOFF.md. (0.9.19 built them without
+      that decision; 0.9.21 took them back out.)
 - [x] Large speakers (Vasco): his back hid you in the narrower shots of you (0.9.18 clip);
       0.9.19 keeps those to 38 degrees or wider with a large speaker. To check in the next
       round

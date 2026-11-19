@@ -219,7 +219,7 @@ namespace CCC
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
 		int         emotionCloseUps{ -1 };    // -1 the preset's own (0.8.13: Standard and Room none, Close strong lines only, CCC SF's every tier), 0 off, 1 every tier
 		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
-		int         extremeCloseUpChancePlayer{ -1 };  // % of close-ups of you that are extreme (0.8.3); -1 = the preset's own (0.9.19)
+		int         extremeCloseUpChancePlayer{ 40 };  // % of close-ups of you that are extreme (0.8.3)
 		// Emotion close-ups by tier (0.8.6): each list with its own chance (%).
 		std::string closeUpEmotionsMild{ "Amused,Confident,Thinking,Grateful,Question,Impressed,Tired,Concentrating,Relieved" };
 		std::string closeUpEmotionsMedium{ "Concerned,Serious,Smirk,Happy,Confused,Puzzled,Apologetic,Awed" };
