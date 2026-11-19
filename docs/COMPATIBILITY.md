@@ -24,7 +24,9 @@ CCC SF touches.
 
 ## Tested compatible
 
-Used alongside CCC SF throughout 0.9.x testing (about 330 mods in the test setup).
+Active alongside CCC SF through every 0.9.x test, which makes them the most tested of all (the
+test setup runs about 330 mods with 257 active plugins; the ones that matter to CCC SF are
+listed here).
 
 | Mod | Area | Notes |
 | --- | --- | --- |
