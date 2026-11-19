@@ -276,8 +276,11 @@ Decisions so far (to build together once every preset is discussed):
   proposed (trims the 26 s and 21 s holds; faces about 18%). No extreme close-ups of you in
   Constellation (the user: "not for this preset"; an expression reaction is a regular
   close-up). Room and full-figure share left as it is (38%).
-- Your angle held for many turns (Constellation's Distant for 5 of your turns): the user
-  wants a cap for variety, possibly in every preset; under discussion.
+- Your angle held for many turns (Constellation's Distant for 5 of your turns), all presets:
+  a room or shared shot (Distant, Master, Wide, overhead, two-shot) stays as your angle for 2
+  of your turns at most; the next turn gets another angle (for that turn; the room shot can
+  come back later). Over-the-shoulder, close-ups, mediums and three-quarters keep each
+  preset's rhythm (the user: room shots only).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 
