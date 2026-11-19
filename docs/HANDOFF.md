@@ -293,6 +293,11 @@ Decisions so far (to build together once every preset is discussed):
   eyes reach the lower third of the frame.
 - Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user). In every
   preset, the overhead of you is never used for a reaction (the user; old proposal 1).
+- Bug, all presets: the close-up of you for a tagged choice ([Commerce] in the run) came one
+  turn late, at your next reply (the player is silent, so the NPC answers at once), and only
+  as long as you took to pick (2.75 s and 2.05 s), a flick to your face and back. Fix (the
+  user, option 1): the close-up of you right when you pick, about 2 s over the start of their
+  answer, then their shot; with a skill check, then the persuasion beat.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
