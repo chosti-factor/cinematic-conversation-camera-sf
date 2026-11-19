@@ -248,6 +248,8 @@ Last updated: 0.9.21 (2026-11-18).
 
 Not to be built until the user has seen the data and decided on each one. 0.9.19 built them
 without that decision (a mistake); 0.9.21 took them back out, so the presets are as in 0.9.18.
+The proposals stay on the table (the user, 2026-11-18): the data comes from the next test,
+long conversations with Sarah, Sam and other quest NPCs through the presets as they are.
 
 Proposed from partial data (0.8.16 Constellation/Nebula extracts, 0.8.17 your-side shots);
 the user wants a long conversation with Sarah through the CCC SF presets first, then
