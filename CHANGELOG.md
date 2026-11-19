@@ -20,6 +20,9 @@ test build; "diagnostic" items only add information to the log for testing.
   rounded straight back; it's a slider of half steps now. The three finest sliders (the large
   speaker height, the filming stop distance and time) move in 0.05 steps instead of 0.01, so a
   controller crosses them in a few dozen presses, not a couple of hundred.
+- Settings page: when changes apply ("from the next conversation; made during one, from the
+  one after") is now at the top of every page, not only at the bottom; the cutting pace's help
+  says it's one setting for every preset, nudging each one's own rhythm.
 
 ## 0.9.26 - 2026-11-19
 

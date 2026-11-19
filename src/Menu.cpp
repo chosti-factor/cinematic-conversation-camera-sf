@@ -56,7 +56,7 @@ namespace CCC::Menu
 				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
 				kPresets },
 			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
-				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest." },
+				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. One setting for every preset (each keeps its own rhythm and is nudged from it); mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
 			{ "Camera", "Look", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
 				"0 a tripod, 100 fully handheld." },
 			{ "Camera", "Look", "Camera", "fConversationLens", "Lens (degrees)", Kind::kOwnFloat, 20, 70, "%.0f",
@@ -407,6 +407,9 @@ namespace CCC::Menu
 			if (std::chrono::steady_clock::now() - g_readAt > std::chrono::seconds(2) && !ImGuiMCP::IsAnyItemActive()) {
 				ReadAll();
 			}
+			// Where changes go and when they apply, at the top of every page (0.9.27; it was only
+			// at the bottom, easy to miss).
+			ImGuiMCP::TextDisabled("%s", "Changes apply from the next conversation (made during one, from the one after).");
 			const char* group = nullptr;
 			for (std::size_t i = 0; i < kCount; ++i) {
 				const auto& e = kEntries[i];
@@ -421,7 +424,7 @@ namespace CCC::Menu
 			}
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();
-			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini and apply from the next conversation.");
+			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). The preset key (U) switches presets at once, mid-conversation too.");
 			if (!g_status.empty()) {
 				ImGuiMCP::TextDisabled("%s", g_status.c_str());
 			}
