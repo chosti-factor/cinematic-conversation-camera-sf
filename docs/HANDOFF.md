@@ -255,7 +255,7 @@ close-up up to 28 s in every preset.
 Decisions so far (to build together once every preset is discussed):
 - B, all presets: a cap on how long one close-up holds over a run of emotional lines, then a
   cut to a three-quarter or medium of them (or a reaction of you); a value per preset, to be
-  settled preset by preset. Frontier: proposed 12 s. Starborn: 18 s (the user).
+  settled preset by preset. Frontier 12 s, Starborn 18 s, Constellation 14 s, Nebula 12 s (all confirmed by the user).
 - C, Frontier: listening reactions in mediums and three-quarters, not close-ups; close-ups
   of you kept for when your face shows an expression. Other presets: to discuss.
 - Starborn, less Kubrick and more Interstellar (the user, all five):
@@ -286,8 +286,8 @@ Decisions so far (to build together once every preset is discussed):
   trailer pacing; the user likes its pacing, so cutting stays. B: 12 s proposed (trims the
   17-28 s holds only). Extreme share of close-ups of you stays 40% (the user). Describe it as
   space opera in README and PRESETS.
-- Idea, not decided (proposed for after 1.0): a new angle of you once you've spent about 10 s
-  choosing a reply (CCC has a choosing-reply timer, off by default).
+- After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
+  reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 

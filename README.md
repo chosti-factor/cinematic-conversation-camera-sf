@@ -253,6 +253,8 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- A new angle of you once you've spent a while choosing your reply (about 10 s), instead of
+  one shot held for as long as the options are open (CCC has a timer for this, off by default).
 - Your traits setting your face's temperament (Introvert subtler, Extrovert fuller, Empath
   mirroring more). Open questions: mods that unlock every trait (many traits at once), which
   trait wins when several apply, and whether it should work only with the game's usual trait
