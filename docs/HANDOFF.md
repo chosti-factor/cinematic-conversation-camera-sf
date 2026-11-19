@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.22 (2026-11-18).
+Last updated: 0.9.23 (2026-11-18).
 
 ## Working rules
 
@@ -244,7 +244,7 @@ Last updated: 0.9.22 (2026-11-18).
   detailed log stay ON by default until the very last step before 1.0 (the user's call:
   they keep evaluating with them).
 
-## CCC SF preset review from the 2026-11-18 run (in progress; nothing built yet)
+## CCC SF preset review from the 2026-11-18 run (built in 0.9.23)
 
 Data: 0.9.21, the Lodge, about 10 minutes per preset with Muria, Sam, Barrett and Andreja.
 Reaction timing is fine in every preset (the user). Room bounds limited almost nothing (every
@@ -252,7 +252,7 @@ obstacle check clear; room shots got 97-99% of the distance they wanted). Compan
 expressive (Frontier: 54 of 74 NPC lines tagged), and runs of emotional lines held one
 close-up up to 28 s in every preset.
 
-Decisions so far (to build together once every preset is discussed):
+Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
 - B, all presets: a cap on how long one close-up holds over a run of emotional lines, then a
   cut to a three-quarter or medium of them (or a reaction of you); a value per preset, to be
   settled preset by preset. Frontier 12 s, Starborn 18 s, Constellation 14 s, Nebula 12 s (all confirmed by the user).

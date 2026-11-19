@@ -97,7 +97,7 @@ namespace CCC::Shots
 
 		constexpr std::array<const char*, static_cast<std::size_t>(Move::kCount)> kMoveNames{
 			"None", "Push in", "Pull out", "Crane up", "Crane down", "Tilt up", "Tilt down", "Drift",
-			"Zoom in", "Zoom out", "Orbit left", "Orbit right", "Slide left", "Slide right"
+			"Zoom in", "Zoom out", "Orbit left", "Orbit right", "Slide left", "Slide right", "Push in tilt up"
 		};
 
 		// Full travel of each move at amount 100, in CCC's units.
@@ -108,6 +108,7 @@ namespace CCC::Shots
 			case M::kPullOut:
 			case M::kZoomIn:
 			case M::kZoomOut:
+			case M::kPushTiltUp:
 				return 0.40f;  // share of the standoff
 			case M::kCraneUp:
 			case M::kCraneDown:
@@ -436,6 +437,13 @@ namespace CCC::Shots
 		case M::kTiltDown:
 			aimLift = -units * p;
 			break;
+		case M::kPushTiltUp:
+			// 0.9.23 (Nebula's low angles; the tilt up alone sank the face under the subtitles):
+			// a push in, and a third of the tilt up at the same amount; the tilt is held to a
+			// sixth of the frame's height below where the framing puts the face (below).
+			distance *= 1.0f - travel * p;
+			aimLift = FullScale(M::kTiltUp) * std::clamp(a_in.moveAmount, 0, 100) / 100.0f * kUnit / 3.0f * p;
+			break;
 		case M::kDrift:
 		case M::kOrbitRight:
 			angle += travel * p;
@@ -474,6 +482,12 @@ namespace CCC::Shots
 			distance = (std::max)(distance, separation + 60.0f * kUnit);
 		}
 		result.distance = distance;
+		if (a_in.move == M::kPushTiltUp && aimLift > 0.0f) {
+			// The face may sink a sixth of the frame's height at most: from where the framing puts
+			// it (around the upper third) to about the middle, never into the subtitles.
+			const float halfV = std::atan(std::tan(std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f * kDeg) / (std::max)(a_in.aspect, 0.5f));
+			aimLift = (std::min)(aimLift, distance * std::tan(halfV) / 3.0f);
+		}
 
 		const auto& anchorPoint = spec.anchor == Anchor::kSubject ? subject : midpoint;
 		const auto& aimPoint = spec.aimMidpoint ? midpoint : subject;

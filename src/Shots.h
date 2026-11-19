@@ -80,6 +80,7 @@ namespace CCC::Shots
 		kOrbitRight,
 		kTruckLeft,
 		kTruckRight,
+		kPushTiltUp,  // 0.9.23: a push in with a third of a tilt up, never past the frame's middle (Nebula's low angles)
 		kCount
 	};
 

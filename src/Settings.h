@@ -198,6 +198,9 @@ namespace CCC
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
 		int         choiceCloseUps{ -1 };     // a close-up of you on a tagged option: -1 the preset's own (CCC SF's), 0 off, 1 on (0.8.16)
+		float       choiceCloseUpSeconds{ 2.0f };  // ... shown as you pick, over the start of their answer, this long (0.9.23)
+		float       closeUpLimit{ -1.0f };    // one close-up of them at most this long, then a wider shot of them: -1 the preset's own, 0 none (0.9.23)
+		int         listeningCloseUps{ -1 };  // listening reactions on a close-up of you: -1 the preset's own (not in Frontier), 0 no, 1 yes (0.9.23)
 		int         reactionShots{ -1 };      // one of the NPC's lines shown on you: -1 the preset's own (0.8.13: CCC's off, CCC SF's on), 0 off, 1 on
 		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot

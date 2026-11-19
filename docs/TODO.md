@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.22 (2026-11-18). Dates assume the Friday 27 November release; for
+Last updated: 0.9.23 (2026-11-18). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -49,9 +49,11 @@ Wednesday the 25th, about two days earlier.
 - [x] Filming people talking (0.9.17 test): starts on its own, cuts between them, skips
       blocked angles, stops when they stop or you move; shook when started on momentum (0.9.18: the game camera's
       root held while filming; starting while you walk stays, the user's call)
-- [ ] The long Sarah conversation through the CCC SF presets as they are (data first); then
-      the user decides on each proposed tweak in HANDOFF.md. (0.9.19 built them without
-      that decision; 0.9.21 took them back out.)
+- [x] The CCC SF presets reviewed from the 2026-11-18 run (Muria, Sam, Barrett, Andreja; the
+      user's decisions in HANDOFF.md), built in 0.9.23
+- [ ] Test 0.9.23 (Barrett, then Andreja): close-up limits, room shots as your angle,
+      Frontier's listening reactions, Starborn towards Interstellar, Nebula's low angles
+      (NebulaTest), the tagged option's close-up, no one-frame flashes
 - [x] Large speakers (Vasco): his back hid you in the narrower shots of you (0.9.18 clip);
       0.9.19 keeps those to 38 degrees or wider with a large speaker. 0.9.21 test: still hidden
       in Starborn, by the plain over-the-shoulder shot it fell back on (no Starborn shot of you

@@ -8,7 +8,9 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 every preset). Settings are in the `[Director]` section of
 the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.9.21 (2026-11-18; the 0.9.19 change taken back out, reactions as in 0.9.18). 0.8.5 reworked reactions to break the monotony of long
+Last updated: 0.9.23 (2026-11-18: never the overhead of you; Frontier's listening reactions; the
+tagged option's close-up as you pick; a limit on one close-up of them; no extreme close-ups of
+you in Constellation). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
 
 ## On each NPC line
@@ -21,7 +23,10 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    but Neutral and Friendly) 100%; and a roll of
    `iExtremeCloseUpChanceNpc` (40%) makes it an extreme one. The camera cuts to a close-up
    (or extreme close-up) of them, pushing in slowly. If it's already on their close-up, it
-   stays.
+   stays (0.9.23: in CCC SF's presets a still one starts pushing in from there). One close-up
+   of them holds 12 to 18 s at most in CCC SF's presets (Frontier and Nebula 12, Constellation
+   14, Starborn 18; `fCloseUpLimitSecondsNpc`), then a three-quarter or medium of them at a
+   line's start; no emotion close-up for half that time after it.
 2. **Persuasion answer?** After each round of a persuasion (the verdict included) or a
    chosen skill check, their answer is held on them (`bPersuasionBeatNpc`): a close-up,
    pushing in; in a long answer (over 10 s), once the push-in is done, one cut to a medium
@@ -57,10 +62,12 @@ stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
    - Your face shows an expression on that line: a close-up of you, pushing in, by the
      expression's tier (the same lists as theirs): mild 25%, medium 40%, strong always
      (`iCloseUpChanceMildPlayer`, `...MediumPlayer`, `...StrongPlayer`);
-     `iExtremeCloseUpChancePlayer` (40%) of those an extreme one.
+     `iExtremeCloseUpChancePlayer` (40%) of those an extreme one (none in Constellation).
    - Otherwise, you listening, in the preset's angle of you: your regular shots (shoulder,
      three-quarter, medium, close, long...), never the room, the two-shot or the profile of
-     you both.
+     you both, and never the overhead of you (0.9.23: it read as someone watching you). In
+     Frontier never a close-up of you either: a medium or three-quarter, close-ups of you
+     kept for your expressions (`bListeningCloseUpsPlayer`).
 8. **In a long speech,** again after every 7 s stretch.
 
 Lines that follow each other without a pause count as separate lines (0.8.4), so a long
@@ -85,7 +92,8 @@ it.
 Nothing about how often. They change what you see:
 
 - A listening reaction uses the preset's regular angles of you (Standard: a shoulder,
-  three-quarter or medium of you; Room: possibly a long or overhead shot of you).
+  three-quarter or medium of you; Room: possibly a long shot of you; never the overhead of
+  you; Frontier: no close-ups of you).
 - Emotion close-ups and close-ups of you are the same close-up shots in every preset, even
   in Room, which has none of its own; their push-in is the same too (8 s, 9 s for the
   extreme ones).
@@ -107,3 +115,14 @@ Nothing about how often. They change what you see:
 | Extreme close-ups | 1 in 3 | 40% |
 | Reaction during an emotion close-up | Never: it waits for the next line | When the 7 s are reached during a regular one, to the end of the line; never an extreme one |
 | Close-ups of you | No (your listening face is animated, but not cut to) | Half the reactions, when your face shows an expression |
+
+## Your tagged option (0.9.23)
+
+Choosing a tagged option ([Persuade], [Commerce], [Wanted]...; every tag but [Pay ...]) gets a
+close-up of you as you pick it, over the start of their answer, for
+`fChoiceCloseUpSecondsPlayer` (2 s), then their shot, or the persuasion beat for a skill check.
+Before 0.9.23 it came a turn late: at your next reply, for only as long as you took to pick
+(the 2026-11-18 run: 2.75 s and 2.05 s, a flick to your face and back). The choice is noticed
+a moment after their answer starts (0.22 s), so on your turn the camera stays on you for the
+first 0.3 s of their answer, and no reaction is decided for a line that starts under the
+close-up.

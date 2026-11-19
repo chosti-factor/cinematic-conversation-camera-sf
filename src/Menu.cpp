@@ -42,7 +42,7 @@ namespace CCC::Menu
 			std::span<const char* const> choices{};
 		};
 
-		constexpr const char* kPresets[]{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
+		constexpr const char* kPresets[]{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula", "NebulaTest" };
 		constexpr const char* kFocusStyles[]{ "Wide", "Cinematic" };
 
 		// The player-facing settings. Test switches, transitions and the plain camera's offsets
@@ -53,7 +53,7 @@ namespace CCC::Menu
 				"Off: the whole mod stands down and conversations use the game's own camera." },
 			{ "Camera", "Look", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
-				"Constellation (a hard sci-fi documentary) and Nebula (a trailer) are CCC SF's.",
+				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's. NebulaTest is for testing only.",
 				kPresets },
 			{ "Camera", "Look", "Director", "iCuttingPace", "Cutting pace", Kind::kInt, -2, 2, "%+d",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest." },
@@ -94,11 +94,17 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceStrongNpc", "Strong lines", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iExtremeCloseUpChanceNpc", "Extreme close-ups", Kind::kInt, 0, 100, "%d%%",
 				"Of those close-ups, how many are extreme." },
+			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 4.0f, 60.0f, "%.0f",
+				"One close-up of them at most this long, then a wider shot of them. The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
 				"Cutting to you listening during their longer lines." },
 			{ "Close-ups and reactions", "You", "Director", "iReactionChancePlayer", "Reaction chance", Kind::kInt, 0, 100, "%d%%", nullptr },
+			{ "Close-ups and reactions", "You", "Director", "bListeningCloseUpsPlayer", "Listening reactions in close-up", Kind::kTri, 0, 0, nullptr,
+				"Reactions of you listening may be close-ups. The preset's own: yes, except Frontier (mediums and three-quarters)." },
+			{ "Close-ups and reactions", "You", "Director", "fChoiceCloseUpSecondsPlayer", "Skill-choice close-up (s)", Kind::kFloat, 0.5f, 6.0f, "%.1f",
+				"How long the close-up of you lasts as you pick a tagged option, over the start of their answer." },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
 			{ "Close-ups and reactions", "You", "Director", "iExtremeCloseUpChancePlayer", "Extreme close-ups of you", Kind::kInt, 0, 100, "%d%%", nullptr },

@@ -85,6 +85,10 @@ namespace CCC
 			bool                                  reactionCloseUp{ false };  // ...as your emotion close-up
 			bool                                  choiceCloseUp{ false };    // you chose a tagged option: a close-up of you for it (0.8.16)
 			bool                                  choiceExtreme{ false };    // ... an extreme one
+			// 0.9.23: shown as you pick, over the start of their answer, until this time (it came a
+			// turn late before: at your next reply, for only as long as you took to pick it).
+			std::chrono::steady_clock::time_point choiceInsertUntil{};
+			bool                                  yourTurn{ false };         // the camera is on you for your turn (not a reaction)
 			bool                                  reactionPending{ false };  // waiting for this line's subtitle to decide
 			float                                 monoSeconds{ 0.0f };       // their talking since the camera last showed you (0.8.5)
 			int                                   npcLinesStarted{ 0 };      // their lines so far in this conversation (0.8.6)
@@ -898,6 +902,25 @@ namespace CCC
 			// Shot/reverse-shot: the NPC holds the camera while talking; once they've been
 			// quiet briefly it's the player's turn, so cut to the player.
 			const bool talking = a_speaker->IsTalking();
+			// Your tagged choice (0.9.23): a close-up of you as you pick, over the start of their
+			// answer, for fChoiceCloseUpSecondsPlayer; then their shot (or the persuasion beat).
+			if (g_state.choiceCloseUp && g_state.choiceInsertUntil != std::chrono::steady_clock::time_point{}) {
+				if (a_now < g_state.choiceInsertUntil) {
+					g_state.reactionShownLine = true;  // (their line was seen on you)
+					return Subject::kPlayer;
+				}
+				g_state.choiceCloseUp = false;
+				g_state.choiceInsertUntil = {};
+			}
+			// The choice is noticed a moment after their answer starts (0.22 s in the 2026-11-18
+			// log): on your turn, stay on you for the first 0.3 s of it, so the close-up follows
+			// on with no flash of them in between.
+			if (talking && g_state.yourTurn && Director::ChoiceCloseUps() && a_now - g_state.lineStart < 300ms) {
+				return Subject::kPlayer;
+			}
+			if (talking) {
+				g_state.yourTurn = false;
+			}
 			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
 				// A reaction shot: you, listening, for reactionHold seconds from the cut to you.
 				if (g_state.reactionOnAt == std::chrono::steady_clock::time_point{}) {
@@ -937,6 +960,7 @@ namespace CCC
 			g_state.monoSeconds = 0.0f;  // your turn: the camera is on you (0.8.5)
 			g_state.reactionOwed = false;  // 0.8.6 test: one owed from before your turn cut to you 0.6 s into their reply
 			g_state.replyBeat = false;   // their answer to a persuasion is over
+			g_state.yourTurn = true;
 			return Subject::kPlayer;
 		}
 
@@ -2423,7 +2447,11 @@ namespace CCC
 					}
 				}
 				if (talkingNow && (!g_state.speakerWasTalking || newPart)) {
-					g_state.choiceCloseUp = false;  // their answer: your tagged choice's close-up is over (0.8.16)
+					// Their answer: your tagged choice's close-up is over (0.8.16), unless it's being shown
+					// over its start (0.9.23).
+					if (now >= g_state.choiceInsertUntil) {
+						g_state.choiceCloseUp = false;
+					}
 					g_lineSerial.fetch_add(1, std::memory_order_acq_rel);
 					++g_state.npcLinesStarted;
 					// An emotion close-up: a line tagged with one of sCloseUpEmotions, iCloseUpChance
@@ -2501,7 +2529,7 @@ namespace CCC
 						}
 						const bool afterBeat = std::exchange(g_state.afterBeat, false);
 						if (fresh && Director::ReactionShots() && s.director && s.shotMode == ShotMode::kFollowSpeaker && g_state.bodyReady &&
-							!g_state.lineBeat && !g_state.replyBeat) {
+							!g_state.lineBeat && !g_state.replyBeat && !(g_state.choiceCloseUp && now < g_state.choiceInsertUntil)) {
 							// 0.8.5, reactions break the monotony of long stretches: once the camera
 							// has been on them for fReactionAfterSecondsPlayer of their talking without
 							// a cut to you, a reaction is due (iReactionChancePlayer of the time; a no
@@ -2853,6 +2881,7 @@ namespace CCC
 				frame.intenseExtreme = g_state.lineExtreme;
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
+				frame.lineDecided = !g_state.reactionPending;
 				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
 				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
 				frame.playerChoice = g_state.choiceCloseUp;
@@ -2888,6 +2917,7 @@ namespace CCC
 				frame.intenseExtreme = g_state.lineExtreme;
 				frame.npcLineSerial = g_lineSerial.load(std::memory_order_acquire);
 				frame.reaction = g_state.reactionActive && !frame.npcTurn;
+				frame.lineDecided = !g_state.reactionPending;
 				frame.persuasionBeat = g_state.lineBeat || g_state.replyBeat;
 				frame.playerCloseUp = (g_state.reactionActive && g_state.reactionCloseUp) || g_state.choiceCloseUp;
 				frame.playerChoice = g_state.choiceCloseUp;
@@ -4588,6 +4618,8 @@ namespace CCC
 						}
 						g_state.choiceCloseUp = true;
 						g_state.choiceExtreme = extreme;
+						g_state.choiceInsertUntil = std::chrono::steady_clock::now() +
+						                            std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(Settings::Get().choiceCloseUpSeconds));
 						REX::INFO("Your choice '{}'{}: a close-up of you{}", tagged ? a_text.substr(0, close + 1) : a_text.substr(0, 40), a_persuasion ? " in a persuasion" : "",
 							extreme ? " (extreme: a confrontational skill)" : "");
 					}
@@ -5403,7 +5435,8 @@ namespace CCC
 				down = !(ui && ui->IsMenuOpen(console));
 			}
 			if (down && !wasDown) {
-				constexpr std::array<const char*, 7> kOrder{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
+				// (NebulaTest: temporary, for judging Nebula's low angles; out before 1.0.)
+				constexpr std::array<const char*, 8> kOrder{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula", "NebulaTest" };
 				std::string current{ s.preset };
 				std::ranges::transform(current, current.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				std::size_t next = 0;

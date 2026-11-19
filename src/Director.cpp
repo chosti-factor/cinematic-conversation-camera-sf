@@ -29,7 +29,17 @@ namespace CCC::Director
 		{
 			std::string preset{ Settings::Get().preset };
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			// 0.9.23: the temporary Nebula test preset is Nebula in everything but its low angles.
+			if (preset == "nebulatest" && std::string_view{ a_name } == "nebula") {
+				return true;
+			}
 			return preset == a_name;
+		}
+
+		// One of CCC's own presets (Standard, Close, Room).
+		bool CccPresetNow()
+		{
+			return PresetIs("standard") || PresetIs("close") || PresetIs("room");
 		}
 
 		// The lens a shot without its own is framed for: the preset's, or the game's.
@@ -72,6 +82,7 @@ namespace CCC::Director
 			int                     lines{ 0 };
 			int                     linesTarget{ 3 };
 			bool                    changeDue{ false };
+			int                     roomTurns{ 0 };  // your turns in a row on a room or shared shot (0.9.23)
 		};
 
 		struct State
@@ -119,6 +130,14 @@ namespace CCC::Director
 			std::uint32_t                                cuts{ 0 };
 			const char*                                  why{ "" };
 			std::optional<bool>                          plainTurn;  // nothing fitted this turn (true = theirs): plain shot until the turn changes
+			// 0.9.23: a cut owed at a line's start waits until the line's reaction is decided (a
+			// cut, then a reaction a frame later, flashed one frame of the first: 22 in the
+			// 2026-11-18 run).
+			bool              lineCutOwed{ false };
+			clock::time_point lineCutOwedAt{};
+			clock::time_point moveFrom{};          // the shot's move counts from here (the cut, or an emotion push-in on a held close-up)
+			clock::time_point closeUpCooldown{};   // after the close-up limit's cut, no emotion close-up before this
+			bool              noRoomPick{ false }; // Pick leaves out the room and shared shots (your angle held on one for 2 turns)
 		} g;
 
 		ObstacleTest g_obstacleTest = nullptr;
@@ -243,15 +262,20 @@ namespace CCC::Director
 		// the subject straight down the middle), very slow push-ins held long, a perfectly
 		// still camera (no sway), and one slow crane up on the wide shots as a reveal. No
 		// drifting: the stillness is the point.
+		// 0.9.23, less Kubrick and more Interstellar (the 2026-11-18 review): the regular close-ups
+		// held still (the push-ins are kept for the emotion close-ups), close-up lenses a step
+		// wider (45 -> 50, 40 -> 45, 40 -> 45, 35 -> 40), the distant shot and the master more
+		// often (10 -> 25, 8 -> 20: a wide shot for scale every few minutes; the crane-up reveal
+		// stays on the master). Faces half off-centre and a touch of handheld: InputFor, CameraSway.
 		constexpr std::array kStarborn{
 			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kLocked, 0, 4.2f, 40.0f },
 			PresetEntry{ ShotType::kOverNpcShoulder, 20, Move::kLocked, 0, 4.2f, 40.0f },
-			PresetEntry{ ShotType::kCloseUp, 45, Move::kPushIn, 30, 12.0f, 45.0f },
-			PresetEntry{ ShotType::kClosePlayer, 35, Move::kPushIn, 25, 12.0f, 40.0f },
-			PresetEntry{ ShotType::kExtremeClose, 8, Move::kPushIn, 30, 12.0f, 40.0f },
-			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kPushIn, 30, 12.0f, 35.0f },
-			PresetEntry{ ShotType::kDistant, 10, Move::kLocked, 0, 4.2f, 40.0f },
-			PresetEntry{ ShotType::kMaster, 8, Move::kCraneUp, 30, 12.0f, 60.0f },
+			PresetEntry{ ShotType::kCloseUp, 45, Move::kLocked, 0, 12.0f, 50.0f },
+			PresetEntry{ ShotType::kClosePlayer, 35, Move::kLocked, 0, 12.0f, 45.0f },
+			PresetEntry{ ShotType::kExtremeClose, 8, Move::kLocked, 0, 12.0f, 45.0f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kLocked, 0, 12.0f, 40.0f },
+			PresetEntry{ ShotType::kDistant, 25, Move::kLocked, 0, 4.2f, 40.0f },
+			PresetEntry{ ShotType::kMaster, 20, Move::kCraneUp, 30, 12.0f, 60.0f },
 		};
 		// Constellation, a hard sci-fi documentary (The Martian, Apollo 13): the Lodge, labs,
 		// ships. Built on Room, watched from across the room on longer lenses (45-70, Room's
@@ -306,16 +330,19 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kCloseWide, 15, Move::kPushIn, 20, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kMediumProfile, 15, Move::kDrift, 15, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kPlayerProfile, 15, Move::kDrift, 15, 5.0f, 60.0f },
-			PresetEntry{ ShotType::kLowProfile, 10, Move::kTiltUp, 22, 5.0f, 60.0f },
-			PresetEntry{ ShotType::kLowAngle, 15, Move::kTiltUp, 22, 5.0f, 60.0f },
-			PresetEntry{ ShotType::kPlayerLow, 15, Move::kTiltUp, 22, 5.0f, 60.0f },
+			// 0.9.23: the low angles push in with a third of the tilt (the tilt up alone sank the
+			// face under the subtitles).
+			PresetEntry{ ShotType::kLowProfile, 10, Move::kPushTiltUp, 22, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kLowAngle, 15, Move::kPushTiltUp, 22, 5.0f, 60.0f },
+			PresetEntry{ ShotType::kPlayerLow, 15, Move::kPushTiltUp, 22, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kHighAngle, 15, Move::kCraneDown, 26, 5.0f, 65.0f },
 			PresetEntry{ ShotType::kTwoShot, 30, Move::kDrift, 18, 6.0f, 72.0f },
 			PresetEntry{ ShotType::kProfile, 15, Move::kDrift, 12, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
 			PresetEntry{ ShotType::kLongPlayer, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
-			PresetEntry{ ShotType::kOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
-			PresetEntry{ ShotType::kPlayerOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
+			// 0.9.23: a flourish, a little rarer (15 -> 12).
+			PresetEntry{ ShotType::kOverhead, 12, Move::kCraneDown, 26, 5.0f, 85.0f },
+			PresetEntry{ ShotType::kPlayerOverhead, 12, Move::kCraneDown, 26, 5.0f, 85.0f },
 			PresetEntry{ ShotType::kWide, 25, Move::kPullOut, 22, 6.0f, 88.0f },
 			PresetEntry{ ShotType::kMaster, 25, Move::kCraneUp, 45, 7.0f, 95.0f },
 			PresetEntry{ ShotType::kDistant, 20, Move::kPullOut, 35, 6.0f, 45.0f },
@@ -439,7 +466,7 @@ namespace CCC::Director
 			in.playerGround = a_frame.playerGround;
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(CameraSway()) / 100.0f;
-			in.lookRoomScale = PresetIs("starborn") ? 0.0f : 1.0f;  // Starborn: faces centred (0.8.14)
+			in.lookRoomScale = PresetIs("starborn") ? 0.5f : 1.0f;  // Starborn: faces centred (0.8.14); half off-centre (0.9.23)
 			in.roomAngle = a_frame.roomAngle;
 			in.roomDistance = a_frame.roomDistance;
 			in.roomRise = a_frame.roomRise;
@@ -536,6 +563,40 @@ namespace CCC::Director
 			return std::abs(a_solved.angle) < s.largeSpeakerAngle;
 		}
 
+		// 0.9.23 (the 2026-11-18 preset review):
+		// The room and shared shots (the two of you, the room, the overhead of you): as your angle,
+		// 2 of your turns in a row at most (Constellation's distant shot held for 5).
+		bool RoomOrShared(ShotType a_type)
+		{
+			return Shots::Neutral(a_type) || a_type == ShotType::kPlayerOverhead;
+		}
+
+		// How long one close-up of them may hold before a wider shot of them (runs of emotional
+		// lines held one for up to 28 s): fCloseUpLimitSecondsNpc, or the preset's own: Frontier
+		// 12 s, Starborn 18, Constellation 14, Nebula 12; CCC's presets none, as CCC. 0 = none.
+		float CloseUpLimit()
+		{
+			const float mine = Settings::Get().closeUpLimit;
+			if (mine >= 0.0f) {
+				return mine;
+			}
+			return PresetIs("frontier") ? 12.0f : PresetIs("starborn") ? 18.0f : PresetIs("constellation") ? 14.0f : PresetIs("nebula") ? 12.0f : 0.0f;
+		}
+
+		// Listening reactions on a close-up of you: bListeningCloseUpsPlayer, or the preset's own
+		// (Frontier's in mediums and three-quarters; close-ups of you for your expressions).
+		bool ListeningCloseUps()
+		{
+			const int mode = Settings::Get().listeningCloseUps;
+			return mode >= 0 ? mode == 1 : !PresetIs("frontier");
+		}
+
+		// Extreme close-ups of you: none in Constellation (a documentary doesn't go that close).
+		bool ExtremeCloseUpsOfYou()
+		{
+			return !PresetIs("constellation");
+		}
+
 		bool Usable(ShotType a_type, const Frame& a_frame, bool a_checkObstacles = true)
 		{
 			const auto& setup = g.setups[static_cast<std::size_t>(a_type)];
@@ -551,6 +612,15 @@ namespace CCC::Director
 			// A reaction shows you (0.8.3, as CCC): your regular shots, never the room, the
 			// two-shot or the profile of you both.
 			if (a_frame.reaction && Shots::Neutral(a_type)) {
+				return false;
+			}
+			// 0.9.23: never the overhead of you (it reads as someone watching you); and in
+			// presets without listening close-ups, your close-ups only for your expressions.
+			if (a_frame.reaction && a_type == ShotType::kPlayerOverhead) {
+				return false;
+			}
+			if (a_frame.reaction && !a_frame.playerCloseUp && !ListeningCloseUps() &&
+				(a_type == ShotType::kClosePlayer || a_type == ShotType::kExtremeClosePlayer)) {
 				return false;
 			}
 			const auto solved = Shots::Solve(a_type, InputFor(a_frame, setup, 0.0f));
@@ -606,7 +676,8 @@ namespace CCC::Director
 		// expression, as a close-up of you; extreme as often as the NPC's.
 		std::optional<ShotType> PlayerCloseShot(const Frame& a_frame)
 		{
-			const bool extreme = a_frame.playerExtreme || std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer;
+			const bool extreme = ExtremeCloseUpsOfYou() &&
+			                     (a_frame.playerExtreme || std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= Settings::Get().extremeCloseUpChancePlayer);
 			if (extreme && Placeable(ShotType::kExtremeClosePlayer, a_frame)) {
 				return ShotType::kExtremeClosePlayer;
 			}
@@ -677,6 +748,9 @@ namespace CCC::Director
 				}
 				if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer) {
 					continue;  // only for the lines that call for one (0.8.15, as CCC)
+				}
+				if (g.noRoomPick && RoomOrShared(type)) {
+					continue;  // your angle has been on one for 2 turns (0.9.23)
 				}
 				if (Usable(type, a_frame)) {
 					const int weight = g.setups[i].weight;
@@ -757,6 +831,8 @@ namespace CCC::Director
 			auto& side = a_frame.npcTurn ? g.npc : g.player;
 			g.intenseSetup.reset();
 			g.extremeLineOver = false;
+			g.lineCutOwed = false;  // (0.9.23) whatever cut was owed at the line's start is made
+			g.moveFrom = a_now;
 			g_shotLens.store(g.setups[static_cast<std::size_t>(a_type)].lens, std::memory_order_relaxed);
 			g.current = a_type;
 			++g.cuts;
@@ -847,7 +923,7 @@ namespace CCC::Director
 					cut(0, 4, 7, 3.5f);    // long holds, few cuts
 				} else if (preset == "constellation") {
 					cut(25, 3, 5, 2.8f);   // an observer's rhythm
-				} else if (preset == "nebula") {
+				} else if (preset == "nebula" || preset == "nebulatest") {
 					cut(75, 2, 3, 1.6f);   // quick
 				} else {
 					cut(0, 2, 3, 2.4f);    // Standard
@@ -874,7 +950,7 @@ namespace CCC::Director
 				presetIndoor = presetOutdoor = 5.0f;
 				g.roomIndoor = 9.0f;
 				g.roomOutdoor = 12.0f;
-			} else if (preset == "nebula") {
+			} else if (preset == "nebula" || preset == "nebulatest") {
 				LoadPreset(kNebula);
 				presetIndoor = 7.0f;
 				presetOutdoor = 13.0f;
@@ -894,6 +970,28 @@ namespace CCC::Director
 				preset = "standard";
 			}
 			ApplyOverrides();
+			// The temporary Nebula test preset (0.9.23, out before 1.0): Nebula with its low
+			// angles (pushing in with a third of a tilt) as half of the angles picked on each side.
+			if (preset == "nebulatest") {
+				using enum ShotType;
+				int theirs = 0, yours = 0;
+				for (std::size_t i = 0; i < g.setups.size(); ++i) {
+					const auto type = static_cast<ShotType>(i);
+					if (type == kExtremeClose || type == kExtremeClosePlayer || type == kLowAngle || type == kLowProfile || type == kPlayerLow) {
+						continue;  // (extreme close-ups aren't picked as angles)
+					}
+					const int w = g.setups[i].weight;
+					if (Shots::Neutral(type) || Shots::OnNpc(type)) {
+						theirs += w;
+					}
+					if (Shots::Neutral(type) || !Shots::OnNpc(type)) {
+						yours += w;
+					}
+				}
+				g.setups[static_cast<std::size_t>(kLowAngle)].weight = (std::max)(1, theirs / 2);
+				g.setups[static_cast<std::size_t>(kLowProfile)].weight = (std::max)(1, theirs / 2);
+				g.setups[static_cast<std::size_t>(kPlayerLow)].weight = (std::max)(1, yours);
+			}
 			FillMissingLenses();
 			return preset;
 		}
@@ -960,6 +1058,9 @@ namespace CCC::Director
 		g.reactionReturnSetup.reset();
 		g.limit = std::numeric_limits<float>::infinity();
 		g.plainTurn.reset();
+		g.lineCutOwed = false;
+		g.closeUpCooldown = {};
+		g.noRoomPick = false;
 		g.beatActive = false;
 		g.cuts = 0;
 		g.why = "";
@@ -1002,8 +1103,20 @@ namespace CCC::Director
 		// the presets with no fresh-angle roll.
 		const bool  playerStarted = TrackLine(g.playerLine, g.player, a_frame.playerTalking, a_now, false);
 		const bool  lineStarted = a_frame.npcTurn ? npcStarted : playerStarted;
-		const float held = std::chrono::duration<float>(a_now - g.cutAt).count();
+		// How long the shot on screen has held, as of now: a cut earlier in this frame starts it
+		// again (0.9.23: an emotion close-up's cut, then "new angle" on the same frame from the
+		// time held before it, flashed one frame of the close-up).
+		const auto  heldNow = [&]() { return std::chrono::duration<float>(a_now - g.cutAt).count(); };
 		auto&       side = a_frame.npcTurn ? g.npc : g.player;
+		// A cut owed at a line's start waits for the line's reaction to be decided (0.9.23),
+		// at most a second.
+		if (lineStarted) {
+			g.lineCutOwed = true;
+			g.lineCutOwedAt = a_now;
+		} else if (g.lineCutOwed && a_now - g.lineCutOwedAt > std::chrono::seconds(1)) {
+			g.lineCutOwed = false;
+		}
+		const bool lineCutNow = g.lineCutOwed && a_frame.lineDecided;
 
 		// Emotion close-ups: a line tagged with one of the chosen expressions starts.
 		if (npcStarted) {
@@ -1068,6 +1181,9 @@ namespace CCC::Director
 		const bool holding = g.beatActive && a_frame.npcTurn && g.current &&
 		                     (*g.current == ShotType::kCloseUp || *g.current == ShotType::kExtremeClose || g.beatWidened);
 		if (!holding) {
+			if (g.intensePending && a_now < g.closeUpCooldown) {
+				g.intensePending = false;  // just widened at the close-up limit (0.9.23)
+			}
 			if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
 				// The turn passes to them on an intense line: the turn's cut is the close-up.
 				if (const auto shot = IntenseShot(a_frame)) {
@@ -1142,20 +1258,56 @@ namespace CCC::Director
 				if (!a_frame.npcTurn && side.shot && ++side.lines >= side.linesTarget) {
 					side.changeDue = true;
 				}
+				// 0.9.23: your angle on a room or shared shot for 2 turns in a row at most; this
+				// turn gets another (it can come back later).
+				const bool roomHeld = !a_frame.npcTurn && side.shot && RoomOrShared(*side.shot) && side.roomTurns >= 2;
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= g.freshAngleChance;
-				if (side.shot && !side.changeDue && !fresh && Usable(*side.shot, a_frame)) {
+				if (side.shot && !side.changeDue && !fresh && !roomHeld && Usable(*side.shot, a_frame)) {
 					Cut(*side.shot, a_frame, a_now, "turn", false);
+					side.roomTurns = RoomOrShared(*side.shot) ? side.roomTurns + 1 : 0;
 				} else {
 					g.current = side.shot;  // so Pick avoids repeating it
-					if (const auto pick = Pick(a_frame)) {
-						Cut(*pick, a_frame, a_now, side.shot ? "turn, new angle" : "turn", true);
+					g.noRoomPick = roomHeld;
+					const auto pick = Pick(a_frame);
+					g.noRoomPick = false;
+					if (pick) {
+						Cut(*pick, a_frame, a_now, roomHeld ? "turn, after 2 turns on a room shot" : side.shot ? "turn, new angle" : "turn", true);
+						side.roomTurns = RoomOrShared(*pick) ? 1 : 0;
 					} else {
 						g.current.reset();
 						g.plainTurn = a_frame.npcTurn;
 						return std::nullopt;
 					}
 				}
-			} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && held >= 0.7f) {
+			} else if (const float limit = CloseUpLimit();
+					   limit > 0.0f && a_frame.npcTurn && g.currentNpcSide && alreadyClose && !g.beatActive && !g.extremeLineOver &&
+					   ((lineCutNow && heldNow() >= limit) || heldNow() >= limit + 6.0f)) {
+				// 0.9.23: one close-up of them held this long (a run of emotional lines held one
+				// for 28 s): a wider shot of them, at a line's start (mid-line 6 s later at most).
+				// No emotion close-up for half the limit after it.
+				std::optional<ShotType> wider;
+				const bool              threeQuarterFirst = std::uniform_int_distribution<int>{ 0, 1 }(g.rng) == 0;
+				const std::array        order{ threeQuarterFirst ? ShotType::kThreeQuarterNpc : ShotType::kMediumNpc,
+                    threeQuarterFirst ? ShotType::kMediumNpc : ShotType::kThreeQuarterNpc };
+				for (const auto type : order) {
+					if (Usable(type, a_frame)) {
+						wider = type;
+						break;
+					}
+				}
+				for (const auto type : order) {
+					if (!wider && Placeable(type, a_frame)) {
+						wider = type;
+					}
+				}
+				if (wider) {
+					Cut(*wider, a_frame, a_now, "close-up limit, wider", false);
+					g.closeUpCooldown = a_now + std::chrono::duration_cast<clock::duration>(std::chrono::duration<float>(limit * 0.5f));
+					g.intensePending = false;
+				} else {
+					g.cutAt = a_now;  // nothing wider fits: try again after another stretch
+				}
+			} else if (g.intensePending && a_frame.npcTurn && !alreadyClose && heldNow() >= 0.7f) {
 				// An intense line in the middle of their turn: push in (not within 0.7 s of the
 				// last cut, so a turn cut and this one never come back to back).
 				if (const auto shot = IntenseShot(a_frame)) {
@@ -1165,11 +1317,11 @@ namespace CCC::Director
 					g.intenseShot = shot;
 				}
 				g.intensePending = false;
-			} else if (g.extremeLineOver && a_frame.npcTurn && g.current && *g.current == ShotType::kExtremeClose) {
+			} else if (g.extremeLineOver && a_frame.npcTurn && g.current && *g.current == ShotType::kExtremeClose && a_frame.lineDecided) {
 				// Their next line after an extreme close-up (0.8.9): a regular close-up if it's an
 				// emotion line too, otherwise back to their usual angle (or a new one). Not before
-				// fShortestHold on screen.
-				if (held >= g.shortestHold) {
+				// fShortestHold on screen. (0.9.23: once the line's reaction is decided.)
+				if (heldNow() >= g.shortestHold) {
 					std::optional<ShotType> shot;
 					const char*             why = "after the extreme close-up";
 					if (g.intensePending && Placeable(ShotType::kCloseUp, a_frame)) {
@@ -1193,8 +1345,17 @@ namespace CCC::Director
 					g.intensePending = false;
 				}
 			} else if (g.intensePending && alreadyClose) {
+				// Already on a close-up of them. In CCC SF's presets, a still one starts the
+				// emotion push-in from here (0.9.23: Starborn's regular close-ups are held still,
+				// the push-ins kept for the emotion lines).
+				if (!CccPresetNow() && *g.current == ShotType::kCloseUp && !g.intenseSetup &&
+					g.setups[static_cast<std::size_t>(ShotType::kCloseUp)].move == Move::kLocked) {
+					g.intenseSetup = IntenseSetup(ShotType::kCloseUp);
+					g.moveFrom = a_now;
+					NoteEmotionCut(ShotType::kCloseUp);
+				}
 				g.intensePending = false;
-			} else if (side.changeDue && lineStarted && held >= g.shortestHold) {
+			} else if (side.changeDue && lineCutNow && heldNow() >= g.shortestHold) {
 				if (const auto pick = Pick(a_frame); pick && pick != g.current) {
 					Cut(*pick, a_frame, a_now, "new angle", true);
 				} else {
@@ -1220,7 +1381,7 @@ namespace CCC::Director
 		}
 
 		const auto& setup = g.intenseSetup ? *g.intenseSetup : g.setups[static_cast<std::size_t>(*g.current)];
-		const float progress = setup.seconds > 0.0f ? std::chrono::duration<float>(a_now - g.cutAt).count() / setup.seconds : 1.0f;
+		const float progress = setup.seconds > 0.0f ? std::chrono::duration<float>(a_now - g.moveFrom).count() / setup.seconds : 1.0f;
 		auto        in = InputFor(a_frame, setup, progress);
 		in.heldAngle = g.heldAngle;
 		in.heldLookSign = g.heldLookSign;
@@ -1400,7 +1561,7 @@ namespace CCC::Director
 			}
 			std::string preset{ s.preset };
 			std::ranges::transform(preset, preset.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" ? 37.5f : 45.0f;
+			return preset == "frontier" || preset == "starborn" || preset == "constellation" || preset == "nebula" || preset == "nebulatest" ? 37.5f : 45.0f;
 		}
 	}
 
@@ -1519,9 +1680,10 @@ namespace CCC::Director
 	{
 		const int mine = Settings::Get().cameraSway;
 		// The preset's own (0.8.14; 0.8.17 after the sway test): CCC's presets none, as CCC
-		// (a tripod); Frontier a touch of handheld, Starborn locked off, Constellation the
-		// documentary operator's, Nebula 40.
-		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 70 : PresetIs("nebula") ? 40 : 0;
+		// (a tripod); Frontier a touch of handheld, Starborn locked off (until 0.9.23), Constellation the
+		// documentary operator's, Nebula 40. 0.9.23: Starborn 30, a touch of handheld (less
+		// Kubrick, more Interstellar).
+		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 70 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 30 : 0;
 	}
 
 	float Handheld()

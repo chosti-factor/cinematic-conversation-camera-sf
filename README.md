@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.22 (2026-11-18).
+Last updated: 0.9.23 (2026-11-18).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -67,8 +67,11 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   Shocked, Somber...) always; Neutral and Friendly never (`sCloseUpEmotions...Npc`,
   `iCloseUpChance...Npc`). About one line in five, more with emotional characters. CCC does
   this with lines Skyrim's writers marked as intense; because Starfield's lines carry no
-  such mark, the expression decides. Each line's expression can be shown on screen while
-  testing (`bShowMessages`). Tables: [docs/EMOTIONS.md](docs/EMOTIONS.md).
+  such mark, the expression decides. In CCC SF's presets one close-up of them holds 12 to 18 s
+  at most (each preset its own), then a wider shot of them, so a run of emotional lines
+  doesn't stay on one face for half a minute (`fCloseUpLimitSecondsNpc`). Each line's
+  expression can be shown on screen while testing (`bShowMessages`). Tables:
+  [docs/EMOTIONS.md](docs/EMOTIONS.md).
 - **Reaction shots, reworked** (CCC SF's presets; CCC's have them off, as CCC ships, and CCC
   rolls a chance after every few lines instead): to break the monotony of a long stretch,
   after 7 to 12 s of their talking without a cut to you (each preset its own), their next
@@ -77,11 +80,14 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   regular one can be cut away from when they're reached. A reaction is an insert: the camera
   goes back to exactly the speaker's shot. It's you listening, or a close-up of your
   expression, by its tier like theirs: mild 25%, medium 40%, strong always
-  (`iCloseUpChance...Player`). Details: [docs/REACTIONS.md](docs/REACTIONS.md).
+  (`iCloseUpChance...Player`). Never the overhead shot of you; in Frontier you listening is
+  a medium or three-quarter, with close-ups of you kept for your expressions
+  (`bListeningCloseUpsPlayer`). Details: [docs/REACTIONS.md](docs/REACTIONS.md).
 - **Cutting:** CCC's line counts, with each preset's own rhythm. `iCuttingPace` nudges it,
   from -2 (calmer: a new angle after more lines, held longer, fewer fresh angles when the
   turn passes) to +2 (livelier), keeping the preset's character; 0 is the preset as
-  designed. `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead.
+  designed. `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead. A room or
+  shared shot (the two of you, the room) stays your angle for 2 of your turns at most.
 - **Per-preset camera distances,** matched to each preset's widest shot: the camera stands
   where CCC's numbers put it, and each preset lets it go as far as its widest shot needs
   (Standard: 7 m indoors, 10.5 m outdoors); obstacle detection pulls it in or picks another
@@ -109,8 +115,9 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   expression (mirrored or as a listener would), options with a skill, background or trait
   tag ([Persuade], [Space Scoundrel], [Wanted]...) and questions show on it, and your
   background colours neutral moments. Close-ups of you when your face shows something, and
-  (CCC SF's presets) when you choose a tagged option: an extreme close-up for the
-  confrontational skills (`bChoiceCloseUpsPlayer`, `[Face]`; tables in
+  (CCC SF's presets) as you choose a tagged option, over the start of their answer: an
+  extreme close-up for the confrontational skills (none in Constellation)
+  (`bChoiceCloseUpsPlayer`, `fChoiceCloseUpSecondsPlayer`, `[Face]`; tables in
   [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you** (CCC 1.5.0 films them by key, or once you stand still; here
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
@@ -139,11 +146,11 @@ What CCC doesn't do.
   front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are
   recognised by the game's vendor flag on their faction, wherever the shop is.
 - **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
-  (Kubrick and *Interstellar*), Constellation (a hard sci-fi documentary) and Nebula (a
-  trailer), with their own lenses, moves, cutting and sway (see Presets below).
+  (*Interstellar* with a touch of Kubrick), Constellation (a hard sci-fi documentary) and
+  Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
-  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn
-  locked off, Constellation handheld), or `iCameraSway` sets one.
+  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn a
+  light touch, Constellation handheld), or `iCameraSway` sets one.
 - **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
   game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
   menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
@@ -173,9 +180,12 @@ of your expressions.
 | Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in (lenses 35-50) | A film-noir conversation: faces fill the screen, every flicker of an expression counts | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes on the wide ones (lenses 45-95) | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants |
 | Frontier | CCC SF (Standard) | Standard on slightly longer lenses, slow dolly-like drifts on the two-shot, three-quarters and mediums, the room now and then, a touch of handheld | A space western (*Firefly*, *The Expanse*): Akila, Neon, the outposts | Up to 9 m indoors, 12 m outdoors |
-| Starborn | CCC SF (Close) | Close-ups and shoulders on long, compressed lenses, faces centred in the frame, very slow push-ins held long, a locked-off camera, one slow crane up as a reveal | Kubrick and *Interstellar*: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
+| Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses, faces half off-centre, a light handheld touch, still shots with push-ins on the emotional lines, a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
 | Constellation | CCC SF (Room) | Watched from across the room on longer lenses, small slow drifts everywhere, the most handheld sway, cranes on the master and long shots, faces now and then | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
-| Nebula | CCC SF | Every angle in the library, every move CCC has, bigger and quicker, quick cutting | A blockbuster trailer: restless, varied, unexpected angles | Up to 9 m indoors, 12 m outdoors |
+| Nebula | CCC SF | Every angle in the library, every move CCC has, bold and varied: heroic low angles, high angles, profiles, group shots | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) | Up to 9 m indoors, 12 m outdoors |
+
+While testing there's an eighth preset, `NebulaTest`: Nebula with its low angles as half the
+angles it picks, to judge their new push-in with a little tilt (it comes out before 1.0).
 
 `iCameraSway` sets the sway for every preset instead of the preset's own (0 = tripod, 100 =
 fully handheld); `fConversationLens` sets one lens for every angle. Every preset's shots,

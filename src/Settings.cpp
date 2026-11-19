@@ -144,6 +144,10 @@ namespace CCC
 			a_s.enforceLine = ReadInt(a_path, L"Director", L"bEnforceLine", a_s.enforceLine ? 1 : 0) != 0;
 			a_s.followFace = ReadInt(a_path, L"Director", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
 			a_s.choiceCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bChoiceCloseUpsPlayer", a_s.choiceCloseUps), -1, 1);
+			a_s.choiceCloseUpSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fChoiceCloseUpSecondsPlayer", a_s.choiceCloseUpSeconds), 0.5f, 6.0f);
+			a_s.closeUpLimit = ReadFloat(a_path, L"Director", L"fCloseUpLimitSecondsNpc", a_s.closeUpLimit);
+			a_s.closeUpLimit = a_s.closeUpLimit < 0.0f ? -1.0f : a_s.closeUpLimit == 0.0f ? 0.0f : std::clamp(a_s.closeUpLimit, 4.0f, 60.0f);
+			a_s.listeningCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bListeningCloseUpsPlayer", a_s.listeningCloseUps), -1, 1);
 			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", a_s.reactionShots), -1, 1);
 			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", a_s.reactionEvery), 1, 10);
 			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", a_s.reactionChance), 0, 100);

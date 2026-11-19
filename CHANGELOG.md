@@ -4,6 +4,46 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.23 - 2026-11-18
+
+From the review of the 2026-11-18 run (0.9.21, the Lodge, about ten minutes per CCC SF
+preset with Muria, Sam, Barrett and Andreja). Nothing changes in CCC's presets except the
+two fixes.
+
+### Changed
+- One close-up of them holds 12 to 18 s at most in CCC SF's presets (Frontier and Nebula 12,
+  Constellation 14, Starborn 18), then a three-quarter or medium of them at the next line's
+  start; runs of emotional lines held one for 20 to 28 s (Andreja's four Nervous lines: 28 s).
+  `fCloseUpLimitSecondsNpc`, in the INI and on the settings page; CCC's presets none.
+- A room or shared shot (the two of you, the room, the overhead of you) stays your angle for
+  2 of your turns at most, in every preset (Constellation held its distant shot for 5).
+- Reactions are never the overhead shot of you, in every preset (it reads as someone
+  watching you).
+- Frontier: you listening is a medium or three-quarter; close-ups of you are kept for your
+  expressions (`bListeningCloseUpsPlayer`, in the INI and on the settings page).
+- Starborn, less Kubrick and more *Interstellar*: a light touch of handheld (sway 30), faces
+  half off-centre, regular close-ups held still with the push-ins kept for the emotional
+  lines, close-up lenses a step wider (50, 45, 45, 40), and the distant and master shots
+  more often (25 and 20), so a wide shot for scale comes every few minutes.
+- Constellation: no extreme close-ups of you (a documentary doesn't go that close).
+- Nebula is a space opera now, not a trailer (the variety of angles is the point; its pacing
+  stays). Its overhead shots a little rarer (15 to 12). Its low angles push in with a third
+  of their old tilt, and the face never sinks past the middle of the frame (the tilt alone
+  sank it under the subtitles).
+
+### Fixed
+- One-frame flashes of a shot: two decisions on the same frame (a new angle or an emotion
+  close-up, then a reaction or a second cut) cut twice; 22 in the run, in every preset. A cut
+  at a line's start now waits for the line's reaction to be decided.
+- The close-up of you for a tagged option came a turn late, at your next reply, for only as
+  long as you took to pick ([Commerce]: a flick to your face and back). It now comes as you
+  pick, over the start of their answer, for `fChoiceCloseUpSecondsPlayer` (2 s), then their
+  shot or the persuasion beat.
+
+### Added
+- A temporary eighth preset for testing, `NebulaTest`: Nebula with its low angles as half of
+  the angles picked, to judge their new move. It comes out before 1.0.
+
 ## 0.9.22 - 2026-11-18
 
 ### Fixed
