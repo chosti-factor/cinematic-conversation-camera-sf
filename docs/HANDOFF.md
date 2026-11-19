@@ -272,8 +272,12 @@ Decisions so far (to build together once every preset is discussed):
   two decisions on the same frame (a fresh angle, then a reaction or an emotion close-up at a
   line's start) cut twice. Settle the final shot before cutting.
 - Constellation: the faces share (21% measured, 7% designed) is fine with the user ("dialogue
-  is not a real sci-fi documentary"); a little lower at most, never down to 7%. Its B value
-  and the rest still to settle.
+  is not a real sci-fi documentary"); a little lower at most, never down to 7%. B: 14 s
+  proposed (trims the 26 s and 21 s holds; faces about 18%). No extreme close-ups of you in
+  Constellation (the user: "not for this preset"; an expression reaction is a regular
+  close-up). Room and full-figure share left as it is (38%).
+- Your angle held for many turns (Constellation's Distant for 5 of your turns): the user
+  wants a cap for variety, possibly in every preset; under discussion.
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 
