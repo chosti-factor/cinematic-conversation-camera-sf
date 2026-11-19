@@ -286,6 +286,13 @@ Decisions so far (to build together once every preset is discussed):
   trailer pacing; the user likes its pacing, so cutting stays. B: 12 s proposed (trims the
   17-28 s holds only). Extreme share of close-ups of you stays 40% (the user). Describe it as
   space opera in README and PRESETS.
+- Nebula's low angles (low angle on them, low profile, low angle on you): the tilt-up sank the
+  person to the bottom of the frame under the subtitles (3 cuts in the run, up to 9.5 s).
+  Hybrid proposed (awaiting the user's OK): a push-in at Nebula's strength plus about a third
+  of the old tilt (about 0.13 m instead of 0.4), with a guard that stops the tilt once their
+  eyes reach the lower third of the frame.
+- Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user). In every
+  preset, the overhead of you is never used for a reaction (the user; old proposal 1).
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
