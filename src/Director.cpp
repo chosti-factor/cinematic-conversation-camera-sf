@@ -273,16 +273,17 @@ namespace CCC::Director
 		// drifting: the stillness is the point.
 		// 0.9.23, less Kubrick and more Interstellar (the 2026-11-18 review): the regular close-ups
 		// held still (the push-ins are kept for the emotion close-ups), close-up lenses a step
-		// wider (45 -> 50, 40 -> 45, 40 -> 45, 35 -> 40), the distant shot and the master more
+		// wider (45 -> 50, 40 -> 45, 40 -> 45, 35 -> 40; 0.9.25, after the 0.9.24 test: half that
+		// step, 47.5, 42.5, 42.5, 37.5, as it lost some of its character), the distant shot and the master more
 		// often (10 -> 25, 8 -> 20: a wide shot for scale every few minutes; the crane-up reveal
 		// stays on the master). Faces half off-centre and a touch of handheld: InputFor, CameraSway.
 		constexpr std::array kStarborn{
 			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kLocked, 0, 4.2f, 40.0f },
 			PresetEntry{ ShotType::kOverNpcShoulder, 20, Move::kLocked, 0, 4.2f, 40.0f },
-			PresetEntry{ ShotType::kCloseUp, 45, Move::kLocked, 0, 12.0f, 50.0f },
-			PresetEntry{ ShotType::kClosePlayer, 35, Move::kLocked, 0, 12.0f, 45.0f },
-			PresetEntry{ ShotType::kExtremeClose, 8, Move::kLocked, 0, 12.0f, 45.0f },
-			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kLocked, 0, 12.0f, 40.0f },
+			PresetEntry{ ShotType::kCloseUp, 45, Move::kLocked, 0, 12.0f, 47.5f },
+			PresetEntry{ ShotType::kClosePlayer, 35, Move::kLocked, 0, 12.0f, 42.5f },
+			PresetEntry{ ShotType::kExtremeClose, 8, Move::kLocked, 0, 12.0f, 42.5f },
+			PresetEntry{ ShotType::kExtremeClosePlayer, 8, Move::kLocked, 0, 12.0f, 37.5f },
 			PresetEntry{ ShotType::kDistant, 25, Move::kLocked, 0, 4.2f, 40.0f },
 			PresetEntry{ ShotType::kMaster, 20, Move::kCraneUp, 30, 12.0f, 60.0f },
 			// 0.9.24: Interstellar's cockpit singles with a shoulder in the foreground, the close

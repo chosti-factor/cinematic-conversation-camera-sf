@@ -12,7 +12,8 @@ test build; "diagnostic" items only add information to the log for testing.
 
 - From the 0.9.24 test (the user):
   - Starborn overshot a little towards *Interstellar*: sway 30 to 15, faces a quarter
-    off-centre (half before). Its wider close-up lenses stay for now, to be decided.
+    off-centre (half before), and its close-up lenses half of 0.9.23's step wider than the
+    original (their close-up 47.5 degrees, yours 42.5, the extreme ones 42.5 and 37.5).
   - The low angle on them (the lowest camera of the three) tilts a sixth of the old tilt, not
     a third; it was still a bit much next to the others.
   - Frontier's extreme close-ups of them are rarer: 20% of its emotion close-ups (4 of 9 in the
