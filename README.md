@@ -266,6 +266,10 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- A close-up of you on your own turn when your face shows a strong expression. Today the
+  close-ups that follow your face come almost only from reaction shots, which need the NPC to
+  talk a while; someone clicking quickly through dialogue mostly sees close-ups of you as
+  your turn's angle, not tied to your expression.
 - A new angle of you once you've spent a while choosing your reply (about 10 s), instead of
   one shot held for as long as the options are open (CCC has a timer for this, off by default).
 - Your traits setting your face's temperament (Introvert subtler, Extrovert fuller, Empath

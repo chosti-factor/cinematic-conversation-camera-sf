@@ -320,6 +320,10 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   Close's 5 m cap gives a 12.5 m line, and their Distant (40-degree lens) wants 16.5 m,
   Starborn's Master 12.7 m. Room shots skip it now. Found by the user's doubt about the odds
   (11 fresh angles, no wide shot). Reactions left as they are (the user, 2026-11-19).
+- After 1.0, Mulling (the user, 2026-11-19): a close-up of you on your own turn when your face
+  shows a strong expression, for players who click quickly (expression close-ups of you come
+  almost only from reactions; 0.9.25: close-ups of you 9% of the time, 1.4 a minute, mostly
+  your turn's angle and tagged choices).
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
