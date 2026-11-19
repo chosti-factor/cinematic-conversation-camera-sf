@@ -182,7 +182,7 @@ namespace CCC
 
 		// [Director] CCC's shot library and cutting rules.
 		bool        director{ true };
-		std::string preset{ "Standard" };
+		std::string preset{ "Nebula" };  // the default since 0.9.26 (was Standard)
 		// How lively the cutting is, relative to the preset's own rhythm (0.9.8; replaced the
 		// named cutting styles): -2 calmest .. 0 the preset's own .. +2 liveliest.
 		int         cuttingPace{ 0 };

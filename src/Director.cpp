@@ -953,7 +953,7 @@ namespace CCC::Director
 				} else if (preset == "constellation") {
 					cut(25, 3, 5, 2.8f);   // an observer's rhythm
 				} else if (preset == "nebula") {
-					cut(75, 2, 3, 1.6f);   // quick
+					cut(60, 2, 4, 2.0f);   // lively (0.9.26, a little calmer: was 75%, 2-3 lines, 1.6 s)
 				} else {
 					cut(0, 2, 3, 2.4f);    // Standard
 				}

@@ -324,6 +324,8 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   shows a strong expression, for players who click quickly (expression close-ups of you come
   almost only from reactions; 0.9.25: close-ups of you 9% of the time, 1.4 a minute, mostly
   your turn's angle and tagged choices).
+- Nebula is the default preset since 0.9.26 (the user: "becoming my favorite"), its pace a
+  little calmer (fresh angle 60% of turns, every 2-4 lines, hold 2 s; was 75%, 2-3, 1.6).
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of

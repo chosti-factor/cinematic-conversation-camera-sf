@@ -6,6 +6,11 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.26 - 2026-11-19
 
+### Changed
+- Nebula is the default preset (was Standard; the user's favourite after the tests), and its
+  pace a little calmer: a fresh angle on 60% of the turns (75%), a new angle every 2 to 4
+  lines (2 to 3), each shot held 2 s at least (1.6 s).
+
 ### Fixed
 - Starborn never showed its wide shots, and CCC's Close never showed its distant shot. Every
   shot is left out when its framing wants the camera more than 2.5 times the preset's distance
