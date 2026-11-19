@@ -31,7 +31,7 @@ in Frontier, Starborn and Constellation).
 | Framing | | | | | Faces a little off-centre: a quarter of the usual room in the direction they look | | |
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-4 lines and more than half the turns, 2 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
-| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 47% | 19% |
+| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 55% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |
 | Extreme share of their emotion close-ups (`iExtremeCloseUpChanceNpc`) | | 40% | | 25% | 40% | 40% | 40% |
 | Close-up of you on a tagged option | no | no | no | yes | yes | yes | yes |
@@ -62,7 +62,7 @@ shot.
 | Room | 2 | Three-quarter (53%, 72°), medium (47%, 70°) |
 | Frontier | 2 | Three-quarter (57%, 52°, drifting), medium (43%, 56°, drifting) |
 | Starborn | 2 | Close-up (50%, 47.5°, still), three-quarter (50%, 40°, a little off-centre) |
-| Constellation | 3 | Three-quarter (42%, 50°, drifting), medium (37%, 50°, drifting), medium profile (21%, 50°, drifting) |
+| Constellation | 3 | Three-quarter (38%, 50°, drifting), medium (31%, 50°, drifting), medium profile (31%, 50°, drifting) |
 | Nebula | 3 | Three-quarter (47%, 58°), medium (35%, 62°), medium profile (18%, 60°) |
 
 - In Close and Starborn the three-quarter isn't one of the preset's own angles; it takes the
@@ -117,10 +117,10 @@ that shot. (Generated from the presets in the code.)
 | Close profile (NPC) |  |  |  |  | 3% still, 45° |  | 2% push in, 50° |
 | Extreme close-up (NPC) |  | 9% zoom in, 40° |  | 1% push in, 40° | 3% still, 42.5° | 1% push in, 40° | 1% push in, 40° |
 | Extreme close-up (you) |  | 9% push in, 35° |  | 1% push in, 40° | 3% still, 37.5° | 1% push in, 40° | 1% push in, 40° |
-| Three-quarter (NPC) | 10% still, 58° |  | 6% still, 72° | 7% drift, 52° |  | 5% drift, 50° | 5% drift, 58° |
-| Three-quarter (you) | 10% still, 58° |  | 6% still, 72° | 7% drift, 52° |  | 5% drift, 50° | 5% drift, 58° |
-| Medium (NPC) | 7% still, 62° |  | 6% still, 70° | 6% drift, 56° | 3% still, 45° | 5% drift, 50° | 4% drift, 62° |
-| Medium (you) | 7% still, 62° |  | 6% still, 70° | 6% drift, 56° | 3% still, 45° | 5% drift, 50° | 4% drift, 62° |
+| Three-quarter (NPC) | 10% still, 58° |  | 6% still, 72° | 7% drift, 52° |  | 3% drift, 50° | 5% drift, 58° |
+| Three-quarter (you) | 10% still, 58° |  | 6% still, 72° | 7% drift, 52° |  | 3% drift, 50° | 5% drift, 58° |
+| Medium (NPC) | 7% still, 62° |  | 6% still, 70° | 6% drift, 56° | 3% still, 45° | 3% drift, 50° | 4% drift, 62° |
+| Medium (you) | 7% still, 62° |  | 6% still, 70° | 6% drift, 56° | 3% still, 45° | 3% drift, 50° | 4% drift, 62° |
 | Medium profile (NPC) |  |  |  |  |  | 3% drift, 50° | 2% drift, 60° |
 | Profile (you) |  |  |  |  |  |  | 2% drift, 60° |
 | Low profile (NPC) |  |  |  |  |  |  | 1% push in, a little tilt up, 60° |
@@ -129,14 +129,14 @@ that shot. (Generated from the presets in the code.)
 | High angle (you) |  |  |  |  |  |  | 2% crane down, 65° |
 | Profile (both, side on) | 2% still, 60° |  |  | 2% still, 55° |  | 3% drift, 55° | 2% drift, 60° |
 | Two-shot | 4% drift, 72° |  | 7% drift, 80° | 5% drift, 65° |  | 6% drift, 60° | 4% drift, 72° |
-| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 7% crane up, 55° | 3% crane up, 80° |
-| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 7% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
 | Overhead (NPC) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
 | Overhead (you) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
 | Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 7% drift, 60° | 3% pull out, 88° |
-| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 10% drift, 45° | 2% pull out, 45° |
+| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 13% drift, 45° | 2% pull out, 45° |
 | Distant, low (room shot) |  |  |  |  |  |  | 2% drift, 45° |
-| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 9% drift, 70° | 3% crane up, 95° |
+| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 11% drift, 70° | 3% crane up, 95° |
 
 ## Notes
 

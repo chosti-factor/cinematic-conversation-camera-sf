@@ -9,6 +9,10 @@ test build; "diagnostic" items only add information to the log for testing.
 ### Changed
 - Camera sway: Constellation 60 to 50 (with its handheld wander it was a touch strong at
   times), Frontier 50 to 45. Constellation, with the wander, is still the most handheld.
+- Constellation leans back towards the room it watches from across (the tests measured 18%
+  wide indoors, 32% outdoors, against about half designed): the distant shot 75 to 95, the
+  master 70 to 85, the long shots 55 to 65, the three-quarters 40 to 25 and the mediums 35 to
+  20. Wide and full-figure shots 47% to 55% of its weights; faces unchanged.
 
 ## 0.9.26 - 2026-11-19
 

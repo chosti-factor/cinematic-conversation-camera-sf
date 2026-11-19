@@ -295,17 +295,20 @@ namespace CCC::Director
 		// are 45-95): the distant shot and the master most, small slow drifts everywhere as an
 		// operator following along, the most handheld sway, cranes on the master and the long
 		// shots to show the space and the work; faces now and then (about a fifth).
+		// 0.9.27: more of the room (the tests measured 18% wide indoors, 32% outdoors, against
+		// about half designed): Distant 75 -> 95, Master 70 -> 85, the long shots 55 -> 65; the
+		// three-quarters 40 -> 25 and the mediums 35 -> 20. Faces unchanged.
 		constexpr std::array kConstellation{
-			PresetEntry{ ShotType::kDistant, 75, Move::kDrift, 8, 9.0f, 45.0f },
-			PresetEntry{ ShotType::kMaster, 70, Move::kDrift, 10, 10.0f, 70.0f },  // 0.9.25: drifts (was a crane up; an operator on the floor)
+			PresetEntry{ ShotType::kDistant, 95, Move::kDrift, 8, 9.0f, 45.0f },
+			PresetEntry{ ShotType::kMaster, 85, Move::kDrift, 10, 10.0f, 70.0f },  // 0.9.25: drifts (was a crane up; an operator on the floor)
 			PresetEntry{ ShotType::kWide, 55, Move::kDrift, 10, 9.0f, 60.0f },
-			PresetEntry{ ShotType::kLongNpc, 55, Move::kCraneUp, 15, 9.0f, 55.0f },
-			PresetEntry{ ShotType::kLongPlayer, 55, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kLongNpc, 65, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kLongPlayer, 65, Move::kCraneUp, 15, 9.0f, 55.0f },
 			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 10, 9.0f, 60.0f },
-			PresetEntry{ ShotType::kThreeQuarterNpc, 40, Move::kDrift, 8, 7.0f, 50.0f },
-			PresetEntry{ ShotType::kThreeQuarterPlayer, 40, Move::kDrift, 8, 7.0f, 50.0f },
-			PresetEntry{ ShotType::kMediumNpc, 35, Move::kDrift, 8, 7.0f, 50.0f },
-			PresetEntry{ ShotType::kMediumPlayer, 35, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kThreeQuarterNpc, 25, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kThreeQuarterPlayer, 25, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kMediumNpc, 20, Move::kDrift, 8, 7.0f, 50.0f },
+			PresetEntry{ ShotType::kMediumPlayer, 20, Move::kDrift, 8, 7.0f, 50.0f },
 			PresetEntry{ ShotType::kOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
 			PresetEntry{ ShotType::kPlayerOverhead, 25, Move::kCraneDown, 15, 8.0f, 70.0f },
 			PresetEntry{ ShotType::kOverPlayerShoulder, 30, Move::kDrift, 6, 7.0f, 50.0f },

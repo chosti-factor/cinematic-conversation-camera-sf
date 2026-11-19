@@ -326,6 +326,9 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   your turn's angle and tagged choices).
 - Nebula is the default preset since 0.9.26 (the user: "becoming my favorite"), its pace a
   little calmer (fresh angle 60% of turns, every 2-4 lines, hold 2 s; was 75%, 2-3, 1.6).
+- 0.9.27 (the user): sway Constellation 50, Frontier 45; Constellation's weights back towards
+  the room (wide 47% -> 55% of its weights, faces unchanged), as "Room, but filmed by a
+  handheld operator with a long lens". To check its measured wide share next test.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
