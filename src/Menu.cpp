@@ -56,7 +56,7 @@ namespace CCC::Menu
 				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
 				kPresets },
 			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
-				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. One setting for every preset (each keeps its own rhythm and is nudged from it); mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
+				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
 			{ "Camera", "Look", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
 				"0 a tripod, 100 fully handheld." },
 			{ "Camera", "Look", "Camera", "fConversationLens", "Lens (degrees)", Kind::kOwnFloat, 20, 70, "%.0f",
@@ -166,11 +166,31 @@ namespace CCC::Menu
 			return out;
 		}
 
-		std::optional<std::string> ReadRaw(const wchar_t* a_path, const Entry& a_entry)
+		// The INI key an entry reads and writes (0.9.27): the cutting pace is each preset's own,
+		// fCuttingPace<Preset> for the preset in use (fCuttingPace itself is the fallback).
+		std::string KeyOf(const Entry& a_entry)
+		{
+			if (std::string_view{ a_entry.key } != "fCuttingPace") {
+				return a_entry.key;
+			}
+			std::string preset{ Settings::Get().preset };
+			for (const char* name : Settings::kPresetNames) {
+				std::string lower{ name };
+				std::string mine{ preset };
+				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				std::ranges::transform(mine, mine.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (lower == mine) {
+					return std::string{ "fCuttingPace" } + name;
+				}
+			}
+			return a_entry.key;
+		}
+
+		std::optional<std::string> ReadKey(const wchar_t* a_path, const char* a_section, const std::string& a_key)
 		{
 			wchar_t buffer[512]{};
-			const auto section = Wide(a_entry.section);
-			const auto key = Wide(a_entry.key);
+			const auto section = Wide(a_section);
+			const auto key = Wide(a_key.c_str());
 			::GetPrivateProfileStringW(section.c_str(), key.c_str(), L"\x01", buffer, 511, a_path);
 			if (buffer[0] == L'\x01') {
 				return std::nullopt;
@@ -183,6 +203,11 @@ namespace CCC::Menu
 				value.pop_back();
 			}
 			return value;
+		}
+
+		std::optional<std::string> ReadRaw(const wchar_t* a_path, const Entry& a_entry)
+		{
+			return ReadKey(a_path, a_entry.section, KeyOf(a_entry));
 		}
 
 		struct Value
@@ -202,8 +227,17 @@ namespace CCC::Menu
 				const auto& e = kEntries[i];
 				if (auto mine = ReadRaw(kUserIniPath, e)) {
 					g_values[i] = { *mine, true };
+				} else if (auto main = ReadRaw(kIniPath, e)) {
+					g_values[i] = { *main, false };
+				} else if (KeyOf(e) != e.key) {
+					// No pace of this preset's own: the general fCuttingPace (yours, or the INI's).
+					auto general = ReadKey(kUserIniPath, e.section, e.key);
+					if (!general) {
+						general = ReadKey(kIniPath, e.section, e.key);
+					}
+					g_values[i] = { general.value_or(""), false };
 				} else {
-					g_values[i] = { ReadRaw(kIniPath, e).value_or(""), false };
+					g_values[i] = { "", false };
 				}
 			}
 			g_readAt = std::chrono::steady_clock::now();
@@ -212,28 +246,30 @@ namespace CCC::Menu
 		void Write(std::size_t a_index, const std::string& a_text)
 		{
 			const auto& e = kEntries[a_index];
+			const auto  name = KeyOf(e);
 			const auto  section = Wide(e.section);
-			const auto  key = Wide(e.key);
+			const auto  key = Wide(name.c_str());
 			const auto  text = Wide(a_text.c_str());
 			if (::WritePrivateProfileStringW(section.c_str(), key.c_str(), text.c_str(), kUserIniPath)) {
 				g_values[a_index] = { a_text, true };
-				g_status = std::format("Saved {}={} to your _user.ini.", e.key, a_text);
+				g_status = std::format("Saved {}={} to your _user.ini.", name, a_text);
 				if (std::string_view{ e.key } == "sPreset") {
 					Settings::SetPresetOverride("");  // the preset key's choice gives way to this one
 				}
 			} else {
-				g_status = std::format("Couldn't write {} to CinematicConversationCameraSF_user.ini (Data\\SFSE\\Plugins).", e.key);
+				g_status = std::format("Couldn't write {} to CinematicConversationCameraSF_user.ini (Data\\SFSE\\Plugins).", name);
 			}
 		}
 
 		void Reset(std::size_t a_index)
 		{
 			const auto& e = kEntries[a_index];
+			const auto  name = KeyOf(e);
 			const auto  section = Wide(e.section);
-			const auto  key = Wide(e.key);
+			const auto  key = Wide(name.c_str());
 			::WritePrivateProfileStringW(section.c_str(), key.c_str(), nullptr, kUserIniPath);  // removes the line
-			g_values[a_index] = { ReadRaw(kIniPath, e).value_or(""), false };
-			g_status = std::format("{} back to the INI's value.", e.key);
+			ReadAll();
+			g_status = std::format("{} back to the INI's value.", name);
 		}
 
 		int AsInt(const std::string& a_text, int a_default)
@@ -316,7 +352,11 @@ namespace CCC::Menu
 						const float fallback = key == "fCuttingPace" ? 0.0f : e.min;
 						int         steps = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, fallback), e.min, e.max) / step));
 						const auto  shown = key == "fCuttingPace" ? std::format("{:+.1f}", steps * step) : std::format("{:.2f}", steps * step);
-						ImGuiMCP::SliderInt(e.label, &steps, static_cast<int>(std::lround(e.min / step)), static_cast<int>(std::lround(e.max / step)), shown.c_str());
+						// The cutting pace names the preset it belongs to (0.9.27: each has its own);
+						// "###" keeps the widget the same while the name changes.
+						const auto keyName = KeyOf(e);
+						const auto label = key == "fCuttingPace" && keyName.size() > 12 ? std::format("{} ({})###{}", e.label, keyName.substr(12), e.key) : std::string{ e.label };
+						ImGuiMCP::SliderInt(label.c_str(), &steps, static_cast<int>(std::lround(e.min / step)), static_cast<int>(std::lround(e.max / step)), shown.c_str());
 						Help(e);
 						if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 							Write(a_index, std::format("{:.2f}", steps * step));

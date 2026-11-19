@@ -104,6 +104,7 @@ namespace CCC::Director
 			std::optional<Frame>      lastFrame;                // the last frame seen, for the closing shot (0.9.14)
 			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
 			// The cutting rhythm in use: the preset's own, nudged by iCuttingPace (0.9.8).
+			float pace{ 0.0f };  // the cutting pace in use (the preset's own or fCuttingPace, 0.9.27)
 			int   freshAngleChance{ 50 };
 			int   minLines{ 2 };
 			int   maxLines{ 5 };
@@ -928,7 +929,8 @@ namespace CCC::Director
 			{
 				static constexpr float kLineScale[] = { 1.6f, 1.3f, 1.0f, 0.75f, 0.55f };
 				// 0.9.26: half steps too, between the whole steps' scales.
-				const float pace = std::clamp(s.cuttingPace, -2.0f, 2.0f);
+				const float pace = std::clamp(s.CuttingPaceFor(preset), -2.0f, 2.0f) + 0.0f;  // (the preset's own pace, 0.9.27; + 0 so -0 shows as 0)
+				g.pace = pace;
 				const float at = pace + 2.0f;
 				const int   lo = std::clamp(static_cast<int>(std::floor(at)), 0, 4);
 				const int   hi = (std::min)(lo + 1, 4);
@@ -1082,7 +1084,7 @@ namespace CCC::Director
 		g.skipped.clear();
 		gp = PlainIntense{};
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+.1f} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
-			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingPace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
+			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, g.pace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
 			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", ExtremeCloseUpChanceNpc(),
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,

@@ -20,9 +20,12 @@ test build; "diagnostic" items only add information to the log for testing.
   rounded straight back; it's a slider of half steps now. The three finest sliders (the large
   speaker height, the filming stop distance and time) move in 0.05 steps instead of 0.01, so a
   controller crosses them in a few dozen presses, not a couple of hundred.
+- The cutting pace is each preset's own (the user): `fCuttingPaceNebula`, `fCuttingPaceStarborn`
+  and so on; the settings page shows and sets the pace of the preset in use, named beside it,
+  and switching presets picks up that preset's pace. `fCuttingPace` still applies to any preset
+  without its own. (The log printed a pace of 0 as "-0.0" at times; fixed.)
 - Settings page: when changes apply ("from the next conversation; made during one, from the
-  one after") is now at the top of every page, not only at the bottom; the cutting pace's help
-  says it's one setting for every preset, nudging each one's own rhythm.
+  one after") is now at the top of every page, not only at the bottom.
 
 ## 0.9.26 - 2026-11-19
 

@@ -186,6 +186,23 @@ namespace CCC
 		// How lively the cutting is, relative to the preset's own rhythm (0.9.8; replaced the
 		// named cutting styles): -2 calmest .. 0 the preset's own .. +2 liveliest.
 		float       cuttingPace{ 0.0f };  // -2 to +2 in steps of 0.5 (0.9.26; whole steps before, iCuttingPace)
+		// Each preset's own pace (0.9.27): fCuttingPace<Preset> (fCuttingPaceNebula...); NaN = not
+		// set, fCuttingPace applies. In the order of kPresetNames.
+		static constexpr std::array<const char*, 7> kPresetNames{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
+		std::array<float, 7> cuttingPaces{ std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(),
+			std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::quiet_NaN() };
+		// The pace in use for a preset (any case): its own, or fCuttingPace.
+		[[nodiscard]] float CuttingPaceFor(std::string_view a_preset) const
+		{
+			for (std::size_t i = 0; i < kPresetNames.size(); ++i) {
+				const std::string_view name{ kPresetNames[i] };
+				if (name.size() == a_preset.size() &&
+					std::equal(name.begin(), name.end(), a_preset.begin(), [](char a, char b) { return std::tolower(static_cast<unsigned char>(a)) == std::tolower(static_cast<unsigned char>(b)); })) {
+					return std::isnan(cuttingPaces[i]) ? cuttingPace : cuttingPaces[i];
+				}
+			}
+			return cuttingPace;
+		}
 		int         minLines{ 0 };             // new angle after this many lines... (0 = the preset's)
 		int         maxLines{ 0 };             // ...up to this many, random in between (0 = the preset's)
 		float       shortLineSeconds{ 1.2f };  // lines shorter than this don't count

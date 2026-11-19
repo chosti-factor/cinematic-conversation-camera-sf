@@ -132,6 +132,14 @@ namespace CCC
 			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"iCuttingPace", a_s.cuttingPace);
 			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"fCuttingPace", a_s.cuttingPace);
 			a_s.cuttingPace = std::clamp(std::round(a_s.cuttingPace * 2.0f) / 2.0f, -2.0f, 2.0f);
+			for (std::size_t i = 0; i < Settings::kPresetNames.size(); ++i) {
+				std::wstring key = L"fCuttingPace";
+				for (const char* c = Settings::kPresetNames[i]; *c; ++c) {
+					key.push_back(static_cast<wchar_t>(*c));
+				}
+				const float own = ReadFloat(a_path, L"Director", key.c_str(), a_s.cuttingPaces[i]);
+				a_s.cuttingPaces[i] = std::isnan(own) ? own : std::clamp(std::round(own * 2.0f) / 2.0f, -2.0f, 2.0f);
+			}
 			a_s.minLines = std::clamp(ReadInt(a_path, L"Director", L"iMinLines", a_s.minLines), 0, 20);
 			a_s.maxLines = std::clamp(ReadInt(a_path, L"Director", L"iMaxLines", a_s.maxLines), 0, 20);
 			a_s.shortLineSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fShortLineSeconds", a_s.shortLineSeconds), 0.0f, 10.0f);
