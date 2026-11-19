@@ -61,7 +61,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   everything (-1, the default, keeps each angle's own; 30 is the game's).
 - **Emotion close-ups** (every tier in Frontier, Starborn and Nebula; strong lines only in
   Constellation and, of CCC's, Close): lines the game tags with an expression push in to a
-  close-up of the speaker, 40% of them extreme close-ups (each for its own line only). The
+  close-up of the speaker, 40% of them extreme close-ups (Frontier 20%; each for its own line
+  only). The
   expressions come in three tiers with their own chances: mild (Amused, Confident,
   Thinking...) 25%, medium (Concerned, Serious, Smirk...) 40%, strong (Angry, Afraid,
   Shocked, Somber...) always; Neutral and Friendly never (`sCloseUpEmotions...Npc`,
@@ -149,8 +150,8 @@ What CCC doesn't do.
   (*Interstellar* with a touch of Kubrick), Constellation (a hard sci-fi documentary) and
   Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
-  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn a
-  light touch, Constellation handheld), or `iCameraSway` sets one.
+  fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
+  there, Constellation handheld), or `iCameraSway` sets one.
 - **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
   game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
   menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
@@ -180,7 +181,7 @@ of your expressions.
 | Close | CCC | Shoulders, tight close-ups and extreme close-ups, pushing and zooming in (lenses 35-50) | A film-noir conversation: faces fill the screen, every flicker of an expression counts | Distant only, as far as CCC's framing wants |
 | Room | CCC | Wide and full-figure shots: masters, wides, long shots, overheads, with cranes on the wide ones (lenses 45-95) | A classic western or a stage play: people small in their surroundings, the place matters | As far as CCC's framing wants |
 | Frontier | CCC SF (Standard) | Standard on slightly longer lenses, slow dolly-like drifts on the two-shot, three-quarters and mediums, singles with a shoulder edging in, heroic low angles, the room now and then, a touch of handheld | A space western (*Firefly*, *The Expanse*): Akila, Neon, the outposts | Up to 9 m indoors, 12 m outdoors |
-| Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses, singles with a shoulder edging in, a close profile, faces half off-centre, a light handheld touch, still shots with push-ins on the emotional lines, a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
+| Starborn | CCC SF (Close) | Close-ups and shoulders on long lenses, singles with a shoulder edging in, a close profile, faces a little off-centre, a barely-there handheld touch, still shots with push-ins on the emotional lines, a wide shot for scale every few minutes with a slow crane up | *Interstellar* with a touch of Kubrick: the Unity, the artifacts, the uncanny | Up to 9 m indoors, 12 m outdoors |
 | Constellation | CCC SF (Room) | Watched from across the room on longer lenses, past people's shoulders and side on, small slow drifts everywhere (the master too), the most handheld sway, cranes on the long shots, faces now and then | A hard sci-fi documentary (*The Martian*, *Apollo 13*): the Lodge, labs, ships | Up to 9 m indoors, 12 m outdoors |
 | Nebula | CCC SF | Every angle in the library, every move CCC has, bold and varied: heroic low angles, high angles, profiles, group shots | A space opera (*Guardians of the Galaxy*, *The Fifth Element*, *Valerian*, the original *Star Wars*) | Up to 9 m indoors, 12 m outdoors |
 

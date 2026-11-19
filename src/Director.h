@@ -103,6 +103,9 @@ namespace CCC::Director
 	// Emotion close-ups and reaction shots in the preset in use (0.8.13): your setting, or the
 	// preset's own. EmotionCloseUps: 0 none, 1 every tier, 3 strong lines only.
 	[[nodiscard]] int  EmotionCloseUps();
+	// The share of their emotion close-ups that are extreme (0.9.25): iExtremeCloseUpChanceNpc,
+	// or the preset's own (Frontier 20%, the others 40%).
+	[[nodiscard]] int  ExtremeCloseUpChanceNpc();
 	[[nodiscard]] bool ReactionShots();
 
 	// A close-up of you when you choose a tagged option (0.8.16): your setting, or the

@@ -2481,7 +2481,7 @@ namespace CCC
 						const bool afterExtreme = g_state.lineIntense && g_state.lineExtreme && g_state.monoSeconds > 0.0f;
 						g_state.lineIntense = rolled;
 						// Extreme or not decided here (0.8.3), so a reaction knows not to interrupt it.
-						g_state.lineExtreme = rolled && !afterExtreme && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < s.extremeCloseUpChance;
+						g_state.lineExtreme = rolled && !afterExtreme && std::uniform_int_distribution<int>{ 0, 99 }(g_reactionRng) < Director::ExtremeCloseUpChanceNpc();
 						g_state.closeUpGoesOn = rolled && wasCloseUp && !g_state.lineExtreme;
 						if (listed && !rolled && s.debugLog) {
 							REX::INFO("Emotion close-up: '{}' line ({}), the {}% roll said no", emotion, tier == 3 ? "strong" : tier == 2 ? "medium" : "mild", chance);
@@ -2957,7 +2957,7 @@ namespace CCC
 			                   farSeated ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, s.overSeatedBehind, s.overSeatedSide * (plainSign < 0.0f ? -1.0f : 1.0f), s.overSeatedHeight) :
 			                   subject == Subject::kPlayer && g_state.largeSpeaker ?
-			                   Camera::OverShoulderAt(nearHeadRef, farHeadRef, plainSign, s.largeSpeakerAngle) :
+			                   Camera::OverShoulderAt(nearHeadRef, farHeadRef, plainSign, s.largeSpeakerPlainAngle) :
 			                   Camera::OverShoulder(nearHeadRef, farHeadRef, plainSign);
 			// Obstacles on the plain shot (seated people, merchants, or nothing in the preset
 			// fits): checked when the camera turns to the other person. A wall behind the

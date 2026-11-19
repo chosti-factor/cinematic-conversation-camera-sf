@@ -488,7 +488,7 @@ namespace CCC::Director
 			in.playerGround = a_frame.playerGround;
 			in.feetValid = a_frame.feetValid;
 			in.sway = static_cast<float>(CameraSway()) / 100.0f;
-			in.lookRoomScale = PresetIs("starborn") ? 0.5f : 1.0f;  // Starborn: faces centred (0.8.14); half off-centre (0.9.23)
+			in.lookRoomScale = PresetIs("starborn") ? 0.25f : 1.0f;  // Starborn: faces centred (0.8.14); half off-centre (0.9.23); a quarter (0.9.25)
 			in.roomAngle = a_frame.roomAngle;
 			in.roomDistance = a_frame.roomDistance;
 			in.roomRise = a_frame.roomRise;
@@ -1092,7 +1092,7 @@ namespace CCC::Director
 		REX::INFO("Director: preset {}, {}: camera at most {:.1f} m from the subject ({}); cutting pace {:+d} ({}% fresh angle per turn, new angle every {}-{} lines, hold at least {:.1f} s)",
 			preset, interior ? "interior" : "exterior", g.maxDistance, capFrom, s.cuttingPace, g.freshAngleChance, g.minLines, g.maxLines, g.shortestHold);
 		REX::INFO("Settings in effect: focus on the person in shot {}, focus style {} (wide beyond {:.1f} m), emotion close-ups {} ({}% extreme): {}",
-			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", s.extremeCloseUpChance,
+			s.focusOnSubject ? "on" : "off", s.deepFocusLongShots ? "Wide" : "Cinematic", s.deepFocusBeyond, EmotionCloseUps() == 0 ? "off" : EmotionCloseUps() == 3 ? "strong lines only" : "on", ExtremeCloseUpChanceNpc(),
 			std::format("mild {}% ({}), medium {}% ({}), strong {}% ({})", s.closeUpChanceMild, s.closeUpEmotionsMild, s.closeUpChanceMedium, s.closeUpEmotionsMedium,
 				s.closeUpChanceStrong, s.closeUpEmotionsStrong));
 		REX::INFO("Settings in effect: obstacle check {} ({:.2f} m wide){}", s.obstacleCheck ? "on" : "off", s.obstacleRadius,
@@ -1688,6 +1688,14 @@ namespace CCC::Director
 		return PresetIs("constellation") ? 3 : 1;
 	}
 
+	int ExtremeCloseUpChanceNpc()
+	{
+		const int mine = Settings::Get().extremeCloseUpChance;
+		// The preset's own: Frontier 20 (the 0.9.24 test: four of nine in the Andreja and
+		// Barrett conversations looked too many for the western), the others 40.
+		return mine >= 0 ? mine : PresetIs("frontier") ? 20 : 40;
+	}
+
 	float ReactionAfterSeconds()
 	{
 		const float mine = Settings::Get().reactionAfterSeconds;
@@ -1707,8 +1715,9 @@ namespace CCC::Director
 		// (a tripod); Frontier a touch of handheld, Starborn locked off (until 0.9.23), Constellation the
 		// documentary operator's, Nebula 40. 0.9.23: Starborn 30, a touch of handheld (less
 		// Kubrick, more Interstellar).
-		// 0.9.24: Constellation 70 -> 60 (the user).
-		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 60 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 30 : 0;
+		// 0.9.24: Constellation 70 -> 60 (the user). 0.9.25: Starborn 30 -> 15 (the 0.9.24
+		// test: overshot).
+		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 60 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 15 : 0;
 	}
 
 	float Handheld()

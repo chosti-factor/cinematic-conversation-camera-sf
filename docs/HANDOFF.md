@@ -308,6 +308,12 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
 - Considered and kept for now (the user, 2026-11-18): removing Constellation's two overhead
   shots (a documentary operator isn't above people; they read as surveillance). Its master
   drifts instead of craning up since 0.9.25 (the user); its long shots still crane.
+- 0.9.24 test (the user): NebulaTest's low angles looked great, one still a bit much (the low
+  angle on them: a sixth of the tilt in 0.9.25); Starborn overshot (sway 15, faces a quarter
+  off-centre in 0.9.25; its close-up lenses on hold: the user asked whether halfway is 47.5 or
+  42.5: each lens goes halfway from its own original, close-up of them 45 -> 47.5, of you
+  40 -> 42.5); Vasco's plain shot of you to 45 degrees ("good enough for 1.0"); Frontier's
+  extreme close-ups 20%. Muria's blocked shots were inside a ship and looked good.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of

@@ -441,8 +441,10 @@ namespace CCC::Shots
 			// 0.9.23 (Nebula's low angles; the tilt up alone sank the face under the subtitles):
 			// a push in, and a third of the tilt up at the same amount; the tilt is held to a
 			// sixth of the frame's height below where the framing puts the face (below).
+			// 0.9.25: the low angle on them, the lowest camera of the three, a sixth (the 0.9.24
+			// test: still a bit much next to the others).
 			distance *= 1.0f - travel * p;
-			aimLift = FullScale(M::kTiltUp) * std::clamp(a_in.moveAmount, 0, 100) / 100.0f * kUnit / 3.0f * p;
+			aimLift = FullScale(M::kTiltUp) * std::clamp(a_in.moveAmount, 0, 100) / 100.0f * kUnit / (a_type == ShotType::kLowAngle ? 6.0f : 3.0f) * p;
 			break;
 		case M::kDrift:
 		case M::kOrbitRight:

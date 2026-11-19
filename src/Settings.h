@@ -221,7 +221,7 @@ namespace CCC
 		// in this list, the camera pushes in to a close-up (a third of the time an extreme
 		// close-up), as CCC does for the lines Skyrim's writers marked at full strength.
 		int         emotionCloseUps{ -1 };    // -1 the preset's own (0.8.13: Standard and Room none, Close strong lines only, CCC SF's every tier), 0 off, 1 every tier
-		int         extremeCloseUpChance{ 40 };  // % of emotion close-ups that are extreme close-ups
+		int         extremeCloseUpChance{ -1 };  // % of emotion close-ups that are extreme close-ups; -1 = the preset's own (0.9.25: Frontier 20, the rest 40)
 		int         extremeCloseUpChancePlayer{ 40 };  // % of close-ups of you that are extreme (0.8.3)
 		// Emotion close-ups by tier (0.8.6): each list with its own chance (%).
 		std::string closeUpEmotionsMild{ "Amused,Confident,Thinking,Grateful,Question,Impressed,Tired,Concentrating,Relieved" };
@@ -245,6 +245,7 @@ namespace CCC
 		// the shots of you keep to largeSpeakerAngle degrees off the line or wider. 0 = off.
 		float largeSpeakerHeight{ 1.70f };
 		float largeSpeakerAngle{ 38.0f };
+		float largeSpeakerPlainAngle{ 45.0f };  // ... and the plain over-the-shoulder shot of you (0.9.25)
 		bool  gameCameraInScenes{ true };
 		// Focus on the person in shot (0.5.0): the game's conversation blur is focused at the
 		// distance from the camera to whoever is in shot. Focus style (0.5.1): Cinematic = the

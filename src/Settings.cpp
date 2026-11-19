@@ -168,7 +168,7 @@ namespace CCC
 			a_s.closeUpEmotionsMild = ReadString(a_path, L"Director", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);
 			a_s.closeUpEmotionsMedium = ReadString(a_path, L"Director", L"sCloseUpEmotionsMediumNpc", a_s.closeUpEmotionsMedium);
 			a_s.closeUpEmotionsStrong = ReadString(a_path, L"Director", L"sCloseUpEmotionsStrongNpc", a_s.closeUpEmotionsStrong);
-			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChanceNpc", a_s.extremeCloseUpChance), 0, 100);
+			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Director", L"iExtremeCloseUpChanceNpc", a_s.extremeCloseUpChance), -1, 100);
 			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
 			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
 			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
@@ -193,6 +193,7 @@ namespace CCC
 			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeightNpc", a_s.minSpeakerHeight), 0.0f, 3.0f);
 			a_s.largeSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerHeightNpc", a_s.largeSpeakerHeight), 0.0f, 3.0f);
 			a_s.largeSpeakerAngle = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerAnglePlayer", a_s.largeSpeakerAngle), 0.0f, 60.0f);
+			a_s.largeSpeakerPlainAngle = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerPlainAnglePlayer", a_s.largeSpeakerPlainAngle), 0.0f, 60.0f);
 			a_s.gameCameraInScenes = ReadInt(a_path, L"Camera", L"bGameCameraInScenes", a_s.gameCameraInScenes ? 1 : 0) != 0;
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
 			// sFocusStyle (0.5.1); bDeepFocusLongShots=1 from 0.5.0 INIs means Wide.

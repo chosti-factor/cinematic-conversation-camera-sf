@@ -10,6 +10,17 @@ test build; "diagnostic" items only add information to the log for testing.
 - Constellation's master shot drifts instead of craning up: the documentary operator is on
   the floor with the people (the user). Its long shots still crane up.
 
+- From the 0.9.24 test (the user):
+  - Starborn overshot a little towards *Interstellar*: sway 30 to 15, faces a quarter
+    off-centre (half before). Its wider close-up lenses stay for now, to be decided.
+  - The low angle on them (the lowest camera of the three) tilts a sixth of the old tilt, not
+    a third; it was still a bit much next to the others.
+  - Frontier's extreme close-ups of them are rarer: 20% of its emotion close-ups (4 of 9 in the
+    test). `iExtremeCloseUpChanceNpc` is now -1, the preset's own (Frontier 20, the others 40).
+  - With a large speaker, the plain over-the-shoulder shot of you swings round to 45 degrees
+    (38 still showed part of Vasco when you stood close); `fLargeSpeakerPlainAnglePlayer`, in
+    the INI and on the settings page.
+
 ### Fixed
 - The last one-frame flashes (3 in the 0.9.24 test, down from 22): an emotion close-up in the
   middle of their turn, then a reaction on the next frame. It now waits for the line's
