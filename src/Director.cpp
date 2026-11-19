@@ -1705,7 +1705,8 @@ namespace CCC::Director
 		// (a tripod); Frontier a touch of handheld, Starborn locked off (until 0.9.23), Constellation the
 		// documentary operator's, Nebula 40. 0.9.23: Starborn 30, a touch of handheld (less
 		// Kubrick, more Interstellar).
-		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 70 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 30 : 0;
+		// 0.9.24: Constellation 70 -> 60 (the user).
+		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 60 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 30 : 0;
 	}
 
 	float Handheld()

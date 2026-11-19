@@ -18,6 +18,7 @@ test build; "diagnostic" items only add information to the log for testing.
   - Constellation: singles with a shoulder edging in (the observer shooting past people),
     the profile of you both and their medium profile, drifting. Its medium profile can also
     open a conversation from first person.
+- Constellation's camera sway 70 to 60 (with its handheld wander as before).
 
 ## 0.9.23 - 2026-11-18
 
