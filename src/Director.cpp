@@ -1705,8 +1705,9 @@ namespace CCC::Director
 		// documentary operator's, Nebula 40. 0.9.23: Starborn 30, a touch of handheld (less
 		// Kubrick, more Interstellar).
 		// 0.9.24: Constellation 70 -> 60 (the user). 0.9.25: Starborn 30 -> 15 (the 0.9.24
-		// test: overshot).
-		return mine >= 0 ? mine : PresetIs("frontier") ? 50 : PresetIs("constellation") ? 60 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 15 : 0;
+		// test: overshot). 0.9.27: Constellation 60 -> 50 (with the wander a touch strong at
+		// times), Frontier 50 -> 45 (the user).
+		return mine >= 0 ? mine : PresetIs("frontier") ? 45 : PresetIs("constellation") ? 50 : PresetIs("nebula") ? 40 : PresetIs("starborn") ? 15 : 0;
 	}
 
 	float Handheld()

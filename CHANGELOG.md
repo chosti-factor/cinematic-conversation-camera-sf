@@ -4,6 +4,12 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.27 - 2026-11-19
+
+### Changed
+- Camera sway: Constellation 60 to 50 (with its handheld wander it was a touch strong at
+  times), Frontier 50 to 45. Constellation, with the wander, is still the most handheld.
+
 ## 0.9.26 - 2026-11-19
 
 ### Changed

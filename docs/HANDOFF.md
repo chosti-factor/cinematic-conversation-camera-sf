@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.26 (2026-11-19).
+Last updated: 0.9.27 (2026-11-19).
 
 ## Working rules
 

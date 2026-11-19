@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.26 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
+Last updated: 0.9.27 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
 *Interstellar*, Nebula a space opera, close-up limits, and the rest below; 0.9.24: more shots
 in Frontier, Starborn and Constellation).
 
@@ -27,7 +27,7 @@ in Frontier, Starborn and Constellation).
 | The look | Shoulders, close-ups, three-quarters and mediums on both sides | Shoulders, tight close-ups and extreme close-ups | Wide and full-figure shots | Standard on slightly longer lenses, with the room now and then; singles with a shoulder edging in, heroic low angles, wide over-the-shoulders | Close-ups and shoulders, faces a little off-centre, singles with a shoulder edging in, a close profile, now and then a medium; a wide shot for scale every few minutes | Watched from across the room, past people's shoulders and side on; faces now and then | Every angle in the library |
 | Camera movement | Mostly still; close-ups push in; the two-shot drifts | Pushes and zooms on every close-up | Cranes and pull-outs on the wide shots, the rest still | Slow drifts on the two-shot, three-quarters and mediums, as on a dolly; close-ups push in | Regular shots held still; the emotion close-ups push in; a slow crane up on the master; nothing drifts | Small, slow drifts everywhere (the master too, since 0.9.25), as an operator following along; cranes on the long shots | Every move, bold and varied; the low angles push in with a little tilt up |
 | Lenses (degrees, per angle) | 50-72 | 35-50 | 45-95 | 40-80 | 37.5-60 | 40-70 | 40-95 |
-| Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 50, a touch of handheld | 15, barely there | 60 plus a slow handheld wander | 40 |
+| Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 45, a touch of handheld | 15, barely there | 50 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces a little off-centre: a quarter of the usual room in the direction they look | | |
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-4 lines and more than half the turns, 2 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
