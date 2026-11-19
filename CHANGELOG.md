@@ -17,7 +17,9 @@ test build; "diagnostic" items only add information to the log for testing.
 ### Fixed
 - Settings page: the cutting pace couldn't be moved with a controller (only with the mouse).
   Its half steps were made by rounding a decimal slider, and a controller's nudges (0.1) were
-  rounded straight back; it's a slider of half steps now. The other sliders weren't affected.
+  rounded straight back; it's a slider of half steps now. The three finest sliders (the large
+  speaker height, the filming stop distance and time) move in 0.05 steps instead of 0.01, so a
+  controller crosses them in a few dozen presses, not a couple of hundred.
 
 ## 0.9.26 - 2026-11-19
 

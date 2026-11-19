@@ -303,18 +303,25 @@ namespace CCC::Menu
 				}
 			case Kind::kFloat:
 				{
-					// The cutting pace moves in half steps (0.9.26). As a whole-number slider of
-					// half steps (0.9.27): a float slider rounded to 0.5 never moved with a
-					// controller, whose nudges (0.1) were rounded straight back.
-					if (std::string_view{ e.key } == "fCuttingPace") {
-						int        halves = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, 0.0f), e.min, e.max) * 2.0f));
-						const auto shown = std::format("{:+.1f}", halves / 2.0f);
-						ImGuiMCP::SliderInt(e.label, &halves, static_cast<int>(e.min * 2.0f), static_cast<int>(e.max * 2.0f), shown.c_str());
+					// Sliders in set steps (0.9.27), drawn as whole-number sliders of steps so a
+					// controller moves them a step per press: the cutting pace in halves (a float
+					// slider rounded to 0.5 never moved with a controller, whose 0.1 nudges were
+					// rounded straight back), and the finest ones in 0.05 (a controller crossed
+					// them 0.01 at a time).
+					const std::string_view key{ e.key };
+					const float            step = key == "fCuttingPace"                                                                          ? 0.5f :
+					                              key == "fLargeSpeakerHeightNpc" || key == "fFilmStopDistance" || key == "fFilmStopSeconds" ? 0.05f :
+					                                                                                                                           0.0f;
+					if (step > 0.0f) {
+						const float fallback = key == "fCuttingPace" ? 0.0f : e.min;
+						int         steps = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, fallback), e.min, e.max) / step));
+						const auto  shown = key == "fCuttingPace" ? std::format("{:+.1f}", steps * step) : std::format("{:.2f}", steps * step);
+						ImGuiMCP::SliderInt(e.label, &steps, static_cast<int>(std::lround(e.min / step)), static_cast<int>(std::lround(e.max / step)), shown.c_str());
 						Help(e);
 						if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
-							Write(a_index, std::format("{:.1f}", halves / 2.0f));
+							Write(a_index, std::format("{:.2f}", steps * step));
 						} else if (ImGuiMCP::IsItemActive()) {
-							v.text = std::format("{:.1f}", halves / 2.0f);
+							v.text = std::format("{:.2f}", steps * step);
 						}
 						break;
 					}
