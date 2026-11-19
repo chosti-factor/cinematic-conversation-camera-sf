@@ -34,7 +34,6 @@ Used alongside CCC SF throughout 0.9.x testing (about 330 mods in the test setup
 | Suit Protection Meter; Readable suit protection warnings; Toggle Quest Markers with Scanner and Ship HUD; Clean Vanilla Hitmarker | HUD | |
 | No Vignette (60 fps) | Image space | |
 | Starvegas - Cinematic Killcam; Starshake - Vizualized Recoil | Camera, in combat | Outside conversations, so no conflict |
-| AutoZoom | Camera | Enabled in the test setup; to confirm (see the testing pool) |
 | Background Dialogue Unlocked (and its add-ons); Conner's Ordinary Conversations; Companions Conversations Fix; Upgraded Companions; Improved Follower Behavior | Dialogue and scenes | More scenes for the camera to film; no conflict |
 | Souls of Cities; NPCs Have Routines and Stores Have Schedules; Better NPCs | NPCs | |
 | Starfield Engine Fixes; Address Library for SFSE Plugins; Cassiopeia Papyrus Extender; Console Command Runner; BA2 Limit Fix | Frameworks and fixes | |
@@ -49,6 +48,7 @@ Used alongside CCC SF throughout 0.9.x testing (about 330 mods in the test setup
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Leaves the message layer alone, as far as its page says | |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Replaces `hudmessagesmenu.gfx`; works if the subtitle keeps its place in the menu | The subtitle not moving into the bar |
 | Better Dialogue Controls | Dialogue menu input | Changes keys and timing, not the layout | |
+| AutoZoom | Camera zoom | Installed in the test setup but its plugin inactive, so not tested yet; to check once with it on | Its zoom acting during conversations |
 
 ## Incompatible (tested)
 
@@ -68,7 +68,7 @@ None so far.
 Five UI mods, one at a time; for each, a conversation from first person and one from third,
 and one filming of people talking nearby. Checks: the bars slide in, the subtitle sits in the
 bottom bar, the options fade and come back, the testing messages show. Then AutoZoom on once
-more. Venworks and rbtUI2 both replace the HUD message layer, so not together.
+(its `AutoZoom.esm` is inactive in the test setup's plugins.txt, so it hasn't been tested). Venworks and rbtUI2 both replace the HUD message layer, so not together.
 
 | Mod | Area | Recent | Popularity | Status |
 | --- | --- | --- | --- | --- |
