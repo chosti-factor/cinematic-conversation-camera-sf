@@ -258,6 +258,16 @@ Decisions so far (to build together once every preset is discussed):
   settled preset by preset. Frontier: proposed 12 s. Starborn: 18 s (the user).
 - C, Frontier: listening reactions in mediums and three-quarters, not close-ups; close-ups
   of you kept for when your face shows an expression. Other presets: to discuss.
+- Starborn, less Kubrick and more Interstellar (the user, all five):
+  1. Sway 0 -> 30 (a touch of handheld; Frontier is 50).
+  2. Faces off-centre instead of centred (look room halfway, 0.5, unless the user prefers
+     full).
+  3. Push-ins only on the emotion close-ups (their strength unchanged); the regular close-ups
+     of them and of you held still.
+  4. More room shots for scale: Distant 10 -> 25, Master 8 -> 20 (about one every few
+     minutes instead of one in ten); the crane-up reveal stays on the Master.
+  5. Close-up lenses one step wider: close-up of them 45 -> 50, of you 40 -> 45, extreme
+     close-ups 40 -> 45 and 35 -> 40. The user isn't sold yet: to judge in the test.
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
   emotions) and D (Frontier's two-shot of you for one turn: not seen again).
 
