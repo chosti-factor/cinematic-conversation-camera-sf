@@ -72,7 +72,7 @@ Last updated: 0.9.31 (2026-11-20).
   (0 in the last runs); large speakers (Vasco) keep shots of you swung wide (to be replaced
   by a body-bounds check after 1.0).
 - Filming people talking: starts on its own while you walk or jog past (only sprinting, over
-  6.5 m/s, holds it back; speeds logged, to set the limit), and then holds you still (movement
+  6.5 m/s, holds it back; the 0.9.31 test measured your jog at 4.6-5.0 m/s), and then holds you still (movement
   switched off through an input layer) until you let go of every movement input; moving again
   ends it (the user's rule, 0.9.31); the subtitle in the bar while
   filming (0.9.31). The crosshair is hidden while it films (0.9.29); over-the-shoulder
@@ -96,7 +96,13 @@ Last updated: 0.9.31 (2026-11-20).
   right after filming him with Sarah from first person. That scene was on the game's camera
   (a quest scene) and the mod never touched Tuala; taken as the game's own lip-sync drift
   unless it shows up elsewhere.
-- Known for the debugging pass: the "no DialogueList_mc" warning on a conversation's first
+- 0.9.31 test: all good (the user). At TerraBrew a third person (a Citizen) cut into the
+  filmed scene with a line of its own, and the Adoring Fan's force greet
+  ('TraitUnwantedHero_ForceGreetScene', a quest scene, the game's camera) came right after,
+  twice in a row, then Guillaume's quest scene started, broke off after 12 frames and started
+  again: the game's own scenes interrupting each other; nothing for the mod to change.
+- Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
+  unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
 
 ## Earlier (2026-11-17, 0.9.13)

@@ -77,7 +77,7 @@ Wednesday the 25th, about two days earlier.
 ## 4. Final polish passes (about 22 to 25 Nov), a build and a test round after each
 
 - [x] Take out the temporary "Nebula test" preset (done in 0.9.25)
-- [ ] Redundancy: dead code, finished experiments, old exit modes, spent diagnostics (0.9.30, built; to test; removed parts in docs/MEMORY.md)
+- [x] Redundancy: dead code, finished experiments, old exit modes, spent diagnostics (0.9.30; tested with 0.9.31, 2026-11-20: all good; removed parts in docs/MEMORY.md)
 - [ ] Debugging: every INI setting against its comment; edge cases (loading or a menu
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back
       conversations); thread safety, crashes
