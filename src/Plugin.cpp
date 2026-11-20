@@ -5279,10 +5279,23 @@ namespace CCC
 			// flag flickering after Amoli and Gerhard's scene ended started it again for a
 			// second, a flip to third person and back).
 			const bool freshLine = pick->lastLine > g_filmMain.stoppedAt;
-			// Not while you're running past (0.8.18: the 0.8.17 test started one as you ran by,
-			// flipped to third person and back 0.4 s later); walking up to one still starts it.
-			const bool running = g_filmMain.speed > 3.0f;
-			const bool autoStart = s.autoListen && conversation && !declined && freshLine && !running && a_now >= g_filmMain.autoBlockedUntil;
+			// Not while you're sprinting past (0.8.18: the 0.8.17 test started one as you ran by,
+			// flipped to third person and back 0.4 s later). 0.9.31: the limit was 3 m/s, under
+			// Starfield's usual jog, so it only started once you slowed down (the 0.9.30 test);
+			// now only sprinting holds it back. Your speed is logged either way, to set the limit
+			// from real numbers.
+			constexpr float kSprintSpeed = 6.5f;  // m/s
+			const bool running = g_filmMain.speed > kSprintSpeed;
+			const bool wouldStart = s.autoListen && conversation && !declined && freshLine && a_now >= g_filmMain.autoBlockedUntil;
+			const bool autoStart = wouldStart && !running;
+			if (wouldStart && running && s.debugLog) {
+				static std::uint64_t heldLine = 0;
+				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
+					heldLine = static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count());
+					REX::INFO("Filming people talking: {} and {} not started, you're moving at {:.1f} m/s (over {:.1f}, sprinting)", TalkerName(speaker), TalkerName(listener),
+						g_filmMain.speed, kSprintSpeed);
+				}
+			}
 			if (pressed || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
@@ -5317,7 +5330,7 @@ namespace CCC
 				g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
-					pressed ? "" : " (on its own: a conversation scene nearby)");
+					pressed ? "" : std::format(" (on its own: a conversation scene nearby; you moving at {:.1f} m/s)", g_filmMain.speed));
 				return;
 			}
 			// The prompt (bListenPrompt), while there's a conversation to listen in on; not with

@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.30 (2026-11-19).
+Last updated: 0.9.31 (2026-11-20).
 
 ## Working rules
 
@@ -86,6 +86,10 @@ Last updated: 0.9.30 (2026-11-19).
   docs/COMPATIBILITY.md. AutoZoom with its plugin on: compatible too (the user, 0.9.29).
 - After CCC SF (the user, 2026-11-19): a project of their own, a DLL version of AutoZoom,
   to avoid some of its bugs. Separate from this repository.
+- 0.9.30 test (the redundancy pass): Tuala's lines out of lip sync in 'MQ102_003_JohnSaveaScene'
+  right after filming him with Sarah from first person. That scene was on the game's camera
+  (a quest scene) and the mod never touched Tuala; taken as the game's own lip-sync drift
+  unless it shows up elsewhere.
 - Known for the debugging pass: the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
 

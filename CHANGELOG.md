@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.31 - 2026-11-20
+
+### Fixed
+- Filming people talking: the subtitle now moves into the bottom bar while filming too, with
+  "Subtitles in the bottom bar" on (it only followed your own conversations' bars).
+- Filming people talking starts on its own while you jog past again. Since 0.8.18 it waited
+  until you moved slower than 3 m/s, under Starfield's usual jog, so in practice only once
+  you'd slowed down (the 0.9.30 test). Now only sprinting holds it back (6.5 m/s). Jogging past
+  a scene may start it and stop it again a moment later, as moving on ends it.
+
+### Diagnostic
+- Your speed is logged when filming starts on its own, and when sprinting held it back, to set
+  that limit from real numbers.
+
 ## 0.9.30 - 2026-11-19
 
 The redundancy pass (the first of the four before 1.0): code no longer in use and finished

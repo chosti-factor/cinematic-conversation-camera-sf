@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.30 (2026-11-19).
+Last updated: 0.9.31 (2026-11-20).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -156,15 +156,16 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
   addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
   conversation. Press N", or hold B on a controller) and/or starting on its own when a
-  conversation begins near you, even as you walk past; moving ends it once you've come to a
-  stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
+  conversation begins near you, even as you walk or jog past (not sprinting); moving ends it
+  once you've come to a stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest
   first, then the next one nearby; followed into the game's next scene with the same people,
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
   three-quarters, shoulders), with a two-shot or a group shot now and then when three or
   more are talking. From first person, the view is third person while it films, with you
   hidden, and back to first person after. The crosshair and the name tags are hidden while
-  it films. Over-the-shoulder shots keep the camera at least 1.4 m from the near person,
+  it films, and with `bSubtitlesInBars` the subtitle sits in the bottom bar as in your own
+  conversations. Over-the-shoulder shots keep the camera at least 1.4 m from the near person,
   outside the distance at which the game hides people close to its camera.
 - **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu
   Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional

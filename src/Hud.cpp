@@ -1672,7 +1672,9 @@ namespace CCC::Hud
 				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
-				UpdateSubtitles(s.subtitlesInBars ? g_bars.ease : 0.0f);
+				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only
+				// followed the conversation's, so it stayed put while filming others).
+				UpdateSubtitles(s.subtitlesInBars ? (std::max)(g_bars.ease, g_filmBars.ease) : 0.0f);
 			}
 		}
 		if (dialogueOpen && !g_broken && (s.optionsFade > 0.0f || s.choiceCloseUps != 0 || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
