@@ -15,7 +15,8 @@ test build; "diagnostic" items only add information to the log for testing.
 - Holding you still works: you went 0.56 to 0.60 m in the 0.8-0.9 s you held the stick
   after jogging in at 4.6-5.0 m/s, the glide to a stop, then nothing. The slide seen in the
   0.9.31 test was most likely the aim following someone, not you. A sprint measured 7.7 m/s
-  (jogging 4.5-5.0), so the 6.5 m/s limit sits between them.
+  (jogging 4.5-5.0), so the 6.5 m/s limit sits between them. The distance went while held
+  is no longer logged (0.9.32's diagnostic, answered).
 
 ## 0.9.32 - 2026-11-20
 

@@ -4757,9 +4757,6 @@ namespace CCC
 			RE::NiPoint3                          startFeet{};   // where you were when it started
 			bool                                  settled{ false };  // you've come to a stop since it started (0.8.17)
 			bool                                  holdingYou{ false };  // started on its own: you're held still until you let go of moving (0.9.31)
-			RE::NiPoint3                          heldFrom{};      // where you were when the hold began (0.9.32, diagnostic)
-			float                                 heldPath{ 0.0f };  // how far you went while held
-			RE::NiPoint3                          heldLast{};
 			std::chrono::steady_clock::time_point stopSince{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
@@ -5291,19 +5288,13 @@ namespace CCC
 				bool inputMoved = false;
 				if (g_filmMain.autoStarted) {
 					const bool input = MovementInputHeld();
-					if (g_filmMain.holdingYou) {
-						// 0.9.32 diagnostic (the 0.9.31 test: the picture slid while the stick was
-						// held, and stopped as it was let go): how far you go while held.
-						g_filmMain.heldPath += FlatDistance(feet, g_filmMain.heldLast);
-						g_filmMain.heldLast = feet;
-					}
 					if (g_filmMain.holdingYou && !input) {
 						g_filmMain.holdingYou = false;
 						SetMovementHeld(false);
 						g_filmMain.playerAt = feet;  // where you came to rest
 						g_filmMain.stopSince = a_now;
-						REX::INFO("Filming people talking: you've let go of moving after {:.2f} s; your controls are back, and moving now ends it (while held you went {:.2f} m, ending {:.2f} m from where it started)",
-							std::chrono::duration<float>(a_now - g_filmMain.startedAt).count(), g_filmMain.heldPath, FlatDistance(feet, g_filmMain.heldFrom));
+						REX::INFO("Filming people talking: you've let go of moving after {:.2f} s; your controls are back, and moving now ends it",
+							std::chrono::duration<float>(a_now - g_filmMain.startedAt).count());
 					} else if (!g_filmMain.holdingYou && input) {
 						inputMoved = true;
 					}
@@ -5458,9 +5449,6 @@ namespace CCC
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !keyStarts;
 				g_filmMain.holdingYou = !keyStarts;
-				g_filmMain.heldFrom = g_filmMain.playerAt;
-				g_filmMain.heldLast = g_filmMain.playerAt;
-				g_filmMain.heldPath = 0.0f;
 				if (!keyStarts) {
 					SetMovementHeld(true);
 				}
