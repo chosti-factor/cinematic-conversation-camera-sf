@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.27 (2026-11-19).
+Last updated: 0.9.28 (2026-11-19).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -117,8 +117,10 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   from -2 (calmer: a new angle after more lines, held longer, fewer fresh angles when the
   turn passes) to +2 (livelier), in steps of 0.5, keeping the preset's character; 0 is the
   preset as designed. Each preset keeps its own (`fCuttingPaceNebula` and so on; the settings
-  page sets the one in use). `iMinLines`, `iMaxLines` and `fShortestHold` set exact values instead. A room or
-  shared shot (the two of you, the room) stays your angle for 2 of your turns at most.
+  page sets the one in use). `iMinLines`, `iMaxLines` and `fShortestHold` set exact values
+  instead. A room or shared shot (the two of you, the room) stays your angle for 2 of your
+  turns at most, and the camera never cuts to the shot already on screen: a wide shot is
+  followed by a closer one.
 - **Per-preset camera distances,** matched to each preset's widest shot: the camera stands
   where CCC's numbers put it, and each preset lets it go as far as its widest shot needs
   (Standard: 7 m indoors, 10.5 m outdoors); obstacle detection pulls it in or picks another

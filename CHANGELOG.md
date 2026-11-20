@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.28 - 2026-11-19
+
+### Fixed
+- A cut from a shot to the same shot. Room and shared shots frame you both, so both sides can
+  hold the same one as their angle, and the turn passing cut from it to itself (0.9.27 test:
+  four distant-to-distant cuts in Constellation; one in 0.9.24). Now the new side takes another
+  angle, and not a room shot, so a wide shot is followed by a closer one. Every preset.
+
+### Changed
+- Constellation keeps its room share but frames people larger (0.9.27 test: too far, people
+  too small, less rhythm): the distant shot 95 to 65, the master 85 to 95, the long shots 65
+  to 80. Wide and full-figure shots 56% of its weights; faces unchanged.
+
 ## 0.9.27 - 2026-11-19
 
 ### Changed

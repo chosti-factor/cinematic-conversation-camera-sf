@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.27 (2026-11-19).
+Last updated: 0.9.28 (2026-11-19).
 
 ## Working rules
 
@@ -331,6 +331,14 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
 - 0.9.27 (the user): sway Constellation 50, Frontier 45; Constellation's weights back towards
   the room (wide 47% -> 55% of its weights, faces unchanged), as "Room, but filmed by a
   handheld operator with a long lens". To check its measured wide share next test.
+- 0.9.27 test: Constellation's room-heavy mix hit 47% wide outdoors but felt too far, slow
+  and repetitive (the user agreed: too far, rhythm, less connection; "sometimes the same shot
+  followed the same shot"). 0.9.28: never a cut to the shot on screen (the new side takes a
+  closer angle; every preset), and Constellation's room share framed larger (Distant 65,
+  Master 95, long shots 80). Enhanced Dialogue Interface: bars, options fade and subtitle all
+  worked in the log (choice read by the list's selectedIndex, as EDI highlights every option);
+  the "no DialogueList_mc" log line on its first frame is a false alarm, to quieten in the
+  debugging pass. Awaiting the user's visual OK before listing it as tested compatible.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of
