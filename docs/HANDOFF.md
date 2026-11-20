@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.28 (2026-11-19).
+Last updated: 0.9.29 (2026-11-19).
 
 ## Working rules
 
@@ -51,7 +51,40 @@ Last updated: 0.9.28 (2026-11-19).
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-17, 0.9.13)
+## Where things stand (2026-11-19, 0.9.29): feature freeze
+
+- Features frozen on 2026-11-19 (the user), after the 0.9.29 test. From here: the four
+  polish passes in the release plan below (redundancy, debugging, optimization, INI
+  review), each followed by a build and a test round; then testing messages and the debug
+  log off; then a full test round on the release candidate. 1.0 public beta Friday
+  2026-11-27. New ideas go to README "After 1.0" (Planned or Mulling) on the user's call.
+- Presets settled through the 2026-11-18/19 reviews (docs/PRESETS.md): Nebula (space opera)
+  is the default and calmer (what a pace of -1.5 gave); Constellation frames people larger
+  and never cuts from a shot to the same shot (every preset); Frontier's extreme close-ups
+  25%, others 40%; close-up limits per preset (`fCloseUpLimitSecondsNpc`); per-preset
+  cutting pace (`fCuttingPace<Preset>`, half steps); room shots skip the 2.5x cap.
+- Your conversations: the tagged-choice close-up comes as you pick; no one-frame flash cuts
+  (0 in the last runs); large speakers (Vasco) keep shots of you swung wide (to be replaced
+  by a body-bounds check after 1.0).
+- Filming people talking: the crosshair is hidden while it films (0.9.29); over-the-shoulder
+  shots keep the camera at least 1.4 m from the near person (0.9.29), as the game's
+  third-person camera hides anyone close to it (Walter vanished and faded back in after
+  the cut); the 0.9.29 test: no fade-ins, shots barely different. The log gives each
+  shot's distance.
+- Quest scenes: those you take part in go to the game's camera unless their name starts
+  "Dialogue" or "CREW_" (everyday scenes, such as Noel's greeting at the Lodge, keep ours).
+  The scene-action log has its first Camera action ('MQ101_035_SarahMorganScene'); two other
+  MQ scenes had none, so the after-1.0 per-scene rule looks workable (docs/TODO.md).
+- Subtitles: off by default (`bSubtitlesInBars=0`), vanilla positioning, which can overlap
+  the top edge of the bottom bar (said in the INI and on the settings page, 0.9.29; the
+  user's call, for compatibility).
+- UI mods: all five in the pool tested compatible (rbtUI2, Enhanced Dialogue Interface,
+  Enhanced Subtitles, Venworks Customizable HUD with Canvas, StarUI HUD); see
+  docs/COMPATIBILITY.md. AutoZoom with its plugin on is still untested.
+- Known for the debugging pass: the "no DialogueList_mc" warning on a conversation's first
+  frame is a false alarm (the list isn't built yet); quieten it.
+
+## Earlier (2026-11-17, 0.9.13)
 
 - Starts: the first frame is placed against a prediction of the game's dialogue camera,
   fitted in the 0.9.5 distance test: on the line from the NPC's head through your feet,

@@ -62,9 +62,9 @@ Wednesday the 25th, about two days earlier.
 - [x] SFSE Menu Framework settings page (0.9.12; tested 0.9.14-0.9.18: pages, writes to the
       `_user.ini` (with Mod Organizer, in its overwrite folder), Reset, F1 mid-conversation)
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
-- [ ] Compatibility with UI mods: the testing pool of five in docs/COMPATIBILITY.md (rbtUI2
-      Enhanced Dialogue Interface, Enhanced Subtitles, Venworks HUD and StarUI HUD all work),
-      and AutoZoom on as one check
+- [ ] Compatibility with UI mods: the testing pool of five in docs/COMPATIBILITY.md (rbtUI2,
+      Enhanced Dialogue Interface, Enhanced Subtitles, Venworks HUD and StarUI HUD all work,
+      done); AutoZoom on as one check still to do
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
       are just people talking moved to after 1.0
@@ -72,7 +72,7 @@ Wednesday the 25th, about two days earlier.
 
 ## 3. Feature freeze (about 21 to 22 Nov)
 
-- [ ] Features frozen
+- [x] Features frozen (2026-11-19, after the 0.9.29 test; two days early)
 
 ## 4. Final polish passes (about 22 to 25 Nov), a build and a test round after each
 
