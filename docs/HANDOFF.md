@@ -75,7 +75,7 @@ Last updated: 0.9.34 (2026-11-20).
   6.5 m/s, holds it back; the 0.9.31 test measured your jog at 4.6-5.0 m/s), and then holds you still (movement
   switched off through an input layer) until you let go of every movement input; moving again
   ends it (the user's rule, 0.9.31); the subtitle in the bar while
-  filming (0.9.31). The game's HUD is hidden while it films (the crosshair 0.9.29, all of HUDMenu 0.9.34); over-the-shoulder
+  filming (0.9.31). The game's HUD is hidden while it films (the crosshair 0.9.29, all of HUDMenu 0.9.34, tested: works); looking around is off while it films (0.9.33, tested); over-the-shoulder
   shots keep the camera at least 1.4 m from the near person (0.9.29), as the game's
   third-person camera hides anyone close to it (Walter vanished and faded back in after
   the cut); the 0.9.29 test: no fade-ins, shots barely different. The log gives each
