@@ -14,7 +14,8 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.28 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
+Last updated: 0.9.31 (2026-11-20: Nebula a touch more varied, what a pace of +0.5 gave).
+Before: 0.9.28 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
 *Interstellar*, Nebula a space opera, close-up limits, and the rest below; 0.9.24: more shots
 in Frontier, Starborn and Constellation).
 
@@ -29,7 +30,7 @@ in Frontier, Starborn and Constellation).
 | Lenses (degrees, per angle) | 50-72 | 35-50 | 45-95 | 40-80 | 37.5-60 | 40-70 | 40-95 |
 | Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 45, a touch of handheld | 15, barely there | 50 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces a little off-centre: a quarter of the usual room in the direction they look | | |
-| Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 3-6 lines and 30% of the turns, 2.9 s |
+| Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 3-5 lines and 40% of the turns, 2.5 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
 | Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 56% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |

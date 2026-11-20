@@ -11,8 +11,17 @@ test build; "diagnostic" items only add information to the log for testing.
   "Subtitles in the bottom bar" on (it only followed your own conversations' bars).
 - Filming people talking starts on its own while you jog past again. Since 0.8.18 it waited
   until you moved slower than 3 m/s, under Starfield's usual jog, so in practice only once
-  you'd slowed down (the 0.9.30 test). Now only sprinting holds it back (6.5 m/s). Jogging past
-  a scene may start it and stop it again a moment later, as moving on ends it.
+  you'd slowed down (the 0.9.30 test). Now only sprinting holds it back (6.5 m/s).
+
+### Changed
+- Filming that starts on its own ignores all your movement until you've come to a full stop
+  (the user's rule): walking or jogging on no longer ends the scene early. After the stop,
+  moving ends it as before (`fFilmStopSeconds`, `fFilmStopDistance`). Started with the listen
+  key, walking on `fFilmWalkOnDistance` still ends it too.
+- Nebula a touch more varied (0.9.30 test, a conversation with Sarah: her low angle came back
+  on five of her turns): what a cutting pace of +0.5 gave, now its own. A fresh angle on 40%
+  of turns (was 30%), a new angle every 3-5 lines (was 3-6), held 2.5 s at least (was 2.9).
+  The pace setting still goes both ways from here.
 
 ### Diagnostic
 - Your speed is logged when filming starts on its own, and when sprinting held it back, to set

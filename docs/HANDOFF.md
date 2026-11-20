@@ -62,14 +62,17 @@ Last updated: 0.9.31 (2026-11-20).
   log off; then a full test round on the release candidate. 1.0 public beta Friday
   2026-11-27. New ideas go to README "After 1.0" (Planned or Mulling) on the user's call.
 - Presets settled through the 2026-11-18/19 reviews (docs/PRESETS.md): Nebula (space opera)
-  is the default and calmer (what a pace of -1.5 gave); Constellation frames people larger
+  is the default and calmer (what a pace of -1.5 gave; 0.9.31 half a step back, +0.5, a touch more varied); Constellation frames people larger
   and never cuts from a shot to the same shot (every preset); Frontier's extreme close-ups
   25%, others 40%; close-up limits per preset (`fCloseUpLimitSecondsNpc`); per-preset
   cutting pace (`fCuttingPace<Preset>`, half steps); room shots skip the 2.5x cap.
 - Your conversations: the tagged-choice close-up comes as you pick; no one-frame flash cuts
   (0 in the last runs); large speakers (Vasco) keep shots of you swung wide (to be replaced
   by a body-bounds check after 1.0).
-- Filming people talking: the crosshair is hidden while it films (0.9.29); over-the-shoulder
+- Filming people talking: starts on its own while you walk or jog past (only sprinting, over
+  6.5 m/s, holds it back; speeds logged, to set the limit), and then ignores your movement
+  until you've come to a full stop (the user's rule, 0.9.31); the subtitle in the bar while
+  filming (0.9.31). The crosshair is hidden while it films (0.9.29); over-the-shoulder
   shots keep the camera at least 1.4 m from the near person (0.9.29), as the game's
   third-person camera hides anyone close to it (Walter vanished and faded back in after
   the cut); the 0.9.29 test: no fade-ins, shots barely different. The log gives each

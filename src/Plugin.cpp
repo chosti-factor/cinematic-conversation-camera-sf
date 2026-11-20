@@ -5169,8 +5169,11 @@ namespace CCC
 						g_filmMain.settled = true;
 					}
 				}
+				// 0.9.31 (the user's rule): filming that started on its own ignores all your movement
+				// until you've come to a full stop; walking or jogging on doesn't end the scene early.
+				// Started with the listen key, walking on fFilmWalkOnDistance still ends it.
 				const float moved = g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
-				                    FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
+				                    !g_filmMain.autoStarted && FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
 				if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while

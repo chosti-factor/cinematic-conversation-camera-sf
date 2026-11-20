@@ -156,8 +156,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
   addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
   conversation. Press N", or hold B on a controller) and/or starting on its own when a
-  conversation begins near you, even as you walk or jog past (not sprinting); moving ends it
-  once you've come to a stop (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
+  conversation begins near you, even as you walk or jog past (not sprinting); your movement
+  is ignored until you've come to a full stop, and moving after that ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest
   first, then the next one nearby; followed into the game's next scene with the same people,
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
