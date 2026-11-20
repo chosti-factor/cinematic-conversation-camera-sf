@@ -34,6 +34,7 @@ listed here).
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work |
+| [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) | Camera zoom | Tested (0.9.29) with its plugin on: conversations and filming people talking unaffected |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Tested (0.9.28): the bars, the subtitle in the bar, the options and the testing messages all work |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
@@ -50,7 +51,6 @@ listed here).
 | Mod | Area | Why we expect it to work | Watch for |
 | --- | --- | --- | --- |
 | Better Dialogue Controls | Dialogue menu input | Changes keys and timing, not the layout | |
-| AutoZoom | Camera zoom | Installed in the test setup but its plugin inactive, so not tested yet; to check once with it on | Its zoom acting during conversations |
 
 ## Incompatible (tested)
 
@@ -70,7 +70,7 @@ None so far.
 Five UI mods, one at a time; for each, a conversation from first person and one from third,
 and one filming of people talking nearby. Checks: the bars slide in, the subtitle sits in the
 bottom bar, the options fade and come back, the testing messages show. Then AutoZoom on once
-(its `AutoZoom.esm` is inactive in the test setup's plugins.txt, so it hasn't been tested).
+(done in 0.9.29: compatible).
 
 | Mod | Area | Recent | Popularity | Status |
 | --- | --- | --- | --- | --- |

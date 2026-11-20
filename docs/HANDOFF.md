@@ -80,7 +80,9 @@ Last updated: 0.9.29 (2026-11-19).
   user's call, for compatibility).
 - UI mods: all five in the pool tested compatible (rbtUI2, Enhanced Dialogue Interface,
   Enhanced Subtitles, Venworks Customizable HUD with Canvas, StarUI HUD); see
-  docs/COMPATIBILITY.md. AutoZoom with its plugin on is still untested.
+  docs/COMPATIBILITY.md. AutoZoom with its plugin on: compatible too (the user, 0.9.29).
+- After CCC SF (the user, 2026-11-19): a project of their own, a DLL version of AutoZoom,
+  to avoid some of its bugs. Separate from this repository.
 - Known for the debugging pass: the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
 
