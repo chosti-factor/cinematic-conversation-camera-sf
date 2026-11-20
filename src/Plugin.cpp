@@ -5400,6 +5400,10 @@ namespace CCC
 			const bool running = g_filmMain.speed > kSprintSpeed;
 			const bool wouldStart = s.autoListen && conversation && !declined && freshLine && a_now >= g_filmMain.autoBlockedUntil;
 			const bool autoStart = wouldStart && !running;
+			// The listen key starts filming only with one of the two ways to start it on (0.9.31,
+			// the user's call): with bListenPrompt (the prompt shows), or with bAutoListen (no
+			// prompt; the key still films anyone, barks too). With both off, nothing starts.
+			const bool keyStarts = pressed && (s.listenPrompt || s.autoListen);
 			if (wouldStart && running && s.debugLog) {
 				static std::uint64_t heldLine = 0;
 				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
@@ -5408,7 +5412,7 @@ namespace CCC
 						g_filmMain.speed, kSprintSpeed);
 				}
 			}
-			if (pressed || autoStart) {
+			if (keyStarts || autoStart) {
 				std::scoped_lock lock{ g_film.lock };
 				g_film.active = true;
 				g_film.speaker = speaker;
@@ -5424,9 +5428,9 @@ namespace CCC
 				g_filmMain.scene = scene;
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
-				g_filmMain.autoStarted = !pressed;
-				g_filmMain.holdingYou = !pressed;
-				if (!pressed) {
+				g_filmMain.autoStarted = !keyStarts;
+				g_filmMain.holdingYou = !keyStarts;
+				if (!keyStarts) {
 					SetMovementHeld(true);
 				}
 				g_filmMain.people.clear();
@@ -5446,7 +5450,7 @@ namespace CCC
 				g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
-					pressed ? "" : std::format(" (on its own: a conversation scene nearby; you moving at {:.1f} m/s)", g_filmMain.speed));
+					keyStarts ? "" : std::format(" (on its own: a conversation scene nearby; you moving at {:.1f} m/s)", g_filmMain.speed));
 				return;
 			}
 			// The prompt (bListenPrompt), while there's a conversation to listen in on; not with

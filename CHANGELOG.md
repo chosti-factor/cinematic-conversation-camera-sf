@@ -26,6 +26,10 @@ test build; "diagnostic" items only add information to the log for testing.
   of turns (was 30%), a new angle every 3-5 lines (was 3-6), held 2.5 s at least (was 2.9).
   The pace setting still goes both ways from here.
 
+- With both ways to start filming off (`bListenPrompt=0`, `bAutoListen=0`), the listen key
+  no longer starts it either: nothing does (the user's call). With either on, the key works as
+  before.
+
 ### Diagnostic
 - Your speed is logged when filming starts on its own, and when sprinting held it back, to set
   that limit from real numbers.
