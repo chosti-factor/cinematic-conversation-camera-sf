@@ -115,3 +115,7 @@ Wednesday the 25th, about two days earlier.
   first per scene (a scene with no Camera or Timeline action keeps ours), later per phase
   (the game's camera only while a camera action runs). Needs the 0.9.20 logs from many
   quest scenes first, to confirm the Camera action is what takes the camera over.
+  First data (0.9.29 test, MQ101/MQ102 at the Lodge): the first Camera action seen,
+  'MQ101_035_SarahMorganScene' (1 Camera among 14 actions); 'MQ101_040_SarahFinalScene' and
+  'MQ102_001_PlayerScene' had none, so the per-scene rule would have kept this mod's camera
+  on them. Everyday 'Dialogue...' scenes (Noel's greeting) keep it already, by name.
