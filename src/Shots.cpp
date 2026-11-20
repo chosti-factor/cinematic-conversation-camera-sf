@@ -482,6 +482,16 @@ namespace CCC::Shots
 		if (spec.overShoulder) {
 			// Past the other person, so their shoulder is in the corner of the frame.
 			distance = (std::max)(distance, separation + 60.0f * kUnit);
+			if (a_in.minShoulderGap > 0.0f) {
+				// ...and, when asked, at least this far from them in fact: the near person
+				// stands `along` the camera's line and `across` it, so the room between them is
+				// sqrt((distance - along)^2 + across^2).
+				const float along = separation * std::cos(angle * kDeg);
+				const float across = separation * std::abs(std::sin(angle * kDeg));
+				if (across < a_in.minShoulderGap) {
+					distance = (std::max)(distance, along + std::sqrt(a_in.minShoulderGap * a_in.minShoulderGap - across * across));
+				}
+			}
 		}
 		result.distance = distance;
 		if (a_in.move == M::kPushTiltUp && aimLift > 0.0f) {

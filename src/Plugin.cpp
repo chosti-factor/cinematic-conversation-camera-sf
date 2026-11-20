@@ -6004,6 +6004,7 @@ namespace CCC
 				in.lensDegrees = Director::LensDegrees();
 				in.maxDistance = 7.0f;
 				in.enforceLine = true;
+				in.minShoulderGap = 1.4f;  // 0.9.29: out of the game's fade around its camera
 				std::optional<Shots::Result> chosen, fallback;
 				Shots::ShotType              chosenType = first, fallbackType = first;
 				float                        fallbackRoom = -1.0f;  // how far from the speaker the camera can stand clear
@@ -6122,8 +6123,15 @@ namespace CCC
 			}
 			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
 				g_film.applied = true;
-				REX::INFO("Filming people talking: {} on {}", g_film.groupShot ? std::format("group shot ({} people)", groupHeads.size()) : std::string{ Shots::Key(g_film.shot) },
-					speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker");
+				// 0.9.29: how far the camera stands from the near person, to read the game's fade
+				// distance off the log if someone still vanishes.
+				std::string gap;
+				if (!g_film.groupShot && Shots::OverShoulder(g_film.shot)) {
+					const float gx = pose.position.x - lh.x, gy = pose.position.y - lh.y;
+					gap = std::format(" ({:.2f} m from {})", std::sqrt(gx * gx + gy * gy), listener->GetDisplayFullName() ? listener->GetDisplayFullName() : "the listener");
+				}
+				REX::INFO("Filming people talking: {} on {}{}", g_film.groupShot ? std::format("group shot ({} people)", groupHeads.size()) : std::string{ Shots::Key(g_film.shot) },
+					speaker->GetDisplayFullName() ? speaker->GetDisplayFullName() : "the speaker", gap);
 			}
 		}
 

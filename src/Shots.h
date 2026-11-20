@@ -153,6 +153,13 @@ namespace CCC::Shots
 		// 180-degree rule: never let an angle (after face turns and moves) cross the eyeline
 		// or come within a few degrees of it (CCC's bEnforceLine).
 		bool enforceLine{ true };
+
+		// Over-the-shoulder shots: the least room, in metres, between the camera and the near
+		// person (0 = only the usual 60 units past them). Filming people talking (0.9.29): the
+		// game's third-person camera hides anyone close to it, so the near person vanished and
+		// faded back in after the cut (the 0.9.29 test: Walter, in a close-up after the shot
+		// over his shoulder).
+		float minShoulderGap{ 0.0f };
 	};
 
 	struct Result

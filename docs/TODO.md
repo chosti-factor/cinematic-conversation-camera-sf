@@ -103,6 +103,9 @@ Wednesday the 25th, about two days earlier.
 ## Moved to after 1.0
 
 - The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
+- [x] Filming people talking: the near person in over-the-shoulder shots hidden by the game's
+  camera and fading back in after the cut (Walter, 0.9.29 test). The camera kept 1.4 m from
+  them (0.9.29); to check in the next test, with the distance in the log
 - Replace the large-speaker height rule (decided 2026-11-18; it stays until then) with a
   check of the speaker's actual body: width and bulk, not only height (robots like Vasco are
   wide and bulky). The line from the camera to your face tested against the speaker's body

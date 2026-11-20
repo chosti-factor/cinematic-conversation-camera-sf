@@ -6,6 +6,15 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.29 - 2026-11-19
 
+### Fixed
+- Filming people talking near you: someone vanishing in the over-the-shoulder shots and
+  fading back in after the cut (0.9.29 test: Walter, missing in the shot over his shoulder
+  and fading in at the start of the close-up on him). The game's third-person camera hides
+  anyone close to it, and the camera stood about 0.85 m behind the near person. It now
+  stands at least 1.4 m from them, so their shoulder shows in the corner of the frame as
+  intended; the speaker is a touch smaller in frame when the two stand close. Your own
+  conversations are unchanged. The log gives the distance for each over-the-shoulder shot.
+
 ### Changed
 - Filming people talking near you: the crosshair (the dot in the middle of the screen) is
   hidden while it films, as the name tags and prompts already were, and back when it ends.

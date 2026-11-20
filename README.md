@@ -165,7 +165,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   three-quarters, shoulders), with a two-shot or a group shot now and then when three or
   more are talking. From first person, the view is third person while it films, with you
   hidden, and back to first person after. The crosshair and the name tags are hidden while
-  it films.
+  it films. Over-the-shoulder shots keep the camera at least 1.4 m from the near person,
+  outside the distance at which the game hides people close to its camera.
 - **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu
   Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional
   here, and the INI works without it (see Settings below).
@@ -246,7 +247,10 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 
 Planned:
 - NPCs now and then fading in a moment after a conversation starts (seen once, the Ranger at
-  Neon, from first person): rare enough to look into after 1.0, with footage.
+  Neon, from first person): rare enough to look into after 1.0, with footage. Probably the
+  game hiding people close to its camera, the cause of the same fade while filming people
+  talking (fixed there in 0.9.29 by keeping the camera further away); a fix that keeps the
+  people in shot fully visible would cover both.
 - Quest scenes that are just people talking filmed by this mod: today every quest scene you
   take part in goes to the game's camera, the safe choice, because some direct their own
   shots. Scenes with no camera actions of their own would keep this mod's camera, and later
