@@ -6,6 +6,13 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.28 - 2026-11-19
 
+### Changed
+- Testing messages: when your face shows your background's expression in a quiet moment, the
+  background is named beside it ("You: Suspicious (Bounty Hunter)"), as the log already did.
+- "Hide while they speak" (`bHideOptionsWhileSpeaking`) explained on the settings page and in
+  the INI: the game hides your options during most lines but brings them back before some
+  have ended; on, they stay hidden for the whole line (not during the greeting).
+
 ### Fixed
 - A cut from a shot to the same shot. Room and shared shots frame you both, so both sides can
   hold the same one as their angle, and the turn passing cut from it to itself (0.9.27 test:

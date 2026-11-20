@@ -4844,6 +4844,7 @@ namespace CCC
 			REX::INFO("Line emotion: {} for '{}'{}", emotion.empty() ? "unknown" : emotion, std::string{ raw ? raw : "" }.substr(0, 60), closeUp ? " (close-up emotion)" : "");
 			// Your face answers the line (0.8): mirrored or a listener's response; untagged
 			// lines give your face back to the game.
+			std::string fromBackground;  // 0.9.28: shown in the testing message, so it's clear where the face came from
 			if (Settings::Get().playerFace && g_state.active && !g_state.handedBack) {
 				const char* who = a_speaker->GetDisplayFullName();
 				auto expression = Face::ListeningTo(emotion);
@@ -4854,6 +4855,7 @@ namespace CCC
 					if (expression = Face::MaybeSignature(); !expression.empty()) {
 						(void)Face::Signature(&background);
 						why += std::format("; your {} side", background);
+						fromBackground = background;
 					}
 				}
 				Face::Listen(expression, why);
@@ -4870,7 +4872,9 @@ namespace CCC
 				}
 				// Your face's answer to the line, when it has one (0.7.11).
 				const auto& you = Face::Current();
-				const auto  yours = Settings::Get().playerFace && !you.empty() ? std::format(" | You: {}", you) : std::string{};
+				const auto  yours = Settings::Get().playerFace && !you.empty() ?
+				                        std::format(" | You: {}{}", you, fromBackground.empty() ? std::string{} : std::format(" ({})", fromBackground)) :
+				                        std::string{};
 				g_heldLine = { std::format("{}: {} (#{}){}", name ? name : "Speaker", key, count, yours), closeUp, true, MsgClock::now() };
 			}
 		}
