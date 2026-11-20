@@ -1434,7 +1434,6 @@ namespace CCC::Director
 	{
 		g.lastFrame = a_frame;
 		SwitchPresetNow(a_frame);
-		const auto& s = Settings::Get();
 		bool        started = a_frame.npcTalking && !gp.wasTalking;
 		// A new line that follows the last without a pause (0.8.3).
 		if (!started && a_frame.npcTalking && a_frame.npcLineSerial != gp.serial && a_now - gp.lineAt > std::chrono::milliseconds(500)) {

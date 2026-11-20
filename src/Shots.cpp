@@ -387,8 +387,8 @@ namespace CCC::Shots
 				const float rad = angle * kDeg;
 				const float cx = std::cos(rad) * standoff, cy = std::sin(rad) * standoff;  // subject at origin, other at (separation, 0)
 				const float toSubject = std::atan2(-cy, -cx);
-				const float toOther = std::atan2(-cy, separation - cx);
-				float       off = std::abs(toOther - toSubject) / kDeg;
+				const float toNear = std::atan2(-cy, separation - cx);
+				float       off = std::abs(toNear - toSubject) / kDeg;
 				if (off > 180.0f) {
 					off = 360.0f - off;
 				}

@@ -591,8 +591,11 @@ namespace CCC::Hud
 			const auto& s = Settings::Get();
 			Value       menu;
 			static bool missingLogged = false;
+			// 0.9.35: only once it's been missing for a second. On a conversation's first frame the
+			// menu isn't built yet, which logged a false alarm every session.
+			static int  missingFrames = 0;
 			if (!Child(a_top, "Menu_mc", menu)) {
-				if (!missingLogged) {
+				if (++missingFrames > 60 && !missingLogged) {
 					missingLogged = true;
 					REX::INFO("HUD: the dialogue menu has no Menu_mc (a UI mod's layout?); the options fade is off, the bars still work");
 				}
@@ -603,11 +606,14 @@ namespace CCC::Hud
 			for (int i = 0; i < 2; ++i) {
 				Value list;
 				if (!Child(menu, names[i], list)) {
-					if (i == 0 && !missingLogged) {
+					if (i == 0 && ++missingFrames > 60 && !missingLogged) {
 						missingLogged = true;
 						REX::INFO("HUD: the dialogue menu has no Menu_mc.DialogueList_mc (a UI mod's layout?); the options fade is off, the bars still work");
 					}
 					continue;
+				}
+				if (i == 0) {
+					missingFrames = 0;
 				}
 				Value      visible;
 				const bool now = SafeGet(&list, "visible", &visible) && visible.IsBoolean() && visible.GetBoolean();

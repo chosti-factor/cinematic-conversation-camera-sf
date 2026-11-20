@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.35 - 2026-11-20
+
+The debugging pass (the second of the four before 1.0), first part.
+
+### Fixed
+- The build's warnings in the mod's own code: an unused setting reference, signed and
+  unsigned comparisons of form types, two names hiding others.
+- "The dialogue menu has no Menu_mc.DialogueList_mc" was logged as a false alarm on a
+  conversation's first frame, when the menu isn't built yet; now only once it's been missing
+  for a second.
+- INI comments: Nebula's rhythm (3-5 lines and 40% since 0.9.31) and which presets use room
+  shots (now pointing to docs/PRESETS.md; the list was out of date).
+
 ## 0.9.34 - 2026-11-20
 
 ### Changed

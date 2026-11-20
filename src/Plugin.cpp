@@ -1010,7 +1010,7 @@ namespace CCC
 			}
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
-			if (!ReadFormInfo(reinterpret_cast<std::uintptr_t>(scene), type, id, editorId) || type != std::to_underlying(RE::FormType::kSCEN)) {
+			if (!ReadFormInfo(reinterpret_cast<std::uintptr_t>(scene), type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kSCEN))) {
 				return std::format("unrecognised value {:p} (not counted)", static_cast<void*>(scene));
 			}
 			a_inScene = true;
@@ -1022,7 +1022,7 @@ namespace CCC
 				for (std::size_t k = 0; k < words.size() && quest.empty(); ++k) {
 					std::uint32_t qType = 0, qId = 0;
 					const char*   qEditorId = nullptr;
-					if (ReadFormInfo(words[k], qType, qId, qEditorId) && qType == std::to_underlying(RE::FormType::kQUST)) {
+					if (ReadFormInfo(words[k], qType, qId, qEditorId) && qType == static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kQUST))) {
 						std::array<std::uint8_t, 8> data{};
 						SafeCopy(data.data(), reinterpret_cast<const void*>(words[k] + 0x108), data.size());
 						quest = std::format("; quest {:08X} '{}' at scene +{:X}, quest data {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X} {:02X}", qId, qEditorId ? qEditorId : "", k * 8,
@@ -1058,7 +1058,7 @@ namespace CCC
 				std::uint32_t type = 0, id = 0;
 				const char*   editorId = nullptr;
 				if (!entry.faction || !ReadFormInfo(reinterpret_cast<std::uintptr_t>(entry.faction), type, id, editorId) ||
-					type != std::to_underlying(RE::FormType::kFACT)) {
+					type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kFACT))) {
 					continue;
 				}
 				const char* name = static_cast<const RE::TESFullName*>(entry.faction)->GetFullName();
@@ -2751,13 +2751,13 @@ namespace CCC
 			// side of the line changes.
 			if (s.obstacleCheck && s.director && !pov) {
 				const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
-				const auto         now = std::chrono::steady_clock::now();
+				const auto         roomNow = std::chrono::steady_clock::now();
 				const bool again = g_remeasureRoom.exchange(false);  // the preset changed: its room shot limits too
-				if (again || !g_state.roomMeasured || g_state.roomSide != g_state.side || (Distance(mid, g_state.roomAt) > 1.5f && now - g_state.roomTime > 2s)) {
+				if (again || !g_state.roomMeasured || g_state.roomSide != g_state.side || (Distance(mid, g_state.roomAt) > 1.5f && roomNow - g_state.roomTime > 2s)) {
 					g_state.roomSide = g_state.side;
 					g_state.roomMeasured = true;
 					g_state.roomAt = mid;
-					g_state.roomTime = now;
+					g_state.roomTime = roomNow;
 					float ground = mid.z - 1.6f;
 					if (g_state.smoothNpcFeet && g_state.smoothPlayerFeet) {
 						ground = (std::min)(g_state.smoothNpcFeet->z, g_state.smoothPlayerFeet->z);
@@ -3891,7 +3891,7 @@ namespace CCC
 				std::uint32_t type = 0, id = 0;
 				const char*   editorId = nullptr;
 				BlurRecord    r{};
-				if (!form || !ReadFormInfo(form, type, id, editorId) || type != std::to_underlying(RE::FormType::kIMAD) ||
+				if (!form || !ReadFormInfo(form, type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kIMAD)) ||
 					!SafeCopy(&r.strength, reinterpret_cast<const void*>(form + kBlurStrength), 4) ||
 					!SafeCopy(&r.distance, reinterpret_cast<const void*>(form + kBlurDistance), 4) ||
 					!SafeCopy(&r.range, reinterpret_cast<const void*>(form + kBlurRange), 4)) {
@@ -3983,7 +3983,7 @@ namespace CCC
 			}
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
-			return ReadFormInfo(info, type, id, editorId) && type == std::to_underlying(RE::FormType::kINFO) ? info : 0;
+			return ReadFormInfo(info, type, id, editorId) && type == static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kINFO)) ? info : 0;
 		}
 
 		// The expression tag on a dialogue record's first response ("none" if it has none).
@@ -3997,7 +3997,7 @@ namespace CCC
 			}
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
-			if (!ReadFormInfo(keyword, type, id, editorId) || type != std::to_underlying(RE::FormType::kKYWD) || !editorId) {
+			if (!ReadFormInfo(keyword, type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kKYWD)) || !editorId) {
 				return "none";
 			}
 			std::string_view name{ editorId };
@@ -4079,7 +4079,7 @@ namespace CCC
 			auto infoAt = [](std::uintptr_t a_p, std::uint32_t& a_id) {
 				std::uint32_t type = 0;
 				const char*   editorId = nullptr;
-				return a_p > 0x10000 && a_p < 0x7FFFFFFFFFFF && ReadFormInfo(a_p, type, a_id, editorId) && type == std::to_underlying(RE::FormType::kINFO);
+				return a_p > 0x10000 && a_p < 0x7FFFFFFFFFFF && ReadFormInfo(a_p, type, a_id, editorId) && type == static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kINFO));
 			};
 			std::array<std::uintptr_t, 128> words{};
 			if (!SafeCopy(words.data(), reinterpret_cast<const void*>(manager), sizeof(words))) {
@@ -4120,14 +4120,14 @@ namespace CCC
 			}
 			std::uint32_t type = 0, id = 0;
 			const char*   editorId = nullptr;
-			if (!ReadFormInfo(info, type, id, editorId) || type != std::to_underlying(RE::FormType::kINFO)) {
+			if (!ReadFormInfo(info, type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kINFO))) {
 				return {};
 			}
 			if (!SafeCopy(&response, reinterpret_cast<const void*>(info + 0x70), sizeof(response)) || !ok(response) ||
 				!SafeCopy(&keyword, reinterpret_cast<const void*>(response + 0x18), sizeof(keyword)) || !ok(keyword)) {
 				return "none";
 			}
-			if (!ReadFormInfo(keyword, type, id, editorId) || type != std::to_underlying(RE::FormType::kKYWD) || !editorId) {
+			if (!ReadFormInfo(keyword, type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kKYWD)) || !editorId) {
 				return "none";
 			}
 			std::string_view name{ editorId };
@@ -4518,7 +4518,7 @@ namespace CCC
 				}
 				std::uint32_t type = 0, id = 0;
 				const char*   editorId = nullptr;
-				if (ReadFormInfo(reinterpret_cast<std::uintptr_t>(actor), type, id, editorId) && type == std::to_underlying(RE::FormType::kACHR)) {
+				if (ReadFormInfo(reinterpret_cast<std::uintptr_t>(actor), type, id, editorId) && type == static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kACHR))) {
 					++actors;
 					if (a_out) {
 						a_out->push_back(actor);
