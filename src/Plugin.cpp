@@ -123,20 +123,6 @@ namespace CCC
 			bool                                  plainEyeLine{ false };     // plain shot blocked: shoot from the other person's eyes
 			int                                   busySwitches{ 0 };
 			float                                 busySeconds{ 0.0f };
-			// Head motion of the speaker during the current shot (0.4.19 measurement, for the
-			// jitter seen with NPCs posing or working at a crafting table).
-			struct HeadMotion
-			{
-				std::optional<RE::NiPoint3> last;
-				std::uint32_t               frames{ 0 };
-				float                       seconds{ 0.0f };
-				float                       path{ 0.0f };       // metres travelled
-				float                       peakSpeed{ 0.0f };  // m/s
-				float                       gapSum{ 0.0f };     // raw head to smoothed head, summed
-				float                       gapMax{ 0.0f };
-				const char*                 shot{ nullptr };
-				int                         subject{ -1 };
-			} head;
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
 			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
 			std::uint32_t                         driftBits{ 0 };            // last 32 frames: 1 = the game moved its camera after us
@@ -158,7 +144,6 @@ namespace CCC
 			float                                 directStartHead{ 0.0f };  // head above feet when the rebuild was asked for (0.9.3)
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
-			int                                   framesSinceWaiting{ 0 };   // frames on a shot since your own view ended (0.8.18)
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
 			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
 			std::chrono::steady_clock::time_point readySeenAt{};
@@ -231,6 +216,9 @@ namespace CCC
 
 		using namespace std::chrono_literals;
 		constexpr auto kRepairStartDelay = 250ms;  // never sooner than this after the conversation opens
+		// The direct rebuild asks for every part (1 model, 2 skin, 4 head, 8 face, 16 scale, 32
+		// skeleton): 63 was best in testing, 33 left the head missing (was iBodyUpdateFlagsPlayer).
+		constexpr std::uint32_t kBodyUpdateFlags = 63;
 		constexpr auto kRepairFallbackStart = 1200ms;  // start anyway if the NPC hasn't spoken by then
 		constexpr auto kRepairAcquire = 150ms;         // how long a requested camera mode may take to appear
 		constexpr auto kRepairBackoff = 900ms;         // wait between attempts
@@ -406,12 +394,8 @@ namespace CCC
 		float g_standingHeadHeight = 1.62f;  // the player's head above their feet with the full body; refined as observed
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
-		std::chrono::steady_clock::time_point g_exitMaskUntil{};  // first-person exit: the game passes through third person
-		bool g_exitMasking = false;
-		int  g_exitCoverFrames = 0;  // first-person frames still to cover after a first-person exit
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
-		bool g_exitPendingThird = false;  // the pending exit (g_tpExitPending) is a third-person one (0.9.10)
 		float g_lastBuiltHead = 0.0f;  // your head above your feet when your full body was last built (0.9.9)
 		std::chrono::steady_clock::time_point g_lastBuiltAt{};  // and when it was last known built
 		// The conversation lens (see LensFor): kept on by the main thread while a conversation is
@@ -481,7 +465,6 @@ namespace CCC
 		// ---- Data collection for the test builds -------------------------------------------
 		int  g_conversationNumber = 0;
 		bool g_menusLogged = false;
-		bool g_dumpedThisConversation = false;
 
 		bool SafeWrite(void* a_to, const void* a_from, std::size_t a_bytes)
 		{
@@ -522,98 +505,6 @@ namespace CCC
 					line += std::format(" {:08X}", words[i]);
 				}
 				REX::INFO("Dump {} +{:03X}:{}", a_what, off, line);
-			}
-		}
-
-		struct FovSaved
-		{
-			RE::Setting* setting;
-			float        original;
-		};
-		std::vector<FovSaved> g_fovSaved;
-		bool                  g_stateFovWritten = false;
-		float                 g_stateFovOriginal = 0.0f;
-		constexpr std::size_t kDialogueStateAngleOffset = 0x2A8;  // holds 90.0 during conversations (seen in the 0.3.25 dumps)
-
-		RE::Setting* FindSetting(std::string_view a_key)
-		{
-			for (auto* collection : { static_cast<RE::INISettingCollection*>(RE::INISettingCollection::GetSingleton()),
-					 static_cast<RE::INISettingCollection*>(RE::INIPrefSettingCollection::GetSingleton()) }) {
-				if (!collection) {
-					continue;
-				}
-				for (const auto& setting : collection->settings) {
-					if (setting && setting->GetKey() == a_key && setting->GetType() == RE::Setting::Type::kFloat) {
-						return setting;
-					}
-				}
-			}
-			return nullptr;
-		}
-
-		// Main thread only.
-		void ApplyFovExperiment(bool a_on)
-		{
-			if (!a_on) {
-				for (const auto& saved : g_fovSaved) {
-					saved.setting->SetFloat(saved.original);
-				}
-				if (!g_fovSaved.empty()) {
-					REX::INFO("FOV experiment: settings restored");
-				}
-				g_fovSaved.clear();
-				if (g_stateFovWritten) {
-					g_stateFovWritten = false;
-					if (g_dialogueStateObject) {
-						SafeCopy(static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, &g_stateFovOriginal, sizeof(float));
-					}
-					REX::INFO("FOV experiment 4: dialogue camera value restored");
-				}
-				return;
-			}
-			if (Settings::Get().fovExperiment == 4) {
-				if (g_dialogueStateObject) {
-					float current = 0.0f;
-					SafeCopy(&current, static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, sizeof(float));
-					const float wanted = Settings::Get().fovExperimentValue;
-					if (!g_stateFovWritten) {
-						if (current < 10.0f || current > 170.0f) {
-							return;  // not what we expected to find there; leave it alone
-						}
-						g_stateFovOriginal = current;
-						g_stateFovWritten = true;
-						REX::INFO("FOV experiment 4: dialogue camera value {:.2f} -> {:.2f}", current, wanted);
-					}
-					if (current != wanted) {
-						SafeCopy(static_cast<std::uint8_t*>(g_dialogueStateObject) + kDialogueStateAngleOffset, &wanted, sizeof(float));
-					}
-				}
-				return;
-			}
-			const auto& s = Settings::Get();
-			if (s.fovExperiment == 0 || !g_fovSaved.empty()) {
-				return;
-			}
-			std::vector<std::string_view> keys;
-			switch (s.fovExperiment) {
-			case 1:
-				keys = { "fTPWorldFOV:Camera", "fFPWorldFOV:Camera" };
-				break;
-			case 2:
-				keys = { "fDialogueCameraFailsafeFPFOV:Dialogue" };
-				break;
-			default:
-				keys = { "fDefault1stPersonFOV:Camera", "fFPGeometryFOV:Camera" };
-				break;
-			}
-			for (const auto key : keys) {
-				if (auto* setting = FindSetting(key)) {
-					g_fovSaved.push_back({ setting, setting->GetFloat() });
-					setting->SetFloat(s.fovExperimentValue);
-					REX::INFO("FOV experiment {}: {} {:.2f} -> {:.2f}", s.fovExperiment, key, g_fovSaved.back().original, s.fovExperimentValue);
-				} else {
-					REX::INFO("FOV experiment {}: setting {} not found", s.fovExperiment, key);
-				}
 			}
 		}
 
@@ -792,7 +683,7 @@ namespace CCC
 			// view meanwhile (a zoom, frames from inside your head, a frame of the game's camera);
 			// 0.9.1 opened on a shot from your eyes, which looked like the game's own camera. The
 			// shot from your eyes is left to the older body method, the camera cycle.
-			g_state.povNpcShot = g_lastGameplayFirstPerson && Settings::Get().bodyRebuildMethod != 1;
+			g_state.povNpcShot = false;  // set if the camera-cycle fallback runs (the direct refresh first)
 			g_state.needsBodyRepair = Settings::Get().fixFirstPersonBody && g_lastGameplayFirstPerson;
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
@@ -801,7 +692,6 @@ namespace CCC
 			++g_conversationNumber;
 			g_menusLogged = false;
 			g_fovLogged = false;
-			g_dumpedThisConversation = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 			if (Settings::Get().director) {
 				Director::SetObstacleTest(&TestShot);
@@ -810,14 +700,11 @@ namespace CCC
 			}
 		}
 
-		void LogHeadMotion(const char* a_why);
-
 		void End()
 		{
 			g_cutOwnsLens.store(false, std::memory_order_relaxed);  // the game's lens update back on the camera (0.9.16)
 			if (g_state.active) {
 				if (Settings::Get().debugLog) {
-					LogHeadMotion("conversation end");
 					REX::INFO("Steadier following (speaker's head above {:.2f} m/s): switched on {} times, {:.1f} s in all", Settings::Get().busyHeadSpeed, g_state.busySwitches,
 						g_state.busySeconds);
 				}
@@ -836,7 +723,7 @@ namespace CCC
 				// instead; the render camera goes back to the game just before the third-person
 				// camera's own first update.
 				bool tpExit = false;
-				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && Settings::Get().exitModeThird >= 1 && !g_state.seatedAtStart) {
+				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
@@ -859,7 +746,6 @@ namespace CCC
 						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
 					}
 				}
-				g_exitPendingThird = tpExit && !g_state.startedFirstPerson;
 				if (!tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
 					PutGameplayLensBack(false);
 					REX::INFO("Exit: seated in third person; the game's seated camera takes over (0.9.18)");
@@ -871,9 +757,6 @@ namespace CCC
 					g_needVisibilityRestore = true;
 				}
 				g_restoreVisible = !g_state.startedFirstPerson;
-				if (g_state.startedFirstPerson) {
-					g_exitMaskUntil = std::chrono::steady_clock::now() + 1000ms;
-				}
 				if (g_state.restoreFirstPerson) {
 					g_restoreFirstPersonPending = true;
 					g_restoreFirstPersonDeadline = std::chrono::steady_clock::now() + 1500ms;
@@ -964,129 +847,6 @@ namespace CCC
 			return Subject::kPlayer;
 		}
 
-		// Diagnostic: find where the game keeps its field of view. Copies plausible FOV values
-		// (degrees or radians) out of a block of memory; guarded because the size of the
-		// camera state objects isn't known.
-		struct FloatAt
-		{
-			std::uint32_t offset;
-			float         value;
-		};
-
-		std::size_t ScanFloats(const void* a_base, std::size_t a_from, std::size_t a_to, FloatAt* a_out, std::size_t a_max)
-		{
-			std::size_t n = 0;
-			__try {
-				for (std::size_t off = a_from; off + 4 <= a_to && n < a_max; off += 4) {
-					const float v = *reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
-					if ((v >= 15.0f && v <= 150.0f) || (v >= 0.25f && v <= 2.7f && v != 1.0f)) {
-						a_out[n++] = { static_cast<std::uint32_t>(off), v };
-					}
-				}
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-			return n;
-		}
-
-		void LogFovCandidates(const char* a_what, int a_mode, const void* a_base, std::size_t a_from, std::size_t a_to)
-		{
-			if (!a_base) {
-				return;
-			}
-			std::array<FloatAt, 96> found{};
-			const auto              n = ScanFloats(a_base, a_from, a_to, found.data(), found.size());
-			std::string             text;
-			for (std::size_t i = 0; i < n; ++i) {
-				text += std::format(" +{:X}={:.3f}", found[i].offset, found[i].value);
-			}
-			REX::INFO("FOV scan, mode {}, {}:{}", a_mode, a_what, text);
-		}
-
-		// Diagnostic: look inside a game object for a stored position near a_near (within
-		// a_radius metres), to find where the dialogue camera keeps its own, current position.
-		std::size_t ScanPositions(const void* a_base, std::size_t a_from, std::size_t a_to, const RE::NiPoint3& a_near, float a_radius, std::uint32_t* a_offsets, float* a_values, std::size_t a_max)
-		{
-			std::size_t n = 0;
-			__try {
-				for (std::size_t off = a_from; off + 12 <= a_to && n < a_max; off += 4) {
-					const float* v = reinterpret_cast<const float*>(static_cast<const std::uint8_t*>(a_base) + off);
-					const float  dx = v[0] - a_near.x, dy = v[1] - a_near.y, dz = v[2] - a_near.z;
-					if (dx * dx + dy * dy + dz * dz < a_radius * a_radius) {
-						a_offsets[n] = static_cast<std::uint32_t>(off);
-						a_values[n * 3] = v[0];
-						a_values[n * 3 + 1] = v[1];
-						a_values[n * 3 + 2] = v[2];
-						++n;
-					}
-				}
-			} __except (EXCEPTION_EXECUTE_HANDLER) {
-			}
-			return n;
-		}
-
-		void LogPositionCandidates(const char* a_what, const void* a_base, std::size_t a_from, std::size_t a_to, const RE::NiPoint3& a_near)
-		{
-			if (!a_base) {
-				return;
-			}
-			std::uint32_t offsets[24]{};
-			float         values[72]{};
-			const auto    n = ScanPositions(a_base, a_from, a_to, a_near, 2.5f, offsets, values, 24);
-			std::string   text;
-			for (std::size_t i = 0; i < n; ++i) {
-				text += std::format(" +{:X}=({:.2f} {:.2f} {:.2f})", offsets[i], values[i * 3] - a_near.x, values[i * 3 + 1] - a_near.y, values[i * 3 + 2] - a_near.z);
-			}
-			REX::INFO("Position scan, {} (offsets from the predicted spot):{}", a_what, text.empty() ? " none" : text);
-		}
-
-		// Diagnostic: list the game's own INI settings that mention field of view, the
-		// dialogue camera or the camera in general, with their current values. The game's
-		// dialogue zoom is most likely one of these, and they can be changed at run time.
-		void LogCameraSettings(RE::INISettingCollection* a_collection, const char* a_which)
-		{
-			if (!a_collection) {
-				REX::INFO("Settings scan: {} collection unavailable", a_which);
-				return;
-			}
-			std::size_t total = 0;
-			std::size_t shown = 0;
-			for (const auto& setting : a_collection->settings) {
-				if (!setting) {
-					continue;
-				}
-				++total;
-				const std::string_view key = setting->GetKey();
-				std::string            lower{ key };
-				std::ranges::transform(lower, lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-				if (lower.find("fov") == std::string::npos && lower.find("dialog") == std::string::npos &&
-					lower.find("camera") == std::string::npos && lower.find("zoom") == std::string::npos &&
-					lower.find("dof") == std::string::npos && lower.find("focus") == std::string::npos &&
-					lower.find("depth") == std::string::npos && lower.find("bokeh") == std::string::npos &&
-					lower.find("blur") == std::string::npos) {
-					continue;
-				}
-				++shown;
-				switch (setting->GetType()) {
-				case RE::Setting::Type::kFloat:
-					REX::INFO("Setting [{}] {} = {:.4f}", a_which, key, setting->GetFloat());
-					break;
-				case RE::Setting::Type::kInt:
-					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetInt());
-					break;
-				case RE::Setting::Type::kUInt:
-					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetUInt());
-					break;
-				case RE::Setting::Type::kBool:
-					REX::INFO("Setting [{}] {} = {}", a_which, key, setting->GetBool());
-					break;
-				default:
-					REX::INFO("Setting [{}] {} (other type)", a_which, key);
-					break;
-				}
-			}
-			REX::INFO("Settings scan: {} collection has {} settings, {} listed", a_which, total, shown);
-		}
-
 		// Which camera state the game is in, as an index into CameraState, or -1 if unknown.
 		int CurrentCameraStateIndex(RE::PlayerCamera* a_camera)
 		{
@@ -1115,48 +875,6 @@ namespace CCC
 		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
 		std::string LineEmotion(RE::Actor* a_speaker);
 		std::uintptr_t LineInfo(RE::Actor* a_speaker);
-
-		void LogHeadMotion(const char* a_why)
-		{
-			auto& m = g_state.head;
-			if (m.frames >= 20 && m.seconds > 0.3f) {
-				auto* speaker = Speaker();
-				const char* name = speaker ? speaker->GetDisplayFullName() : nullptr;
-				REX::INFO("Head motion ({}; {} on {}, {:.1f} s): average {:.2f} m/s, peak {:.2f} m/s; camera follows {:.1f} cm behind on average, {:.1f} cm at most",
-					a_why, name ? name : "speaker", m.shot ? m.shot : "plain shot", m.seconds, m.path / m.seconds, m.peakSpeed, 100.0f * m.gapSum / m.frames, 100.0f * m.gapMax);
-			}
-			m = {};
-		}
-
-		// Sentences in a subtitle, for the reaction count: each run of '.', '!', '?' or '...'
-		// (a pause) followed by a space or the end. A line with none counts as one.
-		int CountSentences(std::string_view a_text)
-		{
-			int  count = 0;
-			bool inRun = false;
-			for (std::size_t i = 0; i < a_text.size(); ++i) {
-				const char c = a_text[i];
-				const bool ellipsis = static_cast<unsigned char>(c) == 0xE2 && i + 2 < a_text.size() && static_cast<unsigned char>(a_text[i + 1]) == 0x80 &&
-				                      static_cast<unsigned char>(a_text[i + 2]) == 0xA6;  // U+2026 in UTF-8
-				if (c == '.' || c == '!' || c == '?' || ellipsis) {
-					inRun = true;
-					if (ellipsis) {
-						i += 2;
-					}
-					continue;
-				}
-				if (inRun) {
-					inRun = false;
-					if (c == ' ' || c == '\n' || c == '\r' || c == '\t' || c == '"' || c == '\'' || c == ')') {
-						++count;
-					}
-				}
-			}
-			if (inRun) {
-				++count;
-			}
-			return (std::max)(count, a_text.empty() ? 0 : 1);
-		}
 
 		// Is this expression tag one of the INI's close-up emotions (case doesn't matter)?
 		// Which emotion close-up tier a line's expression is in (0.8.6): 0 none, 1 mild, 2 medium,
@@ -1924,7 +1642,7 @@ namespace CCC
 			// that menu) a couple of frames before it lets go of the speaker; the 0.9.14 clip showed
 			// the last shot two frames without its bars before the closing shot. So the closing shot
 			// comes as the menu closes, once it has been open in this conversation.
-			if (g_state.active && g_state.lastPose && inDialogueState && s.cameraTarget == 1 && s.exitStyle == 1 && s.director) {
+			if (g_state.active && g_state.lastPose && inDialogueState && s.exitStyle == 1 && s.director) {
 				static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
 				auto*                          ui = RE::UI::GetSingleton();
 				const bool                     open = ui && ui->IsMenuOpen(dialogueMenu);
@@ -1939,7 +1657,7 @@ namespace CCC
 					}
 				}
 			}
-			if (!speaker && g_state.active && g_state.lastPose && inDialogueState && s.cameraTarget == 1) {
+			if (!speaker && g_state.active && g_state.lastPose && inDialogueState) {
 				const auto now = std::chrono::steady_clock::now();
 				if (!g_state.holdingExit) {
 					g_state.holdingExit = true;
@@ -1979,58 +1697,44 @@ namespace CCC
 							g_state.exitCutAt = now;
 						}
 						bool drawn = false;
-						if (s.exitCutStaged) {
-							// 0.9.16: the 0.9.15 clips showed the order in which the camera move, the lens,
-							// the blur and your body's hiding reach the screen varies by a frame from exit
-							// to exit, so the cut is built to look right in any order:
-							// - the lens is set on the camera with the move, and the game's lens update
-							//   kept off it meanwhile (they can't land on different frames);
-							// - from first person the camera lands 12 cm in front of your eyes and eases
-							//   back over a quarter of a second, and your body is hidden from the third
-							//   frame: while it's there, the camera is in front of your face;
-							// - the blur goes off from the second frame (your view a frame soft at most,
-							//   rather than the last shot a frame sharp).
-							Camera::Pose pose = *view;
-							if (g_state.startedFirstPerson) {
-								const float t = std::clamp(std::chrono::duration<float>(now - g_state.exitCutAt).count() / 0.25f, 0.0f, 1.0f);
-								const float ahead = 0.12f * (1.0f - t * t * (3.0f - 2.0f * t));
-								RE::NiPoint3 dir{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, pose.lookAt.z - pose.position.z };
-								const float  len = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
-								if (len > 1e-4f && ahead > 0.0f) {
-									const RE::NiPoint3 step{ dir.x / len * ahead, dir.y / len * ahead, dir.z / len * ahead };
-									pose.position = { pose.position.x + step.x, pose.position.y + step.y, pose.position.z + step.z };
-									pose.lookAt = { pose.lookAt.x + step.x, pose.lookAt.y + step.y, pose.lookAt.z + step.z };
-								}
+						// 0.9.16: the 0.9.15 clips showed the order in which the camera move, the lens,
+						// the blur and your body's hiding reach the screen varies by a frame from exit
+						// to exit, so the cut is built to look right in any order:
+						// - the lens is set on the camera with the move, and the game's lens update
+						//   kept off it meanwhile (they can't land on different frames);
+						// - from first person the camera lands 12 cm in front of your eyes and eases
+						//   back over a quarter of a second, and your body is hidden from the third
+						//   frame: while it's there, the camera is in front of your face;
+						// - the blur goes off from the second frame (your view a frame soft at most,
+						//   rather than the last shot a frame sharp).
+						Camera::Pose pose = *view;
+						if (g_state.startedFirstPerson) {
+							const float t = std::clamp(std::chrono::duration<float>(now - g_state.exitCutAt).count() / 0.25f, 0.0f, 1.0f);
+							const float ahead = 0.12f * (1.0f - t * t * (3.0f - 2.0f * t));
+							RE::NiPoint3 dir{ pose.lookAt.x - pose.position.x, pose.lookAt.y - pose.position.y, pose.lookAt.z - pose.position.z };
+							const float  len = std::sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+							if (len > 1e-4f && ahead > 0.0f) {
+								const RE::NiPoint3 step{ dir.x / len * ahead, dir.y / len * ahead, dir.z / len * ahead };
+								pose.position = { pose.position.x + step.x, pose.position.y + step.y, pose.position.z + step.z };
+								pose.lookAt = { pose.lookAt.x + step.x, pose.lookAt.y + step.y, pose.lookAt.z + step.z };
 							}
-							drawn = Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f, false);
-							if (drawn && lens >= 40.0f) {
-								g_cutOwnsLens.store(true, std::memory_order_relaxed);
-								// 0.9.17: through the game's own set-FOV, not our frustum maths: 0.9.16's
-								// SetRenderLens(94) came out much narrower than the game's 94 (the clip:
-								// your view zoomed in about 1.8 times, then widening at the hand-back).
-								SetGameLens(lens);
-							}
-							if (k >= 1) {
-								g_shotDistance.store(0.0f, std::memory_order_relaxed);
-								FocusOnShot(0.0f);
-							}
-							if (g_state.startedFirstPerson && k >= 2) {
-								g_wantRevealPlayer = false;
-								g_wantHidePlayer = true;
-								Visibility::HidePlayer();
-							}
-						} else {
-							if (g_state.startedFirstPerson) {
-								g_wantRevealPlayer = false;
-								g_wantHidePlayer = true;
-								Visibility::HidePlayer();
-							}
-							if (lens >= 40.0f) {
-								g_waitingLens.store(lens, std::memory_order_relaxed);
-							}
+						}
+						drawn = Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f, false);
+						if (drawn && lens >= 40.0f) {
+							g_cutOwnsLens.store(true, std::memory_order_relaxed);
+							// 0.9.17: through the game's own set-FOV, not our frustum maths: 0.9.16's
+							// SetRenderLens(94) came out much narrower than the game's 94 (the clip:
+							// your view zoomed in about 1.8 times, then widening at the hand-back).
+							SetGameLens(lens);
+						}
+						if (k >= 1) {
 							g_shotDistance.store(0.0f, std::memory_order_relaxed);
 							FocusOnShot(0.0f);
-							drawn = Camera::ShowGameplayView(camera->cameraRoot.get(), *view);
+						}
+						if (g_state.startedFirstPerson && k >= 2) {
+							g_wantRevealPlayer = false;
+							g_wantHidePlayer = true;
+							Visibility::HidePlayer();
 						}
 						if (drawn) {
 							++g_state.exitCutFrames;
@@ -2038,7 +1742,7 @@ namespace CCC
 								g_state.exitCut = true;
 								REX::INFO("Exit style 2: cut to your {} view {:.2f} s after the last line (lens {:.1f}{})",
 									g_state.startedFirstPerson ? "first-person" : "third-person", held, lens,
-									s.exitCutStaged ? (g_state.startedFirstPerson ? "; 12 cm ahead easing back, body hidden from frame 3, blur off from frame 2" : "; blur off from frame 2") : "");
+									g_state.startedFirstPerson ? "; 12 cm ahead easing back, body hidden from frame 3, blur off from frame 2" : "; blur off from frame 2");
 							}
 							return;
 						}
@@ -2293,7 +1997,6 @@ namespace CCC
 					feet.z += g_standingHeadHeight;
 					playerHead = feet;
 				}
-				const auto rawNpcHead = *npcHead;
 				npcHead = follow(g_state.smoothNpcHead, *npcHead, kNpc);
 				playerHead = follow(g_state.smoothPlayerHead, *playerHead, k);
 				// Dead band (0.6.1, CCC's face framing): the framed point only moves once the head
@@ -2329,46 +2032,20 @@ namespace CCC
 					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,
 						playerHead->z + (playerSwayHead.z - playerHead->z) * w };
 				}
-				// Measurement: how much the speaker's head moves, and how far the smoothed head
-				// the camera follows lags behind it.
-				if (s.debugLog) {
-					auto&       m = g_state.head;
-					const float gx = rawNpcHead.x - npcHead->x, gy = rawNpcHead.y - npcHead->y, gz = rawNpcHead.z - npcHead->z;
-					const float gap = std::sqrt(gx * gx + gy * gy + gz * gz);
-					if (m.last && delta > 0.0f && delta < 0.1f) {
-						const float mx = rawNpcHead.x - m.last->x, my = rawNpcHead.y - m.last->y, mz = rawNpcHead.z - m.last->z;
-						const float step = std::sqrt(mx * mx + my * my + mz * mz);
-						if (step < 0.5f) {
-							m.path += step;
-							m.seconds += delta;
-							m.peakSpeed = (std::max)(m.peakSpeed, step / delta);
-						}
-					}
-					m.last = rawNpcHead;
-					++m.frames;
-					m.gapSum += gap;
-					m.gapMax = (std::max)(m.gapMax, gap);
-				}
 			}
 
-			// Data collection: the first frames of every conversation, and one steady frame.
+			// The first frames of the first conversations: where the game's camera is reported.
 			if (s.debugLog && g_conversationNumber <= 12) {
 				const auto frame = g_state.framesThisConversation;
 				if (frame <= 6) {
 					const auto  reported = Camera::PoseOf(camera->cameraRoot.get());
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
-					const auto  feet = player->GetPosition();
-					const auto  nFeet = speaker->GetPosition();
 					if (reported && view) {
 						REX::INFO("Start frame {} (mode {}): reported root ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f}); gameplay view was ({:.2f} {:.2f} {:.2f}) aim ({:.3f} {:.3f} {:.3f})",
 							frame, stateIndex, reported->position.x, reported->position.y, reported->position.z,
 							(reported->lookAt.x - reported->position.x) / 5.0f, (reported->lookAt.y - reported->position.y) / 5.0f, (reported->lookAt.z - reported->position.z) / 5.0f,
 							view->position.x, view->position.y, view->position.z,
 							(view->lookAt.x - view->position.x) / 5.0f, (view->lookAt.y - view->position.y) / 5.0f, (view->lookAt.z - view->position.z) / 5.0f);
-					}
-					if (frame == 1) {
-						REX::INFO("Start facts: player feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}); npc feet ({:.2f} {:.2f} {:.2f}) head ({:.2f} {:.2f} {:.2f}), npc head {:.2f} m above its feet",
-							feet.x, feet.y, feet.z, playerHead->x, playerHead->y, playerHead->z, nFeet.x, nFeet.y, nFeet.z, npcHead->x, npcHead->y, npcHead->z, npcHead->z - nFeet.z);
 					}
 				}
 				// Every frame until the rebuild is over and for a few frames after: what the
@@ -2380,16 +2057,6 @@ namespace CCC
 					REX::INFO("Frame {} (mode {}, rebuild stage {}): {}; last shot placed at ({:.2f} {:.2f} {:.2f})", frame, stateIndex, static_cast<int>(g_repair.stage),
 						Camera::DescribeRoot(camera->cameraRoot.get()),
 						g_state.lastPose ? g_state.lastPose->position.x : 0.0f, g_state.lastPose ? g_state.lastPose->position.y : 0.0f, g_state.lastPose ? g_state.lastPose->position.z : 0.0f);
-				}
-				if (frame == 1 || (frame >= 90 && !g_dumpedThisConversation && g_repair.stage == RepairStage::kIdle)) {
-					if (frame > 1) {
-						g_dumpedThisConversation = true;
-					}
-					const auto label = std::format("conversation {} frame {}", g_conversationNumber, frame);
-					DumpObject((label + " player camera").c_str(), camera, 0x188);
-					DumpObject((label + " player camera part 2").c_str(), reinterpret_cast<const std::uint8_t*>(camera) + 0x188, 0x400);
-					DumpObject((label + " dialogue state").c_str(), g_dialogueStateObject, 0x340);
-					DumpObject((label + " render camera").c_str(), Camera::RenderCameraObject(), 0x400);
 				}
 			}
 
@@ -2788,8 +2455,8 @@ namespace CCC
 			// clips: 1-3 frames of the game's own close-up). Detect that and place the shot
 			// against where the dialogue camera is about to be reported instead.
 			std::optional<Camera::Pose> startRoot;
-			const int startMode = g_state.startedFirstPerson ? s.startMode : s.startModeThird;
-			if ((startMode == 1 || startMode == 2) && !predictedRoot && !g_state.startRootCaughtUp && gameplayView && g_state.framesThisConversation <= 20) {
+			// (0.9.30: the other start modes, your own view first, are gone; docs/MEMORY.md.)
+			if (!predictedRoot && !g_state.startRootCaughtUp && gameplayView && g_state.framesThisConversation <= 20) {
 				const auto reported = Camera::PoseOf(camera->cameraRoot.get());
 				bool       stale = false;
 				if (reported) {
@@ -2854,22 +2521,9 @@ namespace CCC
 					}
 				}
 			}
-			std::optional<Camera::Pose> waitingView;
-			// From first person, until your full body is ready (about 0.15 s), your own view,
-			// with you hidden (0.8.14 test, the Ranger at Neon: the first shot began with you
-			// missing and you popped in a moment later). At most 0.6 s.
-			if (gameplayView && ((startMode == 0 && wideFrame) || (startMode == 2 && startRoot))) {
-				waitingView = *gameplayView;
-			}
-			// Your own view keeps your own field of view (0.8.18: the 0.8.17 clips from first
-			// person showed it zoomed to the conversation lens for its 0.1 s, a flash). And from
-			// first person you're shown only once the first shot has been on screen for two
-			// frames: shown on the frame the camera left your eyes, two frames from inside your
-			// head (the brim of your hat, your eyebrows) slipped through.
-			g_waitingLens.store(waitingView && g_state.startFov > 10.0f ? g_state.startFov : 0.0f, std::memory_order_relaxed);
-			g_state.framesSinceWaiting = waitingView ? 0 : g_state.framesSinceWaiting + 1;
+			g_waitingLens.store(0.0f, std::memory_order_relaxed);
 			std::optional<Camera::Pose> directed;
-			if (s.director && !waitingView && !pov && g_state.plainShots) {
+			if (s.director && !pov && g_state.plainShots) {
 				// Plain shots (seated people, merchants): only the emotion close-ups, from in
 				// front of them, so the chair or the counter behind them stays out of the way.
 				Director::Frame frame;
@@ -2907,7 +2561,7 @@ namespace CCC
 				directed = Director::UpdatePlain(frame, now);
 				LensNow();
 			}
-			if (s.director && !waitingView && !pov && !g_state.plainShots) {
+			if (s.director && !pov && !g_state.plainShots) {
 				Director::Frame frame;
 				frame.npcTurn = subject == Subject::kNpc;
 				frame.npcTalking = speaker->IsTalking();
@@ -2947,10 +2601,9 @@ namespace CCC
 			// right shoulder on the right side; your own shots over their matching shoulder, or
 			// with bTrue180 over the opposite one.
 			const float plainSign = subject == Subject::kNpc ? g_state.side : (s.true180 ? -g_state.side : g_state.side);
-			auto        pose = waitingView ? waitingView :
-			                   pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
+			auto        pose = pov ? Camera::Shot(nearHeadRef, farHeadRef, -0.30f, 0.0f, 0.0f) :
 			                   directed ? directed :
-			                   nearSeated || s.shotStyle == 1 ?
+			                   nearSeated ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.seatedSide * plainSign, s.seatedHeight) :
 			                   g_state.plainShots && g_state.merchant && subject == Subject::kPlayer ?
 			                   Camera::Shot(nearHeadRef, farHeadRef, -s.seatedForward, s.vendorSide * plainSign, s.vendorHeight) :
@@ -2963,18 +2616,18 @@ namespace CCC
 			// fits): checked when the camera turns to the other person. A wall behind the
 			// camera pulls it in; anything closer to the person in shot (a ladder in front of
 			// their face) swaps to the eye-line shot from just in front of the other one's eyes.
-			const bool plainPath = pose && !waitingView && !pov && !directed;
+			const bool plainPath = pose && !pov && !directed;
 			// Their lens: the preset's angle each is most like (0.9.1).
 			if (pov || plainPath) {
 				using enum Shots::ShotType;
-				const bool beside = nearSeated || s.shotStyle == 1 || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer);
+				const bool beside = nearSeated || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer);
 				Director::UsePlainShotLens(pov ? kCloseUp : subject == Subject::kNpc ? (beside ? kThreeQuarterNpc : kOverPlayerShoulder) :
 				                                                                     (beside ? kThreeQuarterPlayer : kOverNpcShoulder));
 				LensNow();
 			}
 			if (plainPath && s.obstacleCheck) {
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
-				const bool  plainOverShoulder = !(nearSeated || s.shotStyle == 1 || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer));
+				const bool  plainOverShoulder = !(nearSeated || (g_state.plainShots && g_state.merchant && subject == Subject::kPlayer));
 				const int   key = static_cast<int>(subject);
 				if (key != g_state.plainCheckSubject) {
 					g_state.plainCheckSubject = key;
@@ -2994,18 +2647,6 @@ namespace CCC
 				}
 			} else if (!plainPath) {
 				g_state.plainCheckSubject = -1;
-			}
-			if (s.debugLog) {
-				// Head-motion measurement: one line per shot (the shot name changes, or the
-				// camera turns to the other person).
-				const char* shotName = directed ? Director::Current() : nullptr;
-				const int   who = static_cast<int>(subject);
-				auto&       m = g_state.head;
-				if (m.frames > 0 && (shotName != m.shot || who != m.subject)) {
-					LogHeadMotion("shot changed");
-				}
-				g_state.head.shot = shotName;
-				g_state.head.subject = who;
 			}
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
@@ -3064,26 +2705,26 @@ namespace CCC
 			}
 
 			if (g_state.framesThisConversation == 1) {
-				REX::INFO("frame 1: applying pose to {}", s.cameraTarget == 1 ? "render camera" : "camera root");
+				REX::INFO("frame 1: applying pose to the render camera");
 			}
 			{
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
-				const float distance = waitingView || pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
+				const float distance = pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
 				g_shotDistance.store(distance, std::memory_order_relaxed);
 				FocusOnShot(distance);  // on this very frame (0.8.10)
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
 			// The handheld wander (0.8.15, the sway key's third mode): not on your own view.
-			if (!waitingView && !pov) {
+			if (!pov) {
 				ApplyHandheld(*pose, Director::Handheld(), now);
 			}
-			bool applied = s.cameraTarget == 1 && Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
+			bool applied = Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
 			// The first frame or two of a conversation, the game still draws through the gameplay
 			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
 			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).
-			if (applied && wideFrame && !waitingView) {
+			if (applied && wideFrame) {
 				Camera::SetRenderLens(Director::WantedLens());
 			}
 			if (!applied) {
@@ -3095,7 +2736,7 @@ namespace CCC
 			}
 			// On-screen message for each shot as it's used (bShowMessages, a testing aid): the
 			// setup's name as written in [Shots], and why. Paired with the line it cut for.
-			if (s.showMessages && !waitingView && !pov) {
+			if (s.showMessages && !pov) {
 				const char*         name = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain over-the-shoulder shot";
 				const int           who = static_cast<int>(subject);
 				const std::uint32_t cuts = directed ? Director::Cuts() : 0;
@@ -3125,7 +2766,7 @@ namespace CCC
 			// Measure the room around the two (0.8: where the room shots can stand): once, and
 			// again when they've moved more than 1.5 m (at most every 2 s) or the conversation's
 			// side of the line changes.
-			if (s.obstacleCheck && s.director && !waitingView && !pov) {
+			if (s.obstacleCheck && s.director && !pov) {
 				const RE::NiPoint3 mid{ (npcHead->x + playerHead->x) * 0.5f, (npcHead->y + playerHead->y) * 0.5f, (npcHead->z + playerHead->z) * 0.5f };
 				const auto         now = std::chrono::steady_clock::now();
 				const bool again = g_remeasureRoom.exchange(false);  // the preset changed: its room shot limits too
@@ -3142,7 +2783,7 @@ namespace CCC
 				}
 			}
 			// Obstacle check of the shot on screen, for the log: once per shot.
-			if (s.debugLog && !waitingView && !pov) {
+			if (s.debugLog && !pov) {
 				const char* shotName = directed ? Director::Current() : g_state.plainEyeLine ? "eye-line shot" : "plain shot";
 				const int   who = static_cast<int>(subject);
 				if (shotName != g_state.castShot || who != g_state.castSubject) {
@@ -3150,7 +2791,7 @@ namespace CCC
 					g_state.castSubject = who;
 					const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 					const auto  type = directed ? Shots::FromKey(shotName) : std::optional<Shots::ShotType>{};
-					const bool  overShoulder = type ? Shots::OverShoulder(*type) : !g_state.plainEyeLine && !nearSeated && s.shotStyle != 1;
+					const bool  overShoulder = type ? Shots::OverShoulder(*type) : !g_state.plainEyeLine && !nearSeated;
 					LogShotObstacles(shotName, subjectHead, pose->position, nearHeadRef, overShoulder, subject == Subject::kNpc ? "them" : "you");
 				}
 			}
@@ -3165,8 +2806,6 @@ namespace CCC
 
 			if (g_state.framesThisConversation == 1) {
 				REX::INFO("frame 1: pose applied");
-				const float dx = npcHead->x - playerHead->x, dy = npcHead->y - playerHead->y, dz = npcHead->z - playerHead->z;
-				REX::INFO("Distance between heads: {:.3f} game units (camera state {})", std::sqrt(dx * dx + dy * dy + dz * dz), stateIndex);
 			}
 			if (s.debugLog && g_state.framesThisConversation == 1) {
 				REX::INFO("First frame: camera root {:p}, npc head ({:.1f}, {:.1f}, {:.1f}), player head ({:.1f}, {:.1f}, {:.1f}), camera ({:.1f}, {:.1f}, {:.1f})",
@@ -3315,7 +2954,7 @@ namespace CCC
 				return;
 			}
 			const auto* held = HeldPose();
-			if (!g_state.active || g_repair.stage == RepairStage::kIdle || !held || Settings::Get().cameraTarget != 1) {
+			if (!g_state.active || g_repair.stage == RepairStage::kIdle || !held) {
 				return;
 			}
 			auto* camera = RE::PlayerCamera::GetSingleton();
@@ -3392,18 +3031,10 @@ namespace CCC
 			}
 			g_tpExitPending = false;
 			Camera::RestoreRender();
-			// 0.9.8, iExitModeThirdPerson 2: the third-person camera eases out from where the camera
-			// stood on its first update (vanilla: from your eyes; here from the game's conversation
-			// camera, about 2 m from the NPC: one frame close and from the side, 0.9.7 clips). Put
-			// the camera root on your third-person view first, so the ease starts where it ends.
-			if (g_exitPendingThird && Settings::Get().exitModeThird == 2 && g_thirdPersonView) {
-				if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::SetRootPose(camera->cameraRoot.get(), *g_thirdPersonView)) {
-					REX::INFO("Exit: camera root put on your third-person view before the third-person camera's first update");
-				}
-			}
 		}
 
 		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)
+		constexpr int kExitSkipFrames = 1;  // first-person updates held back at an exit (was iExitSkipFrames, 0.9.8)
 		bool  g_exitPitchKnown = false;
 
 		// 0.9.8, iExitMode 5: the 0.9.7 tests found the cause of the exit's steep-up frame: the
@@ -3420,9 +3051,8 @@ namespace CCC
 				return false;
 			}
 			auto lock = HookLock();
-			const auto& s = Settings::Get();
-			if (!lock.owns_lock() || s.exitMode != 5 || !g_state.active || !g_state.startedFirstPerson || !g_state.holdingExit ||
-				!g_state.bodyReady || !g_state.lastPose || g_exitSkipped >= s.exitSkipFrames) {
+			if (!lock.owns_lock() || !g_state.active || !g_state.startedFirstPerson || !g_state.holdingExit ||
+				!g_state.bodyReady || !g_state.lastPose || g_exitSkipped >= kExitSkipFrames) {
 				return false;
 			}
 			auto* camera = RE::PlayerCamera::GetSingleton();
@@ -3444,107 +3074,8 @@ namespace CCC
 				Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
 			}
 			REX::INFO("Exit: the first-person camera's update {} of {} held back; {} (iExitMode 5; your head {:.2f} m above your feet)",
-				g_exitSkipped, s.exitSkipFrames, own ? "your view drawn" : "the last shot stays", PlayerHeadAboveFeet());
+				g_exitSkipped, kExitSkipFrames, own ? "your view drawn" : "the last shot stays", PlayerHeadAboveFeet());
 			return true;
-		}
-
-		// Diagnostic (0.9.7): where the exit's -68.13 comes from. The 0.9.6 clip (controller
-		// only, no mouse) still showed that frame, and in the first-person camera only +C8/+CC
-		// change during that update. Copies of the objects around it are kept just before the
-		// update; right after it, the copies are searched for the new value (in degrees,
-		// radians, as a sine or cosine) and every value that changed is listed.
-		struct ExitSnap
-		{
-			const char*               name{};
-			const std::uint8_t*       base{};
-			std::vector<std::uint8_t> bytes;
-		};
-		std::vector<ExitSnap> g_exitSnaps;
-
-		void SnapExitObject(const char* a_name, const void* a_base, std::size_t a_size)
-		{
-			if (!a_base) {
-				return;
-			}
-			ExitSnap snap{ a_name, static_cast<const std::uint8_t*>(a_base), std::vector<std::uint8_t>(a_size) };
-			if (SafeCopy(snap.bytes.data(), a_base, a_size) == a_size) {
-				g_exitSnaps.push_back(std::move(snap));
-			}
-		}
-
-		void SnapExitObjects(void* a_state)
-		{
-			g_exitSnaps.clear();
-			auto* camera = RE::PlayerCamera::GetSingleton();
-			SnapExitObject("first-person state", a_state, 0x200);
-			SnapExitObject("player camera", camera, 0x400);
-			if (camera) {
-				SnapExitObject("dialogue state", camera->cameraStates[RE::CameraState::kDialogue], 0x400);
-				SnapExitObject("third-person state", camera->cameraStates[RE::CameraState::kThirdPerson], 0x400);
-			}
-			SnapExitObject("player", RE::PlayerCharacter::GetSingleton(), 0x1000);
-			// Whatever the first-person state points at near its pitch fields.
-			if (a_state) {
-				static constexpr std::pair<std::size_t, const char*> pointers[] = {
-					{ 0x88, "first-person state +88 ->" }, { 0x90, "first-person state +90 ->" },
-					{ 0xB0, "first-person state +B0 ->" }, { 0xB8, "first-person state +B8 ->" }
-				};
-				for (const auto& [at, name] : pointers) {
-					void* target = nullptr;
-					if (SafeCopy(&target, static_cast<std::uint8_t*>(a_state) + at, sizeof(target)) && reinterpret_cast<std::uintptr_t>(target) > 0x10000) {
-						SnapExitObject(name, target, 0x400);
-					}
-				}
-			}
-		}
-
-		void SearchExitObjects(float a_degrees)
-		{
-			const float rad = a_degrees * 0.01745329f;
-			struct Want
-			{
-				const char* what;
-				float       value;
-				float       tolerance;
-			};
-			const Want wants[] = {
-				{ "degrees", a_degrees, 0.02f }, { "degrees, negated", -a_degrees, 0.02f },
-				{ "radians", rad, 0.0004f }, { "radians, negated", -rad, 0.0004f },
-				{ "sine", std::sin(rad), 0.0004f }, { "sine, negated", -std::sin(rad), 0.0004f },
-				{ "cosine", std::cos(rad), 0.0004f }, { "tangent", std::tan(rad), 0.002f },
-			};
-			for (const auto& snap : g_exitSnaps) {
-				std::vector<std::uint8_t> after(snap.bytes.size());
-				const bool  readable = SafeCopy(after.data(), snap.base, after.size()) == after.size();
-				std::string found, changed;
-				int         changes = 0;
-				for (std::size_t off = 0; off + 4 <= snap.bytes.size(); off += 4) {
-					float before = 0.0f, now = 0.0f;
-					std::memcpy(&before, snap.bytes.data() + off, 4);
-					const bool differs = readable && std::memcmp(snap.bytes.data() + off, after.data() + off, 4) != 0;
-					if (readable) {
-						std::memcpy(&now, after.data() + off, 4);
-					}
-					for (const auto& w : wants) {
-						if (std::isfinite(before) && std::abs(before - w.value) < w.tolerance) {
-							found += std::format(" +{:X}={:.4f} ({})", off, before, w.what);
-						}
-						if (differs && std::isfinite(now) && std::abs(now - w.value) < w.tolerance) {
-							found += std::format(" +{:X} became {:.4f} ({})", off, now, w.what);
-						}
-					}
-					if (differs && changes < 40) {
-						++changes;
-						std::uint32_t b = 0, a = 0;
-						std::memcpy(&b, snap.bytes.data() + off, 4);
-						std::memcpy(&a, after.data() + off, 4);
-						changed += std::format(" +{:X}: {:08X} ({:.4g}) -> {:08X} ({:.4g})", off, b, before, a, now);
-					}
-				}
-				REX::INFO("Exit search, {}: holds {:.2f} before the update:{}", snap.name, a_degrees, found.empty() ? " nowhere" : found);
-				REX::INFO("Exit search, {}: changed during the update:{}", snap.name, changed.empty() ? " nothing" : changed);
-			}
-			g_exitSnaps.clear();
 		}
 
 		void BeforeExitUpdate(void* a_state)
@@ -3572,11 +3103,9 @@ namespace CCC
 			// +E2 = 0, +68 = 1.0). On that update it sets its pitch to -68.13 degrees (+C8/+CC)
 			// whatever you were looking at, clears the flag (+E2 = 1, +68 = 30), and the frame
 			// drawn looks at the floor; the next update puts your pitch back (-13 to -20 there).
-			// iExitMode 3: mark it as already entered, so its first update is a normal one.
-			if (Settings::Get().debugLog && g_conversationNumber <= 12) {
-				SnapExitObjects(a_state);
-			}
-			if (Settings::Get().exitMode >= 3 && a_state) {
+			// Mark it as already entered, so its first update is a normal one (0.9.4's iExitMode 3,
+			// kept under iExitMode 5's hold; the modes are gone since 0.9.30, docs/MEMORY.md).
+			if (a_state) {
 				auto* bytes = static_cast<std::uint8_t*>(a_state);
 				g_exitPitchKnown = SafeCopy(g_exitPitchBefore, bytes + 0xC8, sizeof(g_exitPitchBefore)) && std::isfinite(g_exitPitchBefore[0]) &&
 				                   g_exitPitchBefore[0] > -90.0f && g_exitPitchBefore[0] < 90.0f;
@@ -3586,7 +3115,7 @@ namespace CCC
 					bytes[0xE0] = 0;
 					bytes[0xE2] = 1;
 					*reinterpret_cast<float*>(bytes + 0x68) = 30.0f;
-					REX::INFO("Exit: the first-person camera's entry step skipped (iExitMode 3; it had +68 {:.1f})", blend);
+					REX::INFO("Exit: the first-person camera's entry step skipped (it had +68 {:.1f})", blend);
 				} else {
 					REX::INFO("Exit: the first-person camera wasn't in its entry state (+E0 {}, +E2 {}); left alone", entered, done);
 				}
@@ -3597,27 +3126,6 @@ namespace CCC
 					REX::INFO("Exit: camera root before that update: aim ({:.2f} {:.2f} {:.2f})", d.x / 5.0f, d.y / 5.0f, d.z / 5.0f);
 				}
 			}
-		}
-
-		// Diagnostic (0.9.3): the exit's first two first-person updates. Their first frame looks
-		// at the floor though your angles and the camera's aim just before it are right (0.9.2
-		// log), so the first-person camera's own state is dumped before and after the game's
-		// update on those two frames, to find what it starts from.
-		int g_exitDumps = 0;
-		bool ExitDumpWanted()
-		{
-			if (!Settings::Get().debugLog || g_conversationNumber > 12) {
-				return false;
-			}
-			auto lock = HookLock();
-			if (lock.owns_lock() && g_state.active && g_state.startedFirstPerson && g_state.holdingExit) {
-				g_exitDumps = 2;  // this one (frame 0) and the next
-			}
-			if (g_exitDumps <= 0) {
-				return false;
-			}
-			--g_exitDumps;
-			return true;
 		}
 
 		bool ExitToFirstPerson(void* a_state)
@@ -3633,69 +3141,35 @@ namespace CCC
 			if (!camera) {
 				return false;
 			}
-			const int mode = Settings::Get().exitMode;
-			REX::INFO("Exit: cutting from the last shot straight to first person (exit mode {})", mode);
+			REX::INFO("Exit: cutting from the last shot straight to first person");
 			const auto view = *g_firstPersonView;
 			PutGameplayLensBack(true);  // 0.9.17: this path too (0.9.16, after the drink menu: it didn't)
 			End();
 			g_needVisibilityRestore = false;
 			Visibility::Restore(false);
-			// 0.9.4 log: skipping the entry step didn't help; that update still sets +C8/+CC to
-			// -68.13 (a constant, in every exit) and points the root at the floor, then the next
-			// update puts them back. Exit mode 3 now also puts them back, and the root on your
-			// view, right after that update, in case the frame is taken from them afterwards.
-			if (!g_exitSnaps.empty() && a_state) {
-				float after = 0.0f;
-				if (SafeCopy(&after, static_cast<std::uint8_t*>(a_state) + 0xC8, sizeof(after))) {
-					SearchExitObjects(after);
+			// 0.9.4 log: skipping the entry step didn't help on its own; that update still sets
+			// +C8/+CC to -68.13 (a constant, in every exit) and points the root at the floor, then
+			// the next update puts them back. So they're put back, and the root on your view, right
+			// after that update, in case the frame is taken from them afterwards.
+			if (a_state && g_exitPitchKnown) {
+				auto* bytes = static_cast<std::uint8_t*>(a_state);
+				float now[2]{};
+				if (SafeCopy(now, bytes + 0xC8, sizeof(now)) && now[0] < g_exitPitchBefore[0] - 20.0f) {
+					std::memcpy(bytes + 0xC8, g_exitPitchBefore, sizeof(g_exitPitchBefore));
+					REX::INFO("Exit: first-person +C8/+CC were {:.2f}, put back to {:.2f}", now[0], g_exitPitchBefore[0]);
 				}
-				g_exitSnaps.clear();
 			}
-			if (mode >= 3) {
-				if (a_state && g_exitPitchKnown) {
-					auto* bytes = static_cast<std::uint8_t*>(a_state);
-					float now[2]{};
-					if (SafeCopy(now, bytes + 0xC8, sizeof(now)) && now[0] < g_exitPitchBefore[0] - 20.0f) {
-						std::memcpy(bytes + 0xC8, g_exitPitchBefore, sizeof(g_exitPitchBefore));
-						REX::INFO("Exit: first-person +C8/+CC were {:.2f}, put back to {:.2f}", now[0], g_exitPitchBefore[0]);
-					}
-				}
-				if (Camera::SetRootPose(camera->cameraRoot.get(), view)) {
-					REX::INFO("Exit: camera root put on your view after that update");
-				}
+			if (Camera::SetRootPose(camera->cameraRoot.get(), view)) {
+				REX::INFO("Exit: camera root put on your view after that update");
 			}
 			g_exitPitchKnown = false;
 			LogExitFrame(camera, 0);
 			g_exitLogFrames = 6;
-			// The game's first first-person frame looks at the floor (all exits since 0.8.17's
-			// log). Covering it from this hook didn't reach the screen (0.8.18: two frames of
-			// ceiling; 0.9.0: the floor frame unchanged), so mode 1 leaves it; it's logged.
-			// 0.9.7, mode 4: the 0.9.6 clip still showed that frame after mode 3's fixes (taken
-			// during the update), so mode 4 also draws your view over it, now that the root under
-			// it is right too (the 0.9.0 cover was drawn against a root aimed at the floor).
-			if ((mode == 0 || mode == 2 || mode == 4) && Camera::ApplyRender(camera->cameraRoot.get(), view, 0.0f, true)) {
-				g_exitMasking = true;
-				g_exitCoverFrames = mode == 2 ? 3 : 1;
-			}
 			return true;
 		}
 
-		void ExitMaskRelease()
-		{
-			if (!g_hooksSafe) {
-				return;
-			}
-			auto lock = HookLock();
-			if (!lock.owns_lock() || !g_exitMasking) {
-				return;
-			}
-			g_exitMasking = false;
-			g_exitCoverFrames = 0;
-			Camera::RestoreRender();
-			REX::INFO("Exit cover released (left first person)");
-		}
-
-		void ExitMaskEnd()
+		// The first-person frames after an exit, logged (camera, aim and lens against your view).
+		void LogExitFrames()
 		{
 			if (!g_hooksSafe) {
 				return;
@@ -3709,16 +3183,6 @@ namespace CCC
 				LogExitFrame(camera, 7 - g_exitLogFrames);
 				--g_exitLogFrames;
 			}
-			if (!g_exitMasking) {
-				return;
-			}
-			if (--g_exitCoverFrames > 0 && camera && g_firstPersonView &&
-				Camera::ApplyRender(camera->cameraRoot.get(), *g_firstPersonView, 0.0f, true)) {
-				return;  // keep covering
-			}
-			g_exitMasking = false;
-			g_exitMaskUntil = {};
-			Camera::RestoreRender();
 		}
 
 		struct FirstPersonUpdateHook
@@ -3730,14 +3194,7 @@ namespace CCC
 					return;  // the game's update held back this frame (iExitMode 5)
 				}
 				BeforeExitUpdate(a_state);
-				const bool dumpExit = ExitDumpWanted();
-				if (dumpExit) {
-					DumpObject("exit first-person state, before the game's update", a_state, 0x200);
-				}
 				Hook(a_state, a_arg);
-				if (dumpExit) {
-					DumpObject("exit first-person state, after the game's update", a_state, 0x200);
-				}
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
 					return;
@@ -3745,10 +3202,7 @@ namespace CCC
 				if (ExitToFirstPerson(a_state)) {
 					return;  // this frame is drawn from the saved view; don't learn from it
 				}
-				ExitMaskEnd();
-				if (g_exitMasking) {
-					return;
-				}
+				LogExitFrames();
 				MaskRepairFrame("first-person");
 				RememberGameplayView(g_firstPersonView);
 			}
@@ -3843,10 +3297,10 @@ namespace CCC
 				fov = g_lastStartFov[which];  // 0.9.16: a conversation picked up again (after the bar's drink menu) never saw it
 			}
 			void* camera = g_lensCamera.load(std::memory_order_relaxed);
-			if (fov < 40.0f || !camera || !Settings::Get().exitLens) {
+			if (fov < 40.0f || !camera) {
 				static int missed = 0;
 				if (missed++ < 5) {
-					REX::INFO("Exit lens: not put back (lens {:.1f}, camera {}, bExitLens {})", fov, camera ? "known" : "unknown", Settings::Get().exitLens);
+					REX::INFO("Exit lens: not put back (lens {:.1f}, camera {})", fov, camera ? "known" : "unknown");
 				}
 				return;
 			}
@@ -3932,11 +3386,6 @@ namespace CCC
 					return;
 				}
 				MaskRepairFrame("third-person");
-				// A first-person exit cover still in place when the player switches to third
-				// person (0.3.35: the view stayed behind the head until the next conversation).
-				if (g_exitMasking) {
-					ExitMaskRelease();
-				}
 				RememberGameplayView(g_thirdPersonView);
 			}
 			static inline REL::THookVFT<void(void*, void*)> Hook{
@@ -3956,9 +3405,6 @@ namespace CCC
 		// aimed frame at that point. Re-apply the held shot immediately.
 		void HoldShotNow(RE::PlayerCamera* a_camera)
 		{
-			if (Settings::Get().cameraTarget != 1) {
-				return;
-			}
 			auto* root = a_camera->cameraRoot.get();
 			if (g_repair.pendingMode >= 0 && std::chrono::steady_clock::now() - g_repair.pendingSince > (g_repair.pendingMode == 17 ? 400ms : 120ms)) {
 				g_repair.pendingMode = -1;
@@ -4038,11 +3484,6 @@ namespace CCC
 			if (!a_camera->QCameraEquals(RE::CameraState::kDialogue) && !ReturnToDialogueCamera(a_camera)) {
 				return;  // conversation is over; End() already ran
 			}
-			if (a_refused && Settings::Get().debugLog && g_conversationNumber <= 12) {
-				const auto label = std::format("conversation {} rebuild refused", g_conversationNumber);
-				DumpObject((label + " player camera").c_str(), a_camera, 0x188);
-				DumpObject((label + " dialogue state").c_str(), g_dialogueStateObject, 0x340);
-			}
 			const auto attempts = g_repair.attempts + 1;
 			g_repair = Repair{};
 			g_repair.attempts = attempts;
@@ -4086,14 +3527,14 @@ namespace CCC
 				const auto elapsed = a_now - g_state.started;
 				const bool npcSpeaking = g_state.npcEverTalked && a_now - g_state.npcTalkStart >= 200ms;
 				// First attempt: straight away, on the conversation's first frames (see HeldPose).
-				const bool early = Settings::Get().earlyBodyRebuild && g_repair.attempts == 0 && g_state.reRepairs == 0 &&
+				const bool early = g_repair.attempts == 0 && g_state.reRepairs == 0 &&
 				                   g_firstPersonView && elapsed < kRepairStartDelay;
 				if (!dialogue) {
 					return;
 				}
 				// Direct method: ask the game to refresh the player's 3D model. With the dialogue
 				// camera active it builds the full body, with no camera switching at all.
-				if (Settings::Get().bodyRebuildMethod == 1 && !g_state.directFailed) {
+				if (!g_state.directFailed) {
 					auto* player = RE::PlayerCharacter::GetSingleton();
 					if (!player) {
 						return;
@@ -4106,8 +3547,8 @@ namespace CCC
 						g_state.directStartHead = PlayerHeadAboveFeet();
 						g_state.directLastSample = a_now;
 						REX::INFO("Body rebuild (direct): 3D update requested with flags {} (head {:.2f} m above feet, {} ms into the conversation)",
-							Settings::Get().bodyUpdateFlags, PlayerHeadAboveFeet(), std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
-						player->Set3DUpdateFlag(static_cast<std::uint32_t>(Settings::Get().bodyUpdateFlags));
+							kBodyUpdateFlags, PlayerHeadAboveFeet(), std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count());
+						player->Set3DUpdateFlag(kBodyUpdateFlags);
 						return;
 					}
 					if (a_now - g_state.directLastSample >= 12ms) {
@@ -4170,7 +3611,7 @@ namespace CCC
 						g_state.povNpcShot = true;
 						REX::INFO("Body rebuild (direct): no full body yet after {} ms (head {:.2f} m above feet); asking again ({})", waited, PlayerHeadAboveFeet(),
 							g_state.directRetries);
-						player->Set3DUpdateFlag(static_cast<std::uint32_t>(Settings::Get().bodyUpdateFlags));
+						player->Set3DUpdateFlag(kBodyUpdateFlags);
 						return;
 					}
 					if (waited < (g_state.backgroundScene ? 4000 : 2000)) {
@@ -4434,16 +3875,6 @@ namespace CCC
 			}
 			a_editorId = EditorIdUnsafe(form);
 			return true;
-		}
-
-		std::string FormLabel(std::uintptr_t a_ptr)
-		{
-			std::uint32_t type = 0, id = 0;
-			const char*   editorId = nullptr;
-			if (!ReadFormInfo(a_ptr, type, id, editorId)) {
-				return "not a form";
-			}
-			return std::format("form type {} id {:08X} '{}'", type, id, editorId ? editorId : "");
 		}
 
 		// ---- Focus on the person in shot (0.5.0) --------------------------------------------
@@ -6218,23 +5649,7 @@ namespace CCC
 							std::chrono::duration_cast<std::chrono::milliseconds>(t - lastChange).count());
 						lastState = state;
 						lastChange = t;
-						// A few samples of each of first person (0), dialogue (17) and third person (20).
-						static std::array<int, RE::CameraState::kTotal> dumps{};
-						if (state >= 0 && (state == 0 || state == 17 || state == 20) && dumps[state] < 3) {
-							++dumps[state];
-							LogFovCandidates("PlayerCamera", state, cam, 0x20, 0x188);
-							LogFovCandidates("camera state object", state, cam->currentState, 0x8, 0x340);
-						}
 					}
-				}
-			}
-
-			{
-				static bool scanned = false;
-				if (!scanned && Settings::Get().debugLog && g_hookCalls > 0) {
-					scanned = true;
-					LogCameraSettings(RE::INISettingCollection::GetSingleton(), "ini");
-					LogCameraSettings(RE::INIPrefSettingCollection::GetSingleton(), "prefs");
 				}
 			}
 
@@ -6317,33 +5732,6 @@ namespace CCC
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
 
-				// Conversation field of view: keep the game's setting at the value asked for, so
-				// it is in place whenever the dialogue camera starts.
-				{
-					static RE::Setting* fovSetting = nullptr;
-					static bool         looked = false;
-					static float        original = 0.0f;
-					static float        lastLogged = -1.0f;
-					static std::uint32_t ticks = 0;
-					if (!fovSetting && (ticks++ % 240) == 0) {
-						looked = true;
-						fovSetting = FindSetting("fDialogueCameraFailsafeFPFOV:Dialogue");
-						if (fovSetting) {
-							original = fovSetting->GetFloat();
-						}
-					}
-					if (fovSetting && Settings::Get().fovExperiment != 2) {
-						const float wanted = original;  // changing this setting had no visible effect (0.3.28 test); keep the game's value
-						if (fovSetting->GetFloat() != wanted) {
-							fovSetting->SetFloat(wanted);
-						}
-						if (wanted != lastLogged) {
-							lastLogged = wanted;
-							REX::INFO("Conversation field of view: fDialogueCameraFailsafeFPFOV set to {:.1f} (game's own value {:.1f})", wanted, original);
-						}
-					}
-				}
-
 				// Re-read the INI every couple of seconds outside conversations, so edits (game
 				// settings in particular) are in place before the next conversation starts.
 				{
@@ -6421,32 +5809,13 @@ namespace CCC
 					}
 				}
 
-				// Data collection and experiments (main thread).
+				// The open menus, once, a second into the first conversation (testing aid).
 				{
-					static bool dumpedFirst = false, dumpedThird = false;
-					if (camera && !g_state.active && Settings::Get().debugLog && Camera::RenderCameraObject()) {
-						const bool fp = camera->QCameraEquals(RE::CameraState::kFirstPerson);
-						const bool tp = camera->QCameraEquals(RE::CameraState::kThirdPerson);
-						if ((fp && !dumpedFirst) || (tp && !dumpedThird)) {
-							(fp ? dumpedFirst : dumpedThird) = true;
-							const std::string label = fp ? "gameplay first person" : "gameplay third person";
-							DumpObject((label + " player camera").c_str(), camera, 0x188);
-							DumpObject((label + " player camera part 2").c_str(), reinterpret_cast<const std::uint8_t*>(camera) + 0x188, 0x400);
-							DumpObject((label + " camera state").c_str(), camera->currentState, 0x340);
-							DumpObject((label + " render camera").c_str(), Camera::RenderCameraObject(), 0x400);
-						}
-					}
-
 					const bool live = g_state.active && camera && camera->QCameraEquals(RE::CameraState::kDialogue) && !repairing &&
 					                  g_state.framesThisConversation > 60;
-					if (live) {
-						ApplyFovExperiment(true);
-						if (!g_menusLogged) {
-							g_menusLogged = true;
-							LogOpenMenus();
-						}
-					} else if (!g_state.active || repairing) {
-						ApplyFovExperiment(false);
+					if (live && !g_menusLogged) {
+						g_menusLogged = true;
+						LogOpenMenus();
 					}
 				}
 
@@ -6583,9 +5952,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 		REX::CRITICAL("Could not install the dialogue camera hook. Camera features disabled.");
 		return true;
 	}
-	if (!settings.stateHooks) {
-		REX::INFO("First/third-person camera hooks disabled in INI (bStateHooks=0)");
-	} else if (!CCC::FirstPersonUpdateHook::Hook.Enable() || !CCC::ThirdPersonUpdateHook::Hook.Enable()) {
+	if (!CCC::FirstPersonUpdateHook::Hook.Enable() || !CCC::ThirdPersonUpdateHook::Hook.Enable()) {
 		REX::WARN("Could not install the first/third-person camera hooks; the body cycle will be visible");
 	}
 	{
@@ -6608,7 +5975,7 @@ SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 
 	CCC::g_hooksSafe = true;
 	const auto version = SFSE::GetPluginVersion();
-	REX::INFO("Cinematic Conversation Camera SF {}.{}.{} loaded (enabled={}, shotMode={}, cameraTarget={}, revealPlayer={}, poseMode={})", version.major(),
-		version.minor(), version.patch(), settings.enabled, static_cast<int>(settings.shotMode), settings.cameraTarget, settings.revealPlayer, settings.poseMode);
+	REX::INFO("Cinematic Conversation Camera SF {}.{}.{} loaded (enabled={}, shotMode={}, revealPlayer={})", version.major(),
+		version.minor(), version.patch(), settings.enabled, static_cast<int>(settings.shotMode), settings.revealPlayer);
 	return true;
 }

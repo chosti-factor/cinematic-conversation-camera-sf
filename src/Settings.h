@@ -32,7 +32,6 @@ namespace CCC
 		float    filmStopSeconds{ 0.3f };
 		float    filmStopDistance{ 0.25f };
 		float    filmWalkOnDistance{ 3.0f };
-		float    autoListenAfter{ 1.0f };    // seconds standing still first (sitting: 1 s at most), 0.8.4: was 2
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		float    roomShotMaxIndoors{ -1.0f };   // metres; 0 = as far as CCC's framing wants, -1 = the preset's own (0.8.1)
 		float    roomShotMaxOutdoors{ -1.0f };
@@ -61,12 +60,6 @@ namespace CCC
 		// own camera while it finishes closing the conversation (about 1.5 s in total).
 		float exitHoldSeconds{ 0.5f };
 
-		// 0 = over the near character's shoulder (camera behind them; can end up inside a
-		//     wall or chair they are backed against)
-		// 1 = always from in front of and beside the near character (the seated shot), which
-		//     keeps the camera in the open space between the two people
-		std::int32_t shotStyle{ 0 };
-
 		// Shot used when the near character is sitting: camera this far in front of their
 		// head (toward the other person), to the side, and above it.
 		float seatedForward{ 0.25f };
@@ -89,14 +82,6 @@ namespace CCC
 		float busyFollowSmoothing{ 1.0f };
 		float busyHeadSpeed{ 0.25f };  // m/s; back to normal below 60% of this
 
-		// Seconds to blend between shots. 0 = hard cut (CCC's default style).
-		float blendSeconds{ 0.0f };
-
-		// Which camera to move. 0 = the game's logical camera (NPCs react to it and turn
-		// toward it), 1 = only the rendered view (the game keeps thinking the camera is at
-		// the player's eyes, so NPCs keep facing the player).
-		std::int32_t cameraTarget{ 1 };
-
 		// Un-hide the player's body and head during conversations so over-the-shoulder
 		// shots can show them. Their original visibility is restored afterwards.
 		bool revealPlayer{ true };
@@ -105,77 +90,13 @@ namespace CCC
 		// showing them (briefly cycles the view), and return to first person afterwards.
 		bool fixFirstPersonBody{ true };
 
-		// Do that rebuild on the conversation's very first frames, holding the first-person
-		// view, instead of a quarter second in (which visibly zooms the picture out and back).
-		bool earlyBodyRebuild{ true };
-
-		// How the camera transform is written. Kept as a test switch for the first builds.
-		// 0 = world + local + node update, 1 = world + local only, 2 = world only.
-		std::int32_t poseMode{ 0 };
-
-		// Test switch: hook the first- and third-person camera updates (used to hide the
-		// first-person body rebuild). Read once at game start.
-		bool stateHooks{ true };
-
-		// Test switch, re-read at the start of every conversation (no game restart needed):
-		// while a conversation runs, set some of the game's own field-of-view settings to
-		// fFovExperimentValue to find out which one the dialogue camera listens to.
-		// 0 = off, 1 = fTPWorldFOV + fFPWorldFOV, 2 = fDialogueCameraFailsafeFPFOV,
-		// 3 = fDefault1stPersonFOV + fFPGeometryFOV, 4 = a value inside the dialogue camera itself
-		std::int32_t fovExperiment{ 0 };
-		float        fovExperimentValue{ 50.0f };
-
-		// Field of view of the conversation shots, in degrees. 0 = leave the game's own
-		// (about 30, a tight close-up).
-		float dialogueFov{ 0.0f };
-
-		// How the player's full body is built for first-person conversations.
-		// 1 = ask the game to refresh the player's 3D model directly (no camera switching;
-		//     falls back to 0 if the body hasn't appeared after a moment)
-		// 0 = briefly cycle the game through first and third person
-		std::int32_t bodyRebuildMethod{ 1 };
-
-		// Which parts the direct refresh asks for (1 model, 2 skin, 4 head, 8 face,
-		// 16 scale, 32 skeleton; add them up). 63 = all of them, best in testing; 33 left
-		// the head missing.
-		std::int32_t bodyUpdateFlags{ 63 };
-
-		// Test switch: when fDialogueFOV is set, how it is written.
-		// 1 = just before the game's dialogue camera update (the game then works from it)
-		// 2 = just after it, field of view and view cone (0.3.30; made the picture shake)
-		// 3 = before the update, plus the view cone after it
-		std::int32_t fovMethod{ 1 };
-
-		// The conversation's first frames, while the game is still switching to its dialogue
-		// camera. iStartMode (from first person) / iStartModeThirdPerson:
-		// 0 = show the gameplay view, 1 = show the first shot placed against where the dialogue
-		// camera is predicted to be, 2 = show the gameplay view placed that way,
-		// 3 (first person only) = the 0.3.33 opening: a shot from the player's eyes until the
-		// conversation's first cut.
-		std::int32_t startMode{ 1 };
-		std::int32_t startModeThird{ 1 };
-		// iExitMode (first person): 0 = cover the game's first first-person frame, 1 = no
-		// cover, 2 = cover the first three first-person frames, 3 = skip the first-person
-		// camera's entry step (0.9.4).
-		std::int32_t exitMode{ 5 };
-		std::int32_t exitSkipFrames{ 1 };  // iExitMode 5: first-person updates held back
-		// iExitModeThirdPerson: 1 = your third-person view drawn on the switch frame (0.9.4),
-		// 0 = the game's (a frame of its own conversation camera).
-		std::int32_t exitModeThird{ 1 };
-		// bExitLens (0.9.13): your gameplay lens put back on the first frame of your view at an
-		// exit (otherwise that frame is drawn through the conversation's lens, zoomed in).
-		bool         exitLens{ true };
 		// iExitStyle (0.9.14), how a conversation ends, for the hold after the last line:
-		// 0 = the last shot stays to the end; 1 = a closing shot of the NPC alone (you're out
-		// of the picture when the game swaps your body back); 2 = a cut back to your own view
-		// fExitCutSeconds after the last line (your body hidden from first person).
+		// 1 = a closing shot of the NPC alone (you're out of the picture when the game swaps
+		// your body back); 2 = a cut back to your own view fExitCutSeconds after the last line
+		// (your body hidden from first person). The finished alternatives (start and exit
+		// modes, the body method, test switches) are in docs/MEMORY.md (0.9.30).
 		std::int32_t exitStyle{ 2 };
 		float        exitCutSeconds{ 0.4f };
-		// bExitCutStaged (0.9.16): style 2's cut built to look right whatever order its parts
-		// reach the screen in: the lens set with the camera, from first person the camera 12 cm
-		// ahead of your eyes easing back and your body hidden from the third frame, the blur off
-		// from the second. 0 = everything at once.
-		bool         exitCutStaged{ true };
 
 		// Game settings to change, from the [GameSettings] section: "name:Section" = value.
 		std::vector<std::pair<std::string, std::string>> gameSettings;
@@ -219,12 +140,9 @@ namespace CCC
 		float       closeUpLimit{ -1.0f };    // one close-up of them at most this long, then a wider shot of them: -1 the preset's own, 0 none (0.9.23)
 		int         listeningCloseUps{ -1 };  // listening reactions on a close-up of you: -1 the preset's own (not in Frontier), 0 no, 1 yes (0.9.23)
 		int         reactionShots{ -1 };      // one of the NPC's lines shown on you: -1 the preset's own (0.8.13: CCC's off, CCC SF's on), 0 off, 1 on
-		int         reactionEvery{ 2 };       // NPC lines heard before reactions may come
 		bool        avoidBystanders{ true };  // a still bystander covering a face or most of the frame blocks a shot
 		float       bystanderStill{ 1.5f };   // seconds without moving before a bystander counts
 		int         reactionChance{ 100 };    // percent, once due (0.8.5: was 50, rolled on a sentence count)
-		float       reactionSeconds{ 2.5f };  // on you, then back to the speaker; 0 = the whole line (0.8.1)
-		float       reactionMinSeconds{ 2.0f };  // (0.8.3; unused since 0.8.5: reactions last their line)
 		float       reactionAfterSeconds{ -1.0f };  // their talking without a cut to you before a reaction is due (0.8.5); -1 = the preset's own (0.8.15)
 		float       reactionLineMin{ 2.5f };     // the line a reaction takes: at least ... seconds
 		float       reactionLineMax{ 7.0f };     // ... and at most

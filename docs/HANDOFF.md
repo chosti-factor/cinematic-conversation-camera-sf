@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.29 (2026-11-19).
+Last updated: 0.9.30 (2026-11-19).
 
 ## Working rules
 
@@ -40,6 +40,9 @@ Last updated: 0.9.29 (2026-11-19).
   - docs/HANDOFF.md: at milestones, and whenever a test changes what we know.
   - docs/COMPATIBILITY.md (the Nexus page's compatibility list, 2026-11-19): whenever a mod is
     tested or a report comes in.
+  - docs/MEMORY.md (2026-11-19): whatever is removed from the code or the INI (test switches,
+    experiments, diagnostics, dead ends), with its technical detail and the commit it can be
+    read back from. Read it before re-trying an idea.
   - docs/TODO.md (the working list to 1.0): ticked as items are done, items added as they come
     up; items moved to after 1.0 only on the user's call.
   - Each document has a "Last updated: version" line near the top; bump it whenever the

@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.29 (2026-11-19).
+Last updated: 0.9.30 (2026-11-19).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -67,9 +67,8 @@ What CCC doesn't do.
   fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
   there, Constellation handheld), or `iCameraSway` sets one.
 - **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
-  game hands the camera back (the default), a closing shot of the NPC alone as the dialogue
-  menu closes, or the last shot to the end. Clean in both perspectives, and starts with at
-  most a brief flash.
+  game hands the camera back (the default), or a closing shot of the NPC alone as the
+  dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
 - **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
   you take part in (someone walks up and starts talking, several people taking turns) keep
   the game's own camera.
@@ -201,7 +200,8 @@ sway for every preset instead of the preset's own (0 = tripod, 100 = fully handh
 `iExtremeCloseUpChanceNpc` set the close-up limit and the extreme share for every preset.
 Every preset's shots, shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
 How the camera starts and ends a conversation, frame by frame, with the measured numbers:
-[docs/TRANSITIONS.md](docs/TRANSITIONS.md).
+[docs/TRANSITIONS.md](docs/TRANSITIONS.md). What was tried and removed along the way (test
+switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
 ### Planned, roughly in order
 

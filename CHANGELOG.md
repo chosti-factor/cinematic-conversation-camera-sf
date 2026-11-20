@@ -4,6 +4,29 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.30 - 2026-11-19
+
+The redundancy pass (the first of the four before 1.0): code no longer in use and finished
+experiments taken out. Nothing should look or behave differently; what was removed, with its
+technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
+
+### Removed
+- Test switches, each kept at the value in use: `[Transitions]` `iStartMode`,
+  `iStartModeThirdPerson`, `iExitMode`, `iExitSkipFrames`, `iExitModeThirdPerson`, `bExitLens`,
+  `bExitCutStaged`; `[Body]` `iBodyRebuildMethodPlayer` (the direct refresh, with the camera
+  cycle still its automatic fallback) and `iBodyUpdateFlagsPlayer`; `[Debug]` `bStateHooks`
+  and `iCameraTarget`. `iExitStyle` keeps 1 and 2 (0, the last shot to the end, is gone).
+- Old setting names no longer read: `iCuttingPace` (now `fCuttingPace`), `fDeepFocusBeyond`
+  (now `fWideFocusBeyond`), `bDeepFocusLongShots` (now `sFocusStyle`).
+- Settings that were read but did nothing: `fAutoListenAfter`, `iReactionSentencesPlayer`,
+  `fReactionSecondsPlayer`, `fReactionMinSecondsPlayer`, and unused fields from 0.3.x (blend
+  time, the old field-of-view value and method).
+- Experiments fixed at their outcome: the field-of-view experiment, the ways of writing the
+  camera, the plain shot style, the late body rebuild, the exit covers.
+- Diagnostic only: the memory dumps, the field-of-view and position scans, the game settings
+  listing, the exit value search, the head-motion and head-distance measurements, the start
+  facts, and four unused helpers.
+
 ## 0.9.29 - 2026-11-19
 
 ### Fixed

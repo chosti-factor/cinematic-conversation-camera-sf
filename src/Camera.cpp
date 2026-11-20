@@ -294,7 +294,6 @@ namespace CCC::Camera
 		// Render-camera override state. We only ever change the render camera's local
 		// transform, so restoring that one value puts everything back.
 		RE::NiAVObject* g_renderCam = nullptr;
-		std::optional<RE::NiTransform> g_lastWritten;  // the render camera's world transform we last wrote
 		RE::NiTransform g_savedRenderLocal{};
 
 		float Distance(const RE::NiPoint3& a, const RE::NiPoint3& b) { return Length(Sub(a, b)); }
@@ -402,18 +401,12 @@ namespace CCC::Camera
 			return false;
 		}
 
-		const auto mode = Settings::Get().poseMode;
-
+		// World, local and a node update (0.9.30: the test switch for world only, or world and
+		// local only, is gone; docs/MEMORY.md).
 		a_root->world.translate = a_pose.position;
 		a_root->world.rotate = *rot;
-		if (mode == 2) {
-			return true;
-		}
 		a_root->local.translate = a_pose.position;
 		a_root->local.rotate = *rot;
-		if (mode == 1) {
-			return true;
-		}
 		RE::NiUpdateData update{};
 		update.delta = a_delta;
 		a_root->Update(&update);
@@ -524,11 +517,6 @@ namespace CCC::Camera
 		return text;
 	}
 
-	void* RenderCameraObject()
-	{
-		return g_renderCam;
-	}
-
 	std::optional<Pose> PoseOf(RE::NiAVObject* a_root)
 	{
 		if (!a_root || !g_axes) {
@@ -634,7 +622,6 @@ namespace CCC::Camera
 			cam->local.translate = Scale(pw.rotate.Transpose() * Sub(world.translate, pw.translate), invScale);
 		}
 		cam->world = world;
-		g_lastWritten = world;
 
 		auto& frustum = static_cast<RE::NiCamera*>(cam)->viewFrustum;
 		if (!a_holdDialogueFrustum) {
@@ -721,26 +708,6 @@ namespace CCC::Camera
 			REX::INFO("Render camera restored");
 		}
 		g_renderCam = nullptr;
-		g_lastWritten.reset();
-	}
-
-	std::optional<Drift> RenderDrift()
-	{
-		if (!g_renderCam || !g_lastWritten) {
-			return std::nullopt;
-		}
-		const auto& w = g_renderCam->world;
-		const auto& b = *g_lastWritten;
-		Drift       d;
-		d.metres = Length(Sub(w.translate, b.translate));
-		float trace = 0.0f;  // trace(A * B^T): 1 + 2 cos(angle between the two rotations)
-		for (int r = 0; r < 3; ++r) {
-			for (int c = 0; c < 3; ++c) {
-				trace += w.rotate.entry[r][c] * b.rotate.entry[r][c];
-			}
-		}
-		d.degrees = std::acos(std::clamp((trace - 1.0f) * 0.5f, -1.0f, 1.0f)) * 57.29578f;
-		return d;
 	}
 
 	bool TrackFacing(RE::TESObjectREFR* a_ref, const RE::NiPoint3& a_toward, FaceTrack& a_track, float a_delta, const char* a_who)

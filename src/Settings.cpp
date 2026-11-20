@@ -99,7 +99,6 @@ namespace CCC
 			a_s.autoListen = ReadInt(a_path, L"Overhear", L"bAutoListen", a_s.autoListen ? 1 : 0) != 0;
 			a_s.filmEndSeconds = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsNpc", a_s.filmEndSeconds), 0.1f, 10.0f);
 			a_s.filmEndSecondsScene = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmEndSecondsSceneNpc", a_s.filmEndSecondsScene), a_s.filmEndSeconds, 15.0f);
-			a_s.autoListenAfter = std::clamp(ReadFloat(a_path, L"Overhear", L"fAutoListenAfter", a_s.autoListenAfter), 0.5f, 30.0f);
 			a_s.filmStopSeconds = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmStopSeconds", a_s.filmStopSeconds), 0.1f, 2.0f);
 			a_s.filmStopDistance = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmStopDistance", a_s.filmStopDistance), 0.1f, 2.0f);
 			a_s.filmWalkOnDistance = std::clamp(ReadFloat(a_path, L"Overhear", L"fFilmWalkOnDistance", a_s.filmWalkOnDistance), 0.5f, 10.0f);
@@ -128,8 +127,7 @@ namespace CCC
 			// 0.9.8: the named cutting styles (sCuttingStyle) are gone; iCuttingPace nudges the
 			// preset's own rhythm instead of replacing it. The fine-tuning keys override it (0 =
 			// the preset's own).
-			// 0.9.26: fCuttingPace, in steps of 0.5; an older iCuttingPace line is still read.
-			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"iCuttingPace", a_s.cuttingPace);
+			// 0.9.26: fCuttingPace, in steps of 0.5 (iCuttingPace, whole steps, no longer read: 0.9.30).
 			a_s.cuttingPace = ReadFloat(a_path, L"Director", L"fCuttingPace", a_s.cuttingPace);
 			a_s.cuttingPace = std::clamp(std::round(a_s.cuttingPace * 2.0f) / 2.0f, -2.0f, 2.0f);
 			for (std::size_t i = 0; i < Settings::kPresetNames.size(); ++i) {
@@ -160,15 +158,12 @@ namespace CCC
 			a_s.closeUpLimit = a_s.closeUpLimit < 0.0f ? -1.0f : a_s.closeUpLimit == 0.0f ? 0.0f : std::clamp(a_s.closeUpLimit, 4.0f, 60.0f);
 			a_s.listeningCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bListeningCloseUpsPlayer", a_s.listeningCloseUps), -1, 1);
 			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", a_s.reactionShots), -1, 1);
-			a_s.reactionEvery = std::clamp(ReadInt(a_path, L"Director", L"iReactionSentencesPlayer", a_s.reactionEvery), 1, 10);
 			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Director", L"iReactionChancePlayer", a_s.reactionChance), 0, 100);
-			a_s.reactionSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionSecondsPlayer", a_s.reactionSeconds), 0.0f, 30.0f);
 			a_s.reactionAfterSeconds = ReadFloat(a_path, L"Director", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds);
 			a_s.reactionAfterSeconds = a_s.reactionAfterSeconds < 0.0f ? -1.0f : std::clamp(a_s.reactionAfterSeconds, 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
 			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Director", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
-			a_s.reactionMinSeconds = std::clamp(ReadFloat(a_path, L"Director", L"fReactionMinSecondsPlayer", a_s.reactionMinSeconds), 0.0f, 10.0f);
 			a_s.avoidBystanders = ReadInt(a_path, L"Director", L"bAvoidBystandersNpc", a_s.avoidBystanders ? 1 : 0) != 0;
 			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Director", L"fBystanderStillNpc", a_s.bystanderStill), 0.0f, 10.0f);
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", a_s.persuasionBeat ? 1 : 0) != 0;
@@ -207,17 +202,13 @@ namespace CCC
 			a_s.largeSpeakerPlainAngle = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerPlainAnglePlayer", a_s.largeSpeakerPlainAngle), 0.0f, 60.0f);
 			a_s.gameCameraInScenes = ReadInt(a_path, L"Camera", L"bGameCameraInScenes", a_s.gameCameraInScenes ? 1 : 0) != 0;
 			a_s.focusOnSubject = ReadInt(a_path, L"Camera", L"bFocusOnSubject", a_s.focusOnSubject ? 1 : 0) != 0;
-			// sFocusStyle (0.5.1); bDeepFocusLongShots=1 from 0.5.0 INIs means Wide.
-			if (ReadInt(a_path, L"Camera", L"bDeepFocusLongShots", -1) == 1) {
-				a_s.focusStyle = "Wide";
-			}
+			// sFocusStyle (0.5.1).
 			a_s.focusStyle = ReadString(a_path, L"Camera", L"sFocusStyle", a_s.focusStyle);
 			{
 				std::string style = a_s.focusStyle;
 				std::ranges::transform(style, style.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				a_s.deepFocusLongShots = style == "wide";
 			}
-			a_s.deepFocusBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fDeepFocusBeyond", a_s.deepFocusBeyond), 0.0f, 20.0f);
 			a_s.deepFocusBeyond = std::clamp(ReadFloat(a_path, L"Camera", L"fWideFocusBeyond", a_s.deepFocusBeyond), 0.0f, 20.0f);
 
 			a_s.distanceBehind = ReadFloat(a_path, L"PlainCamera", L"fDistanceBehind", a_s.distanceBehind);
@@ -235,21 +226,9 @@ namespace CCC
 
 			a_s.revealPlayer = ReadInt(a_path, L"Body", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
 			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
-			a_s.bodyRebuildMethod = std::clamp(ReadInt(a_path, L"Body", L"iBodyRebuildMethodPlayer", a_s.bodyRebuildMethod), 0, 1);
-			a_s.bodyUpdateFlags = std::clamp(ReadInt(a_path, L"Body", L"iBodyUpdateFlagsPlayer", a_s.bodyUpdateFlags), 1, 0xFFFF);
 
-			a_s.startMode = std::clamp(ReadInt(a_path, L"Transitions", L"iStartMode", a_s.startMode), 0, 2);
-			a_s.startModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iStartModeThirdPerson", a_s.startModeThird), 0, 2);
-			a_s.exitModeThird = std::clamp(ReadInt(a_path, L"Transitions", L"iExitModeThirdPerson", a_s.exitModeThird), 0, 2);
-			a_s.exitMode = std::clamp(ReadInt(a_path, L"Transitions", L"iExitMode", a_s.exitMode), 0, 5);
-			a_s.exitSkipFrames = std::clamp(ReadInt(a_path, L"Transitions", L"iExitSkipFrames", a_s.exitSkipFrames), 1, 4);
-			a_s.exitLens = ReadInt(a_path, L"Transitions", L"bExitLens", a_s.exitLens ? 1 : 0) != 0;
-			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Transitions", L"iExitStyle", a_s.exitStyle), 0, 2);
+			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Transitions", L"iExitStyle", a_s.exitStyle), 1, 2);
 			a_s.exitCutSeconds = std::clamp(ReadFloat(a_path, L"Transitions", L"fExitCutSeconds", a_s.exitCutSeconds), 0.0f, 1.0f);
-			a_s.exitCutStaged = ReadInt(a_path, L"Transitions", L"bExitCutStaged", a_s.exitCutStaged ? 1 : 0) != 0;
-
-			a_s.stateHooks = ReadInt(a_path, L"Debug", L"bStateHooks", a_s.stateHooks ? 1 : 0) != 0;
-			a_s.cameraTarget = std::clamp(ReadInt(a_path, L"Debug", L"iCameraTarget", a_s.cameraTarget), 0, 1);
 
 			for (auto& [key, value] : ReadSection(a_path, L"GameSettings")) {
 				std::erase_if(a_s.gameSettings, [&](const auto& a_p) { return a_p.first == key; });

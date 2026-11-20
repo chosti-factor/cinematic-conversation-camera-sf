@@ -1,9 +1,18 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.18, 2026-11-17).
+measured in testing. Kept up to date with every build (last updated: 0.9.30, 2026-11-19).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
+
+0.9.30 (the redundancy pass): the test switches named below are gone from the INI and the
+code, each fixed at the value this document calls the default: `iStartMode` and
+`iStartModeThirdPerson` (1), `iExitMode` (5) with `iExitSkipFrames` (1),
+`iExitModeThirdPerson` (1), `bExitLens` and `bExitCutStaged` (on), `iBodyRebuildMethodPlayer`
+(1, the direct refresh, with the camera cycle as its automatic fallback),
+`iBodyUpdateFlagsPlayer` (63). `iExitStyle` keeps 1 and 2 (0, the last shot to the end, is
+gone; seated in third person still ends that way). What the other values did, and why they
+were dropped: [MEMORY.md](MEMORY.md).
 
 ## The pieces
 
