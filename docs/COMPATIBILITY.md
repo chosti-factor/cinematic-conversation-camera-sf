@@ -33,6 +33,7 @@ listed here).
 | [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) | Settings page | Optional; gives CCC SF its in-game settings page (F1) |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
+| [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work. In the test setup Canvas never finished loading its HUD (its boot logo kept spinning), with CCC SF on or off, so that's on the Venworks side, not a conflict |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
 | Suit Protection Meter; Readable suit protection warnings; Toggle Quest Markers with Scanner and Ship HUD; Clean Vanilla Hitmarker | HUD | |
@@ -48,7 +49,6 @@ listed here).
 | Mod | Area | Why we expect it to work | Watch for |
 | --- | --- | --- | --- |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Leaves the message layer alone, as far as its page says | |
-| [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Replaces `hudmessagesmenu.gfx`; works if the subtitle keeps its place in the menu | The subtitle not moving into the bar |
 | Better Dialogue Controls | Dialogue menu input | Changes keys and timing, not the layout | |
 | AutoZoom | Camera zoom | Installed in the test setup but its plugin inactive, so not tested yet; to check once with it on | Its zoom acting during conversations |
 
@@ -70,12 +70,12 @@ None so far.
 Five UI mods, one at a time; for each, a conversation from first person and one from third,
 and one filming of people talking nearby. Checks: the bars slide in, the subtitle sits in the
 bottom bar, the options fade and come back, the testing messages show. Then AutoZoom on once
-(its `AutoZoom.esm` is inactive in the test setup's plugins.txt, so it hasn't been tested). Venworks and rbtUI2 both replace the HUD message layer, so not together.
+(its `AutoZoom.esm` is inactive in the test setup's plugins.txt, so it hasn't been tested).
 
 | Mod | Area | Recent | Popularity | Status |
 | --- | --- | --- | --- | --- |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD and its message layer | Aug 2026, built from 1.16.244 | moderate | Already in the test setup: works |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | no date shown | high | Tested: works (0.9.27) |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Oct 2024 (game 1.11.36) | very high (2,888 endorsements) | Tested: works (0.9.28) |
-| [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Sep 2026 (beta) | low so far | To test |
+| [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Sep 2026 (beta) | low so far | Tested: works (0.9.28; its own HUD didn't finish loading, with or without CCC SF) |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | no date shown | the most popular HUD mod | To test |
