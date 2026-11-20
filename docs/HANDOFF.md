@@ -13,6 +13,8 @@ Last updated: 0.9.31 (2026-11-20).
   Actions build (Windows, xmake, CommonLibSF). Pushes to `main` also replace the rolling
   "Test build" pre-release; pushes to other branches only build.
 - `.md`-only pushes don't build and can go out freely.
+- A fix for a build that failed can be pushed without asking (the user, 2026-11-20): only
+  the fix for the failure, nothing else in the same push.
 - Commit as the owner, before the first commit in a new workspace (it defaults to
   "Claude <noreply@anthropic.com>", which GitHub lists as a separate contributor):
   `git config user.name chosti-factor` and
