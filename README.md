@@ -164,7 +164,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
   three-quarters, shoulders), with a two-shot or a group shot now and then when three or
   more are talking. From first person, the view is third person while it films, with you
-  hidden, and back to first person after.
+  hidden, and back to first person after. The crosshair and the name tags are hidden while
+  it films.
 - **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu
   Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional
   here, and the INI works without it (see Settings below).

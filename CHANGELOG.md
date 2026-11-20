@@ -7,6 +7,10 @@ test build; "diagnostic" items only add information to the log for testing.
 ## 0.9.29 - 2026-11-19
 
 ### Changed
+- Filming people talking near you: the crosshair (the dot in the middle of the screen) is
+  hidden while it films, as the name tags and prompts already were, and back when it ends.
+  The game already hides it in your own conversations. A HUD mod that moves the crosshair
+  elsewhere keeps its own.
 - "Subtitles in the bottom bar" (`bSubtitlesInBars`) explained on the settings page and in the
   INI: off, the subtitle stays where the game puts it (vanilla positioning, kept for mods that
   place subtitles themselves), and there it can overlap the top edge of the bottom bar.

@@ -34,6 +34,7 @@ listed here).
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work |
+| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Tested (0.9.28): the bars, the subtitle in the bar, the options and the testing messages all work |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
 | Suit Protection Meter; Readable suit protection warnings; Toggle Quest Markers with Scanner and Ship HUD; Clean Vanilla Hitmarker | HUD | |
@@ -48,7 +49,6 @@ listed here).
 
 | Mod | Area | Why we expect it to work | Watch for |
 | --- | --- | --- | --- |
-| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Leaves the message layer alone, as far as its page says | |
 | Better Dialogue Controls | Dialogue menu input | Changes keys and timing, not the layout | |
 | AutoZoom | Camera zoom | Installed in the test setup but its plugin inactive, so not tested yet; to check once with it on | Its zoom acting during conversations |
 
@@ -78,4 +78,4 @@ bottom bar, the options fade and come back, the testing messages show. Then Auto
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | no date shown | high | Tested: works (0.9.27) |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Oct 2024 (game 1.11.36) | very high (2,888 endorsements) | Tested: works (0.9.28) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Sep 2026 (beta) | low so far | Tested: works (0.9.28) |
-| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | no date shown | the most popular HUD mod | To test |
+| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | no date shown | the most popular HUD mod | Tested: works (0.9.28) |
