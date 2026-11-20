@@ -18,6 +18,11 @@ test build; "diagnostic" items only add information to the log for testing.
   (jogging 4.5-5.0), so the 6.5 m/s limit sits between them. The distance went while held
   is no longer logged (0.9.32's diagnostic, answered).
 
+### Removed
+- Leftovers the redundancy pass missed: conversation and filming state nothing read any more,
+  three unused constants, and comments and an INI note still naming removed settings (the INI
+  said an old `iCuttingPace` line was still read; it isn't since 0.9.30). In docs/MEMORY.md.
+
 ## 0.9.32 - 2026-11-20
 
 ### Diagnostic

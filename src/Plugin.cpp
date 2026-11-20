@@ -124,13 +124,7 @@ namespace CCC
 			int                                   busySwitches{ 0 };
 			float                                 busySeconds{ 0.0f };
 			bool                                  backgroundScene{ false };  // speaker is in a background scene (no mid-conversation camera switching)
-			std::uint32_t                         lastAppliedFrame{ 0 };     // frame our shot was last placed on (main path)
-			std::uint32_t                         driftBits{ 0 };            // last 32 frames: 1 = the game moved its camera after us
-			int                                   driftLogged{ 0 };
 			std::uint32_t                         speakerId{ 0 };
-			std::optional<Camera::Pose>           lastRoot{};
-			std::optional<RE::NiPoint3>           lastNpcFeet{};
-			std::optional<RE::NiPoint3>           lastPlayerFeet{};
 			bool                                  lateRetryDone{ false };
 			bool                                  directRequested{ false };
 			bool                                  directFailed{ false };
@@ -230,13 +224,8 @@ namespace CCC
 		// Head above feet: measured 1.62 m with the full third-person body posed, 1.52 m while
 		// the body is still in its first-person form (0.3.5 log). Anything under this is not ready.
 		constexpr float kStandingHeadHeight = 1.58f;
-		constexpr auto kRepairRetry = 16ms;
 		constexpr auto kRepairTimeout = 1800ms;
 		constexpr std::uint32_t kRepairSettleFrames = 6;
-		// One attempt only. 0.3.9 crashed inside the game while switching camera modes on a
-		// second attempt (Linden, Ryujin HQ), so a failed rebuild now just keeps the camera on
-		// the other person for that conversation.
-		constexpr std::uint32_t kRepairMaxCycles = 1;
 
 		// SFSE runs our per-frame task on whichever thread drains its queue: sometimes the
 		// main thread, sometimes a job thread (the 0.3.9 crash was on "BSJobs 9"). Changing
@@ -643,14 +632,9 @@ namespace CCC
 			REX::INFO("Open menus ({} registered):{}", total, text);
 		}
 
-		// Field of view of the conversation shots. Found in the 0.3.28 dumps: the game keeps
-		// the camera's current horizontal field of view (degrees) inside the player camera
-		// object, and the render camera's real frustum (tangents of the half angles) is at a
-		// different place than the library assumes. Called right after the game's dialogue
-		// camera update, so the game's own value (about 30) is replaced every frame.
+		// The camera's current horizontal field of view (degrees), inside the player camera
+		// object (found in the 0.3.28 dumps).
 		constexpr std::size_t kPlayerCameraFovOffset = 0x280;
-		constexpr std::size_t kRenderCameraFrustumOffset = 0x1C0;
-		bool                  g_fovLogged = false;
 
 		// You're sitting on something (a chair, a bar stool): your process's occupied furniture.
 		bool PlayerOnFurniture()
@@ -691,7 +675,6 @@ namespace CCC
 			Settings::Get().Load();  // pick up INI edits made since the last conversation
 			++g_conversationNumber;
 			g_menusLogged = false;
-			g_fovLogged = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
 			if (Settings::Get().director) {
 				Director::SetObstacleTest(&TestShot);
@@ -2796,7 +2779,6 @@ namespace CCC
 				}
 			}
 			g_state.lastPose = *pose;
-			g_state.lastAppliedFrame = g_state.framesThisConversation;
 			g_state.holdingExit = false;
 			g_state.lastDirected = directed.has_value();
 			g_state.closingDone = false;
@@ -3073,7 +3055,7 @@ namespace CCC
 			} else {
 				Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f);
 			}
-			REX::INFO("Exit: the first-person camera's update {} of {} held back; {} (iExitMode 5; your head {:.2f} m above your feet)",
+			REX::INFO("Exit: the first-person camera's update {} of {} held back; {} (the exit hold; your head {:.2f} m above your feet)",
 				g_exitSkipped, kExitSkipFrames, own ? "your view drawn" : "the last shot stays", PlayerHeadAboveFeet());
 			return true;
 		}
@@ -3191,7 +3173,7 @@ namespace CCC
 			{
 				ReleaseThirdPersonExit();
 				if (HoldExitUpdate()) {
-					return;  // the game's update held back this frame (iExitMode 5)
+					return;  // the game's update held back this frame (the exit hold, 0.9.8)
 				}
 				BeforeExitUpdate(a_state);
 				Hook(a_state, a_arg);
@@ -4763,8 +4745,6 @@ namespace CCC
 			RE::NiPoint3                          speedFeet{};     // your speed over the last quarter second (0.8.18)
 			std::chrono::steady_clock::time_point speedAt{};
 			float                                 speed{ 0.0f };
-			RE::NiPoint3                          stillAt{};       // where you've stood still since stillSince
-			std::chrono::steady_clock::time_point stillSince{};
 			std::chrono::steady_clock::time_point autoBlockedUntil{};  // you stopped it: no auto start before
 			bool                                  autoStarted{ false };
 			std::chrono::steady_clock::time_point startedAt{};
@@ -5124,7 +5104,6 @@ namespace CCC
 			// Never in combat: no prompt, no starting, and filming stops.
 			if (InCombat(player)) {
 				StopFilming("combat");
-				g_filmMain.stillSince = {};
 				return;
 			}
 			// The conversations going on near you: NPC-to-NPC lines within reach.
@@ -5394,9 +5373,9 @@ namespace CCC
 			if (speaker == 0 || inMenu) {
 				return;
 			}
-			// Starting on its own (bAutoListen): sitting for 1.5 s, or standing still for
-			// fAutoListenAfter seconds, near a conversation; not for a minute after you stopped
-			// one with the listen key.
+			// Starting on its own (bAutoListen): as a conversation scene starts near you (0.8.6), even
+			// while you walk or jog past (0.9.31); not for a minute after you stopped one with the
+			// listen key.
 			// 0.8.6: barks and one-liners ("Need something?", "Hey! You wanna dance?") aren't
 			// offered or started on their own: in the 0.8.5 log every real conversation between
 			// NPCs was one of the game's scenes (FC_AC_RandConv..., ...CityLife_Encounter...),

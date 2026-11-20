@@ -124,7 +124,7 @@ namespace CCC
 
 			a_s.director = ReadInt(a_path, L"Director", L"bEnabled", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
-			// 0.9.8: the named cutting styles (sCuttingStyle) are gone; iCuttingPace nudges the
+			// 0.9.8: the named cutting styles (sCuttingStyle) are gone; the cutting pace nudges the
 			// preset's own rhythm instead of replacing it. The fine-tuning keys override it (0 =
 			// the preset's own).
 			// 0.9.26: fCuttingPace, in steps of 0.5 (iCuttingPace, whole steps, no longer read: 0.9.30).

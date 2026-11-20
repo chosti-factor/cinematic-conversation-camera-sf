@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.30 (2026-11-19).
+Last updated: 0.9.33 (2026-11-20).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -49,6 +49,10 @@ there, removed:
   `fDialogueCameraFailsafeFPFOV` and wrote its own original value back (the 0.3.28 finding
   left it at the game's value), logging "Conversation field of view: ... set to 30.0". A
   no-op since.
+- **The render camera's own frustum** (the tangents of its half angles), found in the 0.3.28
+  dumps at render camera +0x1C0, a different place from the library's layout
+  (`kRenderCameraFrustumOffset`). Unused since the lens hook; the frustum is reached through
+  the library's `viewFrustum` (`SetRenderLens`).
 - **The FOV scan** (`LogFovCandidates`, `ScanFloats`): on each camera mode change, the first
   three times each for first person (0), dialogue (17) and third person (20), every 4-byte
   float that looked like an angle (15 to 150 degrees, or 0.25 to 2.7 radians, not 1.0) in
@@ -201,6 +205,11 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
 - **"Body rebuild refused" dumps:** the player camera (0x188) and the dialogue state (0x340)
   when the game refused to leave its dialogue camera (seated NPCs, every time).
 
+- **One camera cycle only** (`kRepairMaxCycles = 1`, and a 16 ms retry, `kRepairRetry`): 0.3.9
+  crashed inside the game while switching camera modes on a second cycle (Linden, Ryujin
+  HQ), so a failed rebuild kept the camera on the other person for that conversation. The
+  constants had no reader left; the attempts are limited by `kRepairMaxAttempts` (4) now.
+
 ## Shots
 
 - **`iShotStyle` / `shotStyle`** (0.3.x, not in the INI since 0.4): 1 = the plain shots always
@@ -237,6 +246,14 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
 - **`fAutoListenAfter`**: seconds standing still near a conversation before filming started on
   its own (4, then 2 in 0.8.2, 1 in 0.8.4). Gone from the INI in 0.8.6 (it starts as the scene
   begins, even while you walk); still read, unused, until 0.9.30.
+
+## Leftovers removed in 0.9.33
+
+- Conversation state never read: `lastAppliedFrame` (written only), `driftBits` and
+  `driftLogged` (the game moving its camera after ours, from `RenderDrift`), `lastRoot`,
+  `lastNpcFeet`, `lastPlayerFeet`. `g_fovLogged` (reset each conversation, never read).
+- `stillAt` and `stillSince` in the filming state: the standing-still timer behind
+  `fAutoListenAfter` (gone in 0.8.6).
 
 ## Old setting names
 

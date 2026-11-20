@@ -103,7 +103,7 @@ namespace CCC::Director
 			std::optional<ShotType>   intenseShot;              // this line's emotion close-up, to come back to after a reaction (0.8.3)
 			std::optional<Frame>      lastFrame;                // the last frame seen, for the closing shot (0.9.14)
 			bool                      extremeLineOver{ false }; // an extreme close-up's line is over: it holds one line only (0.8.9)
-			// The cutting rhythm in use: the preset's own, nudged by iCuttingPace (0.9.8).
+			// The cutting rhythm in use: the preset's own, nudged by the cutting pace (0.9.8; fCuttingPace and fCuttingPace<Preset> since 0.9.26/0.9.27).
 			float pace{ 0.0f };  // the cutting pace in use (the preset's own or fCuttingPace, 0.9.27)
 			int   freshAngleChance{ 50 };
 			int   minLines{ 2 };
@@ -930,7 +930,7 @@ namespace CCC::Director
 			presetOutdoor = 10.5f;
 			// The cutting rhythm: CCC 1.5.0's per preset (Standard a new angle every 2-3 lines,
 			// Close 3-6, Room 3-5; the turn never asks for one; held at least 2.4 s, Room 3 s);
-			// CCC SF's their own (0.8.14). 0.9.8: iCuttingPace nudges it (the named styles that
+			// CCC SF's their own (0.8.14). 0.9.8: the cutting pace nudges it (the named styles that
 			// replaced it are gone); iMinLines, iMaxLines and fShortestHold override.
 			{
 				static constexpr float kLineScale[] = { 1.6f, 1.3f, 1.0f, 0.75f, 0.55f };
