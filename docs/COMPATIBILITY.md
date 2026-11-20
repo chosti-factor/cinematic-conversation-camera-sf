@@ -37,7 +37,7 @@ listed here).
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work |
 | [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) | Camera zoom | Tested (0.9.29) with its plugin on: conversations and filming people talking unaffected |
-| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Tested (0.9.28): the bars, the subtitle in the bar, the options and the testing messages all work |
+| [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Tested (0.9.28): the bars, the subtitle in the bar, the options and the testing messages all work. Again with 0.9.34, together with Enhanced Dialogue Interface and Enhanced Subtitles: its HUD hides and comes back with the game's while filming people talking |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
 | Suit Protection Meter; Readable suit protection warnings; Toggle Quest Markers with Scanner and Ship HUD; Clean Vanilla Hitmarker | HUD | |
