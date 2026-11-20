@@ -63,7 +63,7 @@ Wednesday the 25th, about two days earlier.
       `_user.ini` (with Mod Organizer, in its overwrite folder), Reset, F1 mid-conversation)
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
 - [ ] Compatibility with UI mods: the testing pool of five in docs/COMPATIBILITY.md (rbtUI2
-      and Enhanced Dialogue Interface work; Enhanced Subtitles, Venworks HUD, StarUI HUD to go),
+      Enhanced Dialogue Interface and Enhanced Subtitles work; Venworks HUD, StarUI HUD to go),
       and AutoZoom on as one check
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
