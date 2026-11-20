@@ -339,6 +339,8 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   worked in the log (choice read by the list's selectedIndex, as EDI highlights every option);
   the "no DialogueList_mc" log line on its first frame is a false alarm, to quieten in the
   debugging pass. Awaiting the user's visual OK before listing it as tested compatible.
+- Nebula's default pace = what -1.5 gave (30% fresh, 3-6 lines, 2.9 s; the user kept choosing
+  it). The user's _user.ini has fCuttingPaceNebula=-1.5: to reset to 0 after 0.9.28.
 - After 1.0, Mulling (the user): a new angle of you once you've spent about 10 s choosing a
   reply (CCC has a choosing-reply timer, off by default).
 - Scrapped: A (no mild-tier emotion close-ups in Frontier: it would narrow the range of

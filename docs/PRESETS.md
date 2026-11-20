@@ -29,7 +29,7 @@ in Frontier, Starborn and Constellation).
 | Lenses (degrees, per angle) | 50-72 | 35-50 | 45-95 | 40-80 | 37.5-60 | 40-70 | 40-95 |
 | Camera sway (`iCameraSway`) | 0, a tripod | 0, a tripod | 0, a tripod | 45, a touch of handheld | 15, barely there | 50 plus a slow handheld wander | 40 |
 | Framing | | | | | Faces a little off-centre: a quarter of the usual room in the direction they look | | |
-| Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-4 lines and more than half the turns, 2 s |
+| Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 3-6 lines and 30% of the turns, 2.9 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
 | Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 56% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |

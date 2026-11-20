@@ -16,6 +16,10 @@ test build; "diagnostic" items only add information to the log for testing.
 - Constellation keeps its room share but frames people larger (0.9.27 test: too far, people
   too small, less rhythm): the distant shot 95 to 65, the master 85 to 95, the long shots 65
   to 80. Wide and full-figure shots 56% of its weights; faces unchanged.
+- Nebula is calmer by default: what a cutting pace of -1.5 gave it, which the user kept
+  choosing (a fresh angle on 30% of the turns, was 60%; a new angle every 3 to 6 lines, was 2
+  to 4; held 2.9 s at least, was 2). Its space opera is in the variety of angles, not in the
+  speed of the cuts. The pace setting still goes both ways from here.
 
 ## 0.9.27 - 2026-11-19
 
