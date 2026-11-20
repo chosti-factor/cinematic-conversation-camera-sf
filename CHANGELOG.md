@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.33 - 2026-11-20
+
+### Fixed
+- Filming people talking: looking around (the mouse, or the right stick) is switched off for
+  as long as it films (0.9.32 test: with mouse and keyboard, moving the mouse turned the
+  camera's angles mid-scene). It's back as filming ends.
+
+### Diagnostic (the 0.9.32 test)
+- Holding you still works: you went 0.56 to 0.60 m in the 0.8-0.9 s you held the stick
+  after jogging in at 4.6-5.0 m/s, the glide to a stop, then nothing. The slide seen in the
+  0.9.31 test was most likely the aim following someone, not you. A sprint measured 7.7 m/s
+  (jogging 4.5-5.0), so the 6.5 m/s limit sits between them.
+
 ## 0.9.32 - 2026-11-20
 
 ### Diagnostic

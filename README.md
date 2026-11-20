@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.32 (2026-11-20).
+Last updated: 0.9.33 (2026-11-20).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -157,7 +157,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
   conversation. Press N", or hold B on a controller) and/or starting on its own when a
   conversation begins near you, even as you walk or jog past (not sprinting), and stops you
-  there: your movement is held until you let go of the controls, and moving again ends it (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
+  there: your movement is held until you let go of the controls, and moving again ends it;
+  looking around is off while it films (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest
   first, then the next one nearby; followed into the game's next scene with the same people,
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,

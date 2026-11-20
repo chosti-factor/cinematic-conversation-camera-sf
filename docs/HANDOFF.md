@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.32 (2026-11-20).
+Last updated: 0.9.33 (2026-11-20).
 
 ## Working rules
 
@@ -104,9 +104,12 @@ Last updated: 0.9.32 (2026-11-20).
 - 0.9.31 test, holding you still: the picture slid while the stick was held, and stopped the
   moment it was let go (TerraBrew and Patient & Husband, both jogged into; the NPCs still).
   That points at you still moving while held, the input layer not stopping you (or not
-  fully), with the shot following. 0.9.32 logs how far you went while held, to confirm.
-  If so: try more of the layer's flags, or stop you another way. Nebula stays as it is for
-  1.0 (the user); presets revisited after 1.0.
+  fully), with the shot following. 0.9.32 logged how far you went while held: 0.56-0.60 m
+  in 0.8-0.9 s after jogging in, the glide to a stop, so the hold works (the user: probably a
+  camera drift seen as a slide). Sprinting measured 7.7 m/s, jogging 4.5-5.0. The mouse still
+  turned the camera's angles while filming: 0.9.33 switches looking off while it films.
+  Nebula stays as it is for 1.0 (the user); presets revisited after 1.0. For the debugging
+  pass: scale the 6.5 m/s sprint limit by your speed multiplier (buffs, powers, mods).
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

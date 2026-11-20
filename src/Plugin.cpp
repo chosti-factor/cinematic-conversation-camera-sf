@@ -4877,42 +4877,57 @@ namespace CCC
 
 		// Holding you still while filming starts (0.9.31, the user's rule): your movement is
 		// switched off through an input layer of this mod's own (as SFSE Menu Framework does on
-		// 1.16.244), until you let go of every movement input. Main thread.
+		// 1.16.244), until you let go of every movement input. Looking around is switched off for
+		// as long as it films (0.9.33: the 0.9.32 test, the mouse turned the camera's angles while
+		// filming; the right stick would too). Main thread.
 		struct MoveHold
 		{
 			RE::BSInputEnableManager* manager{ nullptr };
 			RE::BSInputEnableLayer*   layer{ nullptr };
-			bool                      held{ false };
+			bool                      held{ false };     // movement off
+			bool                      looking{ false };  // looking off
 			bool                      failed{ false };
 		} g_moveHold;
 
-		void SetMovementHeld(bool a_held)
+		void SetInputOff(bool& a_state, RE::USER_EVENT_FLAG a_flag, bool a_off)
 		{
-			if (g_moveHold.held == a_held) {
+			if (a_state == a_off) {
 				return;
 			}
 			auto* manager = RE::BSInputEnableManager::GetSingleton();
 			if (!manager) {
-				g_moveHold.held = false;
+				a_state = false;
 				return;
 			}
 			if (!g_moveHold.layer || manager != g_moveHold.manager) {
-				if (!a_held || g_moveHold.failed) {
-					g_moveHold.held = false;
+				if (!a_off || g_moveHold.failed) {
+					a_state = false;
 					return;
 				}
 				RE::BSInputEnableLayer* layer = nullptr;
 				if (!manager->AllocateNewLayer(&layer, "Cinematic Conversation Camera SF") || !layer) {
 					g_moveHold.failed = true;
-					REX::WARN("Filming people talking: couldn't get an input layer; you won't be held still as it starts");
+					REX::WARN("Filming people talking: couldn't get an input layer; you won't be held still, or kept from looking around, while it films");
 					return;
 				}
 				g_moveHold.manager = manager;
 				g_moveHold.layer = layer;
-				REX::INFO("Filming people talking: input layer {} for holding you still", layer->GetLayerID());
+				g_moveHold.held = false;
+				g_moveHold.looking = false;
+				REX::INFO("Filming people talking: input layer {} for holding you still and looking around", layer->GetLayerID());
 			}
-			g_moveHold.layer->EnableUserEvent(RE::USER_EVENT_FLAG::Movement, !a_held);
-			g_moveHold.held = a_held;
+			g_moveHold.layer->EnableUserEvent(a_flag, !a_off);
+			a_state = a_off;
+		}
+
+		void SetMovementHeld(bool a_held)
+		{
+			SetInputOff(g_moveHold.held, RE::USER_EVENT_FLAG::Movement, a_held);
+		}
+
+		void SetLookingHeld(bool a_held)
+		{
+			SetInputOff(g_moveHold.looking, RE::USER_EVENT_FLAG::Looking, a_held);
 		}
 
 		// Whether the actor is in combat. Actor's virtual IsInCombat is slot 0x16B (+0xB58) in
@@ -5034,6 +5049,7 @@ namespace CCC
 			Camera::RestoreRender();
 			g_filmMain.holdingYou = false;
 			SetMovementHeld(false);
+			SetLookingHeld(false);
 			g_filmMain.stoppedAt = std::chrono::steady_clock::now();
 			REX::INFO("Filming people talking: stopped ({})", a_why);
 		}
@@ -5050,9 +5066,10 @@ namespace CCC
 			const auto& s = Settings::Get();
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			// Never leave you held once filming is over, however it ended (a load, a menu).
-			if (g_moveHold.held && !FilmingActive()) {
+			if ((g_moveHold.held || g_moveHold.looking) && !FilmingActive()) {
 				g_filmMain.holdingYou = false;
 				SetMovementHeld(false);
+				SetLookingHeld(false);
 			}
 			std::string prompt;  // the on-screen prompt this tick ("" = none)
 			struct PromptOut
@@ -5447,6 +5464,7 @@ namespace CCC
 				if (!keyStarts) {
 					SetMovementHeld(true);
 				}
+				SetLookingHeld(true);
 				g_filmMain.people.clear();
 				g_filmMain.infos.clear();
 				g_filmMain.repeats = 0;
