@@ -135,6 +135,7 @@ namespace CCC::Director
 			clock::time_point moveFrom{};          // the shot's move counts from here (the cut, or an emotion push-in on a held close-up)
 			clock::time_point closeUpCooldown{};   // after the close-up limit's cut, no emotion close-up before this
 			bool              noRoomPick{ false }; // Pick leaves out the room and shared shots (your angle held on one for 2 turns)
+			std::optional<ShotType> avoidShot;     // ...and this one: the shot on screen as the turn passes (0.9.28)
 		} g;
 
 		ObstacleTest g_obstacleTest = nullptr;
@@ -298,13 +299,15 @@ namespace CCC::Director
 		// shots to show the space and the work; faces now and then (about a fifth).
 		// 0.9.27: more of the room (the tests measured 18% wide indoors, 32% outdoors, against
 		// about half designed): Distant 75 -> 95, Master 70 -> 85, the long shots 55 -> 65; the
-		// three-quarters 40 -> 25 and the mediums 35 -> 20. Faces unchanged.
+		// three-quarters 40 -> 25 and the mediums 35 -> 20. Faces unchanged. 0.9.28 (the 0.9.27
+		// test: too far, people too small): the same room share, framed larger: Distant 95 -> 65,
+		// Master 85 -> 95, the long shots 65 -> 80.
 		constexpr std::array kConstellation{
-			PresetEntry{ ShotType::kDistant, 95, Move::kDrift, 8, 9.0f, 45.0f },
-			PresetEntry{ ShotType::kMaster, 85, Move::kDrift, 10, 10.0f, 70.0f },  // 0.9.25: drifts (was a crane up; an operator on the floor)
+			PresetEntry{ ShotType::kDistant, 65, Move::kDrift, 8, 9.0f, 45.0f },
+			PresetEntry{ ShotType::kMaster, 95, Move::kDrift, 10, 10.0f, 70.0f },  // 0.9.25: drifts (was a crane up; an operator on the floor)
 			PresetEntry{ ShotType::kWide, 55, Move::kDrift, 10, 9.0f, 60.0f },
-			PresetEntry{ ShotType::kLongNpc, 65, Move::kCraneUp, 15, 9.0f, 55.0f },
-			PresetEntry{ ShotType::kLongPlayer, 65, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kLongNpc, 80, Move::kCraneUp, 15, 9.0f, 55.0f },
+			PresetEntry{ ShotType::kLongPlayer, 80, Move::kCraneUp, 15, 9.0f, 55.0f },
 			PresetEntry{ ShotType::kTwoShot, 45, Move::kDrift, 10, 9.0f, 60.0f },
 			PresetEntry{ ShotType::kThreeQuarterNpc, 25, Move::kDrift, 8, 7.0f, 50.0f },
 			PresetEntry{ ShotType::kThreeQuarterPlayer, 25, Move::kDrift, 8, 7.0f, 50.0f },
@@ -782,6 +785,9 @@ namespace CCC::Director
 				if (type == ShotType::kExtremeClose || type == ShotType::kExtremeClosePlayer) {
 					continue;  // only for the lines that call for one (0.8.15, as CCC)
 				}
+				if (g.avoidShot && type == *g.avoidShot) {
+					continue;  // never a cut to the shot already on screen (0.9.28)
+				}
 				if (g.noRoomPick && RoomOrShared(type)) {
 					continue;  // your angle has been on one for 2 turns (0.9.23)
 				}
@@ -1077,6 +1083,7 @@ namespace CCC::Director
 		g.lineCutOwed = false;
 		g.closeUpCooldown = {};
 		g.noRoomPick = false;
+		g.avoidShot.reset();
 		g.beatActive = false;
 		g.cuts = 0;
 		g.why = "";
@@ -1277,17 +1284,27 @@ namespace CCC::Director
 				// 0.9.23: your angle on a room or shared shot for 2 turns in a row at most; this
 				// turn gets another (it can come back later).
 				const bool roomHeld = !a_frame.npcTurn && side.shot && RoomOrShared(*side.shot) && side.roomTurns >= 2;
+				// 0.9.28: never a cut to the shot already on screen. A room or shared shot frames
+				// you both, so both sides can hold the same one as their angle; the turn passing
+				// then cut from it to itself (0.9.27 test: four distant-to-distant cuts in
+				// Constellation). This side takes another angle, and not a room shot, so a wide
+				// shot is followed by a closer one.
+				const auto onScreen = g.current;
+				const bool sameAgain = side.shot && onScreen && *side.shot == *onScreen;
 				const bool fresh = std::uniform_int_distribution<int>{ 1, 100 }(g.rng) <= g.freshAngleChance;
-				if (side.shot && !side.changeDue && !fresh && !roomHeld && Usable(*side.shot, a_frame)) {
+				if (side.shot && !side.changeDue && !fresh && !roomHeld && !sameAgain && Usable(*side.shot, a_frame)) {
 					Cut(*side.shot, a_frame, a_now, "turn", false);
 					side.roomTurns = RoomOrShared(*side.shot) ? side.roomTurns + 1 : 0;
 				} else {
 					g.current = side.shot;  // so Pick avoids repeating it
-					g.noRoomPick = roomHeld;
+					g.noRoomPick = roomHeld || sameAgain;
+					g.avoidShot = onScreen;
 					const auto pick = Pick(a_frame);
 					g.noRoomPick = false;
+					g.avoidShot.reset();
 					if (pick) {
-						Cut(*pick, a_frame, a_now, roomHeld ? "turn, after 2 turns on a room shot" : side.shot ? "turn, new angle" : "turn", true);
+						Cut(*pick, a_frame, a_now,
+							sameAgain ? "turn, not the same shot again" : roomHeld ? "turn, after 2 turns on a room shot" : side.shot ? "turn, new angle" : "turn", true);
 						side.roomTurns = RoomOrShared(*pick) ? 1 : 0;
 					} else {
 						g.current.reset();

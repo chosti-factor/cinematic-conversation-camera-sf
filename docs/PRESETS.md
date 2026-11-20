@@ -31,7 +31,7 @@ in Frontier, Starborn and Constellation).
 | Framing | | | | | Faces a little off-centre: a quarter of the usual room in the direction they look | | |
 | Cutting (new angle) | Every 2-3 lines, held 2.4 s at least | Every 3-6 lines, 2.4 s | Every 3-5 lines, 3 s | Every 2-4 lines and a quarter of the turns, 2.4 s | Every 4-7 lines, 3.5 s | Every 3-5 lines and a quarter of the turns, 2.8 s | Every 2-4 lines and more than half the turns, 2 s |
 | Faces (close-ups and closer) | 26% | 67% | none | 19% | 45% | 6% | 24% |
-| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 55% | 19% |
+| Wide and full-figure shots (long, overhead, room shots) | none | 7% (Distant) | 69% | 7% | 19% | 56% | 19% |
 | Emotion close-ups | none | Strong lines only | none | Every tier | Every tier | Strong lines only | Every tier |
 | Extreme share of their emotion close-ups (`iExtremeCloseUpChanceNpc`) | | 40% | | 25% | 40% | 40% | 40% |
 | Close-up of you on a tagged option | no | no | no | yes | yes | yes | yes |
@@ -44,7 +44,8 @@ in Frontier, Starborn and Constellation).
 
 In every preset (0.9.23): a reaction is never the overhead shot of you; a room or shared
 shot (the two of you, the room, the overhead of you) stays your angle for 2 of your turns
-at most; the close-up of you for a tagged option comes as you pick it, over the start of
+at most, and (0.9.28) the camera never cuts to the shot already on screen: when the turn
+passes and both sides' angle is the same room or shared shot, the new side takes a closer one; the close-up of you for a tagged option comes as you pick it, over the start of
 their answer (`fChoiceCloseUpSecondsPlayer`, 2 s). (0.9.23-0.9.24 had an eighth preset for
 testing, NebulaTest, to judge the low angles' new move; taken out in 0.9.25.)
 
@@ -129,14 +130,14 @@ that shot. (Generated from the presets in the code.)
 | High angle (you) |  |  |  |  |  |  | 2% crane down, 65° |
 | Profile (both, side on) | 2% still, 60° |  |  | 2% still, 55° |  | 3% drift, 55° | 2% drift, 60° |
 | Two-shot | 4% drift, 72° |  | 7% drift, 80° | 5% drift, 65° |  | 6% drift, 60° | 4% drift, 72° |
-| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
-| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 9% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 10% crane up, 55° | 3% crane up, 80° |
+| Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 10% crane up, 55° | 3% crane up, 80° |
 | Overhead (NPC) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
 | Overhead (you) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
 | Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 7% drift, 60° | 3% pull out, 88° |
-| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 13% drift, 45° | 2% pull out, 45° |
+| Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 9% drift, 45° | 2% pull out, 45° |
 | Distant, low (room shot) |  |  |  |  |  |  | 2% drift, 45° |
-| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 11% drift, 70° | 3% crane up, 95° |
+| Master (room shot) |  |  | 13% crane up, 95° |  | 9% crane up, 60° | 12% drift, 70° | 3% crane up, 95° |
 
 ## Notes
 
