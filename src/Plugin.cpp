@@ -4756,6 +4756,7 @@ namespace CCC
 			RE::NiPoint3                          playerAt{};
 			RE::NiPoint3                          startFeet{};   // where you were when it started
 			bool                                  settled{ false };  // you've come to a stop since it started (0.8.17)
+			bool                                  holdingYou{ false };  // started on its own: you're held still until you let go of moving (0.9.31)
 			std::chrono::steady_clock::time_point stopSince{};
 			std::chrono::steady_clock::time_point lastLine{};
 			std::uint32_t                         lastSpeaker{ 0 };
@@ -4822,6 +4823,92 @@ namespace CCC
 				}
 			}
 			return held;
+		}
+
+		// Movement input right now (0.9.31): the default movement keys (W, A, S, D and the arrow
+		// keys) and the controller's left stick past its usual dead zone. Read straight from the
+		// keyboard and XInput, since the game's own movement events are switched off while you're
+		// held (below). Remapped movement keys aren't seen; moving then ends filming by distance.
+		bool GameHasFocus();
+		bool MovementInputHeld()
+		{
+			if (!GameHasFocus()) {
+				return false;
+			}
+			for (const int key : { 'W', 'A', 'S', 'D', VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT }) {
+				if ((::GetAsyncKeyState(key) & 0x8000) != 0) {
+					return true;
+				}
+			}
+			struct Pad
+			{
+				std::uint32_t packet;
+				std::uint16_t buttons;
+				std::uint8_t  leftTrigger, rightTrigger;
+				std::int16_t  lx, ly, rx, ry;
+			};
+			using GetState_t = DWORD(WINAPI*)(DWORD, Pad*);
+			static GetState_t getState = [] {
+				for (const auto* dll : { L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll" }) {
+					if (const HMODULE module = ::LoadLibraryW(dll)) {
+						if (const auto fn = reinterpret_cast<GetState_t>(::GetProcAddress(module, "XInputGetState"))) {
+							return fn;
+						}
+					}
+				}
+				return static_cast<GetState_t>(nullptr);
+			}();
+			if (!getState) {
+				return false;
+			}
+			constexpr int kDeadZone = 7849;  // XInput's left-stick dead zone
+			for (DWORD pad = 0; pad < 4; ++pad) {
+				Pad state{};
+				if (getState(pad, &state) == ERROR_SUCCESS && (std::abs(static_cast<int>(state.lx)) > kDeadZone || std::abs(static_cast<int>(state.ly)) > kDeadZone)) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		// Holding you still while filming starts (0.9.31, the user's rule): your movement is
+		// switched off through an input layer of this mod's own (as SFSE Menu Framework does on
+		// 1.16.244), until you let go of every movement input. Main thread.
+		struct MoveHold
+		{
+			RE::BSInputEnableManager* manager{ nullptr };
+			RE::BSInputEnableLayer*   layer{ nullptr };
+			bool                      held{ false };
+			bool                      failed{ false };
+		} g_moveHold;
+
+		void SetMovementHeld(bool a_held)
+		{
+			if (g_moveHold.held == a_held) {
+				return;
+			}
+			auto* manager = RE::BSInputEnableManager::GetSingleton();
+			if (!manager) {
+				g_moveHold.held = false;
+				return;
+			}
+			if (!g_moveHold.layer || manager != g_moveHold.manager) {
+				if (!a_held || g_moveHold.failed) {
+					g_moveHold.held = false;
+					return;
+				}
+				RE::BSInputEnableLayer* layer = nullptr;
+				if (!manager->AllocateNewLayer(&layer, "Cinematic Conversation Camera SF") || !layer) {
+					g_moveHold.failed = true;
+					REX::WARN("Filming people talking: couldn't get an input layer; you won't be held still as it starts");
+					return;
+				}
+				g_moveHold.manager = manager;
+				g_moveHold.layer = layer;
+				REX::INFO("Filming people talking: input layer {} for holding you still", layer->GetLayerID());
+			}
+			g_moveHold.layer->EnableUserEvent(RE::USER_EVENT_FLAG::Movement, !a_held);
+			g_moveHold.held = a_held;
 		}
 
 		// Whether the actor is in combat. Actor's virtual IsInCombat is slot 0x16B (+0xB58) in
@@ -4941,6 +5028,8 @@ namespace CCC
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			Camera::RestoreRender();
+			g_filmMain.holdingYou = false;
+			SetMovementHeld(false);
 			g_filmMain.stoppedAt = std::chrono::steady_clock::now();
 			REX::INFO("Filming people talking: stopped ({})", a_why);
 		}
@@ -4956,6 +5045,11 @@ namespace CCC
 		{
 			const auto& s = Settings::Get();
 			auto*       player = RE::PlayerCharacter::GetSingleton();
+			// Never leave you held once filming is over, however it ended (a load, a menu).
+			if (g_moveHold.held && !FilmingActive()) {
+				g_filmMain.holdingYou = false;
+				SetMovementHeld(false);
+			}
 			std::string prompt;  // the on-screen prompt this tick ("" = none)
 			struct PromptOut
 			{
@@ -5169,10 +5263,25 @@ namespace CCC
 						g_filmMain.settled = true;
 					}
 				}
-				// 0.9.31 (the user's rule): filming that started on its own ignores all your movement
-				// until you've come to a full stop; walking or jogging on doesn't end the scene early.
-				// Started with the listen key, walking on fFilmWalkOnDistance still ends it.
-				const float moved = g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
+				// 0.9.31 (the user's rule): filming that started on its own stops you where you are.
+				// Your movement input is ignored (switched off) until you let go of every movement
+				// input; moving again then gives you your controls back and ends it. Started with
+				// the listen key, walking on fFilmWalkOnDistance still ends it, as before.
+				bool inputMoved = false;
+				if (g_filmMain.autoStarted) {
+					const bool input = MovementInputHeld();
+					if (g_filmMain.holdingYou && !input) {
+						g_filmMain.holdingYou = false;
+						SetMovementHeld(false);
+						g_filmMain.playerAt = feet;  // where you came to rest
+						g_filmMain.stopSince = a_now;
+						REX::INFO("Filming people talking: you've let go of moving; your controls are back, and moving now ends it");
+					} else if (!g_filmMain.holdingYou && input) {
+						inputMoved = true;
+					}
+				}
+				const float moved = inputMoved ? 1.0f :
+				                    g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
 				                    !g_filmMain.autoStarted && FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
 				if (pressed) {
 					StopFilming("listen key");
@@ -5316,6 +5425,10 @@ namespace CCC
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !pressed;
+				g_filmMain.holdingYou = !pressed;
+				if (!pressed) {
+					SetMovementHeld(true);
+				}
 				g_filmMain.people.clear();
 				g_filmMain.infos.clear();
 				g_filmMain.repeats = 0;

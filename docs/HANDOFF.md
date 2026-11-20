@@ -70,8 +70,9 @@ Last updated: 0.9.31 (2026-11-20).
   (0 in the last runs); large speakers (Vasco) keep shots of you swung wide (to be replaced
   by a body-bounds check after 1.0).
 - Filming people talking: starts on its own while you walk or jog past (only sprinting, over
-  6.5 m/s, holds it back; speeds logged, to set the limit), and then ignores your movement
-  until you've come to a full stop (the user's rule, 0.9.31); the subtitle in the bar while
+  6.5 m/s, holds it back; speeds logged, to set the limit), and then holds you still (movement
+  switched off through an input layer) until you let go of every movement input; moving again
+  ends it (the user's rule, 0.9.31); the subtitle in the bar while
   filming (0.9.31). The crosshair is hidden while it films (0.9.29); over-the-shoulder
   shots keep the camera at least 1.4 m from the near person (0.9.29), as the game's
   third-person camera hides anyone close to it (Walter vanished and faded back in after
