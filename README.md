@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.28 (2026-11-19).
+Last updated: 0.9.29 (2026-11-19).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -35,7 +35,8 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
   you (the side with more room), and no shot or camera move crosses it (`bEnforceLine`;
   `bTrue180` films everything from that one side).
 - **Letterbox:** black bars slide in while the camera films a conversation, with
-  Starfield's subtitle sitting in the bottom bar; the dialogue options stay hidden while the
+  Starfield's subtitle where the game puts it (where it can overlap the top edge of the bottom
+  bar) or centred in the bar (`bSubtitlesInBars`); the dialogue options stay hidden while the
   NPC speaks (except during their first line, the greeting, where the game lets A choose
   one) and fade in when the line ends (`[Interface]`).
 - **Holding on the answer** after each persuasion round (the verdict included) or a skill

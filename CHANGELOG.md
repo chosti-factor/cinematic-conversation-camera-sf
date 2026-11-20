@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.29 - 2026-11-19
+
+### Changed
+- "Subtitles in the bottom bar" (`bSubtitlesInBars`) explained on the settings page and in the
+  INI: off, the subtitle stays where the game puts it (vanilla positioning, kept for mods that
+  place subtitles themselves), and there it can overlap the top edge of the bottom bar.
+
 ## 0.9.28 - 2026-11-19
 
 ### Changed
