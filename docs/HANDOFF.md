@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.34 (2026-11-20).
+Last updated: 0.9.35 (2026-11-20).
 
 ## Working rules
 
@@ -109,7 +109,8 @@ Last updated: 0.9.34 (2026-11-20).
   camera drift seen as a slide). Sprinting measured 7.7 m/s, jogging 4.5-5.0. The mouse still
   turned the camera's angles while filming: 0.9.33 switches looking off while it films.
   Nebula stays as it is for 1.0 (the user); presets revisited after 1.0. For the debugging
-  pass: scale the 6.5 m/s sprint limit by your speed multiplier (buffs, powers, mods).
+  pass: scale the 6.5 m/s sprint limit by your speed multiplier (buffs, powers, mods); moved
+  to after 1.0 (0.9.35: needs an actor value read not confirmed for 1.16.244).
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

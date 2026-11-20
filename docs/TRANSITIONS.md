@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.30, 2026-11-19).
+measured in testing. Kept up to date with every build (last updated: 0.9.35, 2026-11-20).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -145,8 +145,7 @@ were dropped: [MEMORY.md](MEMORY.md).
 - **The hold:** after the last line ("Speaker gone"), the game keeps its dialogue camera for
   about **1.5 s** while the dialogue menu closes (letterbox and subtitles go away): measured
   1.50-1.56 s in five exits and 0.75 s in one (0.9.12 logs). The mod holds the last shot
-  through it, up to 3 s, until the game leaves its dialogue camera (`fExitHoldSeconds` = 0.5
-  is the minimum).
+  through it, up to 3 s, until the game leaves its dialogue camera (`fExitHoldSeconds`, a minimum of 0.5 s, had no effect in practice and is gone since 0.9.35).
 - **The exit style (0.9.14, `iExitStyle`), during that hold:**
   - **2 (default; the user's pick after the 0.9.14 comparison): cut back to your view** `fExitCutSeconds` (0.4 s) after the last line:
     your saved first- or third-person view (`ShowGameplayView`), your gameplay lens (the

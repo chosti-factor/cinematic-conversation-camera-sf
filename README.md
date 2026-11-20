@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.34 (2026-11-20).
+Last updated: 0.9.35 (2026-11-20).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -248,6 +248,9 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 ### After 1.0
 
 Planned:
+- The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
+  mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
+  the game's actor values, not yet confirmed for 1.16.244 (the user, 2026-11-20: after 1.0).
 - NPCs now and then fading in a moment after a conversation starts (seen once, the Ranger at
   Neon, from first person): rare enough to look into after 1.0, with footage. Probably the
   game hiding people close to its camera, the cause of the same fade while filming people

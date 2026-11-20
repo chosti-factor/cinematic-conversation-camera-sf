@@ -1645,7 +1645,7 @@ namespace CCC
 				if (!g_state.holdingExit) {
 					g_state.holdingExit = true;
 					g_state.holdStarted = now;
-					REX::INFO("Speaker gone; holding the last shot for up to {:.2f} s", s.exitHoldSeconds);
+					REX::INFO("Speaker gone; holding the last shot until the game takes over (3 s at most)");
 				}
 				const float held = std::chrono::duration<float>(now - g_state.holdStarted).count();
 				// iExitStyle 1 (0.9.14): when the game hands the camera back it swaps your body
@@ -1735,7 +1735,7 @@ namespace CCC
 				// to the player's view: first person (the first-person hook cuts there) and, since
 				// 0.7.6, third person too.
 				const bool holdToEnd = held < 3.0f && (g_state.startedFirstPerson ? g_firstPersonView.has_value() : true);
-				if ((held < s.exitHoldSeconds || holdToEnd) && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
+				if (holdToEnd && Camera::ApplyRender(camera->cameraRoot.get(), *g_state.lastPose, 0.0f)) {
 					return;
 				}
 				// Third-person conversations: the game would now show its eye-level dialogue view
@@ -5104,6 +5104,12 @@ namespace CCC
 			// Never in combat: no prompt, no starting, and filming stops.
 			if (InCombat(player)) {
 				StopFilming("combat");
+				return;
+			}
+			// A loading screen (fast travel, a door, a save loaded) ends it (0.9.35): you're not
+			// left held still, unable to look around and without your HUD on the other side.
+			if (GameLoading()) {
+				StopFilming("a loading screen");
 				return;
 			}
 			// The conversations going on near you: NPC-to-NPC lines within reach.

@@ -16,6 +16,14 @@ The debugging pass (the second of the four before 1.0), first part.
   for a second.
 - INI comments: Nebula's rhythm (3-5 lines and 40% since 0.9.31) and which presets use room
   shots (now pointing to docs/PRESETS.md; the list was out of date).
+- Filming people talking ends at a loading screen (fast travel, a door, a save loaded), so you
+  aren't left held still, unable to look around and without your HUD on the other side.
+- Settings page: "Longest close-up" between 0 and 4 snaps to 0 (no limit) or 4, instead of
+  quietly becoming 4; "Large speaker from" goes up to 3 m, as the INI does.
+
+### Removed
+- `fExitHoldSeconds`: the last shot is held until the game takes over anyway, and exit style 2
+  cuts at `fExitCutSeconds`, so it had no effect. In docs/MEMORY.md.
 
 ## 0.9.34 - 2026-11-20
 

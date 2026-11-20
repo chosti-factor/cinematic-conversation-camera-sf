@@ -247,6 +247,13 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   its own (4, then 2 in 0.8.2, 1 in 0.8.4). Gone from the INI in 0.8.6 (it starts as the scene
   begins, even while you walk); still read, unused, until 0.9.30.
 
+## Exits, later
+
+- **`fExitHoldSeconds`** (`[Camera]`, 0.5, 0-5; removed 0.9.35): after the last line, hold the
+  final shot at least this long before your view comes back. Since 0.7.6 the last shot is held
+  anyway until the game leaves its dialogue camera (up to 3 s), and exit style 2 cuts to your
+  view at `fExitCutSeconds` (0.4 s), so it never changed anything.
+
 ## Leftovers removed in 0.9.33
 
 - Conversation state never read: `lastAppliedFrame` (written only), `driftBits` and

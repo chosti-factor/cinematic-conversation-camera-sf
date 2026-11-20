@@ -78,7 +78,7 @@ namespace CCC::Menu
 			{ "Camera", "Staging", "Director", "bPlainShotsMerchantsNpc", "Plain shot for merchants", Kind::kBool, 0, 1, nullptr,
 				"An over-the-shoulder shot instead of the shot library, whose angles often put the counter in the way." },
 			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Game's camera in quest scenes", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Staging", "Camera", "fLargeSpeakerHeightNpc", "Large speaker from (m)", Kind::kFloat, 0.0f, 2.5f, "%.2f",
+			{ "Camera", "Staging", "Camera", "fLargeSpeakerHeightNpc", "Large speaker from (m)", Kind::kFloat, 0.0f, 3.0f, "%.2f",
 				"Head this high above their feet (Vasco 1.75, people about 1.6): shots of you keep wider so their body doesn't hide you. 0 = off." },
 			{ "Camera", "Staging", "Camera", "fLargeSpeakerAnglePlayer", "Large speaker: shots of you from (degrees)", Kind::kFloat, 0.0f, 60.0f, "%.0f",
 				"How far off the line between you the shots of you stay with a large speaker." },
@@ -97,7 +97,7 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "Their close-ups", "Director", "iExtremeCloseUpChanceNpc", "Extreme close-ups", Kind::kOwnInt, 0, 100, "%d%%",
 				"Of those close-ups, how many are extreme. The preset's own: Frontier 25%, the others 40%." },
 			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 0.0f, 60.0f, "%.0f",
-				"One close-up of them at most this long, then a wider shot of them; 0 = no limit (below 4 counts as 4). The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
+				"One close-up of them at most this long (4-60), then a wider shot of them; 0 = no limit. The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
@@ -407,6 +407,11 @@ namespace CCC::Menu
 						} else {
 							float value = std::clamp(raw, e.min, e.max);
 							ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.1f");
+							// The close-up limit is 0 (none) or 4-60: in between snaps to the nearer
+							// (0.9.35; before, 0.1-3.9 quietly became 4).
+							if (std::string_view{ e.key } == "fCloseUpLimitSecondsNpc" && value > 0.0f && value < 4.0f) {
+								value = value < 2.0f ? 0.0f : 4.0f;
+							}
 							if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 								Write(a_index, std::format("{:.1f}", value));
 							} else if (ImGuiMCP::IsItemActive()) {

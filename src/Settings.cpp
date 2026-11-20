@@ -195,7 +195,6 @@ namespace CCC
 			a_s.followSmoothing = std::clamp(ReadFloat(a_path, L"Camera", L"fFollowSmoothing", a_s.followSmoothing), 0.0f, 3.0f);
 			a_s.busyFollowSmoothing = std::clamp(ReadFloat(a_path, L"Camera", L"fBusyFollowSmoothing", a_s.busyFollowSmoothing), 0.0f, 5.0f);
 			a_s.busyHeadSpeed = std::clamp(ReadFloat(a_path, L"Camera", L"fBusyHeadSpeed", a_s.busyHeadSpeed), 0.02f, 5.0f);
-			a_s.exitHoldSeconds = std::clamp(ReadFloat(a_path, L"Camera", L"fExitHoldSeconds", a_s.exitHoldSeconds), 0.0f, 5.0f);
 			a_s.minSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fMinSpeakerHeightNpc", a_s.minSpeakerHeight), 0.0f, 3.0f);
 			a_s.largeSpeakerHeight = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerHeightNpc", a_s.largeSpeakerHeight), 0.0f, 3.0f);
 			a_s.largeSpeakerAngle = std::clamp(ReadFloat(a_path, L"Camera", L"fLargeSpeakerAnglePlayer", a_s.largeSpeakerAngle), 0.0f, 60.0f);

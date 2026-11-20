@@ -56,10 +56,6 @@ namespace CCC
 		float heightOffset{ 0.06f };      // raise or lower the camera relative to the head
 		float lookHeightOffset{ -0.03f }; // aim slightly below the eyes of the far character
 
-		// After the last line, hold our final shot this long, then hand back to the game's
-		// own camera while it finishes closing the conversation (about 1.5 s in total).
-		float exitHoldSeconds{ 0.5f };
-
 		// Shot used when the near character is sitting: camera this far in front of their
 		// head (toward the other person), to the side, and above it.
 		float seatedForward{ 0.25f };
