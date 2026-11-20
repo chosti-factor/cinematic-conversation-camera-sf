@@ -4835,7 +4835,8 @@ namespace CCC
 			if (!GameHasFocus()) {
 				return false;
 			}
-			for (const int key : { 'W', 'A', 'S', 'D', VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT }) {
+			static constexpr std::array<int, 8> kMoveKeys{ 'W', 'A', 'S', 'D', VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT };
+			for (const int key : kMoveKeys) {
 				if ((::GetAsyncKeyState(key) & 0x8000) != 0) {
 					return true;
 				}
