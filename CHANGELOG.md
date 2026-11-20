@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.32 - 2026-11-20
+
+### Diagnostic
+- Filming that starts on its own: how far you went while held still, logged as you let go
+  (the 0.9.31 test: the picture slid while the stick was held, and stopped the moment it was
+  let go, which looks like you still moving, not the camera).
+
 ## 0.9.31 - 2026-11-20
 
 ### Fixed

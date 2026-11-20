@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.31 (2026-11-20).
+Last updated: 0.9.32 (2026-11-20).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -279,6 +279,10 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- Every preset revisited with what 1.0's players report, tweaked further, and maybe new ones
+  (the user, 2026-11-20).
+- Coming back from a reaction as a turn of its own, so it can bring a fresh angle (0.9.31
+  test: Sarah's close-up came back after each of three reactions, five times in all).
 - A close-up of you on your own turn when your face shows a strong expression. Today the
   close-ups that follow your face come almost only from reaction shots, which need the NPC to
   talk a while; someone clicking quickly through dialogue mostly sees close-ups of you as
