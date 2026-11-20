@@ -4,7 +4,7 @@ A working list for the Nexus page: which mods work with Cinematic Conversation C
 which don't, and what still needs a test. Grouped by how sure we are. Game version
 1.16.244; CCC SF 0.9.27.
 
-Last updated: 0.9.27 (2026-11-19).
+Last updated: 0.9.28 (2026-11-19).
 
 ## What CCC SF touches (why some mods matter and most don't)
 
@@ -32,6 +32,7 @@ listed here).
 | --- | --- | --- |
 | [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) | Settings page | Optional; gives CCC SF its in-game settings page (F1) |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
+| [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
 | Suit Protection Meter; Readable suit protection warnings; Toggle Quest Markers with Scanner and Ship HUD; Clean Vanilla Hitmarker | HUD | |
 | No Vignette (60 fps) | Image space | |
@@ -45,7 +46,6 @@ listed here).
 
 | Mod | Area | Why we expect it to work | Watch for |
 | --- | --- | --- | --- |
-| [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Restyles the menu; the options list keeps its role | The options not fading, the bars missing |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Restyles the subtitle; its "fixed position during dialogue" may disagree with CCC SF's subtitle in the bar | The subtitle in two places, or over the picture |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Leaves the message layer alone, as far as its page says | |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Replaces `hudmessagesmenu.gfx`; works if the subtitle keeps its place in the menu | The subtitle not moving into the bar |
@@ -75,7 +75,7 @@ bottom bar, the options fade and come back, the testing messages show. Then Auto
 | Mod | Area | Recent | Popularity | Status |
 | --- | --- | --- | --- | --- |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD and its message layer | Aug 2026, built from 1.16.244 | moderate | Already in the test setup: works |
-| [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | no date shown | high | To test (check 1.16 reports first) |
+| [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | no date shown | high | Tested: works (0.9.27) |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Oct 2024 (game 1.11.36) | very high (2,888 endorsements) | To test (check 1.16 reports first) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) | HUD and its message layer | Sep 2026 (beta) | low so far | To test |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | no date shown | the most popular HUD mod | To test |
