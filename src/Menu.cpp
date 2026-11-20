@@ -464,6 +464,14 @@ namespace CCC::Menu
 					ImGuiMCP::SeparatorText(group);
 				}
 				DrawEntry(i);
+				// While "Start on its own" is on, what it does to your camera and your controls,
+				// spelled out under it (0.9.33, the user's request).
+				if (std::string_view{ e.key } == "bAutoListen" && AsFloat(g_values[i].text, 1.0f) != 0.0f) {
+					ImGuiMCP::PushTextWrapPos(0.0f);
+					ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s",
+						"Heads up: when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.");
+					ImGuiMCP::PopTextWrapPos();
+				}
 			}
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();

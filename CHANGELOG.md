@@ -18,6 +18,11 @@ test build; "diagnostic" items only add information to the log for testing.
   (jogging 4.5-5.0), so the 6.5 m/s limit sits between them. The distance went while held
   is no longer logged (0.9.32's diagnostic, answered).
 
+### Added
+- A heads-up under "Start on its own" on the settings page while it's on, and in the INI:
+  the camera is taken over by these scenes, and you're stopped where you are until you let go
+  of the movement controls (the user's request).
+
 ### Removed
 - Leftovers the redundancy pass missed: conversation and filming state nothing read any more,
   three unused constants, and comments and an INI note still naming removed settings (the INI
