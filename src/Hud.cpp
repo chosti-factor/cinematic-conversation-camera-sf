@@ -1229,18 +1229,17 @@ namespace CCC::Hud
 			std::string   glyphFont{ "$Controller_Buttons_inverted" };  // for "{B}" in the prompt
 		} g_prompt;
 
-		// The interaction prompt and name tag (RolloverWidget_mc), hidden while this mod films
-		// people talking (0.8.2 test: aiming through the camera brought up NPCs' name tags).
-		// 0.9.29: the crosshair's group too (CenterGroup_mc, the dot in the middle of the
-		// screen), which the game already hides in conversations but not while you stand by.
+		// The game's HUD (HUDMenu) hidden while this mod films people talking: 0.8.2 the
+		// interaction prompt and name tags (aiming through the camera brought up NPCs' name
+		// tags), 0.9.29 the crosshair, 0.9.34 all of it (the 0.9.33 test: the watch, health and
+		// weapon at the bottom of the screen). The HUD messages menu, with the subtitles, the
+		// letterbox and the testing messages, is a menu of its own and stays.
 		struct RolloverState
 		{
-			bool   hide{ false };          // wanted
-			bool   hidden{ false };        // done (alpha set to 0)
-			double alpha{ 0.75 };          // the game's, to put back
-			bool   centerHidden{ false };  // the crosshair's group, the same way
-			double centerAlpha{ 0.75 };
-			bool   centerLogged{ false };
+			bool   hide{ false };       // wanted
+			bool   hidden{ false };     // done (alpha set to 0)
+			double alpha{ 1.0 };        // the HUD's own, to put back
+			bool   logged{ false };
 		} g_rollover;
 
 		void CollectTextFields(const Value& a_obj, int a_depth, int& a_visited, std::vector<Value>& a_out)
@@ -1262,42 +1261,41 @@ namespace CCC::Hud
 			}
 		}
 
-		// Main thread: learn the interaction prompt's look while it's on screen, and hide or
-		// put back the rollover widget.
+		// Main thread: hide or put back the game's HUD while filming people talking, and learn
+		// the interaction prompt's look while it's on screen.
 		void UpdateRollover(float a_delta)
 		{
 			const bool learn = !g_prompt.lookKnown && (g_prompt.lookAge += a_delta) >= 0.5f;
-			if (!learn && !g_rollover.hide && !g_rollover.hidden && !g_rollover.centerHidden) {
+			if (!learn && !g_rollover.hide && !g_rollover.hidden) {
 				return;
 			}
 			const auto ref = OpenMovie("HUDMenu");
 			if (!ref) {
 				return;
 			}
-			Value top, widget, center;
+			Value top, widget;
 			if (!RootObject(ref->root, top, "HUDMenu")) {
 				return;
 			}
-			// The crosshair (0.9.29). A HUD mod without this group simply keeps its own.
-			if (Child(top, "CenterGroup_mc", center)) {
-				if (g_rollover.hide) {
-					if (!g_rollover.centerHidden) {
-						g_rollover.centerAlpha = Member(center, "alpha", 0.75);
-						g_rollover.centerHidden = true;
-						if (!g_rollover.centerLogged) {
-							g_rollover.centerLogged = true;
-							REX::INFO("HUD: crosshair (HUDMenu.CenterGroup_mc, alpha {:.2f}) hidden while filming people talking", g_rollover.centerAlpha);
-						}
+			// The whole HUD (0.9.34), every frame while filming (the game may set it again).
+			if (g_rollover.hide) {
+				if (!g_rollover.hidden) {
+					g_rollover.alpha = Member(top, "alpha", 1.0);
+					g_rollover.hidden = true;
+					if (!g_rollover.logged) {
+						g_rollover.logged = true;
+						REX::INFO("HUD: the game's HUD (HUDMenu, alpha {:.2f}) hidden while filming people talking", g_rollover.alpha);
 					}
-					const Value zero{ 0.0 };
-					SafeSet(&center, "alpha", &zero);
-				} else if (g_rollover.centerHidden) {
-					const Value alpha{ g_rollover.centerAlpha };
-					SafeSet(&center, "alpha", &alpha);
-					g_rollover.centerHidden = false;
 				}
-			} else {
-				g_rollover.centerHidden = false;
+				const Value zero{ 0.0 };
+				SafeSet(&top, "alpha", &zero);
+			} else if (g_rollover.hidden) {
+				const Value alpha{ g_rollover.alpha };
+				SafeSet(&top, "alpha", &alpha);
+				g_rollover.hidden = false;
+			}
+			if (!learn) {
+				return;
 			}
 			if (!Child(top, "RolloverWidget_mc", widget)) {
 				return;
@@ -1345,18 +1343,6 @@ namespace CCC::Hud
 					REX::INFO("HUD: the listen prompt takes the look of the game's interaction prompt: font '{}', size {:.0f}, colour {:06X}{}", g_prompt.font,
 						g_prompt.size, g_prompt.color, g_prompt.bold ? ", bold" : "");
 				}
-			}
-			if (g_rollover.hide) {
-				if (!g_rollover.hidden) {
-					g_rollover.alpha = Member(widget, "alpha", 0.75);
-					g_rollover.hidden = true;
-				}
-				const Value zero{ 0.0 };
-				SafeSet(&widget, "alpha", &zero);
-			} else if (g_rollover.hidden) {
-				const Value alpha{ g_rollover.alpha };
-				SafeSet(&widget, "alpha", &alpha);
-				g_rollover.hidden = false;
 			}
 		}
 

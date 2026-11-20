@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.34 - 2026-11-20
+
+### Changed
+- Filming people talking: the game's whole HUD is hidden while it films (the 0.9.33 test: the
+  watch, health and weapon stayed at the bottom of the screen), not only the crosshair and the
+  name tags and prompts; the compass and quest markers go too. The subtitles, the letterbox
+  and the testing messages live in a menu of their own and stay. All back as it ends.
+
 ## 0.9.33 - 2026-11-20
 
 ### Fixed

@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.33 (2026-11-20).
+Last updated: 0.9.34 (2026-11-20).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -164,8 +164,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
   three-quarters, shoulders), with a two-shot or a group shot now and then when three or
   more are talking. From first person, the view is third person while it films, with you
-  hidden, and back to first person after. The crosshair and the name tags are hidden while
-  it films, and with `bSubtitlesInBars` the subtitle sits in the bottom bar as in your own
+  hidden, and back to first person after. The game's HUD (the crosshair, name tags, compass,
+  watch, health and weapon) is hidden while it films, and with `bSubtitlesInBars` the subtitle sits in the bottom bar as in your own
   conversations. Over-the-shoulder shots keep the camera at least 1.4 m from the near person,
   outside the distance at which the game hides people close to its camera.
 - **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu

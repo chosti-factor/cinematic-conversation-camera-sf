@@ -4,7 +4,7 @@ A working list for the Nexus page: which mods work with Cinematic Conversation C
 which don't, and what still needs a test. Grouped by how sure we are. Game version
 1.16.244; CCC SF 0.9.27 to 0.9.29.
 
-Last updated: 0.9.29 (2026-11-19).
+Last updated: 0.9.34 (2026-11-20).
 
 ## What CCC SF touches (why some mods matter and most don't)
 
@@ -17,6 +17,8 @@ Last updated: 0.9.29 (2026-11-19).
   testing messages and the preset name show there. A mod that replaces `hudmessagesmenu.gfx`
   can work, as long as the subtitle keeps its place in the menu
   (`BottomCenterGroup_mc.SubtitleText_mc`).
+- **The game's HUD** (`HUDMenu`): hidden as a whole while CCC SF films people talking near you,
+  and put back after. A HUD mod that draws into it is hidden with it, which is intended.
 - **Your character's face** while you talk, and the camera's field of view in conversations.
 
 Everything else (textures, quests, NPCs, ships, outposts, the rest of the HUD) is outside what
