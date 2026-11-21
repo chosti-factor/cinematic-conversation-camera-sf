@@ -5167,7 +5167,7 @@ namespace CCC
 				{
 					Hud::SetPrompt(text);
 					const bool filming = FilmingActive();
-					Hud::SetHideRollover(filming);
+					Hud::SetHideRollover(filming && !Settings::Get().filmTestNoHud);  // (bFilmTestNoHud, 0.9.41: the lip-sync hunt)
 					Hud::SetFilmingOthers(filming && !g_state.active);
 					// 0.8.4 test: filming from first person showed your character in a T-pose (the
 					// game doesn't animate your full body in first person); 0.8.6: with your body
@@ -5559,11 +5559,17 @@ namespace CCC
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !keyStarts;
-				g_filmMain.holdingYou = !keyStarts;
-				if (!keyStarts) {
+				g_filmMain.holdingYou = !keyStarts && !s.filmTestNoHold;  // (bFilmTestNoHold, 0.9.41: the lip-sync hunt)
+				if (g_filmMain.holdingYou) {
 					SetMovementHeld(true);
 				}
-				SetLookingHeld(true);
+				if (!s.filmTestNoHold) {
+					SetLookingHeld(true);
+				}
+				if (s.filmTestNoHud || s.filmTestNoHold || s.filmTestNoLens || s.filmTestNoCamera) {
+					REX::INFO("Filming people talking: lip-sync test, left out:{}{}{}{}", s.filmTestNoHud ? " the HUD hiding" : "", s.filmTestNoHold ? " the input hold" : "",
+						s.filmTestNoLens ? " the lens" : "", s.filmTestNoCamera ? " the camera" : "");
+				}
 				g_filmMain.people.clear();
 				g_filmMain.infos.clear();
 				g_filmMain.repeats = 0;
@@ -5579,7 +5585,7 @@ namespace CCC
 				g_film.group.clear();
 				g_film.groupShot = false;
 				g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
-				g_lensActive.store(true, std::memory_order_relaxed);
+				g_lensActive.store(!s.filmTestNoLens, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
 					keyStarts ? "" : std::format(" (on its own: a conversation scene nearby; you moving at {:.1f} m/s)", g_filmMain.speed));
 				return;
@@ -5605,6 +5611,9 @@ namespace CCC
 		// things and people at TerraBrew).
 		void FilmFrame()
 		{
+			if (Settings::Get().filmTestNoCamera) {
+				return;  // (bFilmTestNoCamera, 0.9.41: the lip-sync hunt) the game's camera stays
+			}
 			CostScope                  cost{ g_costFilm };
 			std::uint32_t              speakerId = 0, listenerId = 0, line = 0;
 			std::vector<std::uint32_t> groupIds;
@@ -6055,7 +6064,7 @@ namespace CCC
 					const bool filmingOthers = FilmingActive();
 					const float lens = Director::WantedLens();
 					g_lensWanted.store(filmingOthers ? g_filmLens.load(std::memory_order_relaxed) : lens, std::memory_order_relaxed);  // (0.8.15: filming kept the last conversation's lens)
-					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
+					g_lensActive.store((filmingOthers && !Settings::Get().filmTestNoLens) || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
 						g_lensCalls.store(0, std::memory_order_relaxed);
 					}

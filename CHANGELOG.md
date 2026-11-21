@@ -18,6 +18,13 @@ test build; "diagnostic" items only add information to the log for testing.
   part: after the first filming, the filming bars cost 50 us a frame, the subtitle 45 us
   and the prompt (once shown) 75-145 us, for good, with nothing on screen.
 
+### Diagnostic
+- The lip-sync hunt: `[Debug]` switches that each leave one part of filming people talking
+  out (`bFilmTestNoHud`, `bFilmTestNoHold`, `bFilmTestNoLens`, `bFilmTestNoCamera`; with
+  third-person play and `bLetterbox=0`, every part can be left out). The 0.9.40 test: the
+  Vanguard ceremony and a city-life scene filmed to their ends, no interruption, then
+  Tuala's conversation unfilmed: lines overlapping again. Temporary: gone before 1.0.
+
 ## 0.9.40 - 2026-11-21
 
 ### Fixed
