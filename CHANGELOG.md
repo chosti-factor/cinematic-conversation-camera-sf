@@ -6,6 +6,12 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.38 - 2026-11-21
 
+### Fixed
+- A conversation of your own starting while filming people talking had put the game in third
+  person (filming from first person does) now ends in first person; it came back in third
+  (the 0.9.37 test: Tuala at the MAST, a quest scene). And a quest scene's first frame is no
+  longer drawn through filming's lens (the log: 50 degrees for the game's 29.6).
+
 ### Changed
 - Nebula's high angle of you cranes down half as far (26 to 13): the 0.9.37 test, Sarah's
   head ended half under the top bar.

@@ -132,7 +132,10 @@ Last updated: 0.9.36 (2026-11-21).
   Sarah, the second time, so likely the mod (pre-release item in docs/TODO.md, A/B test
   first). First-person exits: a small shift of the NPC to the right at the hand-back
   (0.9.38 logs the game's first frames against the view drawn). Nebula's high angle of you
-  craned too far down (half of Sarah's head under the bar): 26 to 13.
+  craned too far down (half of Sarah's head under the bar): 26 to 13. After Tuala's
+  conversation you came back in third person: filming had forced it, and the conversation
+  that interrupted it (a quest scene) never put first person back; 0.9.38 does, and keeps
+  filming's lens off that conversation's first frame.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

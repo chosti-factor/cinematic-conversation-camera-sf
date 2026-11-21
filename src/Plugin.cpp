@@ -284,6 +284,9 @@ namespace CCC
 		bool                                  g_lastGameplayFirstPerson = false;
 		bool                                  g_restoreFirstPersonPending = false;
 		bool                                  g_filmThirdPerson = false;  // filming from first person: the game is in third person for it (0.8.8)
+		// Your own conversation started while filming had put the game in third person (0.9.38:
+		// the 0.9.37 test, Tuala at the MAST: a quest scene, and you came back in third person).
+		std::atomic<bool>                     g_filmLeftThirdPerson{ false };
 		std::chrono::steady_clock::time_point g_restoreFirstPersonDeadline{};
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
@@ -792,7 +795,7 @@ namespace CCC
 					g_needVisibilityRestore = true;
 				}
 				g_restoreVisible = !g_state.startedFirstPerson;
-				if (g_state.restoreFirstPerson) {
+				if (g_state.restoreFirstPerson || g_filmLeftThirdPerson.exchange(false)) {
 					g_restoreFirstPersonPending = true;
 					g_restoreFirstPersonDeadline = std::chrono::steady_clock::now() + 1500ms;
 					g_restoreFirstPersonNext = {};
@@ -1925,6 +1928,7 @@ namespace CCC
 				if (!g_state.smallSpeaker && s.gameCameraInScenes && playerInScene && !ambient) {
 					g_state.handedBack = true;
 					g_state.needsBodyRepair = false;
+					g_lensActive.store(false, std::memory_order_relaxed);  // 0.9.38: not even a frame through filming's lens (the 0.9.37 log: 50 for 29.6)
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
 				}
 				g_state.backgroundScene = speakerInScene && !g_state.handedBack;
@@ -5176,6 +5180,11 @@ namespace CCC
 								g_restoreFirstPersonPending = true;  // back to first person (StepFirstPersonRestore)
 								g_restoreFirstPersonDeadline = std::chrono::steady_clock::now() + 1500ms;
 								g_restoreFirstPersonNext = {};
+							} else {
+								// Your own conversation took over (0.9.38): first person once it ends,
+								// whoever's camera it was on (a quest scene's ended in third person).
+								g_filmLeftThirdPerson.store(true);
+								REX::INFO("Filming people talking: your own conversation started while it had you in third person; first person comes back when it ends");
 							}
 						}
 					}

@@ -92,8 +92,10 @@ Wednesday the 25th, about two days earlier.
 - [ ] Before release (the user, 2026-11-21): lip sync out of step in the conversation that
       follows filming people talking. Twice in MQ102 at the MAST: filming Tuala and Sarah,
       then Tuala's conversation with you (a quest scene, the game's camera), with his lines out
-      of lip sync. Suspected: the hand-over from filming to the game's camera. First an A/B
-      test from a save before it: auto filming off, then on.
+      of lip sync, and you came back in third person after it (0.9.38 fixes that one, and the
+      filming lens on its first frame). Suspected: the hand-over from filming to the game's
+      camera, the game in third person with you hidden as the conversation starts. First an
+      A/B test from a save before it: auto filming off, then on.
 - [ ] Nice before release, else after 1.0 (the user, 2026-11-21): first-person exits, a small
       shift of the NPC to the right as the game takes over. 0.9.38 logs the game's first
       frames against the view drawn.
