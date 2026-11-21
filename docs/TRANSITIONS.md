@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.35, 2026-11-20).
+measured in testing. Kept up to date with every build (last updated: 0.9.36, 2026-11-21).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -211,7 +211,9 @@ were dropped: [MEMORY.md](MEMORY.md).
     last built height, within a minute (0.9.17; 5 s before, and 6 s in the drink menu left
     you hidden, with the exit on the older path showing your back for a few frames).
     When the camera comes back, a new conversation starts. Not while the SFSE Menu Framework
-    menu (F1) is open, or for 0.5 s after it closes (0.9.15): the camera stops then too.
+    menu (F1) is open, or for 0.5 s after it closes (0.9.15): the camera stops then too. The
+    same for the menus a conversation opens over itself (0.9.36): trade, container, crew, ship
+    builder.
 
 ### First person
 

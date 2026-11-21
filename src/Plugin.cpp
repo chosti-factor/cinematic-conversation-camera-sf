@@ -5995,9 +5995,33 @@ namespace CCC
 				// camera stops then, and the 0.9.14 test ended the conversation and started a new one
 				// on the same dialogue when it closed.
 				static std::chrono::steady_clock::time_point menuPauseUntil{};
-				if (g_state.active && Menu::IsOpen()) {
+				// 0.9.36: the same for the menus a conversation opens over itself (the 0.9.35 test:
+				// "Let's see what you have for sale" opened the trade menu, the game's camera stopped,
+				// the conversation ended, and when the trade closed the game's conversation camera
+				// came back for a moment: 0.8 s of a new opening shot, then the exit cut).
+				const char* waitingFor = nullptr;
+				if (g_state.active) {
+					if (Menu::IsOpen()) {
+						waitingFor = "Settings menu";
+					} else if (auto* ui = RE::UI::GetSingleton()) {
+						static const std::array<std::pair<RE::BSFixedString, const char*>, 5> kOverConversation{ {
+							{ RE::BSFixedString{ "BarterMenu" }, "Trade menu" },
+							{ RE::BSFixedString{ "ContainerMenu" }, "Container menu" },
+							{ RE::BSFixedString{ "SpaceshipEditorMenu" }, "Ship builder" },
+							{ RE::BSFixedString{ "ShipCrewAssignMenu" }, "Crew menu" },
+							{ RE::BSFixedString{ "ShipCrewMenu" }, "Crew menu" },
+						} };
+						for (const auto& [menu, name] : kOverConversation) {
+							if (ui->IsMenuOpen(menu)) {
+								waitingFor = name;
+								break;
+							}
+						}
+					}
+				}
+				if (waitingFor) {
 					if (now >= menuPauseUntil) {
-						REX::INFO("Settings menu open mid-conversation; the conversation waits");
+						REX::INFO("{} open mid-conversation; the conversation waits", waitingFor);
 					}
 					menuPauseUntil = now + 500ms;
 				}

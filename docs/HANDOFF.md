@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.35 (2026-11-20).
+Last updated: 0.9.36 (2026-11-21).
 
 ## Working rules
 
@@ -118,8 +118,8 @@ Last updated: 0.9.35 (2026-11-20).
   Found: the trade menu ("Let's see what you have for sale") stops the game's dialogue
   camera, so the conversation ended 0.25 s in (the stopped-updating rule), and when the
   trade closed the game's dialogue camera came back for a moment before ending: about 0.8 s
-  of a new opening shot, then the exit cut. Fix proposed: wait while the trade menu (and
-  similar menus opened from dialogue) is open, as for the F1 menu; waiting on the user.
+  of a new opening shot, then the exit cut. 0.9.36: the conversation waits while the trade,
+  container, crew or ship builder menu is open, as for the F1 menu.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

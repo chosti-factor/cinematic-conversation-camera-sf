@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.36 - 2026-11-21
+
+The debugging pass, second part.
+
+### Fixed
+- Trading with a merchant mid-conversation: the trade menu stops the game's conversation
+  camera, so the conversation ended a quarter of a second in, and when the trade closed the
+  game's camera came back for a moment before ending it: about 0.8 s of a new opening shot,
+  then the cut back to your view (the 0.9.35 test, twice with Anya Griffon). Now the
+  conversation waits while the trade menu is open, as it does for the settings page, and
+  ends normally after. The same for the container, crew and ship builder menus a
+  conversation can open.
+
 ## 0.9.35 - 2026-11-20
 
 The debugging pass (the second of the four before 1.0), first part.
