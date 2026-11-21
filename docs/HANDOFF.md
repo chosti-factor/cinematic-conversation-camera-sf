@@ -111,6 +111,15 @@ Last updated: 0.9.35 (2026-11-20).
   Nebula stays as it is for 1.0 (the user); presets revisited after 1.0. For the debugging
   pass: scale the 6.5 m/s sprint limit by your speed multiplier (buffs, powers, mods); moved
   to after 1.0 (0.9.35: needs an actor value read not confirmed for 1.16.244).
+- 0.9.35 edge-case tests (2026-11-21): a quick load (F9) while filming ends it at the
+  loading screen ("stopped (a loading screen)"), controls and HUD back after; combat near a
+  filming ends it (4.8 s in); conversations back to back clean (three in 25 s). The pause
+  menu can't be opened during a conversation, in vanilla either, so that case doesn't exist.
+  Found: the trade menu ("Let's see what you have for sale") stops the game's dialogue
+  camera, so the conversation ended 0.25 s in (the stopped-updating rule), and when the
+  trade closed the game's dialogue camera came back for a moment before ending: about 0.8 s
+  of a new opening shot, then the exit cut. Fix proposed: wait while the trade menu (and
+  similar menus opened from dialogue) is open, as for the F1 menu; waiting on the user.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
