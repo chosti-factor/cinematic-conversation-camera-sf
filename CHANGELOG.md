@@ -17,6 +17,13 @@ test build; "diagnostic" items only add information to the log for testing.
   starts on its own holds you still).
 - The test switches (`bFilmTest*`) are gone again (docs/MEMORY.md).
 
+### Diagnostic
+- The main-thread task's other parts are timed too, in the cost lines (the cost log itself,
+  the camera mode log, waiting for the camera thread's lock, bystanders, filming people
+  talking, the preset key, the INI check, lines and face, focus, the conversation's upkeep,
+  your visibility): the 0.9.41 log still had a 16-22 ms worst now and then, with the HUD and
+  the scan under 1 ms.
+
 ## 0.9.42 - 2026-11-21
 
 ### Diagnostic

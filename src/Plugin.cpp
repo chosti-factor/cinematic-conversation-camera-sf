@@ -248,6 +248,12 @@ namespace CCC
 		};
 		CostMeter g_costMain{ "main-thread task" }, g_costHud{ "HUD (bars, subtitles, options)" }, g_costScan{ "nearby people scan" },
 			g_costCamera{ "conversation camera" }, g_costFilm{ "filming camera" };
+		// The main-thread task's other parts (0.9.43): the 0.9.41 log still had a 16-22 ms worst
+		// now and then, with the HUD and the scan well under 1 ms.
+		CostMeter g_partCostLog{ "cost log" }, g_partModeLog{ "camera mode log and ship check" }, g_partLockWait{ "waiting for the camera thread" },
+			g_partBystanders{ "bystanders" }, g_partFilming{ "filming people talking" }, g_partPresetKey{ "preset key" },
+			g_partSettings{ "INI check" }, g_partLines{ "lines, face and lens" }, g_partFocus{ "focus" }, g_partRest{ "conversation upkeep" },
+			g_partVisibility{ "your visibility" };
 
 		struct CostScope
 		{
@@ -279,6 +285,21 @@ namespace CCC
 			}
 			if (!text.empty()) {
 				REX::INFO("Cost {}: {}", a_over, text);
+			}
+			std::string parts;
+			for (auto* m : { &g_partCostLog, &g_partModeLog, &g_partLockWait, &g_partBystanders, &g_partFilming, &g_partPresetKey, &g_partSettings, &g_partLines,
+					 &g_partFocus, &g_partRest, &g_partVisibility }) {
+				const auto calls = m->calls.exchange(0, std::memory_order_relaxed);
+				const auto ns = m->ns.exchange(0, std::memory_order_relaxed);
+				const auto maxNs = m->maxNs.exchange(0, std::memory_order_relaxed);
+				if (calls == 0) {
+					continue;
+				}
+				parts += std::format("{}{} {:.1f} us (worst {:.0f})", parts.empty() ? "" : ", ", m->name, static_cast<double>(ns) / static_cast<double>(calls) / 1000.0,
+					static_cast<double>(maxNs) / 1000.0);
+			}
+			if (!parts.empty()) {
+				REX::INFO("Cost {}, the main-thread task's other parts a call: {}", a_over, parts);
 			}
 			if (const auto hud = Hud::CostReport(); !hud.empty()) {
 				REX::INFO("Cost {}, the HUD's parts a frame: {}", a_over, hud);
@@ -5892,6 +5913,7 @@ namespace CCC
 				static auto nextCost = std::chrono::steady_clock::now() + 60s;
 				if (!g_state.active && std::chrono::steady_clock::now() >= nextCost) {
 					nextCost = std::chrono::steady_clock::now() + 60s;
+					CostScope part{ g_partCostLog };
 					LogCosts("over the last minute");
 				}
 			}
@@ -5899,6 +5921,7 @@ namespace CCC
 				REX::INFO("Per-frame task: {} ticks on the main thread, {} on other threads so far", g_ticksMain, g_ticksOther.load());
 			}
 
+			std::optional<CostScope> modePart{ std::in_place, g_partModeLog };
 			// Diagnostic: record every camera mode change, to see exactly which modes the game
 			// passes through (and for how long) when a conversation opens and closes.
 			if (Settings::Get().debugLog) {
@@ -5925,8 +5948,13 @@ namespace CCC
 				g_pilotingShip.store(ui->IsMenuOpen(shipHud), std::memory_order_release);
 			}
 
+			modePart.reset();
 			{
-				std::scoped_lock lock{ g_lock };
+				std::unique_lock<std::timed_mutex> lock{ g_lock, std::defer_lock };
+				{
+					CostScope part{ g_partLockWait };
+					lock.lock();
+				}
 			struct Holder
 			{
 				Holder() { g_lockHolder = ::GetCurrentThreadId(); }
@@ -5970,6 +5998,7 @@ namespace CCC
 					static auto nextScan = now;
 					if (now >= nextScan) {
 						nextScan = now + 250ms;
+						CostScope part{ g_partBystanders };
 						UpdateBystanders(now);
 					}
 				}
@@ -5981,11 +6010,15 @@ namespace CCC
 						CostScope scanCost{ g_costScan };
 						UpdateOverheard(now);
 					}
+					CostScope part{ g_partFilming };
 					UpdateFilming(now);  // every tick, for the listen key
 				}
 				// The preset key (0.8.3): the next preset, on the fly; and the preset on screen
 				// with the testing messages.
-				UpdatePresetKey();
+				{
+					CostScope part{ g_partPresetKey };
+					UpdatePresetKey();
+				}
 
 				// Letterbox, subtitles and dialogue options (0.6.3).
 				{
@@ -6003,6 +6036,7 @@ namespace CCC
 				// stalls of 16-24 ms in every minute, even with the HUD and the scans cheap: the full
 				// read every 2 s (and one at every conversation's start, on the camera thread).
 				{
+					CostScope part{ g_partSettings };
 					static std::chrono::steady_clock::time_point nextReload{};
 					static bool appliedOnce = false;
 					if (!g_state.active && now >= nextReload) {
@@ -6019,6 +6053,7 @@ namespace CCC
 
 				// Diagnostic: the dialogue record of each line the speaker starts.
 				{
+					CostScope part{ g_partLines };
 					static bool wasTalking = false;
 					auto*       speaker = g_state.active && (Settings::Get().debugLog || Settings::Get().showMessages || Settings::Get().playerFace) ? Speaker() : nullptr;
 					const bool  talking = speaker && speaker->IsTalking();
@@ -6055,6 +6090,7 @@ namespace CCC
 				// to the distance from the camera to the person in shot, every shot, and put them
 				// back afterwards (and in quest scenes, where the game's own camera is used).
 				{
+					CostScope    part{ g_partFocus };
 					const auto&  st = Settings::Get();
 					const bool   live = g_state.active && !g_state.handedBack && !g_state.smallSpeaker;
 					static float lastDistance = -1.0f;
@@ -6078,6 +6114,7 @@ namespace CCC
 					}
 				}
 
+				CostScope partRest{ g_partRest };  // (to the end of this block)
 				// The open menus, once, a second into the first conversation (testing aid).
 				{
 					const bool live = g_state.active && camera && camera->QCameraEquals(RE::CameraState::kDialogue) && !repairing &&
@@ -6181,6 +6218,7 @@ namespace CCC
 
 			// Scene-graph work happens outside the lock, so the hook is never kept waiting
 			// (it would skip frames instead) while the engine does its own locking.
+			CostScope part{ g_partVisibility };
 			if (restore) {
 				Visibility::Restore(g_restoreVisible);
 			} else if (reveal) {
