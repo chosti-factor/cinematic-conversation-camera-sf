@@ -1618,16 +1618,71 @@ namespace CCC::Hud
 		g_presetLabel.text = a_text;
 	}
 
+	namespace
+	{
+		// The parts of Update, timed (0.9.40): the 0.9.39 log had the HUD at 0.15-0.3 ms a
+		// frame even with nothing on screen and the testing messages off.
+		struct Part
+		{
+			const char*                name;
+			std::atomic<std::uint64_t> ns{ 0 };
+			std::atomic<std::uint64_t> maxNs{ 0 };
+		};
+		Part          g_parts[]{ { "ready check" }, { "HUD hiding" }, { "prompt" }, { "testing messages" }, { "conversation bars" },
+					 { "filming bars" }, { "subtitles" }, { "dialogue options" } };
+		std::atomic<std::uint64_t> g_partFrames{ 0 };  // (logged from the camera thread too)
+
+		struct PartScope
+		{
+			Part&                                 part;
+			std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
+			~PartScope()
+			{
+				const auto took = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count());
+				part.ns.fetch_add(took, std::memory_order_relaxed);
+				if (took > part.maxNs.load(std::memory_order_relaxed)) {
+					part.maxNs.store(took, std::memory_order_relaxed);  // (one writer: the main thread)
+				}
+			}
+		};
+	}
+
+	std::string CostReport()
+	{
+		std::string text;
+		const auto  frames = g_partFrames.exchange(0, std::memory_order_relaxed);
+		for (auto& p : g_parts) {
+			const auto ns = p.ns.exchange(0, std::memory_order_relaxed);
+			const auto maxNs = p.maxNs.exchange(0, std::memory_order_relaxed);
+			if (frames == 0 || ns == 0) {
+				continue;
+			}
+			text += std::format("{}{} {:.1f} us (worst {:.0f})", text.empty() ? "" : ", ", p.name, static_cast<double>(ns) / static_cast<double>(frames) / 1000.0,
+				static_cast<double>(maxNs) / 1000.0);
+		}
+		return text;
+	}
+
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		if (!g_broken && CheckReady()) {
-			UpdateRollover(a_delta);
+		g_partFrames.fetch_add(1, std::memory_order_relaxed);
+		bool ready;
+		{
+			PartScope t{ g_parts[0] };
+			ready = !g_broken && CheckReady();
+		}
+		if (ready) {
+			{
+				PartScope t{ g_parts[1] };
+				UpdateRollover(a_delta);
+			}
 			if (!g_prompt.text.empty() || g_prompt.created) {
+				PartScope t{ g_parts[2] };
 				UpdatePrompt(a_delta);
 			}
 		}
-		if (g_broken || (!s.letterbox && !s.dumpMenus && s.optionsFade <= 0.0f && s.choiceCloseUps == 0 && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !CheckReady()) {
+		if (g_broken || (!s.letterbox && !s.dumpMenus && s.optionsFade <= 0.0f && s.choiceCloseUps == 0 && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !ready) {
 			g_msg.available = false;
 			return;
 		}
@@ -1650,6 +1705,7 @@ namespace CCC::Hud
 			}
 		}
 		if (s.showMessages && !g_broken) {
+			PartScope t{ g_parts[3] };
 			UpdateMessage(a_filming && dialogueOpen, a_delta);
 			UpdatePresetLabel(a_filming && dialogueOpen && !g_presetLabel.text.empty());
 		} else {
@@ -1657,19 +1713,25 @@ namespace CCC::Hud
 			UpdatePresetLabel(false);
 		}
 		if (s.letterbox && !g_broken) {
-			UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
+			{
+				PartScope t{ g_parts[4] };
+				UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
+			}
 			// Filming people talking near you (0.8.10): the same bars, on the HUD messages menu
 			// (under its subtitles), as no dialogue menu is open.
 			if (!g_broken) {
+				PartScope t{ g_parts[5] };
 				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only
 				// followed the conversation's, so it stayed put while filming others).
+				PartScope t{ g_parts[6] };
 				UpdateSubtitles(s.subtitlesInBars ? (std::max)(g_bars.ease, g_filmBars.ease) : 0.0f);
 			}
 		}
 		if (dialogueOpen && !g_broken && (s.optionsFade > 0.0f || s.choiceCloseUps != 0 || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
+			PartScope t{ g_parts[7] };
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {

@@ -280,6 +280,9 @@ namespace CCC
 			if (!text.empty()) {
 				REX::INFO("Cost {}: {}", a_over, text);
 			}
+			if (const auto hud = Hud::CostReport(); !hud.empty()) {
+				REX::INFO("Cost {}, the HUD's parts a frame: {}", a_over, hud);
+			}
 		}
 
 		bool                                  g_lastGameplayFirstPerson = false;
@@ -1734,20 +1737,23 @@ namespace CCC
 						const int k = g_state.exitCutFrames;
 						if (k == 0) {
 							g_state.exitCutAt = now;
-							// 0.9.39: from first person, your view turned to where you face now. The game
-							// turns you during a conversation, and takes over with that heading; the view
-							// from before it showed the NPC shifting sideways at the hand-back (0.9.38's
-							// log: 9.4, -3.4 and -2.0 degrees across, nothing up or down).
+							// From first person, your view turned to where your body faces (0.9.40). In
+							// first person your view can sit a few degrees off your body's heading, and the
+							// game takes over looking straight along your body; the view from before the
+							// conversation showed the NPC shifting sideways at the hand-back. 0.9.39's log:
+							// the game's view after it matched your body's heading every time (93.5 and 78.6
+							// degrees), the view drawn was 0-5 degrees off it, and your body hadn't turned
+							// (0.9.39 turned by your body's turn, which was none).
 							auto* you = RE::PlayerCharacter::GetSingleton();
-							if (g_state.startedFirstPerson && g_firstPersonView && you && g_state.startAngleKnown) {
-								const float turn = std::remainder(you->GetAngle().z - g_state.startAngle.z, 2.0f * std::numbers::pi_v<float>);
-								if (std::isfinite(turn) && std::abs(turn) > 0.002f) {
-									auto&        v = *g_firstPersonView;
-									const float  dx = v.lookAt.x - v.position.x, dy = v.lookAt.y - v.position.y;
-									const float  c = std::cos(turn), sn = std::sin(turn);
+							if (g_state.startedFirstPerson && g_firstPersonView && you) {
+								auto&       v = *g_firstPersonView;
+								const float dx = v.lookAt.x - v.position.x, dy = v.lookAt.y - v.position.y;
+								const float turn = std::remainder(you->GetAngle().z - std::atan2(dx, dy), 2.0f * std::numbers::pi_v<float>);
+								if (std::isfinite(turn) && std::abs(turn) > 0.002f && std::abs(turn) < 0.6f) {
+									const float c = std::cos(turn), sn = std::sin(turn);
 									v.lookAt.x = v.position.x + dx * c + dy * sn;
 									v.lookAt.y = v.position.y - dx * sn + dy * c;
-									REX::INFO("Exit: your view turned {:+.1f} degrees, to where the game has you facing now", turn * 57.29578f);
+									REX::INFO("Exit: your view turned {:+.1f} degrees, to where your body faces", turn * 57.29578f);
 								}
 							}
 						}

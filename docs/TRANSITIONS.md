@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.36, 2026-11-21).
+measured in testing. Kept up to date with every build (last updated: 0.9.40, 2026-11-21).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -187,6 +187,12 @@ were dropped: [MEMORY.md](MEMORY.md).
       **third frame**: while it's still there the camera is in front of your face, and the
       hiding can't show on the last shot. The blur goes off from the **second frame**.
       `End()` and the exit lens fix hand the lens back to the game.
+    - **Heading (0.9.40):** from first person the view cut to is turned to **your body's
+      heading** (`GetAngle().z`), pitch and position kept. In first person your view can sit
+      a few degrees off your body's heading, and the game takes over looking along your body:
+      the NPC shifted sideways at the hand-back (0.9.38-0.9.39 logs: 0-9.4 degrees, always
+      the difference between the view saved before the conversation and your body's heading;
+      your body doesn't turn during one). 0.9.39 turned by your body's turn instead (none).
     - **The 0.9.16 clip:** clean at the cut in all five standing exits, first and third
       person (no teleport or flicker); starts clean. The only flaw: the zoomed view during
       the hold and its widening at the hand-back (fixed in 0.9.17 as above).

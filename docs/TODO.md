@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.39 (2026-11-21). Dates assume the Friday 27 November release; for
+Last updated: 0.9.40 (2026-11-21). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -83,7 +83,8 @@ Wednesday the 25th, about two days earlier.
       conversations); thread safety, crashes (0.9.35-0.9.36, tested 2026-11-21: build warnings
       gone, filming ends at a loading screen, the conversation waits through a trade)
 - [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
-      the cost meters)
+      the cost meters; 0.9.39: the log written every 3 s, stalls of 15-27 ms still there;
+      0.9.40: the HUD's parts timed)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 
@@ -95,11 +96,17 @@ Wednesday the 25th, about two days earlier.
       of lip sync, and you came back in third person after it (0.9.38 fixes that one, and the
       filming lens on its first frame). Suspected: the hand-over from filming to the game's
       camera, the game in third person with you hidden as the conversation starts. First an
-      A/B test from a save before it: auto filming off, then on.
+      A/B test from a save before it: auto filming off, then on. 0.9.39 test (auto filming off
+      before loading, the Vanguard ceremony and the MAST scene nearby, not filmed): no overlap.
+      So filming starts it. Next: which scene filmed sets it off (the Vanguard ceremony, a
+      city-life scene, or MQ102's MAST scene, a quest scene leading into your conversation).
 - [ ] Nice before release, else after 1.0 (the user, 2026-11-21): first-person exits, a small
       shift of the NPC to the right as the game takes over. 0.9.38's log: the game's heading
       differs from the view drawn (9.4, -3.4, -2.0 degrees across); 0.9.39 turns the view to
-      your current facing. To test.
+      your current facing. 0.9.39 test: still there (two Sarah exits, one shifted); your body
+      hadn't turned, but your first-person view sat 0-5 degrees off your body's heading, and
+      the game takes over along your body (matched to 0.05 degrees on all five exits). 0.9.40
+      cuts to your body's heading. To test.
 
 - [ ] Testing messages and the detailed log off by default
 - [ ] Full test round on the release candidate (starts, exits, every preset, seated,

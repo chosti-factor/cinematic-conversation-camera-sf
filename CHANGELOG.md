@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.40 - 2026-11-21
+
+### Fixed
+- First-person exits: the NPC no longer shifts sideways as the game takes over (0.9.39's fix
+  missed it). In first person your view can sit a few degrees off your body's heading, and the
+  game takes over looking straight along your body; the cut went back to your view. The 0.9.39
+  log matched the game's view to your body's heading on all five exits, with your view 0-5
+  degrees off it (the shift seen) and your body not turned at all. The cut now goes to your
+  body's heading.
+
+### Diagnostic
+- The HUD's cost is broken down by part in the log's cost lines (the ready check, the HUD
+  hiding, the prompt, testing messages, the bars, subtitles, dialogue options): 0.9.39 still
+  had 0.15-0.3 ms a frame for it with the testing messages off, and main-thread stalls of
+  15-27 ms with the log written every 3 s.
+
 ## 0.9.39 - 2026-11-21
 
 ### Fixed
