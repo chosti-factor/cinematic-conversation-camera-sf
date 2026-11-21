@@ -116,6 +116,7 @@ Wednesday the 25th, about two days earlier.
       cuts to your body's heading. Tested 2026-11-21: pristine.
 
 - [ ] Testing messages and the detailed log off by default
+- [ ] Take out the lip-sync test switches (`bFilmTest*`, 0.9.41) once it's found; into docs/MEMORY.md
 - [ ] Full test round on the release candidate (starts, exits, every preset, seated,
       merchants, filming, the settings page)
 - [ ] Nexus page and its credits section (from CREDITS.md)
