@@ -459,8 +459,11 @@ namespace CCC
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
-		int  g_exitCompare = 0;      // first-person frames after an exit still to compare (0.9.38 diagnostic)
+		int  g_exitCompare = 0;      // frames after an exit still to compare (0.9.38 diagnostic; third person too, 0.9.45)
+		int  g_exitCompareTotal = 0;
 		std::optional<Camera::Pose> g_exitDrawn;  // the view drawn for that exit
+		RE::NiPoint3 g_exitFeet{};   // where you stood, and which way you faced, at the hand-back (0.9.45)
+		float        g_exitYaw = 0.0f;
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
 		float g_lastBuiltHead = 0.0f;  // your head above your feet when your full body was last built (0.9.9)
 		std::chrono::steady_clock::time_point g_lastBuiltAt{};  // and when it was last known built
@@ -789,6 +792,21 @@ namespace CCC
 						g_tpExitPending = true;
 						PutGameplayLensBack(false);
 						REX::INFO("Exit: your third-person view drawn on the switch frame");
+						// 0.9.45 diagnostic (the user: third-person exits shift and turn as the camera
+						// settles, and your body sometimes moves as if hit): the game's view over the
+						// second after the hand-back against the one drawn, and your body's moves.
+						g_exitCompare = g_exitCompareTotal = 60;
+						g_exitDrawn = *g_thirdPersonView;
+						if (auto* you = RE::PlayerCharacter::GetSingleton()) {
+							g_exitFeet = you->GetPosition();
+							g_exitYaw = you->GetAngle().z;
+							const auto& d = *g_thirdPersonView;
+							const float viewYaw = std::atan2(d.lookAt.x - d.position.x, d.lookAt.y - d.position.y);
+							REX::INFO("Exit (third person): your body turned {:+.1f} degrees during the conversation; the view drawn (from before it) looks {:+.1f} degrees off your body's heading now, from {:.2f} m behind your feet",
+								std::remainder(g_exitYaw - g_state.startAngle.z, 2.0f * std::numbers::pi_v<float>) * 57.29578f,
+								std::remainder(viewYaw - g_exitYaw, 2.0f * std::numbers::pi_v<float>) * 57.29578f,
+								std::hypot(d.position.x - g_exitFeet.x, d.position.y - g_exitFeet.y));
+						}
 					}
 				}
 				// First person, iExitMode 5 (0.9.10): the game's first first-person update was held
@@ -804,8 +822,12 @@ namespace CCC
 						g_tpExitPending = true;
 						PutGameplayLensBack(true);
 						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
-						g_exitCompare = 3;  // 0.9.38 diagnostic: the game's first frames against it
+						g_exitCompare = g_exitCompareTotal = 3;  // 0.9.38 diagnostic: the game's first frames against it
 						g_exitDrawn = *g_firstPersonView;
+						if (auto* you = RE::PlayerCharacter::GetSingleton()) {
+							g_exitFeet = you->GetPosition();
+							g_exitYaw = you->GetAngle().z;
+						}
 					}
 				}
 				if (!tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
@@ -3139,9 +3161,15 @@ namespace CCC
 			const auto& vpos = g_exitDrawn->position;
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			const auto  pa = player ? player->GetAngle() : RE::NiPoint3{};
-			REX::INFO("Exit frame {} after the hand-back: the game's view is {:+.2f} degrees across and {:+.2f} up from the one drawn, {:.3f} m away (your angles now: pitch {:.3f}, yaw {:.3f})",
-				4 - g_exitCompare, dYaw, gp - vp,
-				std::sqrt((gpos.x - vpos.x) * (gpos.x - vpos.x) + (gpos.y - vpos.y) * (gpos.y - vpos.y) + (gpos.z - vpos.z) * (gpos.z - vpos.z)), pa.x, pa.z);
+			const auto  feet = player ? player->GetPosition() : g_exitFeet;
+			const int   frame = g_exitCompareTotal - g_exitCompare + 1;
+			// Every frame of the first three, then a sample over the second (third person, 0.9.45).
+			if (frame <= 3 || frame == 5 || frame == 10 || frame == 15 || frame == 20 || frame == 30 || frame == 45 || frame == 60) {
+				REX::INFO("Exit frame {} after the hand-back: the game's view is {:+.2f} degrees across and {:+.2f} up from the one drawn, {:.3f} m away (your angles now: pitch {:.3f}, yaw {:.3f}; your body turned {:+.1f} degrees and moved {:.3f} m since the hand-back)",
+					frame, dYaw, gp - vp,
+					std::sqrt((gpos.x - vpos.x) * (gpos.x - vpos.x) + (gpos.y - vpos.y) * (gpos.y - vpos.y) + (gpos.z - vpos.z) * (gpos.z - vpos.z)), pa.x, pa.z,
+					std::remainder(pa.z - g_exitYaw, 2.0f * std::numbers::pi_v<float>) * 57.29578f, std::hypot(feet.x - g_exitFeet.x, feet.y - g_exitFeet.y));
+			}
 			--g_exitCompare;
 		}
 
@@ -3494,6 +3522,7 @@ namespace CCC
 			{
 				ReleaseThirdPersonExit();
 				Hook(a_state, a_arg);
+				CompareExitFrame();  // 0.9.45 diagnostic: third-person exits too
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
 					return;

@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.45 - 2026-11-21
+
+### Diagnostic
+- Third-person exits (the user: a noticeable shift and turn as the camera settles back, and
+  sometimes your body moves as if it was hit): the log compares the game's view with the one
+  drawn over the second after the hand-back (every frame of the first three, then at 5, 10,
+  15, 20, 30, 45 and 60), with how far your body turned and moved meanwhile, and at the
+  hand-back how far your body turned during the conversation and how far the view drawn
+  (your view from before it) looks off your body's heading. Logged with the detailed log off
+  too.
+
 ## 0.9.44 - 2026-11-21
 
 ### Changed
