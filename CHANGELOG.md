@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.37 - 2026-11-21
+
+The optimization pass (the third of the four before 1.0), first step: measuring.
+
+### Diagnostic
+- What the mod costs: the time spent in its own code, per part (the main-thread task, the
+  HUD, the nearby-people scan, the conversation camera, the filming camera), logged at the
+  end of every conversation and once a minute outside them: average and worst per call, and
+  in all. Logged whatever bDebugLog says, so it can be measured with the detailed log off.
+
 ## 0.9.36 - 2026-11-21
 
 The debugging pass, second part.

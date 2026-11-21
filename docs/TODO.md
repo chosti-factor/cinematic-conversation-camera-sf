@@ -82,7 +82,8 @@ Wednesday the 25th, about two days earlier.
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back
       conversations); thread safety, crashes (0.9.35-0.9.36, tested 2026-11-21: build warnings
       gone, filming ends at a loading screen, the conversation waits through a trade)
-- [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper
+- [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
+      the cost meters)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 

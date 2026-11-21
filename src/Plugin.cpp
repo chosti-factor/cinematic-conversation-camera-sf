@@ -234,6 +234,53 @@ namespace CCC
 		std::uint64_t g_ticksMain = 0;
 		std::atomic_uint64_t g_ticksOther{ 0 };
 
+		// ---- What the mod costs per frame (0.9.37, the optimization pass) --------------------
+		// Time spent in the mod's own code, measured around each part, and logged at the end of
+		// every conversation and once a minute outside them: average and worst per call, and in
+		// all. Timing itself costs a few tens of nanoseconds a call.
+		struct CostMeter
+		{
+			const char*                name;
+			std::atomic<std::uint64_t> ns{ 0 };
+			std::atomic<std::uint64_t> maxNs{ 0 };
+			std::atomic<std::uint64_t> calls{ 0 };
+		};
+		CostMeter g_costMain{ "main-thread task" }, g_costHud{ "HUD (bars, subtitles, options)" }, g_costScan{ "nearby people scan" },
+			g_costCamera{ "conversation camera" }, g_costFilm{ "filming camera" };
+
+		struct CostScope
+		{
+			CostMeter&                            meter;
+			std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
+			~CostScope()
+			{
+				const auto took = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count());
+				meter.ns.fetch_add(took, std::memory_order_relaxed);
+				meter.calls.fetch_add(1, std::memory_order_relaxed);
+				auto prev = meter.maxNs.load(std::memory_order_relaxed);
+				while (took > prev && !meter.maxNs.compare_exchange_weak(prev, took, std::memory_order_relaxed)) {
+				}
+			}
+		};
+
+		void LogCosts(const char* a_over)
+		{
+			std::string text;
+			for (auto* m : { &g_costMain, &g_costHud, &g_costScan, &g_costCamera, &g_costFilm }) {
+				const auto calls = m->calls.exchange(0, std::memory_order_relaxed);
+				const auto ns = m->ns.exchange(0, std::memory_order_relaxed);
+				const auto maxNs = m->maxNs.exchange(0, std::memory_order_relaxed);
+				if (calls == 0) {
+					continue;
+				}
+				text += std::format("{}{} {:.1f} us a call ({} calls, worst {:.0f} us, {:.1f} ms in all)", text.empty() ? "" : "; ", m->name,
+					static_cast<double>(ns) / static_cast<double>(calls) / 1000.0, calls, static_cast<double>(maxNs) / 1000.0, static_cast<double>(ns) / 1.0e6);
+			}
+			if (!text.empty()) {
+				REX::INFO("Cost {}: {}", a_over, text);
+			}
+		}
+
 		bool                                  g_lastGameplayFirstPerson = false;
 		bool                                  g_restoreFirstPersonPending = false;
 		bool                                  g_filmThirdPerson = false;  // filming from first person: the game is in third person for it (0.8.8)
@@ -692,6 +739,7 @@ namespace CCC
 						g_state.busySeconds);
 				}
 				REX::INFO("Conversation ended after {} camera frames", g_state.framesThisConversation);
+				LogCosts("of this conversation");
 				if (g_state.startedFirstPerson && g_state.bodyReady) {
 					g_lastBuiltAt = std::chrono::steady_clock::now();  // the body was still built when it ended (0.9.9)
 				}
@@ -2805,6 +2853,7 @@ namespace CCC
 			static void Thunk(void* a_dialogueState)
 			{
 				Hook(a_dialogueState);
+				CostScope cost{ g_costCamera };
 				g_dialogueStateObject = a_dialogueState;
 				if (g_hooksSafe) {
 					auto lock = HookLock();
@@ -5479,6 +5528,7 @@ namespace CCC
 		// things and people at TerraBrew).
 		void FilmFrame()
 		{
+			CostScope                  cost{ g_costFilm };
 			std::uint32_t              speakerId = 0, listenerId = 0, line = 0;
 			std::vector<std::uint32_t> groupIds;
 			{
@@ -5770,6 +5820,15 @@ namespace CCC
 				++g_ticksOther;
 				return;
 			}
+			CostScope cost{ g_costMain };
+			// Outside conversations, what the mod costs, once a minute (0.9.37).
+			{
+				static auto nextCost = std::chrono::steady_clock::now() + 60s;
+				if (!g_state.active && std::chrono::steady_clock::now() >= nextCost) {
+					nextCost = std::chrono::steady_clock::now() + 60s;
+					LogCosts("over the last minute");
+				}
+			}
 			if (++g_ticksMain == 3000) {
 				REX::INFO("Per-frame task: {} ticks on the main thread, {} on other threads so far", g_ticksMain, g_ticksOther.load());
 			}
@@ -5853,6 +5912,7 @@ namespace CCC
 					static auto nextScan = now;
 					if (now >= nextScan) {
 						nextScan = now + 100ms;
+						CostScope scanCost{ g_costScan };
 						UpdateOverheard(now);
 					}
 					UpdateFilming(now);  // every tick, for the listen key
@@ -5867,6 +5927,7 @@ namespace CCC
 					const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
 					last = now;
 					Hud::SetFirstLine(g_state.active && g_state.npcLinesStarted <= 1);
+					CostScope hudCost{ g_costHud };
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
 
