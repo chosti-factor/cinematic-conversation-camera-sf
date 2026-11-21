@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.33 (2026-11-20).
+Last updated: 0.9.43 (2026-11-21).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -246,6 +246,35 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
 - **`fAutoListenAfter`**: seconds standing still near a conversation before filming started on
   its own (4, then 2 in 0.8.2, 1 in 0.8.4). Gone from the INI in 0.8.6 (it starts as the scene
   begins, even while you walk); still read, unused, until 0.9.30.
+
+- **Filming's camera root hold** (`g_film.rootPin`, 0.9.18 to 0.9.42): every filming frame,
+  the gameplay camera's root (`PlayerCamera::cameraRoot`) was written back to its pose from
+  filming's first frame (`Camera::SetRootPose`: world and local, translate and rotate), before
+  `ApplyRender` placed the render camera against it. Why: the shot is placed relative to the
+  root, which follows you; walking on while it filmed (the 0.9.17 test), the root moved again
+  after our hook, and the shot landed a frame's walk off, shaking until you stopped. The game's
+  third-person update sets the root afresh each frame, so the hold didn't build up.
+  **It set off the lip-sync bug** (found 2026-11-21): after filming, conversations had lines
+  overlapping (several playing at once) and mouths out of step, Tuala's at the MAST most
+  often, until a save was loaded; filming quest or ambient scenes alike, interrupted or played
+  to the end. The game evidently reads the camera root as where the camera (the listener) is,
+  and something in its dialogue timing kept the bad state. Without the hold, moving the view
+  (render camera only, as in your own conversations) is harmless. The shake it fixed is mostly
+  gone anyway: auto-started filming holds you still (0.9.31); a listen-key start while
+  walking may shake until you stop. The exit path `ExitToFirstPerson` also writes the root
+  once (`SetRootPose` on your view); it hasn't run in any recent log.
+- **The lip-sync hunt** (0.9.39 to 0.9.42, the user's runs on one save: the Vanguard recruits'
+  ceremony and city-life scenes at the MAST filmed, auto filming off, then Tuala's MQ102
+  conversation): filming off from load, clean; filmed to the end, no interruption, overlap
+  (so not the interruption, nor a reload mid-scene). Temporary `[Debug]` switches, one part
+  of filming each: `bFilmTestNoHud` (the HUD kept), `bFilmTestNoHold` (no input layer hold),
+  `bFilmTestNoLens` (the game's lens), `bFilmTestNoCamera` (`FilmFrame` skipped: no view
+  move, no root hold, no obstacle casts), `bFilmTestNoRootPin` (only the root hold left out).
+  `bFilmTestNoCamera=1` with first person (so the forced third person and your hiding still
+  on, and the HUD hiding, the hold, the lens, the bars): clean. `bFilmTestNoRootPin=1`, all
+  else on: clean. The obstacle casts were out already: they use the dialogue camera's
+  collision query (`g_dialogueStateObject + 0x48`), only known after a conversation of yours,
+  and the 0.9.40 run broke with filming before any. Switches removed in 0.9.43.
 
 ## Exits, later
 

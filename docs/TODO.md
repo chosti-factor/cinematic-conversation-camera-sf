@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.42 (2026-11-21). Dates assume the Friday 27 November release; for
+Last updated: 0.9.43 (2026-11-21). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -91,7 +91,7 @@ Wednesday the 25th, about two days earlier.
 
 ## 5. Release candidate (about 25 to 26 Nov)
 
-- [ ] Before release (the user, 2026-11-21): lip sync out of step in the conversation that
+- [x] Before release (the user, 2026-11-21): lip sync out of step in the conversation that
       follows filming people talking. Twice in MQ102 at the MAST: filming Tuala and Sarah,
       then Tuala's conversation with you (a quest scene, the game's camera), with his lines out
       of lip sync, and you came back in third person after it (0.9.38 fixes that one, and the
@@ -104,7 +104,9 @@ Wednesday the 25th, about two days earlier.
       cleared it. Next test: film the ceremony to its end only, then Tuala with auto filming off.
       0.9.40: overlapping again. 0.9.41 (a switch per part of filming), the camera left out:
       clean, so not third person, your hiding, the hold, the HUD, the lens or the bars. 0.9.42
-      splits the camera: the view moved, or the game's camera root held. The user's rule
+      splits the camera: the view moved, or the game's camera root held. 0.9.42, the root
+      hold left out: clean. Found: filming's hold on the game's camera root; gone in 0.9.43
+      (docs/MEMORY.md). To confirm on the release candidate. The user's rule
       (2026-11-21): story-quest
       scenes stay filmed (the Constellation members' conversation at the Lodge "amazing to
       see"); only a scene or quest shown to conflict is left to the game, never quest scenes
@@ -118,7 +120,7 @@ Wednesday the 25th, about two days earlier.
       cuts to your body's heading. Tested 2026-11-21: pristine.
 
 - [ ] Testing messages and the detailed log off by default
-- [ ] Take out the lip-sync test switches (`bFilmTest*`, 0.9.41) once it's found; into docs/MEMORY.md
+- [x] Take out the lip-sync test switches (`bFilmTest*`, 0.9.41) once it's found; into docs/MEMORY.md (0.9.43)
 - [ ] Full test round on the release candidate (starts, exits, every preset, seated,
       merchants, filming, the settings page)
 - [ ] Nexus page and its credits section (from CREDITS.md)

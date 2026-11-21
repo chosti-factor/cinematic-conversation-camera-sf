@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.43 - 2026-11-21
+
+### Fixed
+- Conversations after filming people talking no longer have lines overlapping and mouths out
+  of step (Tuala's at the MAST, the pre-release item). Filming held the game's camera root
+  where it started, every frame (since 0.9.18, against a shake while you walked on); the game
+  takes that root as where its camera is, and something in its dialogue timing stayed broken
+  until a save was loaded. The 0.9.41-0.9.42 test switches found it: with only that hold left
+  out, the same run was clean. The hold is gone; the view still moves as before. Filming
+  started with the listen key while you walk may shake a little until you stop (filming that
+  starts on its own holds you still).
+- The test switches (`bFilmTest*`) are gone again (docs/MEMORY.md).
+
 ## 0.9.42 - 2026-11-21
 
 ### Diagnostic

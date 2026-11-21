@@ -4837,7 +4837,6 @@ namespace CCC
 			std::vector<std::uint32_t>            group;     // the scene's people lately, for group shots (0.8.10)
 			bool                                  groupShot{ false };  // this line's shot is the group shot
 			std::uint32_t                         lastGroupLine{ 0 };
-			std::optional<Camera::Pose>           rootPin;   // the game camera's root, held where filming started (0.9.18)
 		} g_film;
 
 		struct FilmMain  // main thread only
@@ -5131,7 +5130,6 @@ namespace CCC
 				g_film.smoothSpeaker.reset();
 				g_film.smoothListener.reset();
 				g_film.pose.reset();
-				g_film.rootPin.reset();
 			}
 			g_lensActive.store(false, std::memory_order_relaxed);
 			Camera::RestoreRender();
@@ -5167,7 +5165,7 @@ namespace CCC
 				{
 					Hud::SetPrompt(text);
 					const bool filming = FilmingActive();
-					Hud::SetHideRollover(filming && !Settings::Get().filmTestNoHud);  // (bFilmTestNoHud, 0.9.41: the lip-sync hunt)
+					Hud::SetHideRollover(filming);
 					Hud::SetFilmingOthers(filming && !g_state.active);
 					// 0.8.4 test: filming from first person showed your character in a T-pose (the
 					// game doesn't animate your full body in first person); 0.8.6: with your body
@@ -5549,7 +5547,6 @@ namespace CCC
 				g_film.listener = listener;
 				g_film.line = 1;
 				g_film.applied = false;
-				g_film.rootPin.reset();
 				g_filmMain.playerAt = player->GetPosition();
 				g_filmMain.startFeet = g_filmMain.playerAt;
 				g_filmMain.settled = false;
@@ -5559,17 +5556,11 @@ namespace CCC
 				g_filmMain.lastLine = latest;
 				g_filmMain.lastSpeaker = speaker;
 				g_filmMain.autoStarted = !keyStarts;
-				g_filmMain.holdingYou = !keyStarts && !s.filmTestNoHold;  // (bFilmTestNoHold, 0.9.41: the lip-sync hunt)
-				if (g_filmMain.holdingYou) {
+				g_filmMain.holdingYou = !keyStarts;
+				if (!keyStarts) {
 					SetMovementHeld(true);
 				}
-				if (!s.filmTestNoHold) {
-					SetLookingHeld(true);
-				}
-				if (s.filmTestNoHud || s.filmTestNoHold || s.filmTestNoLens || s.filmTestNoCamera || s.filmTestNoRootPin) {
-					REX::INFO("Filming people talking: lip-sync test, left out:{}{}{}{}{}", s.filmTestNoHud ? " the HUD hiding" : "", s.filmTestNoHold ? " the input hold" : "",
-						s.filmTestNoLens ? " the lens" : "", s.filmTestNoCamera ? " the camera" : "", s.filmTestNoRootPin ? " the camera root held" : "");
-				}
+				SetLookingHeld(true);
 				g_filmMain.people.clear();
 				g_filmMain.infos.clear();
 				g_filmMain.repeats = 0;
@@ -5585,7 +5576,7 @@ namespace CCC
 				g_film.group.clear();
 				g_film.groupShot = false;
 				g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
-				g_lensActive.store(!s.filmTestNoLens, std::memory_order_relaxed);
+				g_lensActive.store(true, std::memory_order_relaxed);
 				REX::INFO("Filming people talking: {} and {}{}", TalkerName(speaker), TalkerName(listener),
 					keyStarts ? "" : std::format(" (on its own: a conversation scene nearby; you moving at {:.1f} m/s)", g_filmMain.speed));
 				return;
@@ -5611,9 +5602,6 @@ namespace CCC
 		// things and people at TerraBrew).
 		void FilmFrame()
 		{
-			if (Settings::Get().filmTestNoCamera) {
-				return;  // (bFilmTestNoCamera, 0.9.41: the lip-sync hunt) the game's camera stays
-			}
 			CostScope                  cost{ g_costFilm };
 			std::uint32_t              speakerId = 0, listenerId = 0, line = 0;
 			std::vector<std::uint32_t> groupIds;
@@ -5814,18 +5802,10 @@ namespace CCC
 			g_lensWanted.store(g_filmLens.load(std::memory_order_relaxed), std::memory_order_relaxed);
 			Camera::Pose pose = *g_film.pose;
 			pose.lookAt = { g_film.anchor.x + g_film.lookOffset.x, g_film.anchor.y + g_film.lookOffset.y, g_film.anchor.z + g_film.lookOffset.z };
-			// 0.9.18: the game camera's root held where filming started. The shot is placed
-			// against the root, which follows you; walking on (filming starts even while you
-			// move), the shot landed a frame's walk off, a little differently each frame: it shook
-			// until you let go of the stick (0.9.17 test). The third-person camera's update sets
-			// the root afresh every frame, so holding it here doesn't build up, and it lets go
-			// as filming stops.
-			if (!g_film.rootPin && !Settings::Get().filmTestNoRootPin) {  // (bFilmTestNoRootPin, 0.9.42: the lip-sync hunt)
-				g_film.rootPin = Camera::PoseOf(camera->cameraRoot.get());
-			}
-			if (g_film.rootPin) {
-				Camera::SetRootPose(camera->cameraRoot.get(), *g_film.rootPin);
-			}
+			// The game camera's root is left where the game puts it (0.9.43). 0.9.18-0.9.42 held it
+			// where filming started, against a shake while you walked on; holding it set off the
+			// lip-sync bug (lines overlapping, mouths out of step, in conversations after filming,
+			// until a save was loaded): the 0.9.41-0.9.42 switches found it, docs/MEMORY.md.
 			if (Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f) && !g_film.applied) {
 				g_film.applied = true;
 				// 0.9.29: how far the camera stands from the near person, to read the game's fade
@@ -6064,7 +6044,7 @@ namespace CCC
 					const bool filmingOthers = FilmingActive();
 					const float lens = Director::WantedLens();
 					g_lensWanted.store(filmingOthers ? g_filmLens.load(std::memory_order_relaxed) : lens, std::memory_order_relaxed);  // (0.8.15: filming kept the last conversation's lens)
-					g_lensActive.store((filmingOthers && !Settings::Get().filmTestNoLens) || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
+					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
 						g_lensCalls.store(0, std::memory_order_relaxed);
 					}

@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.41 (2026-11-21).
+Last updated: 0.9.43 (2026-11-21).
 
 ## Working rules
 
@@ -155,6 +155,12 @@ Last updated: 0.9.41 (2026-11-21).
   part (0.9.40): once filming had happened, the filming bars (50 us), subtitles (45 us) and
   the prompt (75-145 us) kept working every frame with nothing on screen; the main-thread
   stalls (16-24 ms every minute) stayed with the log flushed every 3 s.
+- Lip sync found (2026-11-21, 0.9.41-0.9.42 test switches): filming's hold on the game's camera
+  root (every frame, since 0.9.18) broke the game's dialogue timing for later conversations
+  until a load. Gone in 0.9.43; details in docs/MEMORY.md. 0.9.41 put in the INI-on-change
+  read and the HUD idle guards (0.9.38's write-up without the code): main-thread task 14-42 us
+  a frame outside conversations (was 100-500), stalls now rare. Some 16-22 ms spikes remain in
+  minutes with filming; to look at.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
