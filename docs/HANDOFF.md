@@ -121,6 +121,13 @@ Last updated: 0.9.36 (2026-11-21).
   of a new opening shot, then the exit cut. 0.9.36: the conversation waits while the trade,
   container, crew or ship builder menu is open, as for the F1 menu (tested: waited 10 s
   through a trade with Anya, then the normal exit). Debugging pass done.
+- Optimization pass, 0.9.37's measurement (debug log on): the main-thread task 0.3-0.5 ms a
+  frame, of it the HUD 0.25-0.35 ms (even outside conversations: the letterbox looking up
+  both menus every frame), the nearby-people scan 70-90 us at 10 a second, the conversation
+  camera 10-70 us a frame and the filming camera 7-10 us. Spikes: up to 20-28 ms on the main
+  thread about every 2 s (the full INI re-read) and 16-20 ms on each conversation's first
+  frame (the same re-read on the camera thread, also a data race). 0.9.38 re-reads only on a
+  change and skips idle HUD work; to measure again with the debug log off.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.38 - 2026-11-21
+
+### Changed (the optimization pass)
+- The INI is re-read only when it has changed (checked twice a second, outside
+  conversations), not read in full every 2 s. The 0.9.37 measurement: each full read took up
+  to 20 ms on the main thread, a hitch of a frame or more every 2 s, and the read at every
+  conversation's start (on the camera thread, while the main thread could be reading the
+  settings) made that frame take 16-20 ms too. That read is gone; edits still apply within
+  half a second outside conversations.
+- The HUD skips its work when there's nothing to do: the letterbox bars, once off screen and
+  not wanted, no longer look up their menus every frame (both menus, every frame, were most
+  of the HUD's 0.25-0.35 ms a frame outside conversations), and the subtitle is left alone
+  until there's a reason to move it.
+
 ## 0.9.37 - 2026-11-21
 
 The optimization pass (the third of the four before 1.0), first step: measuring.
