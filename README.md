@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.39 (2026-11-21).
+Last updated: 0.9.44 (2026-11-21).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -361,8 +361,9 @@ With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) insta
 of them are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on five
 pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
-writes changes to the `_user.ini`; **Reset** beside a setting removes your change. Changes
-apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
+writes changes to the `_user.ini`; **Reset** beside a setting removes your change. A setting
+that only works while another is on sits indented under it, and is greyed out with "(off)"
+while that one is off (its tooltip says which). Changes apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
 Mod Organizer it lands in Mod Organizer's `overwrite` folder (`overwrite\SFSE\Plugins`),
 where the game still reads it. Test switches, transitions, per-shot tweaks and the plain
 camera are in the INI only.
@@ -371,7 +372,8 @@ camera are in the INI only.
 
 The log is at
 `Documents\My Games\Starfield\SFSE\Logs\CinematicConversationCameraSF.log`. It records
-every shot the director chooses and why. Please include it with any report.
+every shot the director chooses and why. Please include it with any report, with the detailed
+log on (`bDebugLog=1`, or **Detailed log** on the settings page's Screen page).
 
 While the detailed log is on (`bDebugLog=1`), the dialogue options you're offered and the one
 you pick are also added to `CinematicConversationCameraSF_YourLines.tsv` in the same folder,

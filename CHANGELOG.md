@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.44 - 2026-11-21
+
+### Changed
+- The settings page (the user's request): a setting that only works while another is on is
+  indented under it and greyed out with "(off)" while that one is off, its tooltip saying
+  which ("Start on its own while sprinting" under "Start on its own", everything of filming
+  under "Film them", the letterbox's height, fade and subtitles under "Letterbox bars", your
+  expressions' chances under "Your expressions", the close-up chances under "Emotion
+  close-ups", the reaction settings under "Reaction shots of you", the focus style under
+  "Focus on the person in shot", the large speaker's angles under "Large speaker from").
+  "Skill-choice close-up (s)" now comes after its switch. The "Start on its own" heads-up
+  only shows while filming is on.
+- `bDebugLog` is on the settings page too: **Detailed log**, on the Screen page's Testing
+  group (for bug reports).
+
 ## 0.9.43 - 2026-11-21
 
 ### Fixed

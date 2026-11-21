@@ -105,10 +105,10 @@ namespace CCC::Menu
 			{ "Close-ups and reactions", "You", "Director", "iReactionChancePlayer", "Reaction chance", Kind::kInt, 0, 100, "%d%%", nullptr },
 			{ "Close-ups and reactions", "You", "Director", "bListeningCloseUpsPlayer", "Listening reactions in close-up", Kind::kTri, 0, 0, nullptr,
 				"Reactions of you listening may be close-ups. The preset's own: yes, except Frontier (mediums and three-quarters)." },
-			{ "Close-ups and reactions", "You", "Director", "fChoiceCloseUpSecondsPlayer", "Skill-choice close-up (s)", Kind::kFloat, 0.5f, 6.0f, "%.1f",
-				"How long the close-up of you lasts as you pick a tagged option, over the start of their answer." },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
+			{ "Close-ups and reactions", "You", "Director", "fChoiceCloseUpSecondsPlayer", "Skill-choice close-up (s)", Kind::kFloat, 0.5f, 6.0f, "%.1f",
+				"How long the close-up of you lasts as you pick a tagged option, over the start of their answer." },
 			{ "Close-ups and reactions", "You", "Director", "iExtremeCloseUpChancePlayer", "Extreme close-ups of you", Kind::kInt, 0, 100, "%d%%", nullptr },
 
 			// ---- You ----
@@ -133,6 +133,8 @@ namespace CCC::Menu
 			{ "Screen", "Dialogue options", "Interface", "fOptionsFade", "Fade (s)", Kind::kFloat, 0.0f, 1.5f, "%.1f", "0 = no fade." },
 			{ "Screen", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
 				"The shot and the line's expression in the top bar." },
+			{ "Screen", "Testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
+				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
 
 			// ---- Filming people talking ----
 			{ "Filming people talking", "People talking near you", "Overhear", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr, nullptr },
@@ -150,6 +152,49 @@ namespace CCC::Menu
 			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmWalkOnDistance", "Walking on before you stop (m)", Kind::kFloat, 0.5f, 10.0f, "%.1f",
 				"Started with the listen key as you walk up: walking on this far from where it started ends it. Filming that starts on its own holds you still until you let go of the controls instead." },
 		};
+
+		// Settings that only do something while another is on (0.9.44, the user's request): drawn
+		// indented under it, greyed out with "(off)" while it's off. A three-way parent (the
+		// preset's own / off / on) counts as on unless it's off; a number, above 0.
+		struct Needs
+		{
+			const char* key;
+			const char* parent;
+		};
+		constexpr Needs kNeeds[]{
+			{ "sFocusStyle", "bFocusOnSubject" },
+			{ "fLargeSpeakerAnglePlayer", "fLargeSpeakerHeightNpc" },
+			{ "fLargeSpeakerPlainAnglePlayer", "fLargeSpeakerHeightNpc" },
+			{ "iCloseUpChanceMildNpc", "bEmotionCloseUpsNpc" },
+			{ "iCloseUpChanceMediumNpc", "bEmotionCloseUpsNpc" },
+			{ "iCloseUpChanceStrongNpc", "bEmotionCloseUpsNpc" },
+			{ "iExtremeCloseUpChanceNpc", "bEmotionCloseUpsNpc" },
+			{ "iReactionChancePlayer", "bReactionShotsPlayer" },
+			{ "bListeningCloseUpsPlayer", "bReactionShotsPlayer" },
+			{ "fChoiceCloseUpSecondsPlayer", "bChoiceCloseUpsPlayer" },
+			{ "iSignatureChancePlayer", "bFacePlayer" },
+			{ "iQuestionChancePlayer", "bFacePlayer" },
+			{ "fLetterboxHeight", "bLetterbox" },
+			{ "fLetterboxFade", "bLetterbox" },
+			{ "bSubtitlesInBars", "bLetterbox" },
+			{ "bAutoListen", "bFilmConversationsNpc" },
+			{ "bAutoListenSprinting", "bAutoListen" },
+			{ "bListenPrompt", "bFilmConversationsNpc" },
+			{ "fListenRange", "bFilmConversationsNpc" },
+			{ "fFilmStopDistance", "bFilmConversationsNpc" },
+			{ "fFilmStopSeconds", "bFilmConversationsNpc" },
+			{ "fFilmWalkOnDistance", "bFilmConversationsNpc" },
+		};
+
+		const char* ParentOf(const char* a_key)
+		{
+			for (const auto& n : kNeeds) {
+				if (std::string_view{ n.key } == a_key) {
+					return n.parent;
+				}
+			}
+			return nullptr;
+		}
 
 		// ---- Reading and writing the INI ----------------------------------------------------
 
@@ -297,9 +342,13 @@ namespace CCC::Menu
 
 		// ---- Drawing ------------------------------------------------------------------------
 
+		std::string g_needsNote;  // while drawing a greyed-out setting: what it needs
+
 		void Help(const Entry& a_entry)
 		{
-			if (a_entry.help) {
+			if (!g_needsNote.empty()) {
+				ImGuiMCP::SetItemTooltip("%s%s%s", g_needsNote.c_str(), a_entry.help ? "\n\n" : "", a_entry.help ? a_entry.help : "");
+			} else if (a_entry.help) {
 				ImGuiMCP::SetItemTooltip("%s", a_entry.help);
 			}
 		}
@@ -470,14 +519,45 @@ namespace CCC::Menu
 					group = e.group;
 					ImGuiMCP::SeparatorText(group);
 				}
+				// Indented under what it needs, greyed out while that's off (0.9.44).
+				int         depth = 0;
+				const char* off = nullptr;  // the label of the first setting up the chain that's off
+				for (const char* parent = ParentOf(e.key); parent && depth < 4; parent = ParentOf(parent)) {
+					++depth;
+					for (std::size_t p = 0; p < kCount; ++p) {
+						if (std::string_view{ kEntries[p].key } == parent) {
+							if (!off && AsFloat(g_values[p].text, 1.0f) == 0.0f) {
+								off = kEntries[p].label;
+							}
+							break;
+						}
+					}
+				}
+				constexpr float kStep = 18.0f;
+				if (depth > 0) {
+					ImGuiMCP::Indent(kStep * static_cast<float>(depth));
+				}
+				g_needsNote = off ? std::format("Needs \"{}\" on.", off) : std::string{};
+				if (off) {
+					ImGuiMCP::BeginDisabled(true);
+				}
 				DrawEntry(i);
+				if (off) {
+					ImGuiMCP::SameLine();
+					ImGuiMCP::TextDisabled("%s", "(off)");
+					ImGuiMCP::EndDisabled();
+				}
+				g_needsNote.clear();
 				// While "Start on its own" is on, what it does to your camera and your controls,
-				// spelled out under it (0.9.33, the user's request).
-				if (std::string_view{ e.key } == "bAutoListen" && AsFloat(g_values[i].text, 1.0f) != 0.0f) {
+				// spelled out under it (0.9.33, the user's request); not while filming is off.
+				if (std::string_view{ e.key } == "bAutoListen" && !off && AsFloat(g_values[i].text, 1.0f) != 0.0f) {
 					ImGuiMCP::PushTextWrapPos(0.0f);
 					ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s",
 						"Heads up: when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.");
 					ImGuiMCP::PopTextWrapPos();
+				}
+				if (depth > 0) {
+					ImGuiMCP::Unindent(kStep * static_cast<float>(depth));
 				}
 			}
 			ImGuiMCP::Spacing();
