@@ -14,6 +14,8 @@ test build; "diagnostic" items only add information to the log for testing.
   hand-back how far your body turned during the conversation and how far the view drawn
   (your view from before it) looks off your body's heading. Logged with the detailed log off
   too.
+- A line each time the INI is read again after a change on disk, with how long it took: the
+  0.9.44 run (detailed log off) had three 15 ms reads a minute apart, the only spikes left.
 
 ## 0.9.44 - 2026-11-21
 

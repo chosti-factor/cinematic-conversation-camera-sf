@@ -6070,7 +6070,14 @@ namespace CCC
 					static bool appliedOnce = false;
 					if (!g_state.active && now >= nextReload) {
 						nextReload = now + 500ms;
-						if (Settings::Get().LoadIfChanged() || !appliedOnce) {
+						const auto readAt = std::chrono::steady_clock::now();
+						const bool reread = Settings::Get().LoadIfChanged();
+						if (reread) {
+							// (0.9.45: the 0.9.44 log had three 15 ms reads; which edits were they?)
+							REX::INFO("Settings: the INI changed on disk; read again ({:.1f} ms)",
+								std::chrono::duration<float, std::milli>(std::chrono::steady_clock::now() - readAt).count());
+						}
+						if (reread || !appliedOnce) {
 							ApplyGameSettings();
 							appliedOnce = true;
 						}
