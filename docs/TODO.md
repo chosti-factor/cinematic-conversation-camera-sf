@@ -85,7 +85,10 @@ Wednesday the 25th, about two days earlier.
 - [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
       the cost meters; 0.9.39: the log written every 3 s, stalls of 15-27 ms still there;
       0.9.40: the HUD's parts timed; 0.9.41: the INI read only after a change and the HUD's
-      idle work skipped, both written up in 0.9.38 but never in the build)
+      idle work skipped, both written up in 0.9.38 but never in the build; 0.9.43 log: the
+      main-thread task 16-40 us a frame outside conversations, 100-260 in them (the HUD's
+      subtitle 65-120 of it); one spike, 14.8 ms, the INI re-read after an edit on the
+      settings page; left: one run with the debug log off)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 
@@ -106,7 +109,7 @@ Wednesday the 25th, about two days earlier.
       clean, so not third person, your hiding, the hold, the HUD, the lens or the bars. 0.9.42
       splits the camera: the view moved, or the game's camera root held. 0.9.42, the root
       hold left out: clean. Found: filming's hold on the game's camera root; gone in 0.9.43
-      (docs/MEMORY.md). To confirm on the release candidate. The user's rule
+      (docs/MEMORY.md). 0.9.43 test (the user, 2026-11-21): clean. To confirm once more on the release candidate. The user's rule
       (2026-11-21): story-quest
       scenes stay filmed (the Constellation members' conversation at the Lodge "amazing to
       see"); only a scene or quest shown to conflict is left to the game, never quest scenes
