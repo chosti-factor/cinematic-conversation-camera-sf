@@ -120,6 +120,10 @@ Wednesday the 25th, about two days earlier.
       cuts to your body's heading. Tested 2026-11-21: pristine.
 
 - [ ] Testing messages and the detailed log off by default
+- [ ] Take out the measuring code once the optimization pass is done (the user, 2026-11-21):
+      the cost meters and their log lines (0.9.37), the HUD's parts (0.9.40), the main-thread
+      task's parts (0.9.43); and the diagnostics that only fed finished investigations (the
+      exit frame comparison, 0.9.38). Into docs/MEMORY.md with what they measured.
 - [x] Take out the lip-sync test switches (`bFilmTest*`, 0.9.41) once it's found; into docs/MEMORY.md (0.9.43)
 - [ ] Full test round on the release candidate (starts, exits, every preset, seated,
       merchants, filming, the settings page)
