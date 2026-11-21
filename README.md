@@ -284,6 +284,9 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- A preset editor (the user, 2026-11-21): the per-preset settings (shot choices, close-up
+  chances, cutting pace and the like) edited in one place, instead of spread over the settings
+  page and the INI.
 - Every preset revisited with what 1.0's players report, tweaked further, and maybe new ones
   (the user, 2026-11-20).
 - Coming back from a reaction as a turn of its own, so it can bring a fresh angle (0.9.31

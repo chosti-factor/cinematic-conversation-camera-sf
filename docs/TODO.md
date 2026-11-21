@@ -95,6 +95,9 @@ Wednesday the 25th, about two days earlier.
       settings page; left: one run with the debug log off)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
+- [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
+      design isn't clear enough for people; which options to keep on the page, which to hide
+      (INI only), and which belong in a future preset editor (post-1.0, Mulling)
 
 ## 5. Release candidate (about 25 to 26 Nov)
 
