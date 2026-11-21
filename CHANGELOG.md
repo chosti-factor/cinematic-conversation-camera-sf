@@ -11,6 +11,11 @@ test build; "diagnostic" items only add information to the log for testing.
   you during a conversation and takes over with that heading, while the cut went back to your
   view from before it (0.9.38's log: 9.4, -3.4 and -2.0 degrees across). Your view is now
   turned to where you face as the cut begins.
+- The listen prompt (`bListenPrompt`, with `bAutoListen` off) no longer shows as each of your own
+  conversations ends. The people you'd just talked to still counted as a conversation nearby
+  for a few seconds: they were seen talking throughout, and the last line they'd been overheard
+  saying, before yours started, was to someone else. Only lines that start after your own
+  conversation count now.
 
 ### Added
 - `bAutoListenSprinting` (off by default; on the settings page): filming people talking also

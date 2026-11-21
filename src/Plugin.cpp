@@ -4857,6 +4857,7 @@ namespace CCC
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
 			std::chrono::steady_clock::time_point stoppedAt{};   // when filming last stopped (0.8.15)
+			std::chrono::steady_clock::time_point ownUntil{};    // last seen in a conversation of your own (0.9.39)
 			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
 			std::vector<std::uintptr_t>           infos;     // the lines filmed (by words and record), to notice repeats
 			std::uintptr_t                        lastSaid{ 0 };
@@ -5207,6 +5208,9 @@ namespace CCC
 					}
 				}
 			} promptOut{ prompt };
+			if (g_state.active) {
+				g_filmMain.ownUntil = a_now;
+			}
 			if (!s.filmConversations || !player || g_state.active) {
 				StopFilming(g_state.active ? "your own conversation" : "off");
 				return;
@@ -5246,8 +5250,15 @@ namespace CCC
 				g_filmMain.speedFeet = playerFeet;
 				g_filmMain.speedAt = a_now;
 			}
+			// Not your own conversation (0.9.39 test: the prompt showed as every conversation of
+			// yours ended). Its people kept "talking" through it and the scene stayed theirs for a
+			// few seconds after, so they looked like a conversation nearby: lines from before or
+			// during one of yours don't count.
 			for (const auto& [id, t] : g_talkers) {
 				if (t.lines == 0 || t.addressed == 0 || t.addressed == 0x14 || FlatDistance(t.feet, playerFeet) > s.listenRange) {
+					continue;
+				}
+				if (t.lastLine <= g_filmMain.ownUntil) {
 					continue;
 				}
 				// Still part of it a while after they last spoke, counted from the end of the line
