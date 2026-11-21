@@ -78,9 +78,10 @@ Wednesday the 25th, about two days earlier.
 
 - [x] Take out the temporary "Nebula test" preset (done in 0.9.25)
 - [x] Redundancy: dead code, finished experiments, old exit modes, spent diagnostics (0.9.30; tested with 0.9.31, 2026-11-20: all good; removed parts in docs/MEMORY.md)
-- [ ] Debugging: every INI setting against its comment; edge cases (loading or a menu
+- [x] Debugging: every INI setting against its comment; edge cases (loading or a menu
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back
-      conversations); thread safety, crashes
+      conversations); thread safety, crashes (0.9.35-0.9.36, tested 2026-11-21: build warnings
+      gone, filming ends at a loading screen, the conversation waits through a trade)
 - [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)

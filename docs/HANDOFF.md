@@ -119,7 +119,8 @@ Last updated: 0.9.36 (2026-11-21).
   camera, so the conversation ended 0.25 s in (the stopped-updating rule), and when the
   trade closed the game's dialogue camera came back for a moment before ending: about 0.8 s
   of a new opening shot, then the exit cut. 0.9.36: the conversation waits while the trade,
-  container, crew or ship builder menu is open, as for the F1 menu.
+  container, crew or ship builder menu is open, as for the F1 menu (tested: waited 10 s
+  through a trade with Anya, then the normal exit). Debugging pass done.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
