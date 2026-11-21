@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.41 (2026-11-21). Dates assume the Friday 27 November release; for
+Last updated: 0.9.42 (2026-11-21). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -102,8 +102,10 @@ Wednesday the 25th, about two days earlier.
       So filming starts it. The 0.9.38 run after its reload filmed the ceremony to its end, no
       interruption, and Tuala's (unfilmed) conversation still had it; loading another save
       cleared it. Next test: film the ceremony to its end only, then Tuala with auto filming off.
-      Overlap: a diagnostic build with a switch per part of filming (third person and hiding,
-      the input hold, the HUD hiding, the lens). The user's rule (2026-11-21): story-quest
+      0.9.40: overlapping again. 0.9.41 (a switch per part of filming), the camera left out:
+      clean, so not third person, your hiding, the hold, the HUD, the lens or the bars. 0.9.42
+      splits the camera: the view moved, or the game's camera root held. The user's rule
+      (2026-11-21): story-quest
       scenes stay filmed (the Constellation members' conversation at the Lodge "amazing to
       see"); only a scene or quest shown to conflict is left to the game, never quest scenes
       as a group.

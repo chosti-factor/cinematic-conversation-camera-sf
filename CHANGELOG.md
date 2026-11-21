@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.42 - 2026-11-21
+
+### Diagnostic
+- The lip-sync hunt, narrowed: 0.9.41's test with the camera left out (`bFilmTestNoCamera=1`)
+  was clean, everything else of filming still on (third person and your hiding, the input
+  hold, the HUD hiding, the lens, the bars). The camera's two parts get a switch each:
+  `bFilmTestNoRootPin=1` leaves out holding the game's camera root where filming started (only
+  filming does that; the view still moves). The obstacle checks are out of it: in the 0.9.40
+  run they couldn't run yet (no conversation of yours before the filming), and it still broke.
+
 ## 0.9.41 - 2026-11-21
 
 ### Changed (the optimization pass)

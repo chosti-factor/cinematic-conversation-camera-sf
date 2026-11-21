@@ -5566,9 +5566,9 @@ namespace CCC
 				if (!s.filmTestNoHold) {
 					SetLookingHeld(true);
 				}
-				if (s.filmTestNoHud || s.filmTestNoHold || s.filmTestNoLens || s.filmTestNoCamera) {
-					REX::INFO("Filming people talking: lip-sync test, left out:{}{}{}{}", s.filmTestNoHud ? " the HUD hiding" : "", s.filmTestNoHold ? " the input hold" : "",
-						s.filmTestNoLens ? " the lens" : "", s.filmTestNoCamera ? " the camera" : "");
+				if (s.filmTestNoHud || s.filmTestNoHold || s.filmTestNoLens || s.filmTestNoCamera || s.filmTestNoRootPin) {
+					REX::INFO("Filming people talking: lip-sync test, left out:{}{}{}{}{}", s.filmTestNoHud ? " the HUD hiding" : "", s.filmTestNoHold ? " the input hold" : "",
+						s.filmTestNoLens ? " the lens" : "", s.filmTestNoCamera ? " the camera" : "", s.filmTestNoRootPin ? " the camera root held" : "");
 				}
 				g_filmMain.people.clear();
 				g_filmMain.infos.clear();
@@ -5820,7 +5820,7 @@ namespace CCC
 			// until you let go of the stick (0.9.17 test). The third-person camera's update sets
 			// the root afresh every frame, so holding it here doesn't build up, and it lets go
 			// as filming stops.
-			if (!g_film.rootPin) {
+			if (!g_film.rootPin && !Settings::Get().filmTestNoRootPin) {  // (bFilmTestNoRootPin, 0.9.42: the lip-sync hunt)
 				g_film.rootPin = Camera::PoseOf(camera->cameraRoot.get());
 			}
 			if (g_film.rootPin) {

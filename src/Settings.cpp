@@ -131,6 +131,7 @@ namespace CCC
 			a_s.filmTestNoHold = ReadInt(a_path, L"Debug", L"bFilmTestNoHold", a_s.filmTestNoHold ? 1 : 0) != 0;
 			a_s.filmTestNoLens = ReadInt(a_path, L"Debug", L"bFilmTestNoLens", a_s.filmTestNoLens ? 1 : 0) != 0;
 			a_s.filmTestNoCamera = ReadInt(a_path, L"Debug", L"bFilmTestNoCamera", a_s.filmTestNoCamera ? 1 : 0) != 0;
+			a_s.filmTestNoRootPin = ReadInt(a_path, L"Debug", L"bFilmTestNoRootPin", a_s.filmTestNoRootPin ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
 			a_s.letterboxFade = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxFade", a_s.letterboxFade), 0.0f, 3.0f);

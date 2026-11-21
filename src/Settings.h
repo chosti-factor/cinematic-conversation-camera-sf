@@ -48,6 +48,7 @@ namespace CCC
 		bool     filmTestNoHold{ false };    // your movement and looking aren't held
 		bool     filmTestNoLens{ false };    // the game's lens, not filming's
 		bool     filmTestNoCamera{ false };  // the camera isn't moved (the game's view stays)
+		bool     filmTestNoRootPin{ false }; // the camera moves, but the game's camera root isn't held (0.9.42)
 		bool     letterbox{ true };     // black bars while the camera films a conversation
 		float    letterboxHeight{ 0.12f };  // each bar, share of the screen height
 		float    letterboxFade{ 0.4f };     // seconds for the bars to slide in or out
