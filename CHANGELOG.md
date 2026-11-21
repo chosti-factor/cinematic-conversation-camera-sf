@@ -31,7 +31,7 @@ test build; "diagnostic" items only add information to the log for testing.
   conversations ends. The people you'd just talked to still counted as a conversation nearby
   for a few seconds: they were seen talking throughout, and the last line they'd been overheard
   saying, before yours started, was to someone else. Only lines that start after your own
-  conversation count now.
+  conversation count now. (Tested 2026-11-21: no prompt at the end of conversations.)
 
 ### Added
 - `bAutoListenSprinting` (off by default; on the settings page): filming people talking also
