@@ -98,8 +98,14 @@ Wednesday the 25th, about two days earlier.
       camera, the game in third person with you hidden as the conversation starts. First an
       A/B test from a save before it: auto filming off, then on. 0.9.39 test (auto filming off
       before loading, the Vanguard ceremony and the MAST scene nearby, not filmed): no overlap.
-      So filming starts it. Next: which scene filmed sets it off (the Vanguard ceremony, a
-      city-life scene, or MQ102's MAST scene, a quest scene leading into your conversation).
+      So filming starts it. The 0.9.38 run after its reload filmed the ceremony to its end, no
+      interruption, and Tuala's (unfilmed) conversation still had it; loading another save
+      cleared it. Next test: film the ceremony to its end only, then Tuala with auto filming off.
+      Overlap: a diagnostic build with a switch per part of filming (third person and hiding,
+      the input hold, the HUD hiding, the lens). The user's rule (2026-11-21): story-quest
+      scenes stay filmed (the Constellation members' conversation at the Lodge "amazing to
+      see"); only a scene or quest shown to conflict is left to the game, never quest scenes
+      as a group.
 - [ ] Nice before release, else after 1.0 (the user, 2026-11-21): first-person exits, a small
       shift of the NPC to the right as the game takes over. 0.9.38's log: the game's heading
       differs from the view drawn (9.4, -3.4, -2.0 degrees across); 0.9.39 turns the view to
