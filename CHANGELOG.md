@@ -6,6 +6,15 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.38 - 2026-11-21
 
+### Changed
+- Nebula's high angle of you cranes down half as far (26 to 13): the 0.9.37 test, Sarah's
+  head ended half under the top bar.
+
+### Diagnostic
+- First-person exits: the game's first three frames after the hand-back, against the view
+  drawn for it (how far across and up, in degrees), for the small shift to the right seen
+  as the game takes over.
+
 ### Changed (the optimization pass)
 - The INI is re-read only when it has changed (checked twice a second, outside
   conversations), not read in full every 2 s. The 0.9.37 measurement: each full read took up

@@ -361,7 +361,7 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kLowProfile, 10, Move::kPushTiltUp, 22, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kLowAngle, 15, Move::kPushTiltUp, 22, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kPlayerLow, 15, Move::kPushTiltUp, 22, 5.0f, 60.0f },
-			PresetEntry{ ShotType::kHighAngle, 15, Move::kCraneDown, 26, 5.0f, 65.0f },
+			PresetEntry{ ShotType::kHighAngle, 15, Move::kCraneDown, 13, 5.0f, 65.0f },  // 0.9.38: half the crane (the 0.9.37 test: Sarah's head went half under the top bar at 26)
 			PresetEntry{ ShotType::kTwoShot, 30, Move::kDrift, 18, 6.0f, 72.0f },
 			PresetEntry{ ShotType::kProfile, 15, Move::kDrift, 12, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 30, 6.0f, 80.0f },

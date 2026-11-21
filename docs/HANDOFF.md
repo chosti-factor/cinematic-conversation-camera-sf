@@ -128,6 +128,11 @@ Last updated: 0.9.36 (2026-11-21).
   thread about every 2 s (the full INI re-read) and 16-20 ms on each conversation's first
   frame (the same re-read on the camera thread, also a data race). 0.9.38 re-reads only on a
   change and skips idle HUD work; to measure again with the debug log off.
+- 0.9.37 test (the user, 2026-11-21): Tuala's lip sync off again after filming him with
+  Sarah, the second time, so likely the mod (pre-release item in docs/TODO.md, A/B test
+  first). First-person exits: a small shift of the NPC to the right at the hand-back
+  (0.9.38 logs the game's first frames against the view drawn). Nebula's high angle of you
+  craned too far down (half of Sarah's head under the bar): 26 to 13.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

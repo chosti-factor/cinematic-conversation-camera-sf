@@ -431,6 +431,8 @@ namespace CCC
 		bool g_needVisibilityRestore = false;
 		bool g_restoreVisible = true;  // with g_needVisibilityRestore: leave the player shown
 		int  g_exitLogFrames = 0;    // first-person frames still to log after a first-person exit
+		int  g_exitCompare = 0;      // first-person frames after an exit still to compare (0.9.38 diagnostic)
+		std::optional<Camera::Pose> g_exitDrawn;  // the view drawn for that exit
 		int  g_exitSkipped = 0;      // the exit's first-person updates held back so far (0.9.8, iExitMode 5)
 		float g_lastBuiltHead = 0.0f;  // your head above your feet when your full body was last built (0.9.9)
 		std::chrono::steady_clock::time_point g_lastBuiltAt{};  // and when it was last known built
@@ -775,6 +777,8 @@ namespace CCC
 						g_tpExitPending = true;
 						PutGameplayLensBack(true);
 						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
+						g_exitCompare = 3;  // 0.9.38 diagnostic: the game's first frames against it
+						g_exitDrawn = *g_firstPersonView;
 					}
 				}
 				if (!tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
@@ -3064,6 +3068,36 @@ namespace CCC
 			Camera::RestoreRender();
 		}
 
+		// 0.9.38 diagnostic (the 0.9.37 test: at first-person exits the NPC often shifts a little
+		// to the right as the game takes over): the game's own first frames after the exit
+		// against the view drawn for it (your view from before the conversation), in degrees.
+		void CompareExitFrame()
+		{
+			if (g_exitCompare <= 0 || !g_exitDrawn) {
+				return;
+			}
+			auto* camera = RE::PlayerCamera::GetSingleton();
+			const auto game = camera ? Camera::PoseOf(camera->cameraRoot.get()) : std::nullopt;
+			if (!game) {
+				return;
+			}
+			const auto angles = [](const Camera::Pose& a_p) {
+				const float dx = a_p.lookAt.x - a_p.position.x, dy = a_p.lookAt.y - a_p.position.y, dz = a_p.lookAt.z - a_p.position.z;
+				return std::pair{ std::atan2(dx, dy) * 57.29578f, std::atan2(dz, std::sqrt(dx * dx + dy * dy)) * 57.29578f };
+			};
+			const auto [gy, gp] = angles(*game);
+			const auto [vy, vp] = angles(*g_exitDrawn);
+			const float dYaw = std::remainder(gy - vy, 360.0f);
+			const auto& gpos = game->position;
+			const auto& vpos = g_exitDrawn->position;
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			const auto  pa = player ? player->GetAngle() : RE::NiPoint3{};
+			REX::INFO("Exit frame {} after the hand-back: the game's view is {:+.2f} degrees across and {:+.2f} up from the one drawn, {:.3f} m away (your angles now: pitch {:.3f}, yaw {:.3f})",
+				4 - g_exitCompare, dYaw, gp - vp,
+				std::sqrt((gpos.x - vpos.x) * (gpos.x - vpos.x) + (gpos.y - vpos.y) * (gpos.y - vpos.y) + (gpos.z - vpos.z) * (gpos.z - vpos.z)), pa.x, pa.z);
+			--g_exitCompare;
+		}
+
 		float g_exitPitchBefore[2]{ 0.0f, 0.0f };  // +C8, +CC before the exit's first first-person update (0.9.5)
 		constexpr int kExitSkipFrames = 1;  // first-person updates held back at an exit (was iExitSkipFrames, 0.9.8)
 		bool  g_exitPitchKnown = false;
@@ -3226,6 +3260,7 @@ namespace CCC
 				}
 				BeforeExitUpdate(a_state);
 				Hook(a_state, a_arg);
+				CompareExitFrame();
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)
 					return;
