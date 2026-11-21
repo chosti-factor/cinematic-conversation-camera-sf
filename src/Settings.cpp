@@ -8,6 +8,17 @@ namespace CCC
 		constexpr auto kIniPath = L".\\Data\\SFSE\\Plugins\\CinematicConversationCameraSF.ini";
 		constexpr auto kUserIniPath = L".\\Data\\SFSE\\Plugins\\CinematicConversationCameraSF_user.ini";
 
+		// A file's last write time (0 if it isn't there), to re-read the INI only after an edit.
+		std::uint64_t WriteTime(const wchar_t* a_path)
+		{
+			WIN32_FILE_ATTRIBUTE_DATA data{};
+			if (!::GetFileAttributesExW(a_path, GetFileExInfoStandard, &data)) {
+				return 0;
+			}
+			return (static_cast<std::uint64_t>(data.ftLastWriteTime.dwHighDateTime) << 32) | data.ftLastWriteTime.dwLowDateTime;
+		}
+		std::uint64_t g_mainTime = ~0ull, g_userTime = ~0ull;  // as last read
+
 		float ReadFloat(const wchar_t* a_path, const wchar_t* a_section, const wchar_t* a_key, float a_default)
 		{
 			wchar_t buffer[64]{};
@@ -256,6 +267,8 @@ namespace CCC
 
 	void Settings::Load()
 	{
+		g_mainTime = WriteTime(kIniPath);
+		g_userTime = WriteTime(kUserIniPath);
 		Settings fresh{};
 		LoadFrom(fresh, kIniPath);
 		LoadFrom(fresh, kUserIniPath);  // user overrides survive updates
@@ -263,5 +276,14 @@ namespace CCC
 			fresh.preset = g_presetOverride;
 		}
 		*this = fresh;
+	}
+
+	bool Settings::LoadIfChanged()
+	{
+		if (WriteTime(kIniPath) == g_mainTime && WriteTime(kUserIniPath) == g_userTime) {
+			return false;
+		}
+		Load();
+		return true;
 	}
 }

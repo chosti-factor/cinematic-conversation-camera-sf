@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.40, 2026-11-21).
+measured in testing. Kept up to date with every build (last updated: 0.9.41, 2026-11-21).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -316,7 +316,7 @@ Older modes:
 
 - **`bEnabled=0` (0.9.11):** the whole mod stands down: shots, filming, scans, dialogue
   options and letterbox, face, blur, lens. The hooks stay installed but pass through. The INI
-  is still read every 2 s.
+  is still checked twice a second and read once it changes (0.9.41; every 2 s before).
 - **Before 0.9.11:** it only stopped the shots.
 - **For a strict vanilla comparison,** disable the mod in the mod manager.
 

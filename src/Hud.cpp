@@ -774,6 +774,7 @@ namespace CCC::Hud
 			float       ease{ 0.0f };      // 0 = off screen, 1 = fully in
 			float       barHeight{ 0.0f }; // stage units
 			bool        logged{ false };
+			bool        parked{ false };   // off screen, hidden and not wanted: nothing to do (0.9.41)
 		} g_bars, g_filmBars;  // the dialogue menu's; the HUD messages menu's, filming people talking (0.8.10)
 		bool g_filmingOthers = false;
 
@@ -808,6 +809,12 @@ namespace CCC::Hud
 
 		void UpdateLetterbox(LetterboxState& a_bars, const char* a_menu, bool a_want, float a_delta)
 		{
+			// 0.9.41: once the bars are off screen and hidden, no menu lookups until they're
+			// wanted again. The 0.9.40 log: the filming bars (on the HUD messages menu, always
+			// open) cost 50 us a frame for good after the first filming, nothing on screen.
+			if (!a_want && a_bars.parked) {
+				return;
+			}
 			const auto& s = Settings::Get();
 			const auto  ref = OpenMovie(a_menu);
 			if (!ref) {
@@ -826,6 +833,7 @@ namespace CCC::Hud
 			const bool have = FindChild(top, kTopName, upper) && FindChild(top, kBottomName, lower);
 			if (!have) {
 				if (!a_want) {
+					a_bars.parked = a_bars.ease <= 0.0f;  // none there to hide
 					return;
 				}
 				// Stage size; draw well past its sides, so a wider screen than the movie's is
@@ -864,6 +872,7 @@ namespace CCC::Hud
 			SafeSet(&lower, "y", &downY);
 			SafeSet(&upper, "visible", &shown);
 			SafeSet(&lower, "visible", &shown);
+			a_bars.parked = !a_want && a_bars.ease <= 0.0f;
 		}
 
 		// ---- Testing messages in the top bar (0.7.6) --------------------------------------------
@@ -1219,6 +1228,7 @@ namespace CCC::Hud
 			std::string shown;    // in the field now
 			bool        created{ false };
 			float       alpha{ 0.0f };
+			bool        parked{ false };  // faded out and hidden: nothing to do (0.9.41)
 			// The look of the game's own interaction prompt ("Talk" / the name, when you aim at
 			// someone): HUDMenu.RolloverWidget_mc, its largest text (0.8.3).
 			// 0.8.4: assigned from what the 0.8.3 and 0.8.4 logs found (the words: bold main
@@ -1355,7 +1365,9 @@ namespace CCC::Hud
 		void UpdatePrompt(float a_delta)
 		{
 			const bool want = !g_prompt.text.empty();
-			if (!want && !g_prompt.created) {
+			// 0.9.41: faded out and hidden, nothing to do until it's wanted again (the 0.9.40
+			// log: 75-145 us a frame for good once it had been shown).
+			if (!want && (!g_prompt.created || g_prompt.parked)) {
 				return;
 			}
 			const auto ref = OpenMovie("HUDMessagesMenu");
@@ -1460,6 +1472,7 @@ namespace CCC::Hud
 			SafeSet(&field, "y", &vy);
 			SafeSet(&field, "alpha", &va);
 			SafeSet(&field, "visible", &vv);
+			g_prompt.parked = !want && g_prompt.alpha <= 0.0f;
 		}
 	}
 
@@ -1497,6 +1510,11 @@ namespace CCC::Hud
 
 		void UpdateSubtitles(float a_ease)
 		{
+			// 0.9.41: left alone while it's where the game puts it and the bars are out (the
+			// 0.9.40 log: 45 us a frame for good once bars had been in, nothing to move).
+			if (!g_sub.active && a_ease <= 0.0f) {
+				return;
+			}
 			const auto& s = Settings::Get();
 			const auto  ref = OpenMovie("HUDMessagesMenu");
 			if (!ref) {

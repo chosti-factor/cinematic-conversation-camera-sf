@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.39 (2026-11-21).
+Last updated: 0.9.41 (2026-11-21).
 
 ## Working rules
 
@@ -126,8 +126,10 @@ Last updated: 0.9.39 (2026-11-21).
   both menus every frame), the nearby-people scan 70-90 us at 10 a second, the conversation
   camera 10-70 us a frame and the filming camera 7-10 us. Spikes: up to 20-28 ms on the main
   thread about every 2 s (the full INI re-read) and 16-20 ms on each conversation's first
-  frame (the same re-read on the camera thread, also a data race). 0.9.38 re-reads only on a
-  change and skips idle HUD work; to measure again with the debug log off.
+  frame (the same re-read on the camera thread, also a data race). 0.9.38's CHANGELOG said it
+  re-read only on a change and skipped idle HUD work, but that code never reached a commit
+  (found on 0.9.40, whose HUD timing by part showed the idle work still running): it's in
+  0.9.41. To measure again with the debug log off.
 - 0.9.37 test (the user, 2026-11-21): Tuala's lip sync off again after filming him with
   Sarah, the second time, so likely the mod (pre-release item in docs/TODO.md, A/B test
   first). First-person exits: a small shift of the NPC to the right at the hand-back
@@ -141,8 +143,18 @@ Last updated: 0.9.39 (2026-11-21).
   group scene nearby, filming off, was clean. Not yet separated: the group scene being
   filmed, or the group scene running nearby at all (needs the save with it, filming off from
   before loading). First-person exit shift confirmed as heading: fixed in 0.9.39. The cost
-  meters still showed 16-29 ms stalls with the INI re-read gone: 0.9.39 stops flushing the
-  log on every line. `bAutoListenSprinting` added (off).
+  meters still showed 16-29 ms stalls (the INI re-read wasn't gone after all, see above):
+  0.9.39 stops flushing the log on every line. `bAutoListenSprinting` added (off).
+- 0.9.39-0.9.40 tests (2026-11-21): the listen prompt no longer shows as your conversations
+  end. Lip sync: filming off from before loading, the group scene and MQ102's scene running
+  unfilmed: clean. Then the group scene and a city-life scene filmed to their ends, no
+  interruption, filming off, Tuala's conversation: overlapping again, less. So filming
+  itself sets it off; next a diagnostic build with a switch per part of filming. The user's
+  rule: story-quest scenes stay filmed; only a scene or quest shown to conflict is left out.
+  First-person exits pristine on 0.9.40 (the cut to your body's heading). HUD timing by
+  part (0.9.40): once filming had happened, the filming bars (50 us), subtitles (45 us) and
+  the prompt (75-145 us) kept working every frame with nothing on screen; the main-thread
+  stalls (16-24 ms every minute) stayed with the log flushed every 3 s.
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.

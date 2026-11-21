@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.41 - 2026-11-21
+
+### Changed (the optimization pass)
+- The INI is read only after it has changed (its write time, checked twice a second outside
+  conversations), not in full every 2 s, and no longer at each conversation's start (on the
+  camera thread, while the main thread could be reading the settings). Edits, from the
+  settings page too, still apply within half a second outside conversations. The 0.9.37-0.9.40
+  logs had main-thread stalls of 16-24 ms in every minute, with the HUD and the scans cheap
+  and the log flushed every 3 s.
+- The HUD's idle work stops once there's nothing on screen: the filming bars, the subtitle
+  and the listen prompt, once off screen and not wanted, are left alone. The 0.9.40 log, by
+  part: after the first filming, the filming bars cost 50 us a frame, the subtitle 45 us
+  and the prompt (once shown) 75-145 us, for good, with nothing on screen.
+
 ## 0.9.40 - 2026-11-21
 
 ### Fixed
@@ -71,6 +85,9 @@ test build; "diagnostic" items only add information to the log for testing.
   not wanted, no longer look up their menus every frame (both menus, every frame, were most
   of the HUD's 0.25-0.35 ms a frame outside conversations), and the subtitle is left alone
   until there's a reason to move it.
+- (Correction, 2026-11-21: the two items above were written up but their code never reached
+  the build; the INI was still read in full every 2 s and the HUD idle work still ran,
+  through 0.9.40. Both are in 0.9.41.)
 
 ## 0.9.37 - 2026-11-21
 

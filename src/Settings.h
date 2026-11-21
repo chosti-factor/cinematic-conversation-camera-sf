@@ -190,6 +190,9 @@ namespace CCC
 
 		static Settings& Get();
 		void             Load();
+		// Load() only when either INI file has been written since the last read (0.9.41): a
+		// full read takes up to 20 ms. True when it re-read. Main thread.
+		bool             LoadIfChanged();
 		// The preset switched to with the preset key: kept over sPreset until the game is
 		// restarted ("" = sPreset). Main thread.
 		static void SetPresetOverride(const std::string& a_preset);

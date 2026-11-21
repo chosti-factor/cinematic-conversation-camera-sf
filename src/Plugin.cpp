@@ -728,7 +728,6 @@ namespace CCC
 			g_state.bodyReady = !g_state.needsBodyRepair;
 			g_repair = Repair{};
 			g_exitSkipped = 0;
-			Settings::Get().Load();  // pick up INI edits made since the last conversation
 			++g_conversationNumber;
 			g_menusLogged = false;
 			REX::INFO("Conversation {} started (from {} person)", g_conversationNumber, g_lastGameplayFirstPerson ? "first" : "third");
@@ -5958,8 +5957,8 @@ namespace CCC
 					static std::chrono::steady_clock::time_point nextReload{};
 					static bool loggedOff = false;
 					if (now >= nextReload) {
-						nextReload = now + 2s;
-						Settings::Get().Load();
+						nextReload = now + 500ms;
+						Settings::Get().LoadIfChanged();
 					}
 					g_lensActive.store(false, std::memory_order_relaxed);
 					g_waitingLens.store(0.0f, std::memory_order_relaxed);
@@ -6009,16 +6008,20 @@ namespace CCC
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
 
-				// Re-read the INI every couple of seconds outside conversations, so edits (game
-				// settings in particular) are in place before the next conversation starts.
+				// INI edits picked up outside conversations, so they're in place before the next
+				// one starts (game settings in particular). 0.9.41: only once the file has changed
+				// (its write time, checked twice a second). The 0.9.37-0.9.40 logs had main-thread
+				// stalls of 16-24 ms in every minute, even with the HUD and the scans cheap: the full
+				// read every 2 s (and one at every conversation's start, on the camera thread).
 				{
 					static std::chrono::steady_clock::time_point nextReload{};
 					static bool appliedOnce = false;
 					if (!g_state.active && now >= nextReload) {
-						nextReload = now + 2s;
-						Settings::Get().Load();
-						ApplyGameSettings();
-						appliedOnce = true;
+						nextReload = now + 500ms;
+						if (Settings::Get().LoadIfChanged() || !appliedOnce) {
+							ApplyGameSettings();
+							appliedOnce = true;
+						}
 					} else if (!appliedOnce) {
 						ApplyGameSettings();
 						appliedOnce = true;

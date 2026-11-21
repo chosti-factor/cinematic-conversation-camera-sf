@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.40 (2026-11-21). Dates assume the Friday 27 November release; for
+Last updated: 0.9.41 (2026-11-21). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -84,7 +84,8 @@ Wednesday the 25th, about two days earlier.
       gone, filming ends at a loading screen, the conversation waits through a trade)
 - [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
       the cost meters; 0.9.39: the log written every 3 s, stalls of 15-27 ms still there;
-      0.9.40: the HUD's parts timed)
+      0.9.40: the HUD's parts timed; 0.9.41: the INI read only after a change and the HUD's
+      idle work skipped, both written up in 0.9.38 but never in the build)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 
@@ -106,13 +107,13 @@ Wednesday the 25th, about two days earlier.
       scenes stay filmed (the Constellation members' conversation at the Lodge "amazing to
       see"); only a scene or quest shown to conflict is left to the game, never quest scenes
       as a group.
-- [ ] Nice before release, else after 1.0 (the user, 2026-11-21): first-person exits, a small
+- [x] Nice before release, else after 1.0 (the user, 2026-11-21): first-person exits, a small
       shift of the NPC to the right as the game takes over. 0.9.38's log: the game's heading
       differs from the view drawn (9.4, -3.4, -2.0 degrees across); 0.9.39 turns the view to
       your current facing. 0.9.39 test: still there (two Sarah exits, one shifted); your body
       hadn't turned, but your first-person view sat 0-5 degrees off your body's heading, and
       the game takes over along your body (matched to 0.05 degrees on all five exits). 0.9.40
-      cuts to your body's heading. To test.
+      cuts to your body's heading. Tested 2026-11-21: pristine.
 
 - [ ] Testing messages and the detailed log off by default
 - [ ] Full test round on the release candidate (starts, exits, every preset, seated,
