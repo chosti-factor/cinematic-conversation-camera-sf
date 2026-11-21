@@ -4,6 +4,24 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.39 - 2026-11-21
+
+### Fixed
+- First-person exits: the NPC no longer shifts sideways as the game takes over. The game turns
+  you during a conversation and takes over with that heading, while the cut went back to your
+  view from before it (0.9.38's log: 9.4, -3.4 and -2.0 degrees across). Your view is now
+  turned to where you face as the cut begins.
+
+### Added
+- `bAutoListenSprinting` (off by default; on the settings page): filming people talking also
+  starts on its own while you sprint past.
+
+### Changed (the optimization pass)
+- The log is written to disk every 3 s instead of on every line (warnings and errors still at
+  once). The 0.9.38 measurement still had main-thread stalls of 16-29 ms now and then with the
+  INI re-read gone; writing each line to disk, in a folder that may be synced, is the likely
+  cause.
+
 ## 0.9.38 - 2026-11-21
 
 ### Fixed

@@ -19,6 +19,7 @@
 
 #include <deque>
 #include <numbers>
+#include <spdlog/spdlog.h>
 #include <random>
 
 namespace CCC
@@ -1733,6 +1734,22 @@ namespace CCC
 						const int k = g_state.exitCutFrames;
 						if (k == 0) {
 							g_state.exitCutAt = now;
+							// 0.9.39: from first person, your view turned to where you face now. The game
+							// turns you during a conversation, and takes over with that heading; the view
+							// from before it showed the NPC shifting sideways at the hand-back (0.9.38's
+							// log: 9.4, -3.4 and -2.0 degrees across, nothing up or down).
+							auto* you = RE::PlayerCharacter::GetSingleton();
+							if (g_state.startedFirstPerson && g_firstPersonView && you && g_state.startAngleKnown) {
+								const float turn = std::remainder(you->GetAngle().z - g_state.startAngle.z, 2.0f * std::numbers::pi_v<float>);
+								if (std::isfinite(turn) && std::abs(turn) > 0.002f) {
+									auto&        v = *g_firstPersonView;
+									const float  dx = v.lookAt.x - v.position.x, dy = v.lookAt.y - v.position.y;
+									const float  c = std::cos(turn), sn = std::sin(turn);
+									v.lookAt.x = v.position.x + dx * c + dy * sn;
+									v.lookAt.y = v.position.y - dx * sn + dy * c;
+									REX::INFO("Exit: your view turned {:+.1f} degrees, to where the game has you facing now", turn * 57.29578f);
+								}
+							}
 						}
 						bool drawn = false;
 						// 0.9.16: the 0.9.15 clips showed the order in which the camera move, the lens,
@@ -5494,7 +5511,7 @@ namespace CCC
 			// now only sprinting holds it back. Your speed is logged either way, to set the limit
 			// from real numbers.
 			constexpr float kSprintSpeed = 6.5f;  // m/s
-			const bool running = g_filmMain.speed > kSprintSpeed;
+			const bool running = !s.autoListenSprinting && g_filmMain.speed > kSprintSpeed;  // bAutoListenSprinting (0.9.39): sprinting too
 			const bool wouldStart = s.autoListen && conversation && !declined && freshLine && a_now >= g_filmMain.autoBlockedUntil;
 			const bool autoStart = wouldStart && !running;
 			// The listen key starts filming only with one of the two ways to start it on (0.9.31,
@@ -6195,6 +6212,14 @@ SFSE_PLUGIN_PRELOAD(const SFSE::PreLoadInterface* a_sfse)
 SFSE_PLUGIN_LOAD(const SFSE::LoadInterface* a_sfse)
 {
 	SFSE::Init(a_sfse);
+	// 0.9.39: the log was written to disk on every line (CommonLibSF flushes at Info), from
+	// whichever thread logged it, into Documents (often a synced folder): the cost meters showed
+	// the main thread stalling up to 20-29 ms now and then. Warnings and errors still go to
+	// disk at once; the rest every 3 s.
+	if (auto logger = spdlog::default_logger()) {
+		logger->flush_on(spdlog::level::warn);
+	}
+	spdlog::flush_every(std::chrono::seconds(3));
 
 	auto& settings = CCC::Settings::Get();
 	settings.Load();

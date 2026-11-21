@@ -138,6 +138,8 @@ namespace CCC::Menu
 			{ "Filming people talking", "People talking near you", "Overhear", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Filming people talking", "People talking near you", "Overhear", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
 				"As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it." },
+			{ "Filming people talking", "People talking near you", "Overhear", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
+				"Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks." },
 			{ "Filming people talking", "People talking near you", "Overhear", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
 				"A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it." },
 			{ "Filming people talking", "People talking near you", "Overhear", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f", nullptr },

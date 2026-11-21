@@ -24,6 +24,7 @@ namespace CCC
 		float    listenHold{ 0.5f };         // seconds the button is held
 		bool     listenPrompt{ true };       // "Listen in on nearby conversation" on screen (0.8.2)
 		bool     autoListen{ true };         // start on its own when you sit, or stand still near them (0.8.2)
+		bool     autoListenSprinting{ false };  // ... while you sprint past too (0.9.39; off: only walking and jogging)
 		float    filmEndSeconds{ 0.5f };       // filming people talking ends this long after the last word (0.8.4)
 		float    filmEndSecondsScene{ 4.0f };  // ... while they're still in one of the game's scenes
 		// Moving ends filming (0.9.18, from the INI): once you've stood still this long, moving

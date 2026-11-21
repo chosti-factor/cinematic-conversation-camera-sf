@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.36 (2026-11-21).
+Last updated: 0.9.39 (2026-11-21).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -156,7 +156,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
   addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
   conversation. Press N", or hold B on a controller) and/or starting on its own when a
-  conversation begins near you, even as you walk or jog past (not sprinting), and stops you
+  conversation begins near you, even as you walk or jog past (sprinting too with
+  `bAutoListenSprinting`), and stops you
   there: your movement is held until you let go of the controls, and moving again ends it;
   looking around is off while it films (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest

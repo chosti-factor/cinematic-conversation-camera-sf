@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.36 (2026-11-21).
+Last updated: 0.9.39 (2026-11-21).
 
 ## Working rules
 
@@ -136,6 +136,13 @@ Last updated: 0.9.36 (2026-11-21).
   conversation you came back in third person: filming had forced it, and the conversation
   that interrupted it (a quest scene) never put first person back; 0.9.38 does, and keeps
   filming's lens off that conversation's first frame.
+- 0.9.38 A/B (2026-11-21): lines overlapping and out of lip sync with Tuala after the Vanguard
+  recruits' group scene had been filmed (also during that filmed scene); a save without the
+  group scene nearby, filming off, was clean. Not yet separated: the group scene being
+  filmed, or the group scene running nearby at all (needs the save with it, filming off from
+  before loading). First-person exit shift confirmed as heading: fixed in 0.9.39. The cost
+  meters still showed 16-29 ms stalls with the INI re-read gone: 0.9.39 stops flushing the
+  log on every line. `bAutoListenSprinting` added (off).
 - Known for the debugging pass: the build warnings (an unused `s` in Director.cpp, signed and
   unsigned comparisons in Plugin.cpp, a `now` hiding another); the "no DialogueList_mc" warning on a conversation's first
   frame is a false alarm (the list isn't built yet); quieten it.
