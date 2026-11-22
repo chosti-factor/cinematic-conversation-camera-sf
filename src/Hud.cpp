@@ -2,8 +2,6 @@
 
 #include "Settings.h"
 
-#include <fstream>
-
 namespace CCC::Hud
 {
 	namespace
@@ -262,135 +260,6 @@ namespace CCC::Hud
 			return false;
 		}
 
-		// ---- Menu layout dump (diagnostic) -------------------------------------------------
-		// Once per session per menu: the display list, so the subtitle and option clips can be
-		// found by name.
-		void DumpTree(const Value& a_obj, const std::string& a_path, int a_depth, int& a_count)
-		{
-			if (a_count >= 400 || g_broken) {
-				return;
-			}
-			++a_count;
-			const int   children = static_cast<int>(Member(a_obj, "numChildren", 0.0));
-			std::string text = StringMember(a_obj, "text");
-			if (text.size() > 60) {
-				text.resize(60);
-			}
-			for (auto& c : text) {
-				if (c == '\n' || c == '\r') {
-					c = ' ';
-				}
-			}
-			Value visible;
-			const bool shown = !SafeGet(&a_obj, "visible", &visible) || !visible.IsBoolean() || visible.GetBoolean();
-			REX::INFO("HUD dump {}{}: x {:.0f} y {:.0f} w {:.0f} h {:.0f} alpha {:.2f}{}{}{}", std::string(static_cast<std::size_t>(a_depth) * 2, ' '), a_path,
-				Member(a_obj, "x"), Member(a_obj, "y"), Member(a_obj, "width"), Member(a_obj, "height"), Member(a_obj, "alpha", 1.0), shown ? "" : " hidden",
-				children > 0 ? std::format(" ({} children)", children) : std::string{}, text.empty() ? std::string{} : std::format(" text '{}'", text));
-			if (a_depth >= 6) {
-				return;
-			}
-			for (int i = 0; i < children && a_count < 400; ++i) {
-				Value index{ static_cast<std::int32_t>(i) };
-				Value child;
-				if (!SafeInvoke(const_cast<Value*>(&a_obj), "getChildAt", &child, &index, 1) || !child.IsDisplayObject()) {
-					continue;
-				}
-				std::string name = StringMember(child, "name");
-				DumpTree(child, a_path + "." + (name.empty() ? std::format("[{}]", i) : name), a_depth + 1, a_count);
-			}
-		}
-
-		void Dump(const char* a_menu)
-		{
-			const auto ref = OpenMovie(a_menu);
-			if (!ref) {
-				return;
-			}
-			Value top;
-			if (!RootObject(ref->root, top, a_menu)) {
-				return;
-			}
-			Value stage;
-			if (SafeGet(&top, "stage", &stage) && stage.IsObject()) {
-				REX::INFO("HUD dump {}: stage {:.0f} x {:.0f}", a_menu, Member(stage, "stageWidth"), Member(stage, "stageHeight"));
-			}
-			int count = 0;
-			DumpTree(top, a_menu, 0, count);
-			REX::INFO("HUD dump {}: {} objects{}", a_menu, count, count >= 400 ? " (stopped at 400)" : "");
-		}
-
-		// Big movies (the HUD has hundreds of elements): visit everything, but log only the top
-		// two levels and whatever sits under an element whose name suggests subtitles.
-		bool Interesting(const std::string& a_name)
-		{
-			std::string n = a_name;
-			std::ranges::transform(n, n.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-			for (const char* key : { "subtitle", "speaker", "caption", "dialog", "conversation", "talk" }) {
-				if (n.find(key) != std::string::npos) {
-					return true;
-				}
-			}
-			return false;
-		}
-
-		void SearchTree(const Value& a_obj, const std::string& a_path, int a_depth, int a_under, int& a_visited, int& a_logged)
-		{
-			if (a_visited >= 5000 || a_logged >= 300 || g_broken) {
-				return;
-			}
-			++a_visited;
-			const std::string name = a_path.substr(a_path.rfind('.') + 1);
-			const bool        match = Interesting(name);
-			const int         under = match ? 4 : a_under;
-			const int         children = static_cast<int>(Member(a_obj, "numChildren", 0.0));
-			if (a_depth <= 1 || match || a_under > 0) {
-				++a_logged;
-				std::string text = StringMember(a_obj, "text");
-				if (text.size() > 60) {
-					text.resize(60);
-				}
-				for (auto& c : text) {
-					if (c == '\n' || c == '\r') {
-						c = ' ';
-					}
-				}
-				Value visible;
-				const bool shown = !SafeGet(&a_obj, "visible", &visible) || !visible.IsBoolean() || visible.GetBoolean();
-				REX::INFO("HUD find {}{}: x {:.0f} y {:.0f} w {:.0f} h {:.0f} alpha {:.2f}{}{}{}", match ? "* " : "", a_path, Member(a_obj, "x"), Member(a_obj, "y"),
-					Member(a_obj, "width"), Member(a_obj, "height"), Member(a_obj, "alpha", 1.0), shown ? "" : " hidden",
-					children > 0 ? std::format(" ({} children)", children) : std::string{}, text.empty() ? std::string{} : std::format(" text '{}'", text));
-			}
-			if (a_depth >= 10) {
-				return;
-			}
-			for (int i = 0; i < children; ++i) {
-				Value index{ static_cast<std::int32_t>(i) };
-				Value child;
-				if (!SafeInvoke(const_cast<Value*>(&a_obj), "getChildAt", &child, &index, 1) || !child.IsDisplayObject()) {
-					continue;
-				}
-				const std::string childName = StringMember(child, "name");
-				SearchTree(child, a_path + "." + (childName.empty() ? std::format("[{}]", i) : childName), a_depth + 1, under > 0 ? under - 1 : 0, a_visited,
-					a_logged);
-			}
-		}
-
-		void Search(const char* a_menu)
-		{
-			const auto ref = OpenMovie(a_menu);
-			if (!ref) {
-				REX::INFO("HUD find {}: not open", a_menu);
-				return;
-			}
-			Value top;
-			if (!RootObject(ref->root, top, a_menu)) {
-				return;
-			}
-			int visited = 0, logged = 0;
-			SearchTree(top, a_menu, 0, 0, visited, logged);
-			REX::INFO("HUD find {}: {} elements visited, {} logged", a_menu, visited, logged);
-		}
-
 		// The dialogue menu's lists, by path from its top object.
 		bool Child(Value& a_parent, const char* a_name, Value& a_out)
 		{
@@ -410,12 +279,10 @@ namespace CCC::Hud
 			float setAlpha[2]{ -1.0f, -1.0f };  // what we wrote last frame (-1 = nothing), to see whether the game keeps it
 			int   logs{ 0 };                     // log lines this session (capped)
 			std::string highlighted[2];          // the option under the cursor, to know which was chosen
-			std::vector<std::string> offered[2];  // every option in the list, for the tally of your lines (0.9.12)
 			std::string how[2];                  // how it was told apart (0.8.17), and every option's state, for the log
 			std::string states[2];
 			int         choiceLogs{ 0 };
 			bool  overrideLogged{ false };
-			bool  listDumped{ false };
 		} g_options;
 
 		// ---- Persuasion outcome ---------------------------------------------------------------
@@ -438,44 +305,6 @@ namespace CCC::Hud
 		// Option tags whose answer gets the beat ([Persuade] itself starts the mini-game, whose
 		// outcome is caught from its panel). Case-insensitive; a tag starting with one of
 		// these counts ("Pay" matches "Pay 500 Credits").
-		// ---- The tally of your lines (0.9.12) -------------------------------------------------
-		// Every option the game offered you and which one you picked, appended to
-		// CinematicConversationCameraSF_YourLines.tsv beside the log, across sessions, while the
-		// detailed log is on. The raw material for reading your character's lines by their wording
-		// (after 1.0): which words mark a joke, a threat, a kind answer, and how often each comes up.
-		// Columns: local time, panel (dialogue or persuasion), chosen (1/0), how the pick was told
-		// apart, the option's text.
-		void TallyChoice(const std::vector<std::string>& a_offered, const std::string& a_chosen, bool a_persuasion, const std::string& a_how)
-		{
-			const auto logs = SFSE::log::log_directory();
-			if (!logs || a_offered.empty()) {
-				return;
-			}
-			const auto      path = *logs / L"CinematicConversationCameraSF_YourLines.tsv";
-			std::error_code ec;
-			const bool      fresh = !std::filesystem::exists(path, ec);
-			std::ofstream   out(path, std::ios::app | std::ios::binary);
-			if (!out) {
-				return;
-			}
-			if (fresh) {
-				out << "time\tpanel\tchosen\thow\ttext\r\n";
-			}
-			SYSTEMTIME now{};
-			::GetLocalTime(&now);
-			const auto stamp = std::format("{:04}-{:02}-{:02} {:02}:{:02}:{:02}", now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond);
-			const auto clean = [](std::string a_text) {
-				std::ranges::replace_if(a_text, [](char c) { return c == '\t' || c == '\r' || c == '\n'; }, ' ');
-				return a_text;
-			};
-			for (const auto& text : a_offered) {
-				if (text.empty()) {
-					continue;
-				}
-				out << stamp << '\t' << (a_persuasion ? "persuasion" : "dialogue") << '\t' << (text == a_chosen ? 1 : 0) << '\t' << a_how << '\t' << clean(text)
-					<< "\r\n";
-			}
-		}
 
 		bool IsBeatTag(const std::string& a_tag)
 		{
@@ -547,11 +376,6 @@ namespace CCC::Hud
 				if (Child(panel, "ScoreMeter_mc", meter)) {
 					meterFrame = Member(meter, "currentFrame", 0.0);
 					meterFrames = Member(meter, "totalFrames", 0.0);
-					static int meterDumps = 0;
-					if (meterDumps++ < 2) {
-						int count = 0;
-						DumpTree(meter, "DialogueMenu.Menu_mc.PersuasionData_mc.ScoreMeter_mc", 3, count);
-					}
 				}
 				REX::INFO("HUD: persuasion round {}: turns left '{}', meter frame {:.0f} of {:.0f}", success ? "won" : "lost", turns, meterFrame, meterFrames);
 			}
@@ -586,7 +410,7 @@ namespace CCC::Hud
 
 		bool g_firstLine = false;  // the NPC is speaking the conversation's first line (0.8.6)
 
-		void UpdateOptions(Value& a_top, float a_delta, bool a_dump, bool a_npcTalking)
+		void UpdateOptions(Value& a_top, float a_delta, bool a_npcTalking)
 		{
 			const auto& s = Settings::Get();
 			Value       menu;
@@ -685,7 +509,6 @@ namespace CCC::Hud
 						}
 						if (pick >= 0 && !texts[pick].empty()) {
 							g_options.highlighted[i] = texts[pick];
-							g_options.offered[i].assign(texts.begin(), texts.begin() + count);
 							g_options.how[i] = how;
 							std::string states;
 							for (int e = 0; e < count; ++e) {
@@ -698,10 +521,6 @@ namespace CCC::Hud
 				if (!now && g_options.wasVisible[i] && !g_options.highlighted[i].empty()) {
 					const std::string chosen = g_options.highlighted[i];
 					g_options.highlighted[i].clear();
-					if (s.debugLog) {
-						TallyChoice(g_options.offered[i], chosen, i == 1, g_options.how[i]);
-					}
-					g_options.offered[i].clear();
 					if (g_options.choiceLogs < 30) {
 						++g_options.choiceLogs;
 						REX::INFO("HUD: chose '{}'{} ({}; {})", chosen.substr(0, 60), i == 1 ? " in the persuasion" : "", g_options.how[i], g_options.states[i]);
@@ -734,11 +553,6 @@ namespace CCC::Hud
 					const Value shown{ static_cast<double>(g_options.alpha[i]) };
 					SafeSet(&list, "alpha", &shown);
 					g_options.setAlpha[i] = g_options.alpha[i];
-					if (a_dump && i == 0 && !g_options.listDumped) {
-						g_options.listDumped = true;
-						int count = 0;
-						DumpTree(list, std::string{ "DialogueMenu.Menu_mc." } + names[i], 2, count);
-					}
 				}
 				g_options.wasVisible[i] = now;
 				if (!now) {
@@ -1636,94 +1450,23 @@ namespace CCC::Hud
 		g_presetLabel.text = a_text;
 	}
 
-	namespace
-	{
-		// The parts of Update, timed (0.9.40): the 0.9.39 log had the HUD at 0.15-0.3 ms a
-		// frame even with nothing on screen and the testing messages off.
-		struct Part
-		{
-			const char*                name;
-			std::atomic<std::uint64_t> ns{ 0 };
-			std::atomic<std::uint64_t> maxNs{ 0 };
-		};
-		Part          g_parts[]{ { "ready check" }, { "HUD hiding" }, { "prompt" }, { "testing messages" }, { "conversation bars" },
-					 { "filming bars" }, { "subtitles" }, { "dialogue options" } };
-		std::atomic<std::uint64_t> g_partFrames{ 0 };  // (logged from the camera thread too)
-
-		struct PartScope
-		{
-			Part&                                 part;
-			std::chrono::steady_clock::time_point start{ std::chrono::steady_clock::now() };
-			~PartScope()
-			{
-				const auto took = static_cast<std::uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start).count());
-				part.ns.fetch_add(took, std::memory_order_relaxed);
-				if (took > part.maxNs.load(std::memory_order_relaxed)) {
-					part.maxNs.store(took, std::memory_order_relaxed);  // (one writer: the main thread)
-				}
-			}
-		};
-	}
-
-	std::string CostReport()
-	{
-		std::string text;
-		const auto  frames = g_partFrames.exchange(0, std::memory_order_relaxed);
-		for (auto& p : g_parts) {
-			const auto ns = p.ns.exchange(0, std::memory_order_relaxed);
-			const auto maxNs = p.maxNs.exchange(0, std::memory_order_relaxed);
-			if (frames == 0 || ns == 0) {
-				continue;
-			}
-			text += std::format("{}{} {:.1f} us (worst {:.0f})", text.empty() ? "" : ", ", p.name, static_cast<double>(ns) / static_cast<double>(frames) / 1000.0,
-				static_cast<double>(maxNs) / 1000.0);
-		}
-		return text;
-	}
-
 	void Update(bool a_filming, bool a_npcTalking, float a_delta)
 	{
 		const auto& s = Settings::Get();
-		g_partFrames.fetch_add(1, std::memory_order_relaxed);
-		bool ready;
-		{
-			PartScope t{ g_parts[0] };
-			ready = !g_broken && CheckReady();
-		}
+		const bool  ready = !g_broken && CheckReady();
 		if (ready) {
-			{
-				PartScope t{ g_parts[1] };
-				UpdateRollover(a_delta);
-			}
+			UpdateRollover(a_delta);
 			if (!g_prompt.text.empty() || g_prompt.created) {
-				PartScope t{ g_parts[2] };
 				UpdatePrompt(a_delta);
 			}
 		}
-		if (g_broken || (!s.letterbox && !s.dumpMenus && s.optionsFade <= 0.0f && s.choiceCloseUps == 0 && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !ready) {
+		if (g_broken || (!s.letterbox && s.optionsFade <= 0.0f && s.choiceCloseUps == 0 && !s.hideOptionsWhileSpeaking && !s.persuasionBeat && !s.showMessages && !s.playerFace) || !ready) {
 			g_msg.available = false;
 			return;
 		}
-		static float dialogueOpenFor = 0.0f;
-		static bool  dumpedDialogue = false, dumpedHud = false;
-		auto*        ui = RE::UI::GetSingleton();
-		const bool   dialogueOpen = ui && ui->IsMenuOpen(RE::BSFixedString{ "DialogueMenu" });
-		dialogueOpenFor = dialogueOpen ? dialogueOpenFor + a_delta : 0.0f;
-		if (s.dumpMenus && dialogueOpenFor > 1.5f) {
-			if (!dumpedDialogue) {
-				dumpedDialogue = true;
-				Dump("DialogueMenu");
-			}
-			if (!dumpedHud) {
-				dumpedHud = true;
-				// 0.6.3's full dump of the HUD stopped at 400 elements before the subtitles:
-				// search it (and the HUD messages menu) for them instead.
-				Search("HUDMenu");
-				Search("HUDMessagesMenu");
-			}
-		}
+		auto*      ui = RE::UI::GetSingleton();
+		const bool dialogueOpen = ui && ui->IsMenuOpen(RE::BSFixedString{ "DialogueMenu" });
 		if (s.showMessages && !g_broken) {
-			PartScope t{ g_parts[3] };
 			UpdateMessage(a_filming && dialogueOpen, a_delta);
 			UpdatePresetLabel(a_filming && dialogueOpen && !g_presetLabel.text.empty());
 		} else {
@@ -1731,29 +1474,23 @@ namespace CCC::Hud
 			UpdatePresetLabel(false);
 		}
 		if (s.letterbox && !g_broken) {
-			{
-				PartScope t{ g_parts[4] };
-				UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
-			}
+			UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
 			// Filming people talking near you (0.8.10): the same bars, on the HUD messages menu
 			// (under its subtitles), as no dialogue menu is open.
 			if (!g_broken) {
-				PartScope t{ g_parts[5] };
 				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only
 				// followed the conversation's, so it stayed put while filming others).
-				PartScope t{ g_parts[6] };
 				UpdateSubtitles(s.subtitlesInBars ? (std::max)(g_bars.ease, g_filmBars.ease) : 0.0f);
 			}
 		}
-		if (dialogueOpen && !g_broken && (s.optionsFade > 0.0f || s.choiceCloseUps != 0 || s.hideOptionsWhileSpeaking || s.dumpMenus || s.persuasionBeat || s.playerFace)) {
-			PartScope t{ g_parts[7] };
+		if (dialogueOpen && !g_broken && (s.optionsFade > 0.0f || s.choiceCloseUps != 0 || s.hideOptionsWhileSpeaking || s.persuasionBeat || s.playerFace)) {
 			if (const auto ref = OpenMovie("DialogueMenu")) {
 				Value top;
 				if (RootObject(ref->root, top, "DialogueMenu")) {
-					UpdateOptions(top, a_delta, s.dumpMenus, a_filming && a_npcTalking);
+					UpdateOptions(top, a_delta, a_filming && a_npcTalking);
 				}
 			}
 		} else if (!dialogueOpen) {

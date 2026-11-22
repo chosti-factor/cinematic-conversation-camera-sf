@@ -318,9 +318,8 @@ Last updated: 0.9.43 (2026-11-21).
   check can't see (plants by nearby objects' bounding boxes along the camera-to-face line,
   like the bystander check; planned by the user, 2026-11-17); more of the text of your lines for your face (high-confidence cues from a
   tally of real options, English only, own setting; moved from "maybe" to planned by the
-  user, 2026-11-17; the tally started in 0.9.12: Hud.cpp appends every offered option and
-  the pick to `CinematicConversationCameraSF_YourLines.tsv` in the log folder, columns time,
-  panel, chosen, how the pick was told apart, text; only while bDebugLog is on). Mulling, not decided: traits setting your face's temperament (trait
+  user, 2026-11-17; the tally ran 0.9.12-0.9.49, 2,913 options and 676 picks: the data is in
+  docs/research/your-lines-tally.tsv and summed up in docs/EMOTIONS.md). Mulling, not decided: traits setting your face's temperament (trait
   unlocking mods, precedence among several traits, a setting); the game's sitting camera
   (swings round to your face sitting down and standing up, vanilla too, not stopped by
   `bDisableFurnitureCamera`; whether to steady it, outside conversations); walls the sphere cast passes through (Tuala at the MAST) by a navmesh

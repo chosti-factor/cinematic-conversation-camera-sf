@@ -4,6 +4,24 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.50 - 2026-11-22
+
+### Removed (before the INI review, the user's call)
+- The measuring code of the optimization pass: the cost lines (per conversation and per
+  minute), the HUD's and the main-thread task's parts.
+- Finished diagnostics: the exit frame comparisons and logs (first and third person), the
+  start frame logs and the dialogue camera's return log, the menu layout dump and search
+  (`bDumpMenus`, gone from the INI; also the 4 ms hitch at the first conversation), your
+  line's record, the raw scene action dumps, the per-frame task's tick count.
+- The tally of your lines (`CinematicConversationCameraSF_YourLines.tsv`): its data, 2,913
+  options and 676 picks, is kept in docs/research/your-lines-tally.tsv and summed up in
+  docs/EMOTIONS.md, for the post-1.0 feature reading your lines' wording.
+- Everything removed, what it measured and what it found: docs/MEMORY.md.
+
+### Changed
+- Kept with the detailed log only (for bug reports): each line's emotion, the first-person
+  exit's skipped entry step. Logged always: the INI read again after a change on disk.
+
 ## 0.9.49 - 2026-11-22
 
 ### Changed (back)

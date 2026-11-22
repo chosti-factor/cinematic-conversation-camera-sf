@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.49 (2026-11-22).
+Last updated: 0.9.50 (2026-11-22).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -320,6 +320,71 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   `lastNpcFeet`, `lastPlayerFeet`. `g_fovLogged` (reset each conversation, never read).
 - `stillAt` and `stillSince` in the filming state: the standing-still timer behind
   `fAutoListenAfter` (gone in 0.8.6).
+
+## Measuring code and diagnostics removed in 0.9.50
+
+Taken out once the optimization pass was done (the user, 2026-11-22: before the INI review).
+What each measured or logged, and what it found:
+
+- **The cost meters** (0.9.37-0.9.49, Plugin.cpp `CostMeter`/`CostScope`/`LogCosts`): time in
+  the mod's own code, per call, around the main-thread task, the HUD, the nearby-people scan,
+  the conversation camera and the filming camera; logged at the end of each conversation and
+  once a minute outside them (average and worst per call, total). Found, in order: a full
+  INI read every 2 s and at every conversation's start (up to 20 ms each; read only after a
+  change since 0.9.41), the HUD's idle work (letterbox, subtitle and prompt lookups every
+  frame once used, 50-150 us; skipped since 0.9.41), the log flushed on every line (every
+  3 s since 0.9.39). Final figures, detailed log off (0.9.44-0.9.49): the main-thread task
+  16-35 us a frame outside conversations, 50-310 in them (mostly the HUD: subtitle 45-120,
+  bars 10-45, dialogue options 15-50), the scan 60-90 us at 10 a second, the conversation
+  camera about 20-24 us, the filming camera 8; no spike over 5 ms but the INI read after an
+  edit (15-20 ms, once).
+- **The HUD's parts** (0.9.40, Hud.cpp `Part`/`PartScope`/`CostReport`): Update timed by part
+  (ready check, HUD hiding, prompt, testing messages, conversation bars, filming bars,
+  subtitles, dialogue options). Found the idle work above.
+- **The main-thread task's parts** (0.9.43): the cost log, the camera mode log and ship check,
+  waiting for the camera thread's lock, bystanders, filming, the preset key, the INI check,
+  lines and face, focus, the conversation's upkeep, your visibility. Found the last spikes
+  were the INI read after a settings-page edit; everything else under 3 ms worst.
+- **Exit frame comparisons** (0.9.38, third person 0.9.45; `CompareExitFrame`): the game's
+  view on its first frames after the hand-back (three in first person, a sample over the
+  second in third) against the view drawn, in degrees across and up and metres, with your
+  body's turn and movement. Found the first-person exit shift (your view 0-9 degrees off your
+  body's heading, fixed 0.9.40), the third-person swing (your view orbited 20-24 degrees off,
+  0.6 m, fixed 0.9.46) and the third-person camera's aim (-1.14 degrees, still learned at each
+  exit), and that your body never turns or moves at an exit.
+- **First-person exit frame logs** (0.9.2-0.9.5, `LogExitFrame`/`LogExitFrames`, and
+  `BeforeExitUpdate`'s angle and root lines): the reported camera, aim and lens on the exit's
+  first frames against your view. Found the -68.13 degree "just entered" pitch (the entry
+  step now skipped; that line stays with the detailed log).
+- **Start frame logs** (0.9.5-0.9.6): "Start frame N (mode)" (the reported root against your
+  view on each of the first six frames of the first twelve conversations), "Frame N (mode,
+  rebuild stage)" with the camera root's description (`Camera::DescribeRoot`), the predicted
+  dialogue camera ("placing against the predicted dialogue camera", "now reports its dialogue
+  camera: m from the NPC's head...", "its aim is ... degrees"), "Dialogue root facts" and
+  "Dialogue return +N ms" (the body rebuild's return to the dialogue camera,
+  `LogRootAgainstPrediction`). Found the prediction (2.02 m from the NPC's head, 0.07 m above,
+  aim 2.75 degrees below), still learned at each start, silently now.
+- **The menu layout dump and search** (`bDumpMenus`, 0.6.3; `Dump`, `Search`, `DumpTree`,
+  `SearchTree`, the options list and persuasion meter dumps): the dialogue menu's and the
+  HUD's display lists once per session, searched for subtitle and option clips. Found every
+  element the HUD code uses (Menu_mc.BottomCenterGroup_mc.SubtitleText_mc, DialogueList_mc,
+  PersuasionData_mc.ScoreMeter_mc, RolloverWidget_mc); cost a 4 ms hitch at the first
+  conversation.
+- **Your line's record** (0.7.1-0.7.3): your voice data's dialogue record and subtitle at each
+  of your lines, looking for expression tags on your lines. Found none: the game never tags
+  your lines (your face is the mod's).
+- **The tally of your lines** (0.9.12, Hud.cpp `TallyChoice`): every option offered and the
+  pick, appended to `CinematicConversationCameraSF_YourLines.tsv` with the detailed log on.
+  The data is kept: docs/research/your-lines-tally.tsv, summed up in docs/EMOTIONS.md.
+- **Scene action dumps** (0.9.20, `DumpObject`): the raw first 0x80 bytes of the first Camera
+  and Timeline action of each scene. The action counts per scene stay in the scene check's
+  log line (for the post-1.0 per-scene camera rule).
+- **The tick counter** ("Per-frame task: N ticks on the main thread, M on other threads"):
+  where SFSE runs the per-frame task (0.3.9's crash on a job thread). The main-thread check
+  stays.
+- Kept with the detailed log, for bug reports: shot choices and reasons, speaker changes,
+  line emotions, scene checks, filming decisions, obstacle checks, camera mode changes, the
+  nearby-people summary every 10 s. The INI read after a change is logged always.
 
 ## Old setting names
 

@@ -239,7 +239,8 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
        says (`bEnabled=0` didn't turn the whole mod off until 0.9.11; `iMinLines` was
        ignored until 0.9.8), and edge cases (loading or a menu mid-conversation, ships,
        scenes, combat, quick conversations in a row).
-    3. Optimization: the cost of each frame and each scan measured, then made cheaper.
+    3. Optimization: the cost of each frame and each scan measured, then made cheaper
+       (done 2026-11-22; the measuring code and the finished diagnostics taken out in 0.9.50).
     4. The INI and its defaults reviewed last, once the settings are final.
   - Last, just before 1.0: the log's testing diagnostics and the testing messages off by
     default (they stay on until then, for testing), then a full test round on the release
@@ -361,7 +362,7 @@ apply without restarting the game.
 | `[Interface]` | Letterbox, subtitles in the bars, dialogue options while the NPC speaks |
 | `[Overhear]` | Filming people talking near you: on/off, the listen key, how far |
 | `[Face]` | Your character's face: on/off, background expressions, questions, close-ups of you |
-| `[Debug]` | Testing messages, the preset key, hook and camera-target switches for troubleshooting |
+| `[Debug]` | Testing messages and the preset key |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
 Each setting is explained in the INI itself.
@@ -383,10 +384,6 @@ The log is at
 `Documents\My Games\Starfield\SFSE\Logs\CinematicConversationCameraSF.log`. It records
 every shot the director chooses and why. Please include it with any report, with the detailed
 log on (`bDebugLog=1`, or **Detailed log** on the settings page's Screen page).
-
-While the detailed log is on (`bDebugLog=1`), the dialogue options you're offered and the one
-you pick are also added to `CinematicConversationCameraSF_YourLines.tsv` in the same folder,
-kept across sessions (delete it any time). It helps build the wording cues planned after 1.0.
 
 ## Building
 

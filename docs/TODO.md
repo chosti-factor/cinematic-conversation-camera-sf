@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.49 (2026-11-22). Dates assume the Friday 27 November release; for
+Last updated: 0.9.50 (2026-11-22). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -146,7 +146,7 @@ Wednesday the 25th, about two days earlier.
       cuts to your body's heading. Tested 2026-11-21: pristine.
 
 - [ ] Testing messages and the detailed log off by default
-- [ ] Take out the measuring code once the optimization pass is done (the user, 2026-11-21):
+- [x] Take out the measuring code once the optimization pass is done (the user, 2026-11-21; done in 0.9.50, before the INI review, with the finished diagnostics):
       the cost meters and their log lines (0.9.37), the HUD's parts (0.9.40), the main-thread
       task's parts (0.9.43); and the diagnostics that only fed finished investigations (the
       exit frame comparison, 0.9.38). Into docs/MEMORY.md with what they measured.

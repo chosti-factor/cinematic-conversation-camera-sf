@@ -48,8 +48,4 @@ namespace CCC::Hud
 	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
 	// a conversation is filmed, e.g. "PRESET: FRONTIER". Main thread.
 	void SetPresetLabel(const std::string& a_text);
-
-	// What each part of Update cost since the last call (0.9.40, the optimization pass):
-	// average and worst per frame, for the log's cost lines. "" before any. Main thread.
-	[[nodiscard]] std::string CostReport();
 }

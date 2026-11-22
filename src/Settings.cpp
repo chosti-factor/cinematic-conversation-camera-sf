@@ -126,7 +126,6 @@ namespace CCC
 			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
 			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
 			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Director", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
-			a_s.dumpMenus = ReadInt(a_path, L"Debug", L"bDumpMenus", a_s.dumpMenus ? 1 : 0) != 0;
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
 			a_s.letterboxFade = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxFade", a_s.letterboxFade), 0.0f, 3.0f);

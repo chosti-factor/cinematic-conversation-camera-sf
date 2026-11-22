@@ -4,7 +4,7 @@ Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
 character's face. Kept up to date with every build that changes them.
 
-Last updated: 0.9.23 (2026-11-18: the close-up limit; the tagged option's close-up as you pick;
+Last updated: 0.9.50 (2026-11-22: the tally of your lines kept as research data; 0.9.23, 2026-11-18: the close-up limit; the tagged option's close-up as you pick;
 none extreme of you in Constellation).
 
 ## The rules now (0.9.0)
@@ -186,7 +186,33 @@ Notes:
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
 your expression (`[Face]` in the INI). Kept up to date with every build.
 
-Last updated: 0.8.14 (2026-11-15).
+Last updated: 0.9.50 (2026-11-22).
+
+### Your lines' wording: the tally (research for after 1.0)
+
+For the feature planned after 1.0 where your face answers the wording of your own lines
+(high-confidence cues in the English text of the option you pick: a joke, a threat, a kind
+answer...), 0.9.12-0.9.49 kept a tally of every option the game offered you and which you
+picked. The raw data is kept in [research/your-lines-tally.tsv](research/your-lines-tally.tsv)
+(tab-separated: local time, panel, chosen 1/0, how the pick was told apart, the option's
+text); the code that wrote it was taken out in 0.9.50 (docs/MEMORY.md).
+
+- **What's in it:** 2,913 options offered, 676 picks, 17-21 November 2026 (the test saves).
+  379 different option texts; 3 rows from the persuasion panel.
+- **How the pick was told apart:** the only option highlighted (1,738 rows), the only one
+  not dimmed (1,030), the list's selected index (144), the only option (1).
+- **Tags in the text** (different options): [Normal] 9, [Skip] 6, [Starborn] 4, [Reject] 2,
+  [Pay] 2, and one each of [Chef], [Remove], [Attack], [Persuade], [Assign], [Taskmaster],
+  [Story], [Commerce], [Flirt]: the skill, background and trait tags the mod reads already.
+- **Punctuation:** 169 of the 379 end in "?" (questions: the face's questioning look already
+  uses this), 1 in "!", 7 with an ellipsis.
+- **Plain-wording cues found** (different options, tags left out): thanks 10, goodbye 8
+  ("That's all for now", "See you"), refusal 6, agreement 5, apology 2, greeting 2, humor 1,
+  threat 1. Few clear emotional cues in the wording itself: most options are questions and
+  neutral replies. A cue list would need more saves (combat-heavy quests, Crimson Fleet,
+  romance) before it's worth a setting.
+- **Most common words** (common words left out): any, Constellation, Barrett, some, tell,
+  I'd, need, talk, what's, think, see: names and quest topics, not tone.
 
 ### Listening: your face's answer to the NPC's line
 

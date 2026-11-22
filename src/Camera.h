@@ -70,10 +70,6 @@ namespace CCC::Camera
 	// Where the game's camera (the camera root) is and what it is looking at right now.
 	std::optional<Pose> PoseOf(RE::NiAVObject* a_root);
 
-	// Diagnostics: the camera root's stored and derived positions, its parent, and where the
-	// render camera was last drawn from.
-	std::string DescribeRoot(RE::NiAVObject* a_root);
-
 	// Puts the rendered view back on the game's camera. Safe to call any time.
 	void RestoreRender();
 
