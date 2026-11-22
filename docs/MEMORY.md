@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.43 (2026-11-21).
+Last updated: 0.9.49 (2026-11-22).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -277,6 +277,36 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   and the 0.9.40 run broke with filming before any. Switches removed in 0.9.43.
 
 ## Exits, later
+
+- **Stand-in bars through the exit** (0.9.47-0.9.48, taken out in 0.9.49; post-1.0 Mulling).
+  The letterbox is two shapes added to the dialogue menu's movie; the game closes that menu
+  as the last line ends ("Speaker gone" comes a few frames later), so the bars go 0.4 s before
+  the first-person cut (`fExitCutSeconds`) and about 1.5 s before the third-person one (on the
+  hand-back frame since 0.9.48). The stand-in: the HUD messages menu's bars (filming's,
+  `g_filmBars`) shown from the menu closing to the cut, at the height the dialogue bars had
+  (`g_lastDialogueEase`), no slide, dropped on the cut.
+  - 0.9.47: driven from the main task (`Hud::SetExitBars`; wanted while this conversation's
+    dialogue menu had been open and was now closed, no trade/container/crew/ship-builder menu
+    or settings page over it, no cut yet). The clips, measured frame by frame (the top 20 px'
+    brightness: 0 = bar): one frame without bars at every exit as the menu closed (the task's
+    next tick put them up after that frame was drawn), and in one third-person exit of two
+    the bars went a frame before the cut.
+  - 0.9.48: `BSTEventSink<MenuOpenCloseEvent>` registered on `RE::UI` (`RegisterSink`), the
+    bars put up inside the event when it came on the main task's thread; nothing asking the
+    UI inside it (`IsMenuOpen`/`GetMenuMovie` could deadlock if the UI holds its menu list
+    while it sends the event): the HUD messages menu's movie and "a menu over it" kept from the
+    main task's last tick (the movie handle on a never-freed holder, so quitting
+    mid-conversation can't release it after the UI has gone). The drop a tick after the cut
+    (the camera runs on worker threads: the tick that saw the cut sometimes came before it was
+    drawn). The 0.9.48 clips: still the frame without bars as the menu closed (all four exits;
+    the event's thread never logged, so unknown whether it came on another thread or after the
+    frame's UI was drawn); third-person cut and bars on one frame; first person, the bars a
+    frame after the cut (the tick's delay there; it was only needed at the hand-back).
+  - Ways still open: the event's thread and timing first (a log line per exit was written for
+    0.9.49 and dropped with the rest); bars put in place hidden before the menu closes and
+    only switched on (needs a way to know the end is coming); bars kept on the HUD messages
+    menu all through a conversation (it draws over the dialogue menu: they'd cover its EXIT
+    button hint in the bottom bar).
 
 - **`fExitHoldSeconds`** (`[Camera]`, 0.5, 0-5; removed 0.9.35): after the last line, hold the
   final shot at least this long before your view comes back. Since 0.7.6 the last shot is held

@@ -283,17 +283,17 @@ Older modes:
 
 ### Third person
 
-- **The bars through the exit (0.9.47):** the letterbox lives in the dialogue menu, which the
-  game closes as the last line ends, 0.4 s before the style-2 cut: the last shot jumped to
-  full frame first (0.9.46 clip, 25 frames). The HUD messages menu's bars (filming's) stand
-  in from the menu closing to the cut, at the height they had (no slide), and go with it;
-  without a cut (style 3 from third person, seated), until the game takes over.
+- **The bars at the exit:** the letterbox lives in the dialogue menu, which the game closes as
+  the last line ends: the bars go then, 0.4 s before the first-person cut and about 1.5 s
+  before the third-person one. Stand-in bars (0.9.47-0.9.48, on the HUD messages menu until
+  the cut) left a one-frame flicker as the menu closed; taken out in 0.9.49 (the user: clean
+  exits over bars to the cut; post-1.0 Mulling; docs/MEMORY.md).
 - **Softer during the hold (0.9.46 clip):** your view from the cut to the hand-back is softer
   and a little darker than the game's own, and sharpens on the hand-back frame (sharpness
   about 1,530 then 2,550): the game's conversation image effect stays on until it takes over;
-  the mod's blur off only zeroes its depth of field. Style 3 (on trial) cuts on that frame.
+  the mod's blur off only zeroes its depth of field. Since 0.9.48 the third-person cut is on that frame.
 - **When (0.9.48, the standard after the 0.9.47 trial as `iExitStyle=3`):** from third
-  person there's no cut during the hold; the last shot (and its bars) stays until the game
+  person there's no cut during the hold; the last shot stays until the game
   takes over, and your view is drawn on that switch frame. The early cut left the camera still
   for about a second before the hand-back, where the 0.9.46 clip showed your character's pose
   change over three frames and the view sharpen (the game's conversation image effect going);

@@ -4,6 +4,19 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.49 - 2026-11-22
+
+### Changed (back)
+- The stand-in bars through the exit are gone (the user: clean exits over bars kept to the
+  cut; post-1.0 Mulling). They were this mod's addition in 0.9.47 and left a flicker: one frame
+  without bars as the game closed its dialogue menu, then the stand-ins, then the cut (every
+  exit in the 0.9.47-0.9.48 clips; before them the bars simply went with the menu). The bars
+  go with the dialogue menu again, as up to 0.9.46: 0.4 s before the first-person cut, about
+  1.5 s before the third-person one. With them went the menu-event listener and the 0.9.48
+  delay of a tick (which also left the bars a frame over the first-person cut). The
+  third-person cut on the hand-back frame (0.9.48) stays, as does the turn of your view when
+  no cut came first. What was tried, and what's left to try: docs/MEMORY.md.
+
 ## 0.9.48 - 2026-11-22
 
 ### Changed

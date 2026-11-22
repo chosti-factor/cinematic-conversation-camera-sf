@@ -777,12 +777,6 @@ namespace CCC::Hud
 			bool        parked{ false };   // off screen, hidden and not wanted: nothing to do (0.9.41)
 		} g_bars, g_filmBars;  // the dialogue menu's; the HUD messages menu's, filming people talking (0.8.10)
 		bool g_filmingOthers = false;
-		bool  g_exitBars = false;  // a conversation's exit: the HUD messages menu's bars stand in (0.9.47)
-		bool  g_exitShown = false;  // ... and they're up
-		float g_lastDialogueEase = 0.0f;  // the dialogue menu's bars while it was last open
-		// The HUD messages menu, kept in hand during a conversation (0.9.48). Never freed: a
-		// reference released at shutdown (quitting mid-conversation) could touch a UI already gone.
-		std::optional<MovieRef>& g_hudMessagesMovie = *new std::optional<MovieRef>();
 
 		bool FindChild(Value& a_parent, const char* a_name, Value& a_out)
 		{
@@ -813,7 +807,7 @@ namespace CCC::Hud
 			return SafeInvoke(&a_top, "addChildAt", nullptr, args, 2);
 		}
 
-		void UpdateLetterbox(LetterboxState& a_bars, const char* a_menu, bool a_want, float a_delta, const MovieRef* a_ref = nullptr)
+		void UpdateLetterbox(LetterboxState& a_bars, const char* a_menu, bool a_want, float a_delta)
 		{
 			// 0.9.41: once the bars are off screen and hidden, no menu lookups until they're
 			// wanted again. The 0.9.40 log: the filming bars (on the HUD messages menu, always
@@ -822,9 +816,7 @@ namespace CCC::Hud
 				return;
 			}
 			const auto& s = Settings::Get();
-			// (a_ref: a movie already in hand, so no lookup in the game's menu list: 0.9.48, from
-			// inside the game's own menu event.)
-			const auto  ref = a_ref ? std::optional<MovieRef>{ *a_ref } : OpenMovie(a_menu);
+			const auto  ref = OpenMovie(a_menu);
 			if (!ref) {
 				a_bars.ease = 0.0f;
 				return;
@@ -1639,26 +1631,6 @@ namespace CCC::Hud
 		g_filmingOthers = a_filming;
 	}
 
-	void SetExitBars(bool a_keep)
-	{
-		g_exitBars = a_keep;
-	}
-
-	void OnDialogueMenuClosed()
-	{
-		// 0.9.48: the 0.9.47 clips had one frame without bars at every exit (the stand-in bars
-		// came on the main task's next tick, after the frame had been drawn).
-		// No lookups in the game's menu list here (we're inside its menu event): the HUD
-		// messages menu's movie kept from the main task's last tick.
-		if (g_broken || !Settings::Get().letterbox || g_lastDialogueEase <= 0.0f || !g_hudMessagesMovie || !CheckReady()) {
-			return;
-		}
-		g_exitBars = true;
-		g_exitShown = true;
-		g_filmBars.ease = (std::max)(g_filmBars.ease, g_lastDialogueEase);
-		UpdateLetterbox(g_filmBars, "HUDMessagesMenu", true, 0.0f, &*g_hudMessagesMovie);
-	}
-
 	void SetPresetLabel(const std::string& a_text)
 	{
 		g_presetLabel.text = a_text;
@@ -1761,31 +1733,13 @@ namespace CCC::Hud
 		if (s.letterbox && !g_broken) {
 			{
 				PartScope t{ g_parts[4] };
-				if (dialogueOpen && g_exitShown) {
-					g_bars.ease = (std::max)(g_bars.ease, g_filmBars.ease);  // (0.9.48: back from the stand-in bars, no slide)
-				}
 				UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
 			}
 			// Filming people talking near you (0.8.10): the same bars, on the HUD messages menu
 			// (under its subtitles), as no dialogue menu is open.
 			if (!g_broken) {
 				PartScope t{ g_parts[5] };
-				// 0.9.47: also through a conversation's exit, from the game closing its dialogue
-				// menu (the bars went with it, 0.4 s before the cut back to your view) to that cut,
-				// at the height they had: in and out at once, with no slide.
-				if (dialogueOpen) {
-					g_lastDialogueEase = g_bars.ease;
-					g_hudMessagesMovie = OpenMovie("HUDMessagesMenu");  // (for the menu event: no lookups there)
-				} else if (!g_exitBars) {
-					g_hudMessagesMovie.reset();
-				}
-				if (g_exitBars && !dialogueOpen && !g_exitShown) {
-					g_filmBars.ease = (std::max)(g_filmBars.ease, g_lastDialogueEase);
-				} else if (!g_exitBars && g_exitShown && !g_filmingOthers) {
-					g_filmBars.ease = 0.0f;
-				}
-				g_exitShown = g_exitBars && !dialogueOpen;
-				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", (g_filmingOthers || g_exitBars) && !dialogueOpen, a_delta);
+				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only

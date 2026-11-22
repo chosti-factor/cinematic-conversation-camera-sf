@@ -68,7 +68,7 @@ What CCC doesn't do.
   there, Constellation handheld), or `iCameraSway` sets one.
 - **How a conversation ends** (`iExitStyle`): a cut back to your own view (the default),
   just before the game hands the camera back from first person and on the frame it does from
-  third person, with the letterbox kept until the cut; or a closing shot of the NPC alone as
+  third person; or a closing shot of the NPC alone as
   the dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
 - **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
   you take part in (someone walks up and starts talking, several people taking turns) keep
@@ -285,6 +285,11 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- The letterbox kept through a conversation's exit until the cut back to your view (the user,
+  2026-11-22). The bars live in the game's dialogue menu, which closes as the last line ends,
+  so they go 0.4 s (first person) or about 1.5 s (third person) before the cut. Stand-in bars
+  were tried in 0.9.47-0.9.48 and left a one-frame flicker as the menu closed; clean exits
+  come first (docs/MEMORY.md).
 - A preset editor (the user, 2026-11-21): the per-preset settings (shot choices, close-up
   chances, cutting pace and the like) edited in one place, instead of spread over the settings
   page and the INI.

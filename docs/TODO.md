@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.48 (2026-11-22). Dates assume the Friday 27 November release; for
+Last updated: 0.9.49 (2026-11-22). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -48,7 +48,11 @@ Wednesday the 25th, about two days earlier.
       puts a trial `iExitStyle=3` (the cut on the hand-back frame, third person) to compare.
       0.9.47 test (the user): style 3 cleaner, a clean exit, the bars flickering (a frame
       without them as the menu closed, a frame early once); 0.9.48 makes the hand-back cut
-      standard for third person and fixes the bars to the frame. To confirm on a clip.
+      standard for third person and fixes the bars to the frame. 0.9.48 clips: third person
+      clean (bars and cut on one frame, the cut sharp); the frame without bars as the menu
+      closed still there, and first person a frame of bars over its cut. The user
+      (2026-11-22): clean exits over bars kept to the cut; 0.9.49 takes the stand-in bars out
+      (post-1.0 Mulling). To confirm on a clip.
 - [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
       `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
       user, 2026-11-17)
