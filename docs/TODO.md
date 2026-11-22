@@ -121,9 +121,10 @@ Wednesday the 25th, about two days earlier.
       in the clip, is fine: the user, they add life to a scene)
 - [x] Compare `bCutFocusBridge` 0 and 1: 0 kept, the switch gone (0.9.55)
 - [ ] Before 1.0: the odd frames at some cuts (a frame with bodies or hedges missing, the old
-      lens or focus for a frame). Test: the same conversation with DLSS frame generation off.
-      If it's frame generation, try telling it a cut happened (its reset flag), as a game
-      does at its own cuts
+      lens for a frame, the new focus a frame early). Not frame generation (it was off) and not
+      DLSS (0.9.55 test with it off: the same). 0.9.56: the cut timing trace (detailed log);
+      next lead, how the game's quest-scene cameras cut cleanly (the user). The trace comes
+      out before the RC
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

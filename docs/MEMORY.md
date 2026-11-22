@@ -245,11 +245,10 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   (`bCutFocusBridge`, 0.9.54): those frames came out blurrier, not sharper (a TwoShot's first
   frame at a tenth of its sharpness), so a larger sharp-zone value doesn't widen what's sharp
   the way it was read; all three 1.04-1.67x lens zooms of that run were on its cuts too.
-- **Frame generation (found 2026-11-22):** the user plays with DLSS frame generation (through
-  the RenoDX DLSS add-on). The one-frame odd frames at cuts, varying cut to cut (the focus a
-  frame early or late, the old lens on the new shot, and a frame with bodies and hedges missing
-  in the 0.9.54 clip), may be generated frames between the two shots; next: the same
-  conversation with frame generation off.
+- **Not frame generation, not DLSS (2026-11-22):** frame generation was suspected and wasn't
+  on (the user: DLSS Performance, RenoDX HDR and RenoDX's DLSS neural rendering). With DLSS and
+  neural rendering off (0.9.55 clip, 21 cuts) the same oddities: 4 lens zooms (1.22, 0.83, 1.56,
+  1.04 times), 6 early-focus frames, the worst cuts with both. Next: 0.9.56's cut timing trace.
 
 ## Reactions and filming
 

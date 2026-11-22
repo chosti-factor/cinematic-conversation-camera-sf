@@ -4,6 +4,24 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.56 - 2026-11-22
+
+### Diagnostic (detailed log only; to come out before the RC)
+- The cut timing trace: for 120 ms from each cut, "Cut timing +ms [thread] ..." lines for the
+  mod's camera updates, the game's lens updates (all three callers: what the game asked, what
+  was set, the render camera's lens before and after) and the focus writes. To find why a
+  cut's lens lands a frame late and its focus a frame early now and then.
+
+### Found (the user's DLSS-off test, 0.9.55)
+- Not DLSS: with the upscaler and RenoDX's neural rendering off, 21 cuts, 12 clean; 4 zooms
+  (the new shot's first frame through the old lens: 1.22, 0.83, 1.56 and 1.04 times), 6 with
+  the old shot's last frame drawn with the new focus (3 heavy), the worst cuts with both. Frame
+  generation wasn't on either (the user). The camera update runs on a different worker thread
+  each frame; the game seems to read the camera, its lens and the blur at three different
+  moments, and a cut's three writes can straddle them.
+- The user: the game's own quest-scene cameras cut between you and the NPC cleanly; how they
+  apply the lens and the blur is the next lead.
+
 ## 0.9.55 - 2026-11-22
 
 ### Changed (the user's pick after the 0.9.54 comparison)

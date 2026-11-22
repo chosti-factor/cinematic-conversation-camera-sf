@@ -646,6 +646,18 @@ namespace CCC::Camera
 		return frustum.right / std::tan(a_degrees * 0.5f * std::numbers::pi_v<float> / 180.0f);
 	}
 
+	float RenderLensDegrees()
+	{
+		if (!g_renderCam) {
+			return 0.0f;
+		}
+		const auto& frustum = static_cast<RE::NiCamera*>(g_renderCam)->viewFrustum;
+		if (!(frustum.right > 0.0f) || frustum.ortho) {
+			return 0.0f;
+		}
+		return 2.0f * std::atan(frustum.right) * 180.0f / std::numbers::pi_v<float>;
+	}
+
 	void SetRenderLens(float a_degrees, float a_scale)
 	{
 		if (!g_renderCam || !(a_degrees >= 10.0f && a_degrees <= 170.0f) || !(a_scale > 0.2f && a_scale < 5.0f)) {
