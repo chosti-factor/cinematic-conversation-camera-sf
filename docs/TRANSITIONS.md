@@ -283,6 +283,15 @@ Older modes:
 
 ### Third person
 
+- **The bars through the exit (0.9.47):** the letterbox lives in the dialogue menu, which the
+  game closes as the last line ends, 0.4 s before the style-2 cut: the last shot jumped to
+  full frame first (0.9.46 clip, 25 frames). The HUD messages menu's bars (filming's) stand
+  in from the menu closing to the cut, at the height they had (no slide), and go with it;
+  without a cut (style 3 from third person, seated), until the game takes over.
+- **Softer during the hold (0.9.46 clip):** your view from the cut to the hand-back is softer
+  and a little darker than the game's own, and sharpens on the hand-back frame (sharpness
+  about 1,530 then 2,550): the game's conversation image effect stays on until it takes over;
+  the mod's blur off only zeroes its depth of field. Style 3 (on trial) cuts on that frame.
 - **Heading (0.9.46):** the style-2 cut turns your saved third-person view **round your feet**
   to behind your body, looking `g_thirdPersonAim` off its heading (-1.14 degrees in the 0.9.45
   log; measured again on the game's first third-person frame after each exit, kept if within

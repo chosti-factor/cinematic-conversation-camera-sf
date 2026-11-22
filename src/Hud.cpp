@@ -777,6 +777,7 @@ namespace CCC::Hud
 			bool        parked{ false };   // off screen, hidden and not wanted: nothing to do (0.9.41)
 		} g_bars, g_filmBars;  // the dialogue menu's; the HUD messages menu's, filming people talking (0.8.10)
 		bool g_filmingOthers = false;
+		bool g_exitBars = false;  // a conversation's exit: the HUD messages menu's bars stand in (0.9.47)
 
 		bool FindChild(Value& a_parent, const char* a_name, Value& a_out)
 		{
@@ -1631,6 +1632,11 @@ namespace CCC::Hud
 		g_filmingOthers = a_filming;
 	}
 
+	void SetExitBars(bool a_keep)
+	{
+		g_exitBars = a_keep;
+	}
+
 	void SetPresetLabel(const std::string& a_text)
 	{
 		g_presetLabel.text = a_text;
@@ -1739,7 +1745,21 @@ namespace CCC::Hud
 			// (under its subtitles), as no dialogue menu is open.
 			if (!g_broken) {
 				PartScope t{ g_parts[5] };
-				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
+				// 0.9.47: also through a conversation's exit, from the game closing its dialogue menu
+			// (the bars went with it, 0.4 s before the cut back to your view) to that cut, at the
+			// height they had: in and out at once, with no slide.
+			static float lastEase = 0.0f;
+			static bool  wasExit = false;
+			if (dialogueOpen) {
+				lastEase = g_bars.ease;
+			}
+			if (g_exitBars && !dialogueOpen && !wasExit) {
+				g_filmBars.ease = (std::max)(g_filmBars.ease, lastEase);
+			} else if (!g_exitBars && wasExit && !g_filmingOthers) {
+				g_filmBars.ease = 0.0f;
+			}
+			wasExit = g_exitBars && !dialogueOpen;
+			UpdateLetterbox(g_filmBars, "HUDMessagesMenu", (g_filmingOthers || g_exitBars) && !dialogueOpen, a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only

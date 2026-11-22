@@ -45,6 +45,11 @@ namespace CCC::Hud
 	// conversations (bLetterbox). Main thread.
 	void SetFilmingOthers(bool a_filming);
 
+	// A conversation's exit (0.9.47): the game has closed its dialogue menu, and the bars with
+	// it, before this mod's cut back to your view. True keeps the bars (on the HUD messages
+	// menu, as when filming) at the height they had; false drops them at once. Main thread.
+	void SetExitBars(bool a_keep);
+
 	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
 	// a conversation is filmed, e.g. "PRESET: FRONTIER". Main thread.
 	void SetPresetLabel(const std::string& a_text);

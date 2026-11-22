@@ -15,6 +15,22 @@ test build; "diagnostic" items only add information to the log for testing.
   cut. In vanilla the game's camera moves on that frame and hides it; style 3 puts our cut
   there. To compare with 2 in one session (the INI is read again within half a second).
 
+### Fixed
+- Exits: the letterbox no longer vanishes 0.4 s before the cut back to your view. It lives in
+  the game's dialogue menu, which the game closes as the last line ends; the 0.9.46 clip had
+  the last shot jump to full frame, then the cut 25 frames later (two changes where one should
+  be). The bars on the HUD messages menu (filming's) now stand in, at the height they had,
+  from the menu closing to the cut (or, without a cut, until the game takes over), and go
+  with the cut. Not while a trade or similar menu, or the settings page, is open over the
+  conversation.
+
+### Found, not changed (the shot-to-shot review of the 0.9.46 clip)
+- Cuts within conversations (8) and starts (2): clean, one frame each. During the exit hold
+  your view is softer and a little darker than the game's own, and sharpens on the hand-back
+  frame (the game's conversation image effect stays on until then; the mod's "blur off"
+  only takes out its depth of field): `iExitStyle=3` hides that in its cut too. The exit
+  cut's first frame is soft by design (blur off from frame 2, 0.9.16).
+
 ## 0.9.46 - 2026-11-22
 
 ### Fixed

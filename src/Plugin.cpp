@@ -6119,6 +6119,28 @@ namespace CCC
 					const float dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.1f);
 					last = now;
 					Hud::SetFirstLine(g_state.active && g_state.npcLinesStarted <= 1);
+					// The bars through a conversation's exit (0.9.47): the game closes its dialogue menu,
+					// and the letterbox with it, before the cut back to your view (the 0.9.46 clip: the
+					// last shot jumped to full frame 0.4 s before the cut, two changes where one should
+					// be). Kept until that cut (or, without one, until the game takes over); not while a
+					// trade or similar menu, or the settings page, is over the conversation.
+					{
+						static int  menuSeenIn = -1;
+						auto*       ui = RE::UI::GetSingleton();
+						static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
+						const bool  dialogueOpen = ui && ui->IsMenuOpen(dialogueMenu);
+						if (g_state.active && dialogueOpen) {
+							menuSeenIn = g_conversationNumber;
+						}
+						bool menuOver = Menu::IsOpen();
+						if (!menuOver && ui) {
+							static const std::array<RE::BSFixedString, 5> kOver{ RE::BSFixedString{ "BarterMenu" }, RE::BSFixedString{ "ContainerMenu" },
+								RE::BSFixedString{ "SpaceshipEditorMenu" }, RE::BSFixedString{ "ShipCrewAssignMenu" }, RE::BSFixedString{ "ShipCrewMenu" } };
+							menuOver = std::ranges::any_of(kOver, [&](const auto& a_m) { return ui->IsMenuOpen(a_m); });
+						}
+						Hud::SetExitBars(Settings::Get().letterbox && g_state.active && !g_state.handedBack && !g_state.smallSpeaker && menuSeenIn == g_conversationNumber &&
+										 !dialogueOpen && !menuOver && g_state.exitCutFrames == 0);
+					}
 					CostScope hudCost{ g_costHud };
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
 				}
