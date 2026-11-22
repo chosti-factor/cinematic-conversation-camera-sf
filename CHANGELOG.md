@@ -15,6 +15,9 @@ test build; "diagnostic" items only add information to the log for testing.
   two frames zoomed (the trace: all three cuts from MediumPlayer; every other cut had its lens
   on the camera on the cut's own frame). The check now leaves out the lens this mod put on.
   This was most likely behind the zooms seen since the lens was first set per shot.
+- Checked (the user's 0.9.57 clip, Nebula, DLSS on): 15 of 15 cuts clean, one frame each: no
+  zoom (every cut's lens on the camera on its own frame, trace and clip agree, including cuts
+  from 62, 65, 72 and 80 degree shots) and no blurred frame before or after a cut.
 
 ## 0.9.56 - 2026-11-22
 

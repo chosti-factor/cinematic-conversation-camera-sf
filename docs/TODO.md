@@ -124,8 +124,9 @@ Wednesday the 25th, about two days earlier.
       lens for a frame, the new focus a frame early). Not frame generation (it was off) and not
       DLSS (0.9.55 test with it off: the same). 0.9.56: the cut timing trace (detailed log):
       the zooms were cuts from shots over 60 degrees, taken for the start's gameplay lens
-      (fixed 0.9.57; to check with clips). Left: the early focus now and then; lead, how the
-      game's quest-scene cameras cut cleanly (the user). The trace comes out before the RC
+      (fixed 0.9.57). 0.9.57 clip: 15 of 15 cuts clean, no zoom and no early focus. One more
+      run to confirm; if the early focus comes back, the lead is how the game's quest-scene
+      cameras cut cleanly (the user). The trace comes out before the RC
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
