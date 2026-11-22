@@ -128,8 +128,12 @@ Wednesday the 25th, about two days earlier.
       with no zoom and one mild early softening. Done; the trace comes out next. Post-1.0
       Mulling if the early focus ever bothers: how the game's quest-scene cameras cut
       cleanly (the user)
-- [ ] Cora's lines overlapping at the Lodge (0.9.57 run), after an interrupted filming of
-      Matteo and Walter; Sarah and Vasco fine after it. Check whether vanilla does it too
+- [ ] Cora's lines overlapping at the Lodge (0.9.57 runs), the 0.9.43 bug back. The user's
+      tests: filming off, Cora clean; filming Walter and Vasco (stopped by moving), Cora
+      overlapping; mod off, clean. Both broken runs had the filming stopped mid-scene by moving;
+      0.9.43's tests let scenes play out. Next (the user, 2026-11-23): let the filming end on
+      its own, then Cora. Clean: look at the stop-by-moving path. Overlapping: bring back the
+      `bFilmTest*` switches (docs/MEMORY.md) and bisect again
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
