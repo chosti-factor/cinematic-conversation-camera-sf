@@ -109,6 +109,11 @@ Wednesday the 25th, about two days earlier.
       subtitle 65-120 of it); one spike, 14.8 ms, the INI re-read after an edit on the
       settings page; with the log off (0.9.44-0.9.45): 16-27 us outside conversations, 50-310
       in them, no spike over 5 ms but the INI read after an edit. Done 2026-11-22)
+- [ ] Before the INI review (the user, 2026-11-22): the shot-to-shot cuts that aren't clean
+      (some flicker or "teleport"; most are instant). Lead: in the 0.9.47 clip 2 of 6 cuts
+      showed the old shot a frame with the new shot's focus before the camera moved. Next: a
+      session with the detailed log on, longer conversations (Nebula cuts most), clips; every
+      cut measured frame by frame and sorted by cause.
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
