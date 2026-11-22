@@ -325,6 +325,31 @@ namespace CCC
 		// 0.9.45 log; measured again at each exit (another mod may set its own camera).
 		std::atomic<float> g_thirdPersonAim{ -1.14f * 0.017453292f };
 		std::atomic<bool>  g_thirdPersonAimPending{ false };
+
+		// Your saved third-person view, turned round your feet to behind your body (0.9.46).
+		void TurnThirdPersonViewBehindYou()
+		{
+			auto* you = RE::PlayerCharacter::GetSingleton();
+			if (!g_thirdPersonView || !you) {
+				return;
+			}
+			auto&       v = *g_thirdPersonView;
+			const auto  feet = you->GetPosition();
+			const float viewYaw = std::atan2(v.lookAt.x - v.position.x, v.lookAt.y - v.position.y);
+			const float turn = std::remainder(you->GetAngle().z + g_thirdPersonAim.load(std::memory_order_relaxed) - viewYaw, 2.0f * std::numbers::pi_v<float>);
+			if (!std::isfinite(turn) || std::abs(turn) <= 0.002f) {
+				return;
+			}
+			const float c = std::cos(turn), sn = std::sin(turn);
+			const auto  around = [&](RE::NiPoint3& a_p) {
+				const float dx = a_p.x - feet.x, dy = a_p.y - feet.y;
+				a_p.x = feet.x + dx * c + dy * sn;
+				a_p.y = feet.y - dx * sn + dy * c;
+			};
+			around(v.position);
+			around(v.lookAt);
+			REX::INFO("Exit: your third-person view turned {:+.1f} degrees round you, to behind your body as the game will have it", turn * 57.29578f);
+		}
 		std::optional<Camera::Pose> g_firstPersonView;  // likewise for first person
 
 		// Where the third-person camera sits relative to the first-person view (offset and
@@ -792,6 +817,10 @@ namespace CCC
 				// camera's own first update.
 				bool tpExit = false;
 				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
+					if (Settings::Get().exitStyle == 3 && g_state.exitCutFrames == 0) {
+						TurnThirdPersonViewBehindYou();  // (iExitStyle 3: no cut before this frame turned it)
+						REX::INFO("Exit style 3: from third person, the last shot held to the game's hand-back; your view cut to on its frame");
+					}
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
@@ -1771,7 +1800,13 @@ namespace CCC
 				// lower and closer, a moment after the hand-back), so the last shot stays and the
 				// game's camera takes over in one cut.
 				const bool seatedThird = g_state.seatedAtStart && !g_state.startedFirstPerson;
-				if (s.exitStyle == 2 && !seatedThird && held >= s.exitCutSeconds && held < 3.0f) {
+				// iExitStyle 3 (0.9.47, on trial): from third person, no cut during the hold; the last
+				// shot stays and your view comes on the frame the game takes over (End's switch
+				// frame). The 0.9.46 clip: your character's pose changes over three frames as the
+				// game ends the conversation, with the camera still after the early cut; in vanilla
+				// the game's camera moves on that frame. From first person, as 2.
+				const bool cutEarly = s.exitStyle == 2 || (s.exitStyle == 3 && g_state.startedFirstPerson);
+				if (cutEarly && !seatedThird && held >= s.exitCutSeconds && held < 3.0f) {
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
 					const int   which = g_state.startedFirstPerson ? 0 : 1;
 					float       lens = g_state.startFov;
@@ -1799,22 +1834,8 @@ namespace CCC
 							// not turning): the camera swung round you as the game took over, which read
 							// as your body jolting. The view is turned round your feet to behind your
 							// body, as the game's camera will be.
-							if (!g_state.startedFirstPerson && g_thirdPersonView && you) {
-								auto&       v = *g_thirdPersonView;
-								const auto  feet = you->GetPosition();
-								const float viewYaw = std::atan2(v.lookAt.x - v.position.x, v.lookAt.y - v.position.y);
-								const float turn = std::remainder(you->GetAngle().z + g_thirdPersonAim.load(std::memory_order_relaxed) - viewYaw, 2.0f * std::numbers::pi_v<float>);
-								if (std::isfinite(turn) && std::abs(turn) > 0.002f) {
-									const float c = std::cos(turn), sn = std::sin(turn);
-									const auto  around = [&](RE::NiPoint3& a_p) {
-										const float dx = a_p.x - feet.x, dy = a_p.y - feet.y;
-										a_p.x = feet.x + dx * c + dy * sn;
-										a_p.y = feet.y - dx * sn + dy * c;
-									};
-									around(v.position);
-									around(v.lookAt);
-									REX::INFO("Exit: your third-person view turned {:+.1f} degrees round you, to behind your body as the game will have it", turn * 57.29578f);
-								}
+							if (!g_state.startedFirstPerson) {
+								TurnThirdPersonViewBehindYou();
 							}
 							if (g_state.startedFirstPerson && g_firstPersonView && you) {
 								auto&       v = *g_firstPersonView;

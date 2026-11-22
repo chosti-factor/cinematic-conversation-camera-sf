@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.47 - 2026-11-22
+
+### Added (on trial)
+- `iExitStyle=3`: as 2 from first person; from third person the last shot holds and the cut
+  to your view comes on the frame the game takes over. The 0.9.46 clip (the user: a small but
+  noticeable jolt of your character left): the camera now stays put at the hand-back (the
+  background still to 0.15 px), but your character's pose changes over three frames as the
+  game ends the conversation (arm and head), with the camera already still since the early
+  cut. In vanilla the game's camera moves on that frame and hides it; style 3 puts our cut
+  there. To compare with 2 in one session (the INI is read again within half a second).
+
 ## 0.9.46 - 2026-11-22
 
 ### Fixed

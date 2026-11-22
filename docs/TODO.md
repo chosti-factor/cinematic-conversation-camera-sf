@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.46 (2026-11-22). Dates assume the Friday 27 November release; for
+Last updated: 0.9.47 (2026-11-22). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -35,14 +35,17 @@ Wednesday the 25th, about two days earlier.
       one frame (Muria); watch for it
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
-- [x] Third-person exits (the user, 2026-11-21, nice before release): a noticeable shift and
+- [ ] Third-person exits (the user, 2026-11-21, nice before release): a noticeable shift and
       turn as the camera settles back, sometimes your body moving as if hit. 0.9.45 logs the
       game's view against the one drawn over the second after the hand-back, and your body's
       turn and movement. 0.9.45 log: your view from before sat 20-24 degrees off your body's
       heading, the game's camera behind your body, the swing on frame 1; your body still.
       0.9.46 turns the cut round your feet to behind you. Tested 2026-11-22 (three exits,
       log and clip): the game's view within 0.04 degrees of the one drawn, the clip clean
-      frame by frame at both hand-backs.
+      frame by frame at both hand-backs. The user: still a small but noticeable jolt of your
+      character. Measured in the clip: the camera still (background under 0.15 px), your
+      character's pose changing over three frames as the game ends the conversation. 0.9.47
+      puts a trial `iExitStyle=3` (the cut on the hand-back frame, third person) to compare.
 - [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
       `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
       user, 2026-11-17)
