@@ -117,10 +117,10 @@ Wednesday the 25th, about two days earlier.
       a frame early and the lens one or two late. 0.9.51 sets the lens with the camera and
       the focus a frame after: 20 of 31 cuts clean, 7 with the blurred frame now after the
       cut, 4 zooms. 0.9.52: no blur on a cut's frame, the lens written on the render camera
-      with its position; to check with new clips)
-- [ ] Found in the 0.9.51 clip: a passer-by walked right past the camera, head and hair
-      filling the screen (the bystander check sees people standing still, not people
-      walking through). Before 1.0 or after: the user's call
+      with its position; to check with new clips. A passer-by close past the camera, seen
+      in the clip, is fine: the user, they add life to a scene)
+- [ ] Before 1.0: compare `bCutFocusEase` 0 and 1 (the blur back at once or eased after a
+      cut's sharp frame); keep the user's pick as the behaviour and take the switch out
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

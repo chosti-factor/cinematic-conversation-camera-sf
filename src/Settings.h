@@ -15,6 +15,7 @@ namespace CCC
 		bool     debugLog{ true };
 		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
+		bool     cutFocusEase{ false };   // test (0.9.53): after a cut's sharp frame, the blur eases back over 0.25 s
 		int      presetKey{ 0x55 };       // switches presets on the fly (U; 0 = none), 0.8.3
 		float    conversationLens{ -1.0f };  // the conversation lens, degrees (-1 = the preset's own)
 		bool     filmConversations{ true }; // film people talking near you (the listen key)

@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.53 - 2026-11-22
+
+### Added (a comparison test, the user's ask)
+- `bCutFocusEase` ([Debug]; **Ease the blur back after a cut**, Screen > Testing): after a
+  cut's sharp frame (0.9.52), 0 brings the new shot's blur back on the next frame, 1 eases it
+  back over a quarter of a second (a quick focus pull). Off by default; one stays for 1.0.
+
+### Changed
+- The passer-by in the 0.9.51 clip is fine (the user: people walking close past the camera
+  add life to a scene); off the TODO.
+
 ## 0.9.52 - 2026-11-22
 
 ### Fixed (the 0.9.51 clips: 31 cuts, 20 clean)

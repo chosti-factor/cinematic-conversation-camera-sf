@@ -140,6 +140,8 @@ namespace CCC
 			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
 			int                                   lensSteady{ 0 };           // frames since the lens last changed (0.9.52)
 			bool                                  lensScaleLogged{ false };
+			std::chrono::steady_clock::time_point focusCutAt{};          // the last cut that turned the blur off (0.9.53)
+			bool                                  focusEasing{ false };  // bCutFocusEase: the blur coming back
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
 			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
 			std::chrono::steady_clock::time_point readySeenAt{};
@@ -341,7 +343,7 @@ namespace CCC
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text, bool a_persuasion);
 		void                FilmFrame();
-		void                FocusOnShot(float a_distance);
+		void                FocusOnShot(float a_distance, float a_strength = 1.0f);
 		void                LensNow();
 
 		// A handheld camera's wander (0.8.15): a slow, smooth drift of where the camera stands
@@ -2677,8 +2679,23 @@ namespace CCC
 				const bool  jump = last >= 0.0f && !bothFar &&
 				                  (wasOff != isOff || (!wasOff && std::abs(distance - last) > 0.25f * (std::min)(distance, last)));
 				const float focus = jump ? 0.0f : distance;
+				// bCutFocusEase (0.9.53, a comparison test): the blur eases back over 0.25 s after the
+				// cut's sharp frame instead of all at once.
+				float strength = 1.0f;
+				if (jump) {
+					g_state.focusCutAt = now;
+					g_state.focusEasing = s.cutFocusEase;
+				} else if (g_state.focusEasing) {
+					const float t = std::chrono::duration<float>(now - g_state.focusCutAt).count() / 0.25f;
+					if (t >= 1.0f) {
+						g_state.focusEasing = false;
+					} else {
+						const float u = (std::max)(t, 0.0f);
+						strength = u * u * (3.0f - 2.0f * u);
+					}
+				}
 				g_shotDistance.store(focus, std::memory_order_relaxed);
-				FocusOnShot(focus);
+				FocusOnShot(focus, strength);
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -3875,7 +3892,7 @@ namespace CCC
 			return true;
 		}
 
-		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond)
+		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond, float a_strength = 1.0f)
 		{
 			for (const auto& r : g_blurRecords) {
 				if (!r.form) {
@@ -3887,7 +3904,7 @@ namespace CCC
 				// things near the camera sharp and the people soft (0.8.0 test, the Lodge).
 				// 0.8.10: none either before the first shot (no distance yet): the game's own
 				// focus, 1.5 m, blurred the opening frame of a shot 4 m away.
-				const float strength = a_shotDistance > kNoBlurBeyond || a_shotDistance <= 0.3f ? 0.0f : r.strength;
+				const float strength = a_shotDistance > kNoBlurBeyond || a_shotDistance <= 0.3f ? 0.0f : r.strength * a_strength;
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
@@ -3911,17 +3928,19 @@ namespace CCC
 		// 0.8.10: the focus follows a cut on the same frame. It was set from the main thread, a
 		// frame or two after the camera moved, so the first frame of a shot could be focused for
 		// the last one (a blurred flash, most visible at the start of a conversation).
-		void FocusOnShot(float a_distance)
+		void FocusOnShot(float a_distance, float a_strength)
 		{
 			const auto& st = Settings::Get();
 			if (!st.focusOnSubject || !g_blurReady.load(std::memory_order_acquire) || g_state.handedBack || g_state.smallSpeaker) {
 				return;
 			}
-			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f) {
+			static float strengthWritten = 1.0f;
+			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f && std::abs(a_strength - strengthWritten) < 0.01f) {
 				return;
 			}
 			g_blurWritten.store(a_distance, std::memory_order_relaxed);
-			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond);
+			strengthWritten = a_strength;
+			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond, a_strength);
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:
