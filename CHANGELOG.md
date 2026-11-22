@@ -4,6 +4,29 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.52 - 2026-11-22
+
+### Fixed (the 0.9.51 clips: 31 cuts, 20 clean)
+- **A blurred frame at a cut, from either side.** 0.9.51 moved the focus a frame later; the
+  blurred frame before the cut was gone, but 7 cuts now had a blurred frame just after it,
+  the new shot drawn with the old focus (3 heavy: into a master, a two-shot and a medium
+  shot from close ones). So the game reads the focus when it draws, and a write lands on
+  the frame before the camera's or on the camera's own, whichever comes first. Now the blur
+  is off on a cut's frame (right for both shots) and the new focus goes on a frame later, when
+  only the new shot can be drawn. Not for cuts where the old focus does for both (within a
+  quarter, or both shots past 8 m). The main thread no longer writes the focus once the
+  camera does (its writes land on their own time too).
+- **The zoom just after a cut** (4 of the 31: the new shot's first frame through the old lens,
+  1.6 and 1.1 times about the centre, measured). 0.9.51's call to the game's set-FOV didn't
+  stop it. The lens is now also written on the render camera itself with the camera's
+  position, scaled to the game's own maths for a lens, learned from a steady shot (with the
+  detailed log: "Lens: the game draws ... degrees ... times the plain maths").
+
+### Found, not changed
+- In clip 1 a passer-by walked right past the camera, their head and hair filling the
+  screen for a moment (the bystander check looks at people standing still near the
+  conversation, not people walking through); listed in TODO.
+
 ## 0.9.51 - 2026-11-22
 
 ### Fixed (the messy cuts in the 0.9.50 clips)

@@ -52,13 +52,16 @@ were dropped: [MEMORY.md](MEMORY.md).
   own camera update. A write after that update may not reach that frame. So a cover drawn
   after an update to hide that update's bad frame never works (0.8.18, 0.9.0, 0.9.7 all
   failed). What does work: changing what the update starts from, or not running the update.
-- **Cuts (0.9.51):** the camera, its lens and its focus each reach the screen at a different
-  point. The 0.9.50 clips, measured frame by frame: the focus (the conversation blur records)
-  a frame **before** the camera (a blurred flash on the old shot's last frame), the lens a
-  frame or two **after** it (the new shot's first frames through the old lens, a zoom-pop).
-  So the lens is set with the camera, through the game's own set-FOV (as the exit cut,
-  0.9.17), and the focus a frame later. The main thread no longer writes the lens while the
-  mod films your conversation (it could put the old one back for a frame).
+- **Cuts (0.9.51-0.9.52):** the camera, its lens and its focus each reach the screen on their
+  own time. The focus (the conversation blur records) is read when the game draws: written on
+  the cut's frame it showed on the old shot's last frame now and then (0.9.50 clips), written a
+  frame later on the new shot's first (0.9.51 clips). Neither timing is fixed, so a cut's
+  frame gets **no blur** (right for both shots) and the new focus a frame later (0.9.52); not
+  when the old focus does for both. The lens through the game's lens update or its set-FOV
+  came a frame late now and then (the new shot's first frame zoomed about the centre); since
+  0.9.52 it's also written on the render camera beside the camera's position, scaled to the
+  game's maths for a lens (learned from a steady shot). The main thread writes neither the
+  lens nor the focus while the mod films your conversation.
 
 ## Starts
 

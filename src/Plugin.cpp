@@ -136,8 +136,10 @@ namespace CCC
 			float                                 directStartHead{ 0.0f };  // head above feet when the rebuild was asked for (0.9.3)
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
-			float                                 focusDue{ -1.0f };         // this frame's shot distance, focused on next frame (0.9.51)
+			float                                 focusLast{ -1.0f };        // the shot distance on the last frame (0.9.52)
 			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
+			int                                   lensSteady{ 0 };           // frames since the lens last changed (0.9.52)
+			bool                                  lensScaleLogged{ false };
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
 			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
 			std::chrono::steady_clock::time_point readySeenAt{};
@@ -242,6 +244,7 @@ namespace CCC
 		std::chrono::steady_clock::time_point g_restoreFirstPersonNext{};
 		std::atomic_bool                      g_pilotingShip{ false };
 		std::atomic<float>                    g_shotDistance{ 0.0f };  // camera to the person in shot, this frame
+		constexpr float                       kNoBlurBeyond = 8.0f;    // metres from the camera to the person in shot
 		std::uint32_t                         g_repairMaskedFrames = 0;
 		// The player's own third-person view, refreshed every frame they are in third person
 		// outside a conversation. Used to return to it seamlessly when a conversation ends.
@@ -426,6 +429,7 @@ namespace CCC
 		std::atomic<float> g_gameplayLens[2]{ 0.0f, 0.0f };
 		std::atomic<void*> g_lensCamera{ nullptr };
 		std::atomic<int>   g_exitLensFrames{ 0 };  // lens updates after an exit still to keep on your gameplay lens
+		float              g_lensScale = 0.0f;  // the game's frustum for a lens against the plain maths (0.9.52)
 		std::atomic<bool>  g_cutOwnsLens{ false };  // exit style 2's cut sets the lens itself, with the camera (0.9.16)
 		float              g_lastStartFov[2]{ 0.0f, 0.0f };  // the gameplay lens at the last conversation start seen, first/third person
 		std::atomic<float> g_exitLensValue{ 0.0f };  // the lens kept on through this exit
@@ -2658,17 +2662,23 @@ namespace CCC
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
 				const float distance = pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
-				// 0.9.51: the focus a frame after the camera. Written on the cut's own frame (0.8.10), it
-				// reached the screen a frame before the camera did: the 0.9.50 clips showed the last
-				// frame of a far shot drawn with the next close-up's focus, a blurred flash (worst
-				// from a distant, master or two-shot into a close-up). The main thread's focus reads
-				// g_shotDistance too, so that is held back with it.
-				const float due = g_state.focusDue;
-				g_state.focusDue = distance;
-				if (due >= 0.0f) {
-					g_shotDistance.store(due, std::memory_order_relaxed);
-					FocusOnShot(due);
-				}
+				// The focus at a cut (0.9.52). The blur records are read by the game when it draws, and
+				// a write from here can reach the frame before the camera's or the camera's own: the
+				// 0.9.50 clips (written on the cut's frame) showed the old shot's last frame drawn with
+				// the new focus, the 0.9.51 clips (a frame later) the new shot's first frame with the
+				// old one, a blurred frame either way. So on a cut's frame the blur is off, right for
+				// both shots, and the new shot's focus goes on a frame later, when only the new shot
+				// can be drawn. Not when the old focus would do for both: within a quarter of each
+				// other, or both past the no-blur distance.
+				const float last = g_state.focusLast;
+				g_state.focusLast = distance;
+				const bool  bothFar = last > kNoBlurBeyond && distance > kNoBlurBeyond;
+				const bool  wasOff = last <= 0.3f, isOff = distance <= 0.3f;  // your own view: no blur
+				const bool  jump = last >= 0.0f && !bothFar &&
+				                  (wasOff != isOff || (!wasOff && std::abs(distance - last) > 0.25f * (std::min)(distance, last)));
+				const float focus = jump ? 0.0f : distance;
+				g_shotDistance.store(focus, std::memory_order_relaxed);
+				FocusOnShot(focus);
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -2681,17 +2691,34 @@ namespace CCC
 			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
 			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).
 			if (applied && wideFrame) {
-				Camera::SetRenderLens(Director::WantedLens());
+				Camera::SetRenderLens(Director::WantedLens(), g_lensScale > 0.0f ? g_lensScale : 1.0f);
 				g_state.cutLens = Director::WantedLens();
+				g_state.lensSteady = 0;
 			} else if (applied && g_lensActive.load(std::memory_order_relaxed)) {
-				// 0.9.51: a cut's lens with the camera, through the game's own set-FOV, as the exit
-				// cut does (0.9.17). Left to the game's lens update, it came a frame or two after the
-				// camera: the 0.9.50 clips showed the first frames of a new shot drawn through the
-				// last one's lens, a zoom-pop ("teleport").
+				// A cut's lens with the camera (0.9.51-0.9.52). Left to the game's lens update, it came
+				// a frame after the camera now and then: the new shot's first frame drawn through the
+				// last one's lens, a zoom about the centre ("teleport"; the 0.9.51 clips, 1.6 and 1.1
+				// times). 0.9.51 called the game's set-FOV here, which didn't stop it; the lens it
+				// writes reaches the drawing on its own time. Now the lens is also written on the
+				// render camera itself, beside the camera's position, scaled to the game's own maths
+				// for a lens (learned from a steady shot: what the game's lens left on the camera).
 				const float lens = Director::WantedLens();
 				if (lens >= 10.0f && std::abs(lens - g_state.cutLens) > 0.05f && !FilmingActive()) {
 					g_state.cutLens = lens;
+					g_state.lensSteady = 0;
 					SetGameLens(lens);
+					if (g_lensScale > 0.0f) {
+						Camera::SetRenderLens(lens, g_lensScale);
+					}
+				} else if (++g_state.lensSteady == 12 && g_state.cutLens >= 10.0f) {
+					if (const float scale = Camera::RenderLensScale(g_state.cutLens); scale > 0.2f && scale < 5.0f) {
+						const bool changed = std::abs(scale - g_lensScale) > 0.01f * scale;
+						g_lensScale = scale;
+						if (s.debugLog && (changed || !g_state.lensScaleLogged)) {
+							g_state.lensScaleLogged = true;
+							REX::INFO("Lens: the game draws {:.1f} degrees {:.3f} times the plain maths (the lens written at a cut)", g_state.cutLens, scale);
+						}
+					}
 				}
 			}
 			if (!applied) {
@@ -3811,7 +3838,6 @@ namespace CCC
 		std::atomic<bool>         g_blurReady{ false };  // read and usable (main thread sets it)
 		std::atomic<float>        g_blurWritten{ -1.0f };  // the shot distance last written (-1: the game's own)
 		constexpr std::size_t     kBlurStrength = 0x38C, kBlurDistance = 0x398, kBlurRange = 0x3A4;
-		constexpr float           kNoBlurBeyond = 8.0f;  // metres from the camera to the person in shot
 
 		bool ReadBlurRecords()
 		{
@@ -5882,7 +5908,11 @@ namespace CCC
 					if (live && st.focusOnSubject && ReadBlurRecords()) {
 						g_blurReady.store(true, std::memory_order_release);
 						const float d = g_shotDistance.load(std::memory_order_relaxed);
-						WriteBlurRecords(d, st.deepFocusLongShots, st.deepFocusBeyond);
+						// Only until the camera thread writes the focus itself (0.9.52): a write from here
+						// lands at its own time and could put an old shot's focus back across a cut.
+						if (g_blurWritten.load(std::memory_order_relaxed) < 0.0f) {
+							WriteBlurRecords(d, st.deepFocusLongShots, st.deepFocusBeyond);
+						}
 						if (st.debugLog && std::abs(d - lastDistance) > 0.25f) {
 							lastDistance = d;
 							static int logged = 0;

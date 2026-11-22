@@ -115,7 +115,12 @@ Wednesday the 25th, about two days earlier.
       session with the detailed log on, longer conversations (Nebula cuts most), clips; every
       cut measured frame by frame and sorted by cause. (0.9.50 clips: two causes, the focus
       a frame early and the lens one or two late. 0.9.51 sets the lens with the camera and
-      the focus a frame after; to check with new clips)
+      the focus a frame after: 20 of 31 cuts clean, 7 with the blurred frame now after the
+      cut, 4 zooms. 0.9.52: no blur on a cut's frame, the lens written on the render camera
+      with its position; to check with new clips)
+- [ ] Found in the 0.9.51 clip: a passer-by walked right past the camera, head and hair
+      filling the screen (the bystander check sees people standing still, not people
+      walking through). Before 1.0 or after: the user's call
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

@@ -634,9 +634,21 @@ namespace CCC::Camera
 		}
 	}
 
-	void SetRenderLens(float a_degrees)
+	float RenderLensScale(float a_degrees)
 	{
 		if (!g_renderCam || !(a_degrees >= 10.0f && a_degrees <= 170.0f)) {
+			return 0.0f;
+		}
+		const auto& frustum = static_cast<RE::NiCamera*>(g_renderCam)->viewFrustum;
+		if (!(frustum.right > 0.0f && frustum.top > 0.0f) || frustum.ortho) {
+			return 0.0f;
+		}
+		return frustum.right / std::tan(a_degrees * 0.5f * std::numbers::pi_v<float> / 180.0f);
+	}
+
+	void SetRenderLens(float a_degrees, float a_scale)
+	{
+		if (!g_renderCam || !(a_degrees >= 10.0f && a_degrees <= 170.0f) || !(a_scale > 0.2f && a_scale < 5.0f)) {
 			return;
 		}
 		auto& frustum = static_cast<RE::NiCamera*>(g_renderCam)->viewFrustum;
@@ -644,7 +656,7 @@ namespace CCC::Camera
 			return;
 		}
 		const float aspect = frustum.right / frustum.top;
-		const float right = std::tan(a_degrees * 0.5f * std::numbers::pi_v<float> / 180.0f);
+		const float right = a_scale * std::tan(a_degrees * 0.5f * std::numbers::pi_v<float> / 180.0f);
 		frustum.left = -right;
 		frustum.right = right;
 		frustum.top = right / aspect;

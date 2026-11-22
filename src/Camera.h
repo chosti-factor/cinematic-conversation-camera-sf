@@ -78,7 +78,11 @@ namespace CCC::Camera
 	void RememberGameplayFrustum(RE::NiAVObject* a_root);
 	// The render camera's lens set directly, horizontal degrees (a conversation's first frames,
 	// still drawn through the gameplay lens, 0.9.4).
-	void SetRenderLens(float a_degrees);
+	// a_scale (0.9.52): the game's own frustum for a lens is a_scale times the plain maths;
+	// learned from what the game's set-FOV left on the render camera (RenderLensScale).
+	void SetRenderLens(float a_degrees, float a_scale = 1.0f);
+	// The render camera's frustum against the plain maths for a_degrees (0 if unknown).
+	float RenderLensScale(float a_degrees);
 	bool ShowGameplayView(RE::NiAVObject* a_root, const Pose& a_view);
 
 }
