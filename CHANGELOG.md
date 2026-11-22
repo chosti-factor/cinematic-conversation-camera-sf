@@ -6,6 +6,14 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.48 - 2026-11-22
 
+### Changed
+- Third-person exits cut to your view on the frame the game takes over (the user's pick after
+  comparing the 0.9.47 trial `iExitStyle=3`: cleaner transitions, a clean exit). The last shot
+  holds, with its bars, until then; your character's pose change and the view sharpening as
+  the game's conversation effect goes now happen in the cut instead of on a still camera.
+  First-person exits keep the early cut (`fExitCutSeconds`). `iExitStyle=3` is gone again
+  (read as 2).
+
 ### Fixed
 - The bars through the exit, to the frame (the 0.9.47 clips, measured frame by frame): at
   every exit one frame went without bars as the game closed its dialogue menu (the stand-in

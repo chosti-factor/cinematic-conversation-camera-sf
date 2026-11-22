@@ -292,6 +292,13 @@ Older modes:
   and a little darker than the game's own, and sharpens on the hand-back frame (sharpness
   about 1,530 then 2,550): the game's conversation image effect stays on until it takes over;
   the mod's blur off only zeroes its depth of field. Style 3 (on trial) cuts on that frame.
+- **When (0.9.48, the standard after the 0.9.47 trial as `iExitStyle=3`):** from third
+  person there's no cut during the hold; the last shot (and its bars) stays until the game
+  takes over, and your view is drawn on that switch frame. The early cut left the camera still
+  for about a second before the hand-back, where the 0.9.46 clip showed your character's pose
+  change over three frames and the view sharpen (the game's conversation image effect going);
+  vanilla moves its camera on that frame. The 0.9.47 clip: the cut frame sharp at once and
+  nothing moving after it. First person keeps the early cut (pristine there).
 - **Heading (0.9.46):** the style-2 cut turns your saved third-person view **round your feet**
   to behind your body, looking `g_thirdPersonAim` off its heading (-1.14 degrees in the 0.9.45
   log; measured again on the game's first third-person frame after each exit, kept if within

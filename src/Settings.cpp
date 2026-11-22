@@ -238,7 +238,7 @@ namespace CCC
 			a_s.revealPlayer = ReadInt(a_path, L"Body", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
 			a_s.fixFirstPersonBody = ReadInt(a_path, L"Body", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
 
-			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Transitions", L"iExitStyle", a_s.exitStyle), 1, 3);
+			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Transitions", L"iExitStyle", a_s.exitStyle), 1, 2);
 			a_s.exitCutSeconds = std::clamp(ReadFloat(a_path, L"Transitions", L"fExitCutSeconds", a_s.exitCutSeconds), 0.0f, 1.0f);
 
 			for (auto& [key, value] : ReadSection(a_path, L"GameSettings")) {

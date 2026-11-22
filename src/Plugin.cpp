@@ -817,13 +817,11 @@ namespace CCC
 				// camera's own first update.
 				bool tpExit = false;
 				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
-					// No cut before this frame turned it: iExitStyle 3, or a hold shorter than
-					// fExitCutSeconds with 2 (0.9.48: that drew the view un-turned, the old swing).
+					// From third person the cut to your view is this frame (0.9.48), turned to behind
+					// your body here (with style 1, too, after its closing shot).
 					if (g_state.exitCutFrames == 0) {
 						TurnThirdPersonViewBehindYou();
-						if (Settings::Get().exitStyle == 3) {
-							REX::INFO("Exit style 3: from third person, the last shot held to the game's hand-back; your view cut to on its frame");
-						}
+						REX::INFO("Exit: from third person, the last shot held to the game's hand-back; your view cut to on its frame");
 					}
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
@@ -1804,12 +1802,13 @@ namespace CCC
 				// lower and closer, a moment after the hand-back), so the last shot stays and the
 				// game's camera takes over in one cut.
 				const bool seatedThird = g_state.seatedAtStart && !g_state.startedFirstPerson;
-				// iExitStyle 3 (0.9.47, on trial): from third person, no cut during the hold; the last
-				// shot stays and your view comes on the frame the game takes over (End's switch
-				// frame). The 0.9.46 clip: your character's pose changes over three frames as the
-				// game ends the conversation, with the camera still after the early cut; in vanilla
-				// the game's camera moves on that frame. From first person, as 2.
-				const bool cutEarly = s.exitStyle == 2 || (s.exitStyle == 3 && g_state.startedFirstPerson);
+				// 0.9.48: from third person, no cut during the hold; the last shot stays and your view
+				// comes on the frame the game takes over (End's switch frame). The 0.9.46 clip: your
+				// character's pose changes over three frames as the game ends the conversation, and
+				// the view sharpens (the game's conversation image effect goes), with the camera
+				// still since the early cut; in vanilla the game's camera moves on that frame. Tried
+				// as iExitStyle 3 in 0.9.47 (the user: cleaner, a clean exit); the standard now.
+				const bool cutEarly = s.exitStyle == 2 && g_state.startedFirstPerson;
 				if (cutEarly && !seatedThird && held >= s.exitCutSeconds && held < 3.0f) {
 					const auto& view = g_state.startedFirstPerson ? g_firstPersonView : g_thirdPersonView;
 					const int   which = g_state.startedFirstPerson ? 0 : 1;

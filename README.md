@@ -66,9 +66,10 @@ What CCC doesn't do.
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
   there, Constellation handheld), or `iCameraSway` sets one.
-- **How a conversation ends** (`iExitStyle`): a cut back to your own view just before the
-  game hands the camera back (the default), or a closing shot of the NPC alone as the
-  dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
+- **How a conversation ends** (`iExitStyle`): a cut back to your own view (the default),
+  just before the game hands the camera back from first person and on the frame it does from
+  third person, with the letterbox kept until the cut; or a closing shot of the NPC alone as
+  the dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
 - **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
   you take part in (someone walks up and starts talking, several people taking turns) keep
   the game's own camera.
