@@ -320,6 +320,11 @@ namespace CCC
 		// The player's own third-person view, refreshed every frame they are in third person
 		// outside a conversation. Used to return to it seamlessly when a conversation ends.
 		std::optional<Camera::Pose> g_thirdPersonView;
+		// Which way the game's third-person camera looks against your body's heading when it takes
+		// over after a conversation, in radians (0.9.46): -1.14 degrees in all four exits of the
+		// 0.9.45 log; measured again at each exit (another mod may set its own camera).
+		std::atomic<float> g_thirdPersonAim{ -1.14f * 0.017453292f };
+		std::atomic<bool>  g_thirdPersonAimPending{ false };
 		std::optional<Camera::Pose> g_firstPersonView;  // likewise for first person
 
 		// Where the third-person camera sits relative to the first-person view (offset and
@@ -792,6 +797,7 @@ namespace CCC
 						g_tpExitPending = true;
 						PutGameplayLensBack(false);
 						REX::INFO("Exit: your third-person view drawn on the switch frame");
+						g_thirdPersonAimPending.store(true, std::memory_order_relaxed);
 						// 0.9.45 diagnostic (the user: third-person exits shift and turn as the camera
 						// settles, and your body sometimes moves as if hit): the game's view over the
 						// second after the hand-back against the one drawn, and your body's moves.
@@ -1787,6 +1793,29 @@ namespace CCC
 							// degrees), the view drawn was 0-5 degrees off it, and your body hadn't turned
 							// (0.9.39 turned by your body's turn, which was none).
 							auto* you = RE::PlayerCharacter::GetSingleton();
+							// Third person (0.9.46), the same at heart: the game takes over with its camera
+							// straight behind your body, and your view from before the conversation was
+							// orbited off it (0.9.45 log: about 21 degrees in all four exits, your body
+							// not turning): the camera swung round you as the game took over, which read
+							// as your body jolting. The view is turned round your feet to behind your
+							// body, as the game's camera will be.
+							if (!g_state.startedFirstPerson && g_thirdPersonView && you) {
+								auto&       v = *g_thirdPersonView;
+								const auto  feet = you->GetPosition();
+								const float viewYaw = std::atan2(v.lookAt.x - v.position.x, v.lookAt.y - v.position.y);
+								const float turn = std::remainder(you->GetAngle().z + g_thirdPersonAim.load(std::memory_order_relaxed) - viewYaw, 2.0f * std::numbers::pi_v<float>);
+								if (std::isfinite(turn) && std::abs(turn) > 0.002f) {
+									const float c = std::cos(turn), sn = std::sin(turn);
+									const auto  around = [&](RE::NiPoint3& a_p) {
+										const float dx = a_p.x - feet.x, dy = a_p.y - feet.y;
+										a_p.x = feet.x + dx * c + dy * sn;
+										a_p.y = feet.y - dx * sn + dy * c;
+									};
+									around(v.position);
+									around(v.lookAt);
+									REX::INFO("Exit: your third-person view turned {:+.1f} degrees round you, to behind your body as the game will have it", turn * 57.29578f);
+								}
+							}
 							if (g_state.startedFirstPerson && g_firstPersonView && you) {
 								auto&       v = *g_firstPersonView;
 								const float dx = v.lookAt.x - v.position.x, dy = v.lookAt.y - v.position.y;
@@ -3522,6 +3551,20 @@ namespace CCC
 			{
 				ReleaseThirdPersonExit();
 				Hook(a_state, a_arg);
+				// The game's own third-person camera, its first frame after an exit (0.9.46): which way
+				// it looks against your body's heading, for the next exit's cut.
+				if (g_thirdPersonAimPending.exchange(false, std::memory_order_relaxed)) {
+					auto* camera = RE::PlayerCamera::GetSingleton();
+					auto* you = RE::PlayerCharacter::GetSingleton();
+					if (const auto game = camera && you ? Camera::PoseOf(camera->cameraRoot.get()) : std::nullopt) {
+						const float aim = std::remainder(std::atan2(game->lookAt.x - game->position.x, game->lookAt.y - game->position.y) - you->GetAngle().z,
+							2.0f * std::numbers::pi_v<float>);
+						if (std::isfinite(aim) && std::abs(aim) < 0.1f) {  // (within about 6 degrees: anything else is you turning it)
+							g_thirdPersonAim.store(aim, std::memory_order_relaxed);
+							REX::INFO("Exit: the game's third-person camera looks {:+.2f} degrees off your body's heading; the next exit cuts to that", aim * 57.29578f);
+						}
+					}
+				}
 				CompareExitFrame();  // 0.9.45 diagnostic: third-person exits too
 				if (FilmingActive()) {
 					FilmFrame();  // people talking near you, filmed (0.8)

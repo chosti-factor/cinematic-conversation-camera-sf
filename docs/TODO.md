@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.45 (2026-11-21). Dates assume the Friday 27 November release; for
+Last updated: 0.9.46 (2026-11-22). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -35,10 +35,12 @@ Wednesday the 25th, about two days earlier.
       one frame (Muria); watch for it
 - [ ] Third-person exit: the one frame of the camera easing in (if vanilla is clean: keep your
       view drawn until the camera has settled)
-- [ ] Third-person exits (the user, 2026-11-21, nice before release): a noticeable shift and
+- [x] Third-person exits (the user, 2026-11-21, nice before release): a noticeable shift and
       turn as the camera settles back, sometimes your body moving as if hit. 0.9.45 logs the
       game's view against the one drawn over the second after the hand-back, and your body's
-      turn and movement. Also to compare: the same exit with the mod off (vanilla).
+      turn and movement. 0.9.45 log: your view from before sat 20-24 degrees off your body's
+      heading, the game's camera behind your body, the swing on frame 1; your body still.
+      0.9.46 turns the cut round your feet to behind you. To test.
 - [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
       `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
       user, 2026-11-17)
@@ -86,13 +88,14 @@ Wednesday the 25th, about two days earlier.
       mid-conversation, ships, scenes, combat, death, fast travel, back-to-back
       conversations); thread safety, crashes (0.9.35-0.9.36, tested 2026-11-21: build warnings
       gone, filming ends at a loading screen, the conversation waits through a trade)
-- [ ] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
+- [x] Optimization: per-frame and scan costs measured with the log off, then cheaper (0.9.37:
       the cost meters; 0.9.39: the log written every 3 s, stalls of 15-27 ms still there;
       0.9.40: the HUD's parts timed; 0.9.41: the INI read only after a change and the HUD's
       idle work skipped, both written up in 0.9.38 but never in the build; 0.9.43 log: the
       main-thread task 16-40 us a frame outside conversations, 100-260 in them (the HUD's
       subtitle 65-120 of it); one spike, 14.8 ms, the INI re-read after an edit on the
-      settings page; left: one run with the debug log off)
+      settings page; with the log off (0.9.44-0.9.45): 16-27 us outside conversations, 50-310
+      in them, no spike over 5 ms but the INI read after an edit. Done 2026-11-22)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

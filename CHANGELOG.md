@@ -4,6 +4,26 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.46 - 2026-11-22
+
+### Fixed
+- Third-person exits: no more swing round you as the game takes over (the user: a shift and
+  turn as the camera settled, your body seeming to jolt as if hit). Before a conversation your
+  third-person camera sat orbited off your body's heading (the 0.9.45 log: 20-24 degrees in
+  all four exits); the game takes over with its camera straight behind your body, so the cut
+  back to your view was followed by a 20-degree, 0.6 m swing round you in one frame (exactly
+  that turn about your feet at 1.7 m). Your body never turned or moved (0 in every exit).
+  The cut now turns your view round your feet to where the game's camera will be: behind your
+  body, looking 1.1 degrees left of its heading as the game's does (measured again at every
+  exit, in case another mod sets its own camera).
+
+### Optimization pass: done
+- With the detailed log off (0.9.44-0.9.45 runs): the main-thread task 16-27 us a frame
+  outside conversations, 50-310 in them (mostly the HUD: the subtitle, bars and options);
+  the conversation camera about 20 us and the filming camera 8 on the camera thread. The
+  0.9.44 run's three 15 ms reads of the INI were edits on the settings page (none in the
+  0.9.45 run, no spike over 5 ms).
+
 ## 0.9.45 - 2026-11-21
 
 ### Diagnostic

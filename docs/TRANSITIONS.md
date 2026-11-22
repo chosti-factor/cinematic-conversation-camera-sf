@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.41, 2026-11-21).
+measured in testing. Kept up to date with every build (last updated: 0.9.46, 2026-11-22).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -283,6 +283,12 @@ Older modes:
 
 ### Third person
 
+- **Heading (0.9.46):** the style-2 cut turns your saved third-person view **round your feet**
+  to behind your body, looking `g_thirdPersonAim` off its heading (-1.14 degrees in the 0.9.45
+  log; measured again on the game's first third-person frame after each exit, kept if within
+  6 degrees). Before it, your view from before the conversation sat orbited 20-24 degrees off
+  your body's heading, and the game takes over behind your body: a 20-degree, 0.6 m swing at
+  the hand-back, all on frame 1 (no ease), your body not turning or moving.
 - **The switch frame:** your saved third-person view is drawn through the gameplay frustum
   (`iExitModeThirdPerson=1`, 0.9.4). The render camera goes back to the game just before the
   third-person camera's own first update.
