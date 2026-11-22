@@ -234,6 +234,22 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   settings while the focus was looked for; the answer was the Dialogue_Close/Medium/Long_DOF
   image-space records (+0x38C strength, +0x398 focus distance, +0x3A4 sharp-zone depth), which
   the game reads live (kept, 0.5.0).
+- **The focus at a cut, 0.9.51-0.9.54 (all dropped; 0.9.55 is 0.8.10's way, the focus on the
+  cut's own frame).** Measured per cut in the user's clips (sharpness inside the bars, frame by
+  frame). On the cut's frame (0.8.10-0.9.50): now and then the old shot's last frame drawn with
+  the new focus, a blurred frame (the 0.9.54 clip: 1 of 15 cuts). A frame later (0.9.51): the
+  blurred frame moved to the new shot's first (7 of 31). No blur on the cut's frame, the new
+  focus a frame later (0.9.52), and that blur eased back over 0.25 s (`bCutFocusEase`, 0.9.53):
+  no blurred frames, but the blur's change itself was distracting (the user). The sharp zone
+  (+0x3A4) stretched from the nearer person past the farther on the cut's frame
+  (`bCutFocusBridge`, 0.9.54): those frames came out blurrier, not sharper (a TwoShot's first
+  frame at a tenth of its sharpness), so a larger sharp-zone value doesn't widen what's sharp
+  the way it was read; all three 1.04-1.67x lens zooms of that run were on its cuts too.
+- **Frame generation (found 2026-11-22):** the user plays with DLSS frame generation (through
+  the RenoDX DLSS add-on). The one-frame odd frames at cuts, varying cut to cut (the focus a
+  frame early or late, the old lens on the new shot, and a frame with bodies and hedges missing
+  in the 0.9.54 clip), may be generated frames between the two shots; next: the same
+  conversation with frame generation off.
 
 ## Reactions and filming
 

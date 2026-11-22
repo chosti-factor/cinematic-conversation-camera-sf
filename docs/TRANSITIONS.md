@@ -57,8 +57,9 @@ were dropped: [MEMORY.md](MEMORY.md).
   the cut's frame it showed on the old shot's last frame now and then (0.9.50 clips), written a
   frame later on the new shot's first (0.9.51 clips). Neither timing is fixed. 0.9.52-0.9.53
   gave the cut's frame no blur (easing back in 0.9.53's test): no flicker, but the blur's change
-  itself was distracting (the user). Since 0.9.54 the focus is on the cut's frame again; the
-  `bCutFocusBridge` test stretches that frame's sharp zone over both people instead. The lens through the game's lens update or its set-FOV
+  itself was distracting (the user). Since 0.9.54 the focus is on the cut's frame again (0.9.54's
+  stretched sharp zone, tested and dropped in 0.9.55: blurrier). The one-frame oddities left
+  may be frame generation (the user plays with DLSS's): under test. The lens through the game's lens update or its set-FOV
   came a frame late now and then (the new shot's first frame zoomed about the centre); since
   0.9.52 it's also written on the render camera beside the camera's position, scaled to the
   game's maths for a lens (learned from a steady shot). The main thread writes neither the

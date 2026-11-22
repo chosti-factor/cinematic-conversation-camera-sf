@@ -136,7 +136,6 @@ namespace CCC
 			float                                 directStartHead{ 0.0f };  // head above feet when the rebuild was asked for (0.9.3)
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
-			float                                 focusLast{ -1.0f };        // the shot distance on the last frame (0.9.52)
 			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
 			int                                   lensSteady{ 0 };           // frames since the lens last changed (0.9.52)
 			bool                                  lensScaleLogged{ false };
@@ -341,7 +340,7 @@ namespace CCC
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text, bool a_persuasion);
 		void                FilmFrame();
-		void                FocusOnShot(float a_distance, float a_span = 0.0f);
+		void                FocusOnShot(float a_distance);
 		void                LensNow();
 
 		// A handheld camera's wander (0.8.15): a slow, smooth drift of where the camera stands
@@ -2662,28 +2661,13 @@ namespace CCC
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
 				const float distance = pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
-				// The focus at a cut: on the cut's own frame, with the camera (0.8.10; back in 0.9.54).
-				// The blur records are read by the game when it draws, so now and then the write
-				// reaches the frame before the camera's: the old shot's last frame with the new focus
-				// (0.9.50 clips). 0.9.51 (a frame later) moved that blurred frame after the cut;
-				// 0.9.52-0.9.53 (no blur on the cut's frame) made the blur's change itself
-				// distracting (the user). bCutFocusBridge (0.9.54, a comparison test): on the cut's
-				// frame the sharp zone reaches from the nearer of the two people to the farther, so
-				// whichever shot that frame is drawn with has its person sharp, the background
-				// blurred as usual; the new shot's own focus from the next frame.
-				const float last = g_state.focusLast;
-				g_state.focusLast = distance;
-				const bool  bothFar = last > kNoBlurBeyond && distance > kNoBlurBeyond;
-				const bool  wasOff = last <= 0.3f, isOff = distance <= 0.3f;  // your own view: no blur
-				const bool  bridge = s.cutFocusBridge && last >= 0.0f && !bothFar && !wasOff && !isOff &&
-				                    std::abs(distance - last) > 0.25f * (std::min)(distance, last);
-				const float focus = bridge ? (std::min)(distance, last) : distance;
-				const float span = bridge ? std::abs(distance - last) : 0.0f;
-				if (bridge && s.debugLog) {
-					REX::INFO("Focus at the cut: {:.2f} m to {:.2f} m, this frame sharp from {:.2f} m over {:.2f} m more", last, distance, focus, span);
-				}
+				// The focus at a cut: on the cut's own frame, with the camera (0.8.10; back in 0.9.54,
+				// the user's pick). Now and then the old shot's last frame shows with the new focus
+				// (0.9.50 clips). Tried and dropped (docs/MEMORY.md): a frame later (0.9.51), no blur
+				// on the cut's frame (0.9.52), that eased back (0.9.53), and the sharp zone stretched
+				// over both people on the cut's frame (0.9.54's test: blurrier, not sharper).
 				g_shotDistance.store(distance, std::memory_order_relaxed);
-				FocusOnShot(focus, span);
+				FocusOnShot(distance);
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -3880,17 +3864,14 @@ namespace CCC
 			return true;
 		}
 
-		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond, float a_span = 0.0f)
+		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond)
 		{
 			for (const auto& r : g_blurRecords) {
 				if (!r.form) {
 					continue;
 				}
 				const float distance = a_shotDistance > 0.3f ? a_shotDistance : r.distance;
-				float       range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
-				if (a_span > 0.0f) {
-					range = (std::max)(range, a_span + r.range);  // bCutFocusBridge: from the nearer person past the farther (0.9.54)
-				}
+				const float range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
 				// No blur at all on the far (room) shots: past about 8 m the game's blur kept
 				// things near the camera sharp and the people soft (0.8.0 test, the Lodge).
 				// 0.8.10: none either before the first shot (no distance yet): the game's own
@@ -3919,19 +3900,17 @@ namespace CCC
 		// 0.8.10: the focus follows a cut on the same frame. It was set from the main thread, a
 		// frame or two after the camera moved, so the first frame of a shot could be focused for
 		// the last one (a blurred flash, most visible at the start of a conversation).
-		void FocusOnShot(float a_distance, float a_span)
+		void FocusOnShot(float a_distance)
 		{
 			const auto& st = Settings::Get();
 			if (!st.focusOnSubject || !g_blurReady.load(std::memory_order_acquire) || g_state.handedBack || g_state.smallSpeaker) {
 				return;
 			}
-			static float spanWritten = 0.0f;
-			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f && std::abs(a_span - spanWritten) < 0.05f) {
+			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f) {
 				return;
 			}
 			g_blurWritten.store(a_distance, std::memory_order_relaxed);
-			spanWritten = a_span;
-			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond, a_span);
+			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond);
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:

@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.54 (2026-11-22).
+Last updated: 0.9.55 (2026-11-22).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -78,10 +78,6 @@ What CCC doesn't do.
 - **Testing messages:** each line's expression, your face's answer and the shot used, with
   why, in the top bar while a conversation is filmed, and the preset in use in the bottom
   bar (`bShowMessages`, `fMessageSeconds`).
-- **Focus at a cut (a comparison test, until 1.0):** the new shot's focus goes on with the
-  cut; or, on the cut's frame, the sharp zone reaches both people, so a frame the game draws
-  early or late still has its person sharp (`bCutFocusBridge`, **Focus on both at a cut** on
-  the settings page's Screen page).
 
 ### Changed from CCC
 

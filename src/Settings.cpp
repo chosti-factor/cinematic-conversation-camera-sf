@@ -101,7 +101,6 @@ namespace CCC
 			a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", a_s.showMessages ? 1 : 0) != 0;
 			a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
-			a_s.cutFocusBridge = ReadInt(a_path, L"Debug", L"bCutFocusBridge", a_s.cutFocusBridge ? 1 : 0) != 0;
 			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;
 			a_s.listenKey = std::clamp(ReadInt(a_path, L"Overhear", L"iListenKey", a_s.listenKey), 0, 254);
 			a_s.listenRange = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);

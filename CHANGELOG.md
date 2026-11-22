@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.55 - 2026-11-22
+
+### Changed (the user's pick after the 0.9.54 comparison)
+- The focus at a cut stays on the cut's own frame, as through 0.9.50; `bCutFocusBridge` is
+  gone. Measured: off, 13 of 15 cuts clean, one blurred frame before a cut; on, its stretched
+  sharp zone made those frames blurrier (4 heavy, 4 moderate of 10), and the run's three
+  zooms (1.04, 1.26 and the 1.67 the user saw, Wide to Profile) were all on its cuts.
+  The four tries and what each showed: docs/MEMORY.md.
+
+### Found
+- One cut (CloseHigh to TwoShot) showed two odd frames before the TwoShot: the first from the
+  right place but with bodies and the hedges missing (heads floating), the second with the
+  hedges back and both people missing. The user plays with DLSS frame generation; these and
+  the other one-frame oddities at cuts may be generated frames between two shots. To test:
+  the same conversation with frame generation off.
+
 ## 0.9.54 - 2026-11-22
 
 ### Changed (back, the user's call)
