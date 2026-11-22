@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.51 - 2026-11-22
+
+### Fixed (the messy cuts in the 0.9.50 clips)
+- **The blurred flash before a cut.** The focus on the person in shot was written on the
+  cut's own frame (0.8.10), and reached the screen a frame before the camera: the last frame
+  of the old shot was drawn with the new shot's focus. From a distant, master or two-shot into
+  a close-up, that's the far shot fully out of focus for a frame; milder into far shots. The focus now goes on a frame after the camera, from the
+  camera thread and the main thread alike.
+- **The "teleport" (a zoom-pop) just after a cut.** A shot's lens went on through the game's
+  lens update, which came a frame after the camera; the main thread could also put the old
+  lens back for a frame more (two-step cuts). Now the lens goes on with the camera, through
+  the game's own set-FOV, as the exit cut has done since 0.9.17, and the camera thread alone
+  keeps it while the mod films your conversation.
+- A conversation starts with no blur until its first shot's focus is due (the last
+  conversation's distance could be read for a frame).
+
 ## 0.9.50 - 2026-11-22
 
 ### Removed (before the INI review, the user's call)

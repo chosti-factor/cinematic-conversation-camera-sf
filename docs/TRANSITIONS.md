@@ -52,6 +52,13 @@ were dropped: [MEMORY.md](MEMORY.md).
   own camera update. A write after that update may not reach that frame. So a cover drawn
   after an update to hide that update's bad frame never works (0.8.18, 0.9.0, 0.9.7 all
   failed). What does work: changing what the update starts from, or not running the update.
+- **Cuts (0.9.51):** the camera, its lens and its focus each reach the screen at a different
+  point. The 0.9.50 clips, measured frame by frame: the focus (the conversation blur records)
+  a frame **before** the camera (a blurred flash on the old shot's last frame), the lens a
+  frame or two **after** it (the new shot's first frames through the old lens, a zoom-pop).
+  So the lens is set with the camera, through the game's own set-FOV (as the exit cut,
+  0.9.17), and the focus a frame later. The main thread no longer writes the lens while the
+  mod films your conversation (it could put the old one back for a frame).
 
 ## Starts
 

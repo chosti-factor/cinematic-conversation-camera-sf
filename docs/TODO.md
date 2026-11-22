@@ -113,7 +113,9 @@ Wednesday the 25th, about two days earlier.
       (some flicker or "teleport"; most are instant). Lead: in the 0.9.47 clip 2 of 6 cuts
       showed the old shot a frame with the new shot's focus before the camera moved. Next: a
       session with the detailed log on, longer conversations (Nebula cuts most), clips; every
-      cut measured frame by frame and sorted by cause.
+      cut measured frame by frame and sorted by cause. (0.9.50 clips: two causes, the focus
+      a frame early and the lens one or two late. 0.9.51 sets the lens with the camera and
+      the focus a frame after; to check with new clips)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

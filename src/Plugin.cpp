@@ -136,6 +136,8 @@ namespace CCC
 			float                                 directStartHead{ 0.0f };  // head above feet when the rebuild was asked for (0.9.3)
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
+			float                                 focusDue{ -1.0f };         // this frame's shot distance, focused on next frame (0.9.51)
+			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
 			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
 			std::chrono::steady_clock::time_point readySeenAt{};
@@ -656,6 +658,7 @@ namespace CCC
 		{
 			g_exitLensFrames.store(0, std::memory_order_relaxed);
 			g_cutOwnsLens.store(false, std::memory_order_relaxed);
+			g_shotDistance.store(0.0f, std::memory_order_relaxed);  // no blur until the first shot's focus is due (0.9.51)
 			g_state = State{};
 			g_state.active = true;
 			g_state.lastFrame = std::chrono::steady_clock::now();
@@ -1748,6 +1751,7 @@ namespace CCC
 						drawn = Camera::ApplyRender(camera->cameraRoot.get(), pose, 0.0f, false);
 						if (drawn && lens >= 40.0f) {
 							g_cutOwnsLens.store(true, std::memory_order_relaxed);
+							g_state.cutLens = 0.0f;  // a shot after this puts its own lens back on (0.9.51)
 							// 0.9.17: through the game's own set-FOV, not our frustum maths: 0.9.16's
 							// SetRenderLens(94) came out much narrower than the game's 94 (the clip:
 							// your view zoomed in about 1.8 times, then widening at the hand-back).
@@ -2654,8 +2658,17 @@ namespace CCC
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
 				const float distance = pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
-				g_shotDistance.store(distance, std::memory_order_relaxed);
-				FocusOnShot(distance);  // on this very frame (0.8.10)
+				// 0.9.51: the focus a frame after the camera. Written on the cut's own frame (0.8.10), it
+				// reached the screen a frame before the camera did: the 0.9.50 clips showed the last
+				// frame of a far shot drawn with the next close-up's focus, a blurred flash (worst
+				// from a distant, master or two-shot into a close-up). The main thread's focus reads
+				// g_shotDistance too, so that is held back with it.
+				const float due = g_state.focusDue;
+				g_state.focusDue = distance;
+				if (due >= 0.0f) {
+					g_shotDistance.store(due, std::memory_order_relaxed);
+					FocusOnShot(due);
+				}
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -2669,6 +2682,17 @@ namespace CCC
 			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).
 			if (applied && wideFrame) {
 				Camera::SetRenderLens(Director::WantedLens());
+				g_state.cutLens = Director::WantedLens();
+			} else if (applied && g_lensActive.load(std::memory_order_relaxed)) {
+				// 0.9.51: a cut's lens with the camera, through the game's own set-FOV, as the exit
+				// cut does (0.9.17). Left to the game's lens update, it came a frame or two after the
+				// camera: the 0.9.50 clips showed the first frames of a new shot drawn through the
+				// last one's lens, a zoom-pop ("teleport").
+				const float lens = Director::WantedLens();
+				if (lens >= 10.0f && std::abs(lens - g_state.cutLens) > 0.05f && !FilmingActive()) {
+					g_state.cutLens = lens;
+					SetGameLens(lens);
+				}
 			}
 			if (!applied) {
 				applied = Camera::Apply(root, *pose, delta);
@@ -5835,7 +5859,12 @@ namespace CCC
 					// (Filming people talking near you uses the lens too, at least the game's 30.)
 					const bool filmingOthers = FilmingActive();
 					const float lens = Director::WantedLens();
-					g_lensWanted.store(filmingOthers ? g_filmLens.load(std::memory_order_relaxed) : lens, std::memory_order_relaxed);  // (0.8.15: filming kept the last conversation's lens)
+					// 0.9.51: while this mod films your conversation, the camera thread sets the lens at
+					// each cut (LensNow); a value read here before a cut and stored after it put the
+					// old lens back for a frame (the two-step cuts in the 0.9.50 clips).
+					if (filmingOthers || !g_state.active || g_state.handedBack) {
+						g_lensWanted.store(filmingOthers ? g_filmLens.load(std::memory_order_relaxed) : lens, std::memory_order_relaxed);  // (0.8.15: filming kept the last conversation's lens)
+					}
 					g_lensActive.store(filmingOthers || (g_state.active && !g_state.handedBack && !g_state.smallSpeaker && lens >= 10.0f), std::memory_order_relaxed);
 					if (!g_state.active) {
 						g_lensCalls.store(0, std::memory_order_relaxed);
