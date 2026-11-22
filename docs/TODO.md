@@ -122,9 +122,10 @@ Wednesday the 25th, about two days earlier.
 - [x] Compare `bCutFocusBridge` 0 and 1: 0 kept, the switch gone (0.9.55)
 - [ ] Before 1.0: the odd frames at some cuts (a frame with bodies or hedges missing, the old
       lens for a frame, the new focus a frame early). Not frame generation (it was off) and not
-      DLSS (0.9.55 test with it off: the same). 0.9.56: the cut timing trace (detailed log);
-      next lead, how the game's quest-scene cameras cut cleanly (the user). The trace comes
-      out before the RC
+      DLSS (0.9.55 test with it off: the same). 0.9.56: the cut timing trace (detailed log):
+      the zooms were cuts from shots over 60 degrees, taken for the start's gameplay lens
+      (fixed 0.9.57; to check with clips). Left: the early focus now and then; lead, how the
+      game's quest-scene cameras cut cleanly (the user). The trace comes out before the RC
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

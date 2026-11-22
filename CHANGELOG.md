@@ -4,6 +4,18 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.57 - 2026-11-22
+
+### Fixed (found with 0.9.56's cut timing trace)
+- **The zoom at some cuts.** A cut away from a shot with a lens over 60 degrees
+  (MediumPlayer's 62, the two-shots and other wide ones) didn't put the new lens on with the
+  camera: the check for a conversation's first frames, when the game still draws through
+  your gameplay lens, took any lens over 60 degrees for that. The new shot was drawn through
+  the old lens until the game's own lens update, which runs only every other frame: one or
+  two frames zoomed (the trace: all three cuts from MediumPlayer; every other cut had its lens
+  on the camera on the cut's own frame). The check now leaves out the lens this mod put on.
+  This was most likely behind the zooms seen since the lens was first set per shot.
+
 ## 0.9.56 - 2026-11-22
 
 ### Diagnostic (detailed log only; to come out before the RC)

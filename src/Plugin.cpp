@@ -1871,7 +1871,14 @@ namespace CCC
 			// frames we show the view the player had just before instead.
 			float gameFov = 0.0f;
 			SafeCopy(&gameFov, reinterpret_cast<std::uint8_t*>(camera) + kPlayerCameraFovOffset, sizeof(float));
-			const bool wideFrame = gameFov > 60.0f && gameFov < 170.0f;
+			// The gameplay lens still on the camera (a conversation's first frames, 0.9.4). Not the
+			// lens this mod put on (0.9.57): shots with a lens over 60 degrees (MediumPlayer's 62, the
+			// two-shots) passed for it, so a cut away from them skipped the lens set with the camera,
+			// and the new shot's first frame or two came out through the old lens (the 0.9.56 cut
+			// timing trace: three cuts from MediumPlayer, the old 62 degrees left on until the game's
+			// own lens update, which runs every other frame).
+			const float ourLens = g_lensWanted.load(std::memory_order_relaxed);
+			const bool  wideFrame = gameFov > 60.0f && gameFov < 170.0f && !(ourLens >= 10.0f && std::abs(gameFov - ourLens) < 0.5f);
 			if (wideFrame && g_state.startFov <= 0.0f) {
 				Camera::RememberGameplayFrustum(camera->cameraRoot.get());
 				g_state.startFov = gameFov;
