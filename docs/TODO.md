@@ -52,7 +52,8 @@ Wednesday the 25th, about two days earlier.
       clean (bars and cut on one frame, the cut sharp); the frame without bars as the menu
       closed still there, and first person a frame of bars over its cut. The user
       (2026-11-22): clean exits over bars kept to the cut; 0.9.49 takes the stand-in bars out
-      (post-1.0 Mulling). To confirm on a clip.
+      (post-1.0 Mulling). Confirmed 2026-11-22 (the user: exits clean; 0.9.49 clip, two
+      first-person and two third-person exits: the bars go once with the menu, then one cut).
 - [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
       `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
       user, 2026-11-17)
