@@ -4,6 +4,28 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.54 - 2026-11-22
+
+### Changed (back, the user's call)
+- The focus at a cut goes on with the camera again, on the cut's own frame (0.8.10-0.9.50).
+  0.9.52's no-blur frame and 0.9.53's eased blur stopped the blurred frames but made the
+  blur's change itself distracting (the user, 0.9.53 test). The lens written with the
+  camera (0.9.52) stays: no flicker seen at the cuts since.
+
+### Added (a comparison test, replacing `bCutFocusEase`)
+- `bCutFocusBridge` ([Debug]; **Focus on both at a cut**, Screen > Testing). Off: the new
+  shot's focus on the cut's frame, as through 0.9.50 (now and then drawn on the old shot's
+  last frame). On: on the cut's frame the sharp zone reaches from the nearer person to the
+  farther, the background blurred as usual, so either shot drawn on that frame has its person
+  sharp; the new shot's own focus from the next frame. With the detailed log: "Focus at the
+  cut: ...". Not yet known: how the game's sharp-zone depth spreads round the focus.
+
+### How we got here (CCC)
+- CCC never refocuses between shots: its depth of field (off by default) is one fixed vanilla
+  blur, Skyrim's unused VATS one at a set strength, for the whole conversation. Here the focus
+  follows each shot (0.5.0), because Starfield's conversation blur, unfocused, left people
+  soft on longer shots.
+
 ## 0.9.53 - 2026-11-22
 
 ### Added (a comparison test, the user's ask)

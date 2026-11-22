@@ -119,8 +119,10 @@ Wednesday the 25th, about two days earlier.
       cut, 4 zooms. 0.9.52: no blur on a cut's frame, the lens written on the render camera
       with its position; to check with new clips. A passer-by close past the camera, seen
       in the clip, is fine: the user, they add life to a scene)
-- [ ] Before 1.0: compare `bCutFocusEase` 0 and 1 (the blur back at once or eased after a
-      cut's sharp frame); keep the user's pick as the behaviour and take the switch out
+- [ ] Before 1.0: compare `bCutFocusBridge` 0 and 1 (the new focus on the cut's frame, or
+      that frame's sharp zone over both people); keep the user's pick and take the switch out.
+      (`bCutFocusEase`, 0.9.53: the user found the no-blur frame and the eased blur
+      distracting; gone in 0.9.54)
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

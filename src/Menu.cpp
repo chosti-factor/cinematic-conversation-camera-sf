@@ -133,8 +133,8 @@ namespace CCC::Menu
 			{ "Screen", "Dialogue options", "Interface", "fOptionsFade", "Fade (s)", Kind::kFloat, 0.0f, 1.5f, "%.1f", "0 = no fade." },
 			{ "Screen", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
 				"The shot and the line's expression in the top bar." },
-			{ "Screen", "Testing", "Debug", "bCutFocusEase", "Ease the blur back after a cut", Kind::kBool, 0, 1, nullptr,
-				"A comparison test. A cut's own frame has no blur. Off: the new shot's blur comes back on the next frame. On: it eases back over a quarter of a second." },
+			{ "Screen", "Testing", "Debug", "bCutFocusBridge", "Focus on both at a cut", Kind::kBool, 0, 1, nullptr,
+				"A comparison test. Off: a cut's frame has the new shot's focus (now and then the game draws it on the old shot's last frame, a blurred frame). On: on a cut's frame the sharp zone reaches both people, so either shot has its person sharp; the new shot's own focus from the next frame." },
 			{ "Screen", "Testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
 				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
 

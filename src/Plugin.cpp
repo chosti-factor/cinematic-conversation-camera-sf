@@ -140,8 +140,6 @@ namespace CCC
 			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
 			int                                   lensSteady{ 0 };           // frames since the lens last changed (0.9.52)
 			bool                                  lensScaleLogged{ false };
-			std::chrono::steady_clock::time_point focusCutAt{};          // the last cut that turned the blur off (0.9.53)
-			bool                                  focusEasing{ false };  // bCutFocusEase: the blur coming back
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
 			std::uint32_t                         cutsAtReady{ 0 };          // the director's cuts by then
 			std::chrono::steady_clock::time_point readySeenAt{};
@@ -343,7 +341,7 @@ namespace CCC
 		Director::Clearance TestShot(const RE::NiPoint3& a_subjectHead, const RE::NiPoint3& a_camera, const RE::NiPoint3& a_nearHead, bool a_overShoulder);
 		void                OnOptionChosen(const std::string& a_text, bool a_persuasion);
 		void                FilmFrame();
-		void                FocusOnShot(float a_distance, float a_strength = 1.0f);
+		void                FocusOnShot(float a_distance, float a_span = 0.0f);
 		void                LensNow();
 
 		// A handheld camera's wander (0.8.15): a slow, smooth drift of where the camera stands
@@ -2664,38 +2662,28 @@ namespace CCC
 				const auto& subjectHead = subject == Subject::kNpc ? *npcHead : *playerHead;
 				const float dx = pose->position.x - subjectHead.x, dy = pose->position.y - subjectHead.y, dz = pose->position.z - subjectHead.z;
 				const float distance = pov ? 0.0f : std::sqrt(dx * dx + dy * dy + dz * dz);
-				// The focus at a cut (0.9.52). The blur records are read by the game when it draws, and
-				// a write from here can reach the frame before the camera's or the camera's own: the
-				// 0.9.50 clips (written on the cut's frame) showed the old shot's last frame drawn with
-				// the new focus, the 0.9.51 clips (a frame later) the new shot's first frame with the
-				// old one, a blurred frame either way. So on a cut's frame the blur is off, right for
-				// both shots, and the new shot's focus goes on a frame later, when only the new shot
-				// can be drawn. Not when the old focus would do for both: within a quarter of each
-				// other, or both past the no-blur distance.
+				// The focus at a cut: on the cut's own frame, with the camera (0.8.10; back in 0.9.54).
+				// The blur records are read by the game when it draws, so now and then the write
+				// reaches the frame before the camera's: the old shot's last frame with the new focus
+				// (0.9.50 clips). 0.9.51 (a frame later) moved that blurred frame after the cut;
+				// 0.9.52-0.9.53 (no blur on the cut's frame) made the blur's change itself
+				// distracting (the user). bCutFocusBridge (0.9.54, a comparison test): on the cut's
+				// frame the sharp zone reaches from the nearer of the two people to the farther, so
+				// whichever shot that frame is drawn with has its person sharp, the background
+				// blurred as usual; the new shot's own focus from the next frame.
 				const float last = g_state.focusLast;
 				g_state.focusLast = distance;
 				const bool  bothFar = last > kNoBlurBeyond && distance > kNoBlurBeyond;
 				const bool  wasOff = last <= 0.3f, isOff = distance <= 0.3f;  // your own view: no blur
-				const bool  jump = last >= 0.0f && !bothFar &&
-				                  (wasOff != isOff || (!wasOff && std::abs(distance - last) > 0.25f * (std::min)(distance, last)));
-				const float focus = jump ? 0.0f : distance;
-				// bCutFocusEase (0.9.53, a comparison test): the blur eases back over 0.25 s after the
-				// cut's sharp frame instead of all at once.
-				float strength = 1.0f;
-				if (jump) {
-					g_state.focusCutAt = now;
-					g_state.focusEasing = s.cutFocusEase;
-				} else if (g_state.focusEasing) {
-					const float t = std::chrono::duration<float>(now - g_state.focusCutAt).count() / 0.25f;
-					if (t >= 1.0f) {
-						g_state.focusEasing = false;
-					} else {
-						const float u = (std::max)(t, 0.0f);
-						strength = u * u * (3.0f - 2.0f * u);
-					}
+				const bool  bridge = s.cutFocusBridge && last >= 0.0f && !bothFar && !wasOff && !isOff &&
+				                    std::abs(distance - last) > 0.25f * (std::min)(distance, last);
+				const float focus = bridge ? (std::min)(distance, last) : distance;
+				const float span = bridge ? std::abs(distance - last) : 0.0f;
+				if (bridge && s.debugLog) {
+					REX::INFO("Focus at the cut: {:.2f} m to {:.2f} m, this frame sharp from {:.2f} m over {:.2f} m more", last, distance, focus, span);
 				}
-				g_shotDistance.store(focus, std::memory_order_relaxed);
-				FocusOnShot(focus, strength);
+				g_shotDistance.store(distance, std::memory_order_relaxed);
+				FocusOnShot(focus, span);
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -3892,19 +3880,22 @@ namespace CCC
 			return true;
 		}
 
-		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond, float a_strength = 1.0f)
+		void WriteBlurRecords(float a_shotDistance, bool a_deepLong, float a_beyond, float a_span = 0.0f)
 		{
 			for (const auto& r : g_blurRecords) {
 				if (!r.form) {
 					continue;
 				}
 				const float distance = a_shotDistance > 0.3f ? a_shotDistance : r.distance;
-				const float range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
+				float       range = a_deepLong && a_shotDistance > a_beyond ? (std::max)(r.range * 4.0f, 50.0f) : r.range;
+				if (a_span > 0.0f) {
+					range = (std::max)(range, a_span + r.range);  // bCutFocusBridge: from the nearer person past the farther (0.9.54)
+				}
 				// No blur at all on the far (room) shots: past about 8 m the game's blur kept
 				// things near the camera sharp and the people soft (0.8.0 test, the Lodge).
 				// 0.8.10: none either before the first shot (no distance yet): the game's own
 				// focus, 1.5 m, blurred the opening frame of a shot 4 m away.
-				const float strength = a_shotDistance > kNoBlurBeyond || a_shotDistance <= 0.3f ? 0.0f : r.strength * a_strength;
+				const float strength = a_shotDistance > kNoBlurBeyond || a_shotDistance <= 0.3f ? 0.0f : r.strength;
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurStrength), &strength, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurDistance), &distance, 4);
 				SafeWrite(reinterpret_cast<void*>(r.form + kBlurRange), &range, 4);
@@ -3928,19 +3919,19 @@ namespace CCC
 		// 0.8.10: the focus follows a cut on the same frame. It was set from the main thread, a
 		// frame or two after the camera moved, so the first frame of a shot could be focused for
 		// the last one (a blurred flash, most visible at the start of a conversation).
-		void FocusOnShot(float a_distance, float a_strength)
+		void FocusOnShot(float a_distance, float a_span)
 		{
 			const auto& st = Settings::Get();
 			if (!st.focusOnSubject || !g_blurReady.load(std::memory_order_acquire) || g_state.handedBack || g_state.smallSpeaker) {
 				return;
 			}
-			static float strengthWritten = 1.0f;
-			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f && std::abs(a_strength - strengthWritten) < 0.01f) {
+			static float spanWritten = 0.0f;
+			if (std::abs(a_distance - g_blurWritten.load(std::memory_order_relaxed)) < 0.05f && std::abs(a_span - spanWritten) < 0.05f) {
 				return;
 			}
 			g_blurWritten.store(a_distance, std::memory_order_relaxed);
-			strengthWritten = a_strength;
-			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond, a_strength);
+			spanWritten = a_span;
+			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond, a_span);
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:
