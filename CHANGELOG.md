@@ -18,6 +18,12 @@ test build; "diagnostic" items only add information to the log for testing.
 - Checked (the user's 0.9.57 clip, Nebula, DLSS on): 15 of 15 cuts clean, one frame each: no
   zoom (every cut's lens on the camera on its own frame, trace and clip agree, including cuts
   from 62, 65, 72 and 80 degree shots) and no blurred frame before or after a cut.
+- Checked again (the Lodge, indoors, starts from first person; Cora, Sarah and Vasco; four
+  clips, about 45 cuts): no zoom and no two-step cut anywhere; one mild softening of the old
+  shot just before a cut (CloseUp to OverNpcShoulderLow). Starts and exits as before.
+- Seen in that run (the user): Cora's conversation had lines overlapping, the bug fixed in
+  0.9.43, after a filming of Matteo and Walter that was stopped by moving 2 minutes earlier;
+  Sarah's and Vasco's conversations after it were fine. Not yet known whether it's the mod.
 
 ## 0.9.56 - 2026-11-22
 
