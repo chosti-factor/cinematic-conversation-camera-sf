@@ -40,7 +40,9 @@ Wednesday the 25th, about two days earlier.
       game's view against the one drawn over the second after the hand-back, and your body's
       turn and movement. 0.9.45 log: your view from before sat 20-24 degrees off your body's
       heading, the game's camera behind your body, the swing on frame 1; your body still.
-      0.9.46 turns the cut round your feet to behind you. To test.
+      0.9.46 turns the cut round your feet to behind you. Tested 2026-11-22 (three exits,
+      log and clip): the game's view within 0.04 degrees of the one drawn, the clip clean
+      frame by frame at both hand-backs.
 - [x] Furniture camera swing when sitting and standing: vanilla does it too and the game's
       `bDisableFurnitureCamera` doesn't stop it; left for after 1.0, under Mulling (the
       user, 2026-11-17)
