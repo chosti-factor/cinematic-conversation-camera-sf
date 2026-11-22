@@ -4,6 +4,38 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.48 - 2026-11-22
+
+### Fixed
+- The bars through the exit, to the frame (the 0.9.47 clips, measured frame by frame): at
+  every exit one frame went without bars as the game closed its dialogue menu (the stand-in
+  bars came on the main task's next tick), and in one style-3 exit of two the bars went a
+  frame before the cut. The game's own menu event now puts them up the moment the menu closes
+  (on the main thread; elsewhere the next tick does), and they go a tick after the cut, not on
+  the tick that sees it (the camera runs on worker threads, so that tick sometimes came before
+  the cut was drawn): at worst a frame after the cut, never before it.
+- From the review of 0.9.44-0.9.48 for regressions (the user's request):
+  - The menu event asks the game's UI nothing: which menus are open and the HUD messages
+    menu itself are kept from the main task's last tick (asking the UI from inside its own
+    menu event could lock the game if it holds its menu list meanwhile). The menu kept in hand
+    is never freed, so quitting mid-conversation can't release it after the UI has gone.
+  - A style-2 third-person exit whose hold ended before `fExitCutSeconds` (no cut) drew your
+    view un-turned at the hand-back, the 20-degree swing of before 0.9.46: the view is turned
+    on that frame whenever no cut came first.
+  - The dialogue menu coming back while the stand-in bars are up takes their height at once
+    (no slide in again).
+
+### Found
+- `iExitStyle=3` (0.9.47 clip, two third-person exits): the cut came on the game's hand-back
+  frame, sharp at once (no soft first frame, the game's own state), and nothing moved after
+  it: your character's pose change and the sharpening went into the cut.
+- One exit's hold (style 2, Sarah's hair close in frame) shimmered sharp and soft every other
+  frame once the dialogue menu closed: the game's hair on a still camera; not the mod's.
+- Two cuts within a conversation (of 6 in the style-2 clip; none of 12 in the other clips)
+  showed the old shot a frame with the new shot's focus (sharp background) before the camera
+  moved. The focus and the camera are written together at a cut (0.8.10); which the game picks
+  up first varies with its threads. Not from these builds and not from the exit style.
+
 ## 0.9.47 - 2026-11-22
 
 ### Added (on trial)

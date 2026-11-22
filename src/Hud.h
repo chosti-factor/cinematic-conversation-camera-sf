@@ -50,6 +50,11 @@ namespace CCC::Hud
 	// menu, as when filming) at the height they had; false drops them at once. Main thread.
 	void SetExitBars(bool a_keep);
 
+	// The game has just closed its dialogue menu during a conversation's exit (from its menu
+	// event, main thread, 0.9.48): the bars go up at once, before the frame is drawn without
+	// them.
+	void OnDialogueMenuClosed();
+
 	// The preset on screen with the testing messages (bShowMessages), in the bottom bar while
 	// a conversation is filmed, e.g. "PRESET: FRONTIER". Main thread.
 	void SetPresetLabel(const std::string& a_text);

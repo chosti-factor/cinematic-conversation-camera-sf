@@ -817,9 +817,13 @@ namespace CCC
 				// camera's own first update.
 				bool tpExit = false;
 				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
-					if (Settings::Get().exitStyle == 3 && g_state.exitCutFrames == 0) {
-						TurnThirdPersonViewBehindYou();  // (iExitStyle 3: no cut before this frame turned it)
-						REX::INFO("Exit style 3: from third person, the last shot held to the game's hand-back; your view cut to on its frame");
+					// No cut before this frame turned it: iExitStyle 3, or a hold shorter than
+					// fExitCutSeconds with 2 (0.9.48: that drew the view un-turned, the old swing).
+					if (g_state.exitCutFrames == 0) {
+						TurnThirdPersonViewBehindYou();
+						if (Settings::Get().exitStyle == 3) {
+							REX::INFO("Exit style 3: from third person, the last shot held to the game's hand-back; your view cut to on its frame");
+						}
 					}
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_thirdPersonView)) {
 						tpExit = true;
@@ -5994,6 +5998,38 @@ namespace CCC
 			g_bystanders = std::move(still);
 		}
 
+		// The game's menu events (0.9.48): its dialogue menu closing at a conversation's exit puts
+		// the stand-in bars up at once (main thread only; elsewhere the main task's next tick does).
+		bool MenuOverConversation()
+		{
+			if (Menu::IsOpen()) {
+				return true;
+			}
+			auto* ui = RE::UI::GetSingleton();
+			if (!ui) {
+				return false;
+			}
+			static const std::array<RE::BSFixedString, 5> kOver{ RE::BSFixedString{ "BarterMenu" }, RE::BSFixedString{ "ContainerMenu" },
+				RE::BSFixedString{ "SpaceshipEditorMenu" }, RE::BSFixedString{ "ShipCrewAssignMenu" }, RE::BSFixedString{ "ShipCrewMenu" } };
+			return std::ranges::any_of(kOver, [&](const auto& a_m) { return ui->IsMenuOpen(a_m); });
+		}
+
+		std::atomic<bool> g_menuOverLastTick{ false };  // MenuOverConversation() on the main task's last tick
+
+		struct MenuEvents : RE::BSTEventSink<RE::MenuOpenCloseEvent>
+		{
+			RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent& a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
+			{
+				static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
+				if (!a_event.opening && a_event.menuName == dialogueMenu && ::GetCurrentThreadId() == g_mainThreadId && g_state.active && !g_state.handedBack &&
+					!g_state.smallSpeaker && g_state.exitCutFrames == 0 && !g_menuOverLastTick.load(std::memory_order_relaxed)) {
+					// (Nothing here asks the game's UI anything: this runs inside its menu event.)
+					Hud::OnDialogueMenuClosed();
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		} g_menuEvents;
+
 		void Watchdog()
 		{
 			if (::GetCurrentThreadId() != g_mainThreadId) {
@@ -6001,6 +6037,16 @@ namespace CCC
 				return;
 			}
 			CostScope cost{ g_costMain };
+			{
+				static bool listening = false;
+				if (!listening) {
+					if (auto* ui = RE::UI::GetSingleton()) {
+						ui->RegisterSink<RE::MenuOpenCloseEvent>(&g_menuEvents);
+						listening = true;
+						REX::INFO("Listening for the game's menu events (the bars through a conversation's exit)");
+					}
+				}
+			}
 			// Outside conversations, what the mod costs, once a minute (0.9.37).
 			{
 				static auto nextCost = std::chrono::steady_clock::now() + 60s;
@@ -6124,22 +6170,24 @@ namespace CCC
 					// last shot jumped to full frame 0.4 s before the cut, two changes where one should
 					// be). Kept until that cut (or, without one, until the game takes over); not while a
 					// trade or similar menu, or the settings page, is over the conversation.
+					// 0.9.48: they go a tick after the cut (or the hand-back), not on the tick that sees
+					// it: the camera runs on worker threads, and on some frames this tick came before the
+					// cut was drawn (the 0.9.47 clip: the bars went a frame early once in two exits).
 					{
 						static int  menuSeenIn = -1;
+						static bool wantedLastTick = false;
 						auto*       ui = RE::UI::GetSingleton();
 						static const RE::BSFixedString dialogueMenu{ "DialogueMenu" };
 						const bool  dialogueOpen = ui && ui->IsMenuOpen(dialogueMenu);
 						if (g_state.active && dialogueOpen) {
 							menuSeenIn = g_conversationNumber;
 						}
-						bool menuOver = Menu::IsOpen();
-						if (!menuOver && ui) {
-							static const std::array<RE::BSFixedString, 5> kOver{ RE::BSFixedString{ "BarterMenu" }, RE::BSFixedString{ "ContainerMenu" },
-								RE::BSFixedString{ "SpaceshipEditorMenu" }, RE::BSFixedString{ "ShipCrewAssignMenu" }, RE::BSFixedString{ "ShipCrewMenu" } };
-							menuOver = std::ranges::any_of(kOver, [&](const auto& a_m) { return ui->IsMenuOpen(a_m); });
-						}
-						Hud::SetExitBars(Settings::Get().letterbox && g_state.active && !g_state.handedBack && !g_state.smallSpeaker && menuSeenIn == g_conversationNumber &&
-										 !dialogueOpen && !menuOver && g_state.exitCutFrames == 0);
+						const bool menuOver = MenuOverConversation();
+						g_menuOverLastTick.store(menuOver, std::memory_order_relaxed);
+						const bool want = Settings::Get().letterbox && g_state.active && !g_state.handedBack && !g_state.smallSpeaker && menuSeenIn == g_conversationNumber &&
+						                  !dialogueOpen && !menuOver && g_state.exitCutFrames == 0;
+						Hud::SetExitBars(want || (wantedLastTick && !dialogueOpen && !menuOver));
+						wantedLastTick = want;
 					}
 					CostScope hudCost{ g_costHud };
 					Hud::Update(g_state.active && !g_state.handedBack && !g_state.smallSpeaker, g_state.speakerWasTalking, dt);
