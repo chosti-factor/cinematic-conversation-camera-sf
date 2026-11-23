@@ -127,3 +127,139 @@ Settings page help texts:
 - Setting names and sections (players' `_user.ini` files and old guides keep working).
 - The INI's order, apart from grouping notes.
 - [GameSettings] (one commented example).
+
+## 6. Every setting: where it is, and how advanced (proposal, 2026-11-22)
+
+The user asked (after 0.9.60) for every setting in one table, with a suggestion of which are
+advanced, as some would be better kept from players, labelled advanced, or put in a separate
+advanced section.
+
+Levels proposed:
+- **Page:** on the settings page (and in the INI). The main choices.
+- **Standard:** in the INI's normal sections: a preset's own numbers (for the preset editor
+  after 1.0), your keys, your face's chances. Worth changing for players who want to.
+- **Advanced:** technical tuning and workarounds that are rarely worth changing; kept in the
+  INI but marked or moved (see the options below).
+- **Hidden:** fine-tuning found by testing that a player shouldn't need: out of the shipped
+  INI, still read if someone adds it (listed in a doc for whoever wants them).
+
+Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<Preset>` and the
+[Shots] lines counted once).
+
+| Section | Setting | Default | Where now | Level | What it does |
+|---|---|---|---|---|---|
+| General | `bEnabled` | 1 | INI + page | Page | The mod on or off |
+| General | `bDebugLog` | 0 | INI + page | Page | Detailed log, for bug reports |
+| Director | `bEnabled` | 1 | INI | Advanced | The shot library on (off: plain over-the-shoulder shots only) |
+| Director | `sPreset` | Nebula | INI + page | Page | The preset |
+| Director | `fCuttingPace` | 0 | INI + page | Page | How lively the cutting is (also per preset: fCuttingPace<Preset>) |
+| Director | `iMinLines` | 2 | INI | Advanced | Fewest lines before a new angle (commented out: the preset's own) |
+| Director | `iMaxLines` | 5 | INI | Advanced | Most lines before a new angle (commented out: the preset's own) |
+| Director | `fShortestHold` | 2.0 | INI | Advanced | Shortest hold of a shot (commented out: the preset's own) |
+| Director | `fShortLineSeconds` | 1.2 | INI | Hidden | Lines shorter than this don't count for cutting |
+| Director | `fMaxCameraDistance` | 0 | INI | Standard | Furthest the camera stands, indoors (0 = the preset's own) |
+| Director | `fMaxCameraDistanceExterior` | 0 | INI | Standard | Furthest the camera stands, outdoors (0 = the preset's own) |
+| Director | `bObstacleCheck` | 1 | INI + page | Page | Avoid walls and objects |
+| Director | `fObstacleRadius` | 0.05 | INI | Hidden | Width of the obstacle check (the game's own value) |
+| Director | `bTrue180` | 0 | INI + page | Page | 180-degree rule |
+| Director | `bEnforceLine` | 1 | INI | Advanced | Never across the eyeline |
+| Director | `bFollowFace` | 1 | INI + page | Page | Close-ups follow the face |
+| Director | `bReactionShotsPlayer` | -1 | INI + page | Page | Reaction shots of you |
+| Director | `bChoiceCloseUpsPlayer` | -1 | INI + page | Page | Close-up of you on skill choices |
+| Director | `fChoiceCloseUpSecondsPlayer` | 2 | INI | Standard | How long that close-up lasts |
+| Director | `fReactionAfterSecondsPlayer` | -1 | INI | Standard | Their talking before a reaction of you is due |
+| Director | `iReactionChancePlayer` | 100 | INI | Standard | Chance a due reaction is taken |
+| Director | `fReactionLineMinSecondsPlayer` | 2.5 | INI | Advanced | Shortest line a reaction can take |
+| Director | `fReactionLineMaxSecondsPlayer` | 7 | INI | Advanced | Longest line a reaction takes whole |
+| Director | `fReactionLongLineSecondsPlayer` | 4 | INI | Advanced | Longer lines: how much of it is shown on you |
+| Director | `iCloseUpChanceMildPlayer` | 25 | INI | Standard | Close-up of you: mild expressions (%) |
+| Director | `iCloseUpChanceMediumPlayer` | 40 | INI | Standard | Close-up of you: medium expressions (%) |
+| Director | `iCloseUpChanceStrongPlayer` | 100 | INI | Standard | Close-up of you: strong expressions (%) |
+| Director | `iExtremeCloseUpChancePlayer` | 40 | INI | Standard | Extreme close-ups of you (%) |
+| Director | `bListeningCloseUpsPlayer` | -1 | INI | Standard | Listening reactions may be close-ups |
+| Director | `bAvoidBystandersNpc` | 1 | INI + page | Page | Avoid people in the way |
+| Director | `fBystanderStillNpc` | 1.5 | INI | Hidden | How long someone stands still to count as in the way |
+| Director | `bPersuasionBeatNpc` | 1 | INI + page | Page | Hold on their answer (persuasion) |
+| Director | `sBeatTags` | Intimidate,Intimidati... | INI | Advanced | Skill tags that get the persuasion beat |
+| Director | `bEmotionCloseUpsNpc` | -1 | INI + page | Page | Emotion close-ups of the speaker |
+| Director | `sCloseUpEmotionsMildNpc` | Amused,Confident,Thin... | INI | Advanced | Which expressions are mild |
+| Director | `iCloseUpChanceMildNpc` | 25 | INI | Standard | Close-up chance, mild lines (%) |
+| Director | `sCloseUpEmotionsMediumNpc` | Concerned,Serious,Smi... | INI | Advanced | Which expressions are medium |
+| Director | `iCloseUpChanceMediumNpc` | 40 | INI | Standard | Close-up chance, medium lines (%) |
+| Director | `sCloseUpEmotionsStrongNpc` | VeryAngry,Rage,Angry,... | INI | Advanced | Which expressions are strong |
+| Director | `iCloseUpChanceStrongNpc` | 100 | INI | Standard | Close-up chance, strong lines (%) |
+| Director | `iExtremeCloseUpChanceNpc` | -1 | INI | Standard | Share of their close-ups that are extreme |
+| Director | `fCloseUpLimitSecondsNpc` | -1 | INI | Standard | Longest one close-up of them holds |
+| Director | `iRoomShotMinRoom` | 60 | INI | Advanced | Room shots left out in rooms smaller than this (%) |
+| Director | `fRoomShotMaxIndoors` | -1 | INI | Standard | Furthest back room shots stand, indoors |
+| Director | `fRoomShotMaxOutdoors` | -1 | INI | Standard | Furthest back room shots stand, outdoors |
+| Director | `bPlainShotsSeatedNpc` | 1 | INI | Advanced | Plain shot for seated people |
+| Director | `bPlainShotsMerchantsNpc` | 1 | INI | Advanced | Plain shot for merchants |
+| Director | `bCameraMoves` | 1 | INI + page | Page | Camera moves (push-ins, drifts...) |
+| Shots | `(per shot, e.g. CloseUp)` | 80 | INI | Standard | Per-shot tweaks: weight, move, amount, time (examples, commented out) |
+| Camera | `fConversationLens` | -1 | INI | Standard | One lens for every angle (-1 = each angle's own) |
+| Camera | `iShotMode` | 2 | INI | Advanced | Who gets the camera (shot/reverse-shot, or one side only) |
+| Camera | `fFaceDeadband` | 0.04 | INI | Hidden | Head movement the camera ignores |
+| Camera | `iCameraSway` | -1 | INI | Standard | Camera sway (-1 = the preset's own) |
+| Camera | `fFollowSmoothing` | 0.35 | INI | Advanced | Smoothing when following someone who moves |
+| Camera | `fBusyFollowSmoothing` | 1.0 | INI | Hidden | Smoothing for a speaker on the move |
+| Camera | `fBusyHeadSpeed` | 0.25 | INI | Hidden | Head speed that counts as on the move |
+| Camera | `fMinSpeakerHeightNpc` | 1.0 | INI | Advanced | Shorter speakers (small robots) keep the game's camera |
+| Camera | `fLargeSpeakerHeightNpc` | 1.70 | INI | Advanced | Large speaker from this height (Vasco) |
+| Camera | `fLargeSpeakerAnglePlayer` | 38 | INI | Advanced | Large speaker: how wide the shots of you stay |
+| Camera | `fLargeSpeakerPlainAnglePlayer` | 45 | INI | Advanced | Large speaker: the plain shot of you |
+| Camera | `bGameCameraInScenes` | 1 | INI + page | Page | Game's camera in quest scenes |
+| Camera | `bFocusOnSubject` | 1 | INI + page | Page | Focus on the person in shot |
+| Camera | `sFocusStyle` | Wide | INI + page | Page | Focus style (Wide, Cinematic) |
+| Camera | `fWideFocusBeyond` | 3.5 | INI | Advanced | Wide style: from how far the sharp zone deepens |
+| Body | `bRevealPlayer` | 1 | INI + page | Page | Show your character |
+| Body | `bFixFirstPersonBodyPlayer` | 1 | INI | Advanced | Full body from first person (off shows the broken body) |
+| Transitions | `iExitStyle` | 2 | INI | Advanced | How a conversation ends (1 closing shot, 2 cut to your view) |
+| Transitions | `fExitCutSeconds` | 0.4 | INI | Hidden | First-person exit: seconds after the last line |
+| PlainCamera | `fDistanceBehind` | 0.65 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fSideOffset` | 0.32 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fHeightOffset` | 0.06 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fLookHeightOffset` | -0.03 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fSeatedForward` | 0.25 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fSeatedSide` | 0.9 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fSeatedHeight` | 0.3 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fOverSeatedBehind` | 0.35 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fOverSeatedSide` | 0.6 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fOverSeatedHeight` | -0.25 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fVendorSideNpc` | 0.9 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| PlainCamera | `fVendorHeightNpc` | 0.05 | INI | Hidden | Plain shot offset (when the shot library is off or nothing fits) |
+| Interface | `bLetterbox` | 1 | INI + page | Page | Letterbox bars |
+| Interface | `fLetterboxHeight` | 0.12 | INI + page | Page | Bar height |
+| Interface | `fLetterboxFade` | 0.4 | INI + page | Page | Bars' fade |
+| Interface | `bSubtitlesInBars` | 0 | INI + page | Page | Subtitles in the bottom bar |
+| Interface | `bHideOptionsWhileSpeaking` | 1 | INI + page | Page | Hide the options while they speak |
+| Interface | `fOptionsFade` | 0 | INI + page | Page | Options' fade |
+| Overhear | `bFilmConversationsNpc` | 1 | INI + page | Page | Film people talking near you |
+| Overhear | `bListenPrompt` | 1 | INI + page | Page | Listen prompt |
+| Overhear | `bAutoListen` | 0 | INI + page | Page | Start on its own |
+| Overhear | `bAutoListenSprinting` | 0 | INI + page | Page | Start on its own while sprinting |
+| Overhear | `fFilmEndSecondsNpc` | 0.5 | INI | Advanced | Hand back this long after the last word |
+| Overhear | `fFilmEndSecondsSceneNpc` | 4 | INI | Advanced | ...or up to this long mid-scene |
+| Overhear | `fFilmStopSeconds` | 0.3 | INI | Hidden | Standing still before the stop distance applies |
+| Overhear | `fFilmStopDistance` | 0.25 | INI | Advanced | Moving this far ends it |
+| Overhear | `fFilmWalkOnDistance` | 3 | INI | Advanced | Listen-key start: walking on this far ends it |
+| Overhear | `iListenKey` | 78 | INI | Standard | The listen key (keyboard) |
+| Overhear | `iListenButton` | 8192 | INI | Standard | The listen button (controller) |
+| Overhear | `fListenHold` | 0.5 | INI | Advanced | How long the button is held |
+| Overhear | `fListenRange` | 12 | INI + page | Page | Range |
+| Face | `bFacePlayer` | 1 | INI + page | Page | Your expressions |
+| Face | `iSignatureChancePlayer` | 30 | INI | Standard | Your background's expression (%) |
+| Face | `iQuestionChancePlayer` | 40 | INI | Standard | Asking a question (%) |
+| Debug | `bShowMessages` | 0 | INI + page | Page | Testing messages |
+| Debug | `fMessageSeconds` | 6 | INI | Advanced | How long a testing message stays |
+| Debug | `iPresetKey` | 85 | INI | Standard | The preset key (U) |
+| GameSettings | (the game's own settings) | - | INI | Advanced | Changing game settings while it runs (one commented example) |
+
+Ways to show Advanced (to decide):
+1. **A marked block at the end of each section:** `; ---- Advanced: rarely worth changing ----`
+   with those settings under it. Names and sections stay as they are (your `_user.ini` keeps
+   working); the least change.
+2. **One [Advanced] section at the end of the INI**, with everything advanced in it. Clearest
+   for players; the code reads each setting from [Advanced] first and its old section second,
+   so `_user.ini` files keep working.
+3. **"(advanced)" in each comment**, settings left in place. Simplest, least clear.
