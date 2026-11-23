@@ -1,6 +1,6 @@
 # INI settings
 
-Last updated: 0.9.63 (2026-11-23).
+Last updated: 0.9.66 (2026-11-23).
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini` (what each of its sections holds: the
 README's Settings table). Here: the settings page and the INI, the hidden settings, every
@@ -169,7 +169,7 @@ Kept: 30. To the preset editor: 13. INI only: 12.
 | `bSubtitlesInBars` | 0 | 1 | your call | 0 was chosen for mods that place subtitles themselves; you play with 1 |
 | `bAutoListenSprinting` | 0 | 1 | your call | 0 was your rule (0.9.31): a sprint past isn't stopped |
 | `bAutoListen` | 1 | 1 | your call | it takes the camera and holds you still unasked; new players may not expect it, and the overlapping-lines known issue only follows filming |
-| `iPresetKey` | 85 (U) | - | keep | a feature (presets on the fly), but INI only |
+| `iPresetKey` | 85 (U) | - | keep | a feature (presets on the fly), but INI only; only while a conversation or people talking are filmed (0.9.66) |
 
 ## 4. Comment and text fixes (whatever is decided above)
 

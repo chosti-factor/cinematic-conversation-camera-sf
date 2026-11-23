@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.63 (2026-11-23).
+Last updated: 0.9.66 (2026-11-23).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -73,8 +73,8 @@ What CCC doesn't do.
 - **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
   you take part in (someone walks up and starts talking, several people taking turns) keep
   the game's own camera.
-- **Preset key:** U switches to the next preset on the fly, even mid-conversation
-  (`iPresetKey`).
+- **Preset key:** U switches to the next preset on the fly while a conversation (or people
+  talking near you) is filmed (`iPresetKey`).
 - **Testing messages** (off by default): each line's expression, your face's answer and the
   shot used, with why, in the top bar while a conversation is filmed, and the preset in use
   in the bottom bar (`bShowMessages`, `fMessageSeconds`).
@@ -312,6 +312,10 @@ Mulling (not decided):
    **Actions** → **Build**.
 2. Copy its `Data` folder into your Starfield folder (or install the zip with your
    mod manager).
+
+The `.pdb` file next to the DLL is its debug symbols: a crash logger uses it to name the
+mod's functions in a crash log, which makes a crash report far more useful. It does nothing
+in the game; leave it in place.
 
 ## Compatibility
 

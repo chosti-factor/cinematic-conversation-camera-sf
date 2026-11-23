@@ -17,14 +17,11 @@ namespace CCC::Menu
 
 		enum class Kind
 		{
-			kBool,      // 0/1
-			kTri,       // -1 the preset's own, 0 off, 1 on
-			kInt,       // a range
-			kFloat,     // a range
-			kOwnInt,    // -1 the preset's own, otherwise a range
-			kOwnFloat,  // -1 (or below the range) the preset's own, otherwise a range
-			kZeroFloat, // 0 the preset's own, otherwise a range
-			kChoice     // one of a list of words
+			kBool,    // 0/1
+			kTri,     // -1 the preset's own, 0 off, 1 on
+			kFloat,   // a range
+			kOwnInt,  // -1 the preset's own, otherwise a range
+			kChoice   // one of a list of words
 		};
 
 		struct Entry
@@ -254,6 +251,9 @@ namespace CCC::Menu
 			const auto  section = Wide(e.section);
 			const auto  key = Wide(name.c_str());
 			::WritePrivateProfileStringW(section.c_str(), key.c_str(), nullptr, kUserIniPath);  // removes the line
+			if (std::string_view{ e.key } == "sPreset") {
+				Settings::SetPresetOverride("");  // 0.9.66: as on a change; a preset key choice kept the reset from showing
+			}
 			ReadAll();
 			g_status = std::format("{} back to the INI's value.", name);
 		}
@@ -293,7 +293,7 @@ namespace CCC::Menu
 		// green when on and grey when off, its knob at the end that's on; the label beside it.
 		// Clicking the switch or the label flips it; a controller or the keyboard flips it as a
 		// button. Colours go through GetColorU32, so a greyed-out ("(off)") one fades with the rest.
-		bool Switch(const Entry& a_entry, bool* a_on)
+		bool Switch(const Entry& a_entry, bool* a_on, const char* a_label = nullptr)
 		{
 			const auto  pos = ImGuiMCP::GetCursorScreenPos();
 			const float h = ImGuiMCP::GetFrameHeight();
@@ -312,7 +312,7 @@ namespace CCC::Menu
 				ImGuiMCP::GetColorU32(ImGuiMCP::ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f }), 24);
 			ImGuiMCP::SameLine();
 			ImGuiMCP::AlignTextToFramePadding();
-			ImGuiMCP::TextUnformatted(a_entry.label);
+			ImGuiMCP::TextUnformatted(a_label ? a_label : a_entry.label);
 			if (ImGuiMCP::IsItemClicked()) {
 				flipped = true;
 			}
@@ -348,41 +348,25 @@ namespace CCC::Menu
 					Help(e);
 					break;
 				}
-			case Kind::kInt:
-				{
-					int value = std::clamp(AsInt(v.text, static_cast<int>(e.min)), static_cast<int>(e.min), static_cast<int>(e.max));
-					ImGuiMCP::SliderInt(e.label, &value, static_cast<int>(e.min), static_cast<int>(e.max), e.format ? e.format : "%d");
-					Help(e);
-					if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
-						Write(a_index, std::to_string(value));
-					} else if (ImGuiMCP::IsItemActive()) {
-						v.text = std::to_string(value);  // follows the drag; written on release
-					}
-					break;
-				}
 			case Kind::kFloat:
 				{
-					// Sliders in set steps (0.9.27), drawn as whole-number sliders of steps so a
-					// controller moves them a step per press: the cutting pace in halves (a float
-					// slider rounded to 0.5 never moved with a controller, whose 0.1 nudges were
-					// rounded straight back), and the finest ones in 0.05 (a controller crossed
-					// them 0.01 at a time).
-					const std::string_view key{ e.key };
-					const float            step = key == "fCuttingPace" ? 0.5f : 0.0f;  // (the 0.05 steps' sliders left the page in 0.9.60)
-					if (step > 0.0f) {
-						const float fallback = key == "fCuttingPace" ? 0.0f : e.min;
-						int         steps = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, fallback), e.min, e.max) / step));
-						const auto  shown = key == "fCuttingPace" ? std::format("{:+.1f}", steps * step) : std::format("{:.2f}", steps * step);
-						// The cutting pace names the preset it belongs to (0.9.27: each has its own);
-						// "###" keeps the widget the same while the name changes.
+					// The cutting pace in half steps (0.9.27), drawn as a whole-number slider of
+					// steps so a controller moves it a step per press (a float slider rounded to 0.5
+					// never moved with a controller, whose 0.1 nudges were rounded straight back).
+					if (std::string_view{ e.key } == "fCuttingPace") {
+						constexpr float kStepSize = 0.5f;
+						int             steps = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, 0.0f), e.min, e.max) / kStepSize));
+						const auto      shown = std::format("{:+.1f}", steps * kStepSize);
+						// It names the preset it belongs to (each has its own); "###" keeps the
+						// widget the same while the name changes.
 						const auto keyName = KeyOf(e);
-						const auto label = key == "fCuttingPace" && keyName.size() > 12 ? std::format("{} ({})###{}", e.label, keyName.substr(12), e.key) : std::string{ e.label };
-						ImGuiMCP::SliderInt(label.c_str(), &steps, static_cast<int>(std::lround(e.min / step)), static_cast<int>(std::lround(e.max / step)), shown.c_str());
+						const auto label = keyName.size() > 12 ? std::format("{} ({})###{}", e.label, keyName.substr(12), e.key) : std::string{ e.label };
+						ImGuiMCP::SliderInt(label.c_str(), &steps, static_cast<int>(std::lround(e.min / kStepSize)), static_cast<int>(std::lround(e.max / kStepSize)), shown.c_str());
 						Help(e);
 						if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
-							Write(a_index, std::format("{:.2f}", steps * step));
+							Write(a_index, std::format("{:.2f}", steps * kStepSize));
 						} else if (ImGuiMCP::IsItemActive()) {
-							v.text = std::format("{:.2f}", steps * step);
+							v.text = std::format("{:.2f}", steps * kStepSize);
 						}
 						break;
 					}
@@ -397,40 +381,33 @@ namespace CCC::Menu
 					break;
 				}
 			case Kind::kOwnInt:
-			case Kind::kOwnFloat:
-			case Kind::kZeroFloat:
 				{
-					const bool isInt = e.kind == Kind::kOwnInt;
-					const float raw = AsFloat(v.text, e.kind == Kind::kZeroFloat ? 0.0f : -1.0f);
-					bool own = e.kind == Kind::kZeroFloat ? raw <= 0.0f : raw < e.min;
+					// 0.9.66 (the user): "the preset's own" is a switch like the others, and the
+					// slider stays on the page, greyed out while the switch is on.
+					const int  low = static_cast<int>(e.min);
+					const int  high = static_cast<int>(e.max);
+					const int  middle = low + (high - low) / 2;
+					const int  raw = AsInt(v.text, -1);
+					bool       own = raw < low;
 					const auto ownLabel = std::format("{}: the preset's own", e.label);
-					if (ImGuiMCP::Checkbox(ownLabel.c_str(), &own)) {
-						if (own) {
-							Write(a_index, e.kind == Kind::kZeroFloat ? "0" : "-1");
-						} else {
-							const float start = e.min + (e.max - e.min) * 0.5f;
-							Write(a_index, isInt ? std::to_string(static_cast<int>(start)) : std::format("{:.1f}", start));
-						}
+					if (Switch(e, &own, ownLabel.c_str())) {
+						Write(a_index, own ? "-1" : std::to_string(middle));
 					}
+					int        value = own ? middle : std::clamp(raw, low, high);
+					const auto outer = g_needsNote;
+					if (own) {
+						g_needsNote = std::format("Needs \"{}\" off.", ownLabel);
+						ImGuiMCP::BeginDisabled(true);
+					}
+					ImGuiMCP::SliderInt(e.label, &value, low, high, own ? "the preset's own" : (e.format ? e.format : "%d"));
 					Help(e);
-					if (!own) {
-						if (isInt) {
-							int value = std::clamp(static_cast<int>(raw), static_cast<int>(e.min), static_cast<int>(e.max));
-							ImGuiMCP::SliderInt(e.label, &value, static_cast<int>(e.min), static_cast<int>(e.max), e.format ? e.format : "%d");
-							if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
-								Write(a_index, std::to_string(value));
-							} else if (ImGuiMCP::IsItemActive()) {
-								v.text = std::to_string(value);
-							}
-						} else {
-							float value = std::clamp(raw, e.min, e.max);
-							ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.1f");
-							if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
-								Write(a_index, std::format("{:.1f}", value));
-							} else if (ImGuiMCP::IsItemActive()) {
-								v.text = std::format("{:.1f}", value);
-							}
-						}
+					if (own) {
+						ImGuiMCP::EndDisabled();
+						g_needsNote = outer;
+					} else if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
+						Write(a_index, std::to_string(value));
+					} else if (ImGuiMCP::IsItemActive()) {
+						v.text = std::to_string(value);
 					}
 					break;
 				}
@@ -541,7 +518,7 @@ namespace CCC::Menu
 			}
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();
-			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins). The preset key (U) switches presets at once, mid-conversation too.");
+			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins). The preset key (U) switches presets on the fly during a conversation.");
 			if (!g_status.empty()) {
 				ImGuiMCP::TextDisabled("%s", g_status.c_str());
 			}

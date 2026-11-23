@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.59 (2026-11-22). Dates assume the Friday 27 November release; for
+Last updated: 0.9.66 (2026-11-23). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -159,6 +159,11 @@ Wednesday the 25th, about two days earlier.
       user plays at 4K, where it can be too small). Check the framework's own files and settings
       on the user's PC once it's linked. Not a text-size slider on this mod's pages only (the
       user, 2026-11-23)
+- [x] Pre-1.0 code review (0.9.66, 2026-11-23): no warnings, no leftovers of the experiments,
+      INI, code and page agree, defaults match the INI. Fixed: the sway slider's tooltip, the
+      preset reset under a preset key choice; the preset key only while filming; sway's
+      "preset's own" a switch; the page's unused widget kinds out. The `.pdb` already ships
+      (crash logs), now in the README
 
 - [x] Before release (the user, 2026-11-21): lip sync out of step in the conversation that
       follows filming people talking. Twice in MQ102 at the MAST: filming Tuala and Sarah,

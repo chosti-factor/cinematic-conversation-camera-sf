@@ -4900,13 +4900,18 @@ namespace CCC
 			return window && pid == ::GetCurrentProcessId();
 		}
 
+		bool FilmingActive();
+
 		// ---- The preset key (0.8.3) ------------------------------------------------------
+		// 0.9.66 (the pre-1.0 review, the user): only while a conversation or people talking are
+		// filmed, where it's used; elsewhere a U typed into a name (a ship, an outpost) switched
+		// the preset unseen.
 		void UpdatePresetKey()
 		{
 			const auto&  s = Settings::Get();
 			static bool  wasDown = false;
 			bool         down = false;
-			if (s.presetKey > 0 && GameHasFocus() && (::GetAsyncKeyState(s.presetKey) & 0x8000) != 0) {
+			if (s.presetKey > 0 && (g_state.active || FilmingActive()) && GameHasFocus() && (::GetAsyncKeyState(s.presetKey) & 0x8000) != 0) {
 				// Not while typing in the console.
 				static const RE::BSFixedString console{ "Console" };
 				auto*                          ui = RE::UI::GetSingleton();

@@ -4,6 +4,27 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.66 - 2026-11-23
+
+### Fixed (the pre-1.0 code review)
+- The settings page: the camera sway slider had no tooltip (only its "the preset's own"
+  box did).
+- The settings page: resetting the preset to the INI's value didn't show while a preset
+  chosen with the preset key was in force; the reset now clears that choice, as a change does.
+
+### Changed (the user's call)
+- The preset key (U) works only while a conversation or people talking near you are filmed.
+  Elsewhere a U typed into a name (a ship, an outpost) switched the preset unseen.
+- Camera sway's "the preset's own" is a switch like the other on/off settings, and the sway
+  slider stays on the page, greyed out while it's on.
+
+### Removed
+- The settings page's unused widget kinds (whole numbers, decimals with "the preset's own",
+  and the 0.05-step sliders), left over since settings moved off the page in 0.9.60.
+
+### Docs
+- README: the `.pdb` that ships with the DLL, and what it's for (crash logs).
+
 ## 0.9.65 - 2026-11-23
 
 ### Changed (the user's call)
