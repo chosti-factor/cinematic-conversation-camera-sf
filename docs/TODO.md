@@ -155,6 +155,11 @@ Wednesday the 25th, about two days earlier.
 
 ## 5. Release candidate (about 25 to 26 Nov)
 
+- [ ] SFSE Menu Framework: a global way to set the F1 menu's font and its size or scaling (the
+      user plays at 4K, where it can be too small). Check the framework's own files and settings
+      on the user's PC once it's linked. Not a text-size slider on this mod's pages only (the
+      user, 2026-11-23)
+
 - [x] Before release (the user, 2026-11-21): lip sync out of step in the conversation that
       follows filming people talking. Twice in MQ102 at the MAST: filming Tuala and Sarah,
       then Tuala's conversation with you (a quest scene, the game's camera), with his lines out
