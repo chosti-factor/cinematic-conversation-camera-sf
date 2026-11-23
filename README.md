@@ -286,8 +286,8 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
-- The overlapping lines after filming people talking (Known issues): found how to set it off
-  reliably, then why. A lead: Player Camera During Dialogue keeps camera changes away from an
+- The overlapping lines after filming people talking (Known issues): a way to set it off
+  reliably, then the cause. A lead: Player Camera During Dialogue keeps camera changes away from an
   NPC's multi-part response until it has fully played, against a dialogue-skip bug of its own.
 - The rare soft frame at a cut (the new shot's focus reaching the old shot's last frame): how
   the game's own quest-scene cameras cut cleanly, as a model (the user, 2026-11-22).
