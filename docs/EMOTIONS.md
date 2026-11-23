@@ -184,7 +184,7 @@ Notes:
 ## Your character's face
 
 The game keeps your face neutral and your lines carry no expression tags, so the mod sets
-your expression (`[Face]` in the INI). Kept up to date with every build.
+your expression (`bFacePlayer` and `[PresetTuning]` in the INI). Kept up to date with every build.
 
 Last updated: 0.9.50 (2026-11-22).
 

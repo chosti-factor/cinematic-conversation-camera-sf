@@ -64,14 +64,15 @@ troubleshooting; off the settings page too). [Director] keeps 10 settings, all c
 the user wants the override at hand; the preset editor would set each preset's own), the
 game's camera in quest scenes (its default to decide after the quest-scene log) and the
 focus style. [Body] gone: showing your character to [Debug]. [Interface]: the letterbox's
-slide and the options' fade to [Advanced]. [Overhear] unchanged. [Face] (0.9.62): the
+slide and the options' fade to [Advanced]. [Overhear] unchanged (renamed [SceneFilming] in 0.9.65, the user). [Face] (0.9.62): the
 background and question chances to [PresetTuning]. The settings page: 24 entries on four
 pages ("Your expressions" on "Close-ups and reactions"; the "You" page gone).
 [Advanced] (0.9.63, the user's call): 10 settings hidden, the shot library, the full body from
 first person and the testing messages' time to [Debug], the long-line reaction length to
 [PresetTuning]; 19 left, in four groups (shots, close-ups, exits and screen, filming people
 talking). [PresetTuning] in five groups (lens and distances, their close-ups, reactions of you,
-close-ups of you, your face).
+close-ups of you, your face). [Face] merged into [Director] (0.9.65): `bFacePlayer` sits after
+the reaction and tagged-choice switches.
 (Section 6's "Where now" column is as of the first pass.)
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options
@@ -303,19 +304,19 @@ Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<
 | Interface | `bSubtitlesInBars` | 0 | INI + page | Page | Subtitles in the bottom bar |
 | Interface | `bHideOptionsWhileSpeaking` | 1 | INI + page | Page | Hide the options while they speak |
 | Interface | `fOptionsFade` | 0 | INI + page | Page | Options' fade |
-| Overhear | `bFilmConversationsNpc` | 1 | INI + page | Page | Film people talking near you |
-| Overhear | `bListenPrompt` | 1 | INI + page | Page | Listen prompt |
-| Overhear | `bAutoListen` | 0 | INI + page | Page | Start on its own |
-| Overhear | `bAutoListenSprinting` | 0 | INI + page | Page | Start on its own while sprinting |
-| Overhear | `fFilmEndSecondsNpc` | 0.5 | INI | Advanced | Hand back this long after the last word |
-| Overhear | `fFilmEndSecondsSceneNpc` | 4 | INI | Advanced | ...or up to this long mid-scene |
-| Overhear | `fFilmStopSeconds` | 0.3 | INI | Hidden | Standing still before the stop distance applies |
-| Overhear | `fFilmStopDistance` | 0.25 | INI | Advanced | Moving this far ends it |
-| Overhear | `fFilmWalkOnDistance` | 3 | INI | Advanced | Listen-key start: walking on this far ends it |
-| Overhear | `iListenKey` | 78 | INI | Standard | The listen key (keyboard) |
-| Overhear | `iListenButton` | 8192 | INI | Standard | The listen button (controller) |
-| Overhear | `fListenHold` | 0.5 | INI | Advanced | How long the button is held |
-| Overhear | `fListenRange` | 12 | INI + page | Page | Range |
+| SceneFilming | `bFilmConversationsNpc` | 1 | INI + page | Page | Film people talking near you |
+| SceneFilming | `bListenPrompt` | 1 | INI + page | Page | Listen prompt |
+| SceneFilming | `bAutoListen` | 0 | INI + page | Page | Start on its own |
+| SceneFilming | `bAutoListenSprinting` | 0 | INI + page | Page | Start on its own while sprinting |
+| SceneFilming | `fFilmEndSecondsNpc` | 0.5 | INI | Advanced | Hand back this long after the last word |
+| SceneFilming | `fFilmEndSecondsSceneNpc` | 4 | INI | Advanced | ...or up to this long mid-scene |
+| SceneFilming | `fFilmStopSeconds` | 0.3 | INI | Hidden | Standing still before the stop distance applies |
+| SceneFilming | `fFilmStopDistance` | 0.25 | INI | Advanced | Moving this far ends it |
+| SceneFilming | `fFilmWalkOnDistance` | 3 | INI | Advanced | Listen-key start: walking on this far ends it |
+| SceneFilming | `iListenKey` | 78 | INI | Standard | The listen key (keyboard) |
+| SceneFilming | `iListenButton` | 8192 | INI | Standard | The listen button (controller) |
+| SceneFilming | `fListenHold` | 0.5 | INI | Advanced | How long the button is held |
+| SceneFilming | `fListenRange` | 12 | INI + page | Page | Range |
 | Face | `bFacePlayer` | 1 | INI + page | Page | Your expressions |
 | Face | `iSignatureChancePlayer` | 30 | INI | Standard | Your background's expression (%) |
 | Face | `iQuestionChancePlayer` | 40 | INI | Standard | Asking a question (%) |

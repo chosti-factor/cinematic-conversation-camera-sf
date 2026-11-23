@@ -77,7 +77,7 @@ namespace CCC::Menu
 				"Cutting to you listening during their longer stretches of talk, for one of their lines. The preset's own: off in CCC's presets, on in CCC SF's." },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option, for the line you say. The preset's own: on in CCC SF's presets, off in CCC's." },
-			{ "Close-ups and reactions", "You", "Face", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
+			{ "Close-ups and reactions", "You", "Director", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
 				"Your face answers the NPC's lines and your choices (the game keeps it neutral)." },
 			// ---- Screen ----
 			{ "Screen", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr,
@@ -93,15 +93,15 @@ namespace CCC::Menu
 			{ "Screen", "Testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
 				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
 			// ---- Filming people talking ----
-			{ "Filming people talking", "People talking near you", "Overhear", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
+			{ "Filming people talking", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
 				"Film people talking to each other near you (the game's conversation scenes, not one-liners): a new shot for each line, letterboxed. Started with the listen prompt or on its own (below); moving ends it." },
-			{ "Filming people talking", "People talking near you", "Overhear", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f",
+			{ "Filming people talking", "People talking near you", "SceneFilming", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f",
 				"How near a conversation has to be, in metres, to be offered or filmed." },
-			{ "Filming people talking", "How it starts", "Overhear", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
+			{ "Filming people talking", "How it starts", "SceneFilming", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
 				"A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it." },
-			{ "Filming people talking", "How it starts", "Overhear", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
+			{ "Filming people talking", "How it starts", "SceneFilming", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
 				"As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it." },
-			{ "Filming people talking", "How it starts", "Overhear", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
+			{ "Filming people talking", "How it starts", "SceneFilming", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
 				"Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks." },
 		};
 

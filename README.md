@@ -151,7 +151,7 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   background colours neutral moments. Close-ups of you when your face shows something, and
   (CCC SF's presets) as you choose a tagged option, over the start of their answer: an
   extreme close-up for the confrontational skills (none in Constellation)
-  (`bChoiceCloseUpsPlayer`, `fChoiceCloseUpSecondsPlayer`, `[Face]`; tables in
+  (`bChoiceCloseUpsPlayer`, `bFacePlayer`; tables in
   [docs/EMOTIONS.md](docs/EMOTIONS.md)). Uses the expression function found by rrrafau.
 - **People talking near you** (CCC 1.5.0 films them by key, or once you stand still; here
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
@@ -160,7 +160,7 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   default since 0.9.60), starting on its own when a conversation begins near you, even as you
   walk or jog past (sprinting too with `bAutoListenSprinting`), and stops you
   there: your movement is held until you let go of the controls, and moving again ends it;
-  looking around is off while it films (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
+  looking around is off while it films (`[SceneFilming]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest
   first, then the next one nearby; followed into the game's next scene with the same people,
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
@@ -340,11 +340,10 @@ conversations, within half a second), so changes apply without restarting the ga
 | Section | What's in it |
 |---|---|
 | `[General]` | On/off, the detailed log |
-| `[Director]` | Preset, cutting pace, 180-degree rule, camera moves, emotion close-ups on or off, persuasion beat, reaction shots of you, close-ups of you on tagged choices |
+| `[Director]` | Preset, cutting pace, 180-degree rule, camera moves, emotion close-ups on or off, persuasion beat, reaction shots of you, close-ups of you on tagged choices, your character's face on or off |
 | `[Camera]` | Camera sway, the game's camera in quest scenes, the focus style |
 | `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
-| `[Overhear]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
-| `[Face]` | Your character's face on or off |
+| `[SceneFilming]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
 | `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character, the shot library, the full body from first person) |
 | `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come and how long they last on a long line, close-ups of you by tier, your face's background expressions and questioning looks (for a preset editor after 1.0) |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |

@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.65 - 2026-11-23
+
+### Changed (the user's call)
+- `[Face]` merged into `[Director]`: `bFacePlayer` (your expressions) sits after the reaction
+  and tagged-choice switches, as on the settings page.
+- `[Overhear]` renamed `[SceneFilming]` (filming people talking near you). No old name is read
+  (nothing released): a `_user.ini` with `[Overhear]` lines needs them under the new name.
+
 ## 0.9.64 - 2026-11-23
 
 ### Changed (the settings page, the user's asks)

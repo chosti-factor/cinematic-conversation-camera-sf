@@ -101,14 +101,14 @@ namespace CCC
 			a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", a_s.showMessages ? 1 : 0) != 0;
 			a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
-			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;
-			a_s.listenKey = std::clamp(ReadInt(a_path, L"Overhear", L"iListenKey", a_s.listenKey), 0, 254);
-			a_s.listenRange = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);
-			a_s.listenButton = std::clamp(ReadInt(a_path, L"Overhear", L"iListenButton", a_s.listenButton), 0, 0xFFFF);
+			a_s.filmConversations = ReadInt(a_path, L"SceneFilming", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;
+			a_s.listenKey = std::clamp(ReadInt(a_path, L"SceneFilming", L"iListenKey", a_s.listenKey), 0, 254);
+			a_s.listenRange = std::clamp(ReadFloat(a_path, L"SceneFilming", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);
+			a_s.listenButton = std::clamp(ReadInt(a_path, L"SceneFilming", L"iListenButton", a_s.listenButton), 0, 0xFFFF);
 			a_s.listenHold = std::clamp(ReadFloat(a_path, L"Advanced", L"fListenHold", a_s.listenHold), 0.2f, 2.0f);
-			a_s.listenPrompt = ReadInt(a_path, L"Overhear", L"bListenPrompt", a_s.listenPrompt ? 1 : 0) != 0;
-			a_s.autoListen = ReadInt(a_path, L"Overhear", L"bAutoListen", a_s.autoListen ? 1 : 0) != 0;
-			a_s.autoListenSprinting = ReadInt(a_path, L"Overhear", L"bAutoListenSprinting", a_s.autoListenSprinting ? 1 : 0) != 0;
+			a_s.listenPrompt = ReadInt(a_path, L"SceneFilming", L"bListenPrompt", a_s.listenPrompt ? 1 : 0) != 0;
+			a_s.autoListen = ReadInt(a_path, L"SceneFilming", L"bAutoListen", a_s.autoListen ? 1 : 0) != 0;
+			a_s.autoListenSprinting = ReadInt(a_path, L"SceneFilming", L"bAutoListenSprinting", a_s.autoListenSprinting ? 1 : 0) != 0;
 			a_s.filmEndSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fFilmEndSecondsNpc", a_s.filmEndSeconds), 0.1f, 10.0f);
 			a_s.filmEndSecondsScene = std::clamp(ReadFloat(a_path, L"Advanced", L"fFilmEndSecondsSceneNpc", a_s.filmEndSecondsScene), a_s.filmEndSeconds, 15.0f);
 			a_s.filmStopSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fFilmStopSeconds", a_s.filmStopSeconds), 0.1f, 2.0f);
@@ -120,7 +120,7 @@ namespace CCC
 			a_s.conversationLens = ReadFloat(a_path, L"PresetTuning", L"fConversationLens", a_s.conversationLens);
 			// -1 (or anything below 10) = the preset's own lenses; 30 = the game's own.
 			a_s.conversationLens = a_s.conversationLens < 10.0f ? -1.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
-			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
+			a_s.playerFace = ReadInt(a_path, L"Director", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
 			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
 			a_s.signatureChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
 			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
