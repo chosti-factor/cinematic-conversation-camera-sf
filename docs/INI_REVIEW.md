@@ -4,6 +4,9 @@ Last updated: 0.9.60 (2026-11-22). First pass decided (the user, 2026-11-22: "go
 recommendations"; start on its own off, the prompt on) and built in 0.9.60: the page as in
 section 2, the defaults below, the text fixes in section 4. `bSubtitlesInBars` and
 `bAutoListenSprinting` stay off by default.
+Second step (the user, 2026-11-22): section 6's levels as proposed, shown with option 2 (one
+[Advanced] section) and the 20 Hidden settings out of the INI; no old names or sections read
+(nothing released yet). Built in 0.9.60 too.
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options
 on it; some options hidden (INI only), some kept for a preset editor after 1.0 (Mulling).

@@ -28,6 +28,12 @@ test build; "diagnostic" items only add information to the log for testing.
   before every conversation, since 0.9.41) and that the settings page writes to the
   `_user.ini`; version history taken out of the comments (the CHANGELOG keeps it); the exit
   style's comment shortened; "GroundLevel isn't available yet" gone.
+- The INI's technical settings (31) moved to a new `[Advanced]` section at its end (the
+  user's pick of the table in docs/INI_REVIEW.md, section 6); `[Transitions]` and
+  `[PlainCamera]` are gone with it, and the shot library's switch is `bDirector` there (it was
+  `[Director] bEnabled`). 20 fine-tuning settings found by testing are out of the INI, still
+  read from `[Advanced]` if added (listed with their defaults in the README). No old names
+  or sections are read: nothing had been released (the user).
 
 ## 0.9.59 - 2026-11-22
 

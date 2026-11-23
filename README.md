@@ -367,20 +367,29 @@ conversations, within half a second), so changes apply without restarting the ga
 
 | Section | What's in it |
 |---|---|
-| `[General]` | On/off, extra logging |
-| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups (their tiers, the extreme share, the longest one close-up holds), room shots, reaction shots (listening close-ups or not), close-ups of you on tagged options (and how long), persuasion beat, bystanders |
+| `[General]` | On/off, the detailed log |
+| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups (chances by tier, the extreme share, the longest one close-up holds), room shots' distances, reaction shots of you (when, how often, close-ups or not), close-ups of you on tagged options (and how long), persuasion beat, bystanders |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | One lens for every angle (instead of each angle's own), who gets the camera (shot/reverse or fixed), follow smoothing, sway, third-person exit hold, small-speaker height, large speakers (from what height, how far round the shots of you stay, the plain shot's angle) |
-| `[Body]` | Showing your character, building the full body from first person |
-| `[Transitions]` | How the first and last frames of a conversation are handled |
-| `[PlainCamera]` | The simple over-the-shoulder shots used when the director is off |
+| `[Camera]` | One lens for every angle (instead of each angle's own), sway, the game's camera in quest scenes, focus |
+| `[Body]` | Showing your character |
 | `[Interface]` | Letterbox, subtitles in the bars, dialogue options while the NPC speaks |
-| `[Overhear]` | Filming people talking near you: on/off, the listen key, how far |
-| `[Face]` | Your character's face: on/off, background expressions, questions, close-ups of you |
+| `[Overhear]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
+| `[Face]` | Your character's face: on/off, background expressions, questions |
 | `[Debug]` | Testing messages and the preset key |
+| `[Advanced]` | Technical settings, rarely worth changing: the shot library on/off, never across the eyeline, who gets the camera, plain shots for seated people and merchants, room shots in small rooms, reaction line lengths, the expressions' tiers, the persuasion tags, follow smoothing, small and large speakers, the Wide focus distance, the full body from first person, the exit style, filming's hand-back timings and stop distances, the listen button's hold, the testing messages' time |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
-Each setting is explained in the INI itself.
+Each setting is explained in the INI itself. A few more, found by testing and not worth
+changing, aren't in the INI but are read from `[Advanced]` if you add them (defaults shown):
+`fShortLineSeconds=1.2` (lines shorter don't count for cutting), `fObstacleRadius=0.05`,
+`fBystanderStillNpc=1.5`, `fFaceDeadband=0.04` (head movement the camera ignores),
+`fBusyFollowSmoothing=1.0` and `fBusyHeadSpeed=0.25` (following a speaker on the move),
+`fExitCutSeconds=0.4` (the first-person exit's cut after the last line),
+`fFilmStopSeconds=0.3`, and the plain over-the-shoulder shot's offsets in metres:
+`fDistanceBehind=0.65`, `fSideOffset=0.32`, `fHeightOffset=0.06`, `fLookHeightOffset=-0.03`,
+`fSeatedForward=0.25`, `fSeatedSide=0.9`, `fSeatedHeight=0.3`, `fOverSeatedBehind=0.35`,
+`fOverSeatedSide=0.6`, `fOverSeatedHeight=-0.25`, `fVendorSideNpc=0.9`,
+`fVendorHeightNpc=0.05`.
 
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
