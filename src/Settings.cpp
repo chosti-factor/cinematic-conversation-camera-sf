@@ -121,8 +121,8 @@ namespace CCC
 			// -1 (or anything below 10) = the preset's own lenses; 30 = the game's own.
 			a_s.conversationLens = a_s.conversationLens < 10.0f ? -1.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Face", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
-			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Face", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
-			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Face", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
+			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
+			a_s.signatureChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
 			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
 			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
 			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);

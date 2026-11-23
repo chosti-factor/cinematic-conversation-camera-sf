@@ -72,14 +72,14 @@ namespace CCC::Menu
 				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often: in the INI)." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round." },
+			{ "Close-ups and reactions", "You", "Face", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
+				"Your face answers the NPC's lines and your choices (the game keeps it neutral)." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
 				"Cutting to you listening during their longer lines." },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
 
 			// ---- You ----
-			{ "You", "Your face", "Face", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
-				"Your face answers the NPC's lines and your choices." },
 
 			// ---- Screen ----
 			{ "Screen", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr, nullptr },
@@ -498,7 +498,6 @@ namespace CCC::Menu
 
 		void __stdcall DrawCamera() { DrawPage("Camera"); }
 		void __stdcall DrawCloseUps() { DrawPage("Close-ups and reactions"); }
-		void __stdcall DrawYou() { DrawPage("You"); }
 		void __stdcall DrawScreen() { DrawPage("Screen"); }
 		void __stdcall DrawFilming() { DrawPage("Filming people talking"); }
 	}
@@ -519,7 +518,6 @@ namespace CCC::Menu
 		SFSEMenuFramework::SetSection("Cinematic Conversation Camera SF");
 		SFSEMenuFramework::AddSectionItem("Camera", &DrawCamera);
 		SFSEMenuFramework::AddSectionItem("Close-ups and reactions", &DrawCloseUps);
-		SFSEMenuFramework::AddSectionItem("You", &DrawYou);
 		SFSEMenuFramework::AddSectionItem("Screen", &DrawScreen);
 		SFSEMenuFramework::AddSectionItem("Filming people talking", &DrawFilming);
 		REX::INFO("Settings page: added to SFSE Menu Framework ({} settings)", kCount);

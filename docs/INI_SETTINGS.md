@@ -1,6 +1,6 @@
 # INI settings
 
-Last updated: 0.9.60 (2026-11-22).
+Last updated: 0.9.62 (2026-11-23).
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini` (what each of its sections holds: the
 README's Settings table). Here: the settings page and the INI, the hidden settings, every
@@ -22,7 +22,7 @@ changing, aren't in the INI but are read from `[Advanced]` if you add them (defa
 
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
-five pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The rest
+four pages (Camera, Close-ups and reactions, Screen, Filming people talking). The rest
 stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
 timing), meant for a preset editor after 1.0, and technical tuning. The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
@@ -54,7 +54,9 @@ troubleshooting; off the settings page too). [Director] keeps 10 settings, all c
 the user wants the override at hand; the preset editor would set each preset's own), the
 game's camera in quest scenes (its default to decide after the quest-scene log) and the
 focus style. [Body] gone: showing your character to [Debug]. [Interface]: the letterbox's
-slide and the options' fade to [Advanced]. The settings page: 24 entries.
+slide and the options' fade to [Advanced]. [Overhear] unchanged. [Face] (0.9.62): the
+background and question chances to [PresetTuning]. The settings page: 24 entries on four
+pages ("Your expressions" on "Close-ups and reactions"; the "You" page gone).
 (Section 6's "Where now" column is as of the first pass.)
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options

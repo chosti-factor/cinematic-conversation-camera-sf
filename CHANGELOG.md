@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.62 - 2026-11-23
+
+### Changed (the INI, section by section: [Overhear] and [Face], the user's call)
+- `[Overhear]` unchanged.
+- `[Face]` keeps your expressions on or off; how often your background shows on your face and
+  the questioning look on questions (`iSignatureChancePlayer`, `iQuestionChancePlayer`) to
+  `[PresetTuning]` (the same for every preset for now).
+- The settings page: four pages. "Your expressions" moved to "Close-ups and reactions", with
+  the close-ups and reactions of you; the "You" page is gone.
+
 ## 0.9.61 - 2026-11-23
 
 ### Changed (the INI, section by section: [General] and [Director], the user's call)

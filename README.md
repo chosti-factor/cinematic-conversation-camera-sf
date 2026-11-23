@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.60 (2026-11-22).
+Last updated: 0.9.62 (2026-11-23).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -344,9 +344,9 @@ conversations, within half a second), so changes apply without restarting the ga
 | `[Camera]` | Camera sway, the game's camera in quest scenes, the focus style |
 | `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
 | `[Overhear]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
-| `[Face]` | Your character's face: on/off, background expressions, questions |
+| `[Face]` | Your character's face on or off |
 | `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character) |
-| `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come, close-ups of you by tier (for a preset editor after 1.0) |
+| `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come, close-ups of you by tier, your face's background expressions and questioning looks (for a preset editor after 1.0) |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
 | `[Advanced]` | Technical settings, rarely worth changing: the shot library on/off, never across the eyeline, who gets the camera, plain shots for seated people and merchants, room shots in small rooms, reaction line lengths, the tagged-choice close-up's length, the letterbox's slide and the options' fade, the expressions' tiers, the persuasion tags, follow smoothing, small and large speakers, the Wide focus distance, the full body from first person, the exit style, filming's hand-back timings and stop distances, the listen button's hold, the testing messages' time |
 | `[GameSettings]` | Changing the game's own settings while it runs |
