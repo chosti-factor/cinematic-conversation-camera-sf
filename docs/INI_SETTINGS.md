@@ -42,6 +42,21 @@ default. Second step (the user, 2026-11-22): section 6's levels as proposed, sho
 option 2 (one [Advanced] section) and the 20 Hidden settings out of the INI; no old names or
 sections read (nothing released yet). Built in 0.9.60 too.
 
+Section by section (the user, 2026-11-23, after playing 0.9.60: many INI settings still
+belong in the editor, in [Advanced] or hidden): [General] and [Director] first. A new
+[PresetTuning] section before [Shots] and [Advanced] holds each preset's own numbers for the
+editor: the distances, the room shots' distances, their close-up chances, extreme share and
+limit, the reaction timing and chance, listening close-ups, and the close-ups of you by tier;
+the tagged-choice close-up's length to [Advanced]; the obstacle and bystander checks,
+close-ups following the face and focus on the person in shot to [Debug] (the user: only for
+troubleshooting; off the settings page too). [Director] keeps 10 settings, all choices.
+[Camera]: the lens to [PresetTuning]; it keeps the sway (and it's back on the settings page:
+the user wants the override at hand; the preset editor would set each preset's own), the
+game's camera in quest scenes (its default to decide after the quest-scene log) and the
+focus style. [Body] gone: showing your character to [Debug]. [Interface]: the letterbox's
+slide and the options' fade to [Advanced]. The settings page: 24 entries.
+(Section 6's "Where now" column is as of the first pass.)
+
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options
 on it; some options hidden (INI only), some kept for a preset editor after 1.0 (Mulling).
 

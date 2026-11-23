@@ -340,15 +340,15 @@ conversations, within half a second), so changes apply without restarting the ga
 | Section | What's in it |
 |---|---|
 | `[General]` | On/off, the detailed log |
-| `[Director]` | Preset, cutting pace, camera distances, 180-degree rule, camera moves, emotion close-ups (chances by tier, the extreme share, the longest one close-up holds), room shots' distances, reaction shots of you (when, how often, close-ups or not), close-ups of you on tagged options (and how long), persuasion beat, bystanders |
-| `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
-| `[Camera]` | One lens for every angle (instead of each angle's own), sway, the game's camera in quest scenes, focus |
-| `[Body]` | Showing your character |
-| `[Interface]` | Letterbox, subtitles in the bars, dialogue options while the NPC speaks |
+| `[Director]` | Preset, cutting pace, 180-degree rule, camera moves, emotion close-ups on or off, persuasion beat, reaction shots of you, close-ups of you on tagged choices |
+| `[Camera]` | Camera sway, the game's camera in quest scenes, the focus style |
+| `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
 | `[Overhear]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
 | `[Face]` | Your character's face: on/off, background expressions, questions |
-| `[Debug]` | Testing messages and the preset key |
-| `[Advanced]` | Technical settings, rarely worth changing: the shot library on/off, never across the eyeline, who gets the camera, plain shots for seated people and merchants, room shots in small rooms, reaction line lengths, the expressions' tiers, the persuasion tags, follow smoothing, small and large speakers, the Wide focus distance, the full body from first person, the exit style, filming's hand-back timings and stop distances, the listen button's hold, the testing messages' time |
+| `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character) |
+| `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come, close-ups of you by tier (for a preset editor after 1.0) |
+| `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
+| `[Advanced]` | Technical settings, rarely worth changing: the shot library on/off, never across the eyeline, who gets the camera, plain shots for seated people and merchants, room shots in small rooms, reaction line lengths, the tagged-choice close-up's length, the letterbox's slide and the options' fade, the expressions' tiers, the persuasion tags, follow smoothing, small and large speakers, the Wide focus distance, the full body from first person, the exit style, filming's hand-back timings and stop distances, the listen button's hold, the testing messages' time |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
 Each setting is explained in the INI itself. The settings page, the hidden settings and

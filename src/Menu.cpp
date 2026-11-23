@@ -57,15 +57,13 @@ namespace CCC::Menu
 				kPresets },
 			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
+			{ "Camera", "Look", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
+				"0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander." },
 			{ "Camera", "Look", "Director", "bCameraMoves", "Camera moves", Kind::kBool, 0, 1, nullptr,
 				"Push-ins, drifts, cranes and the like, as each preset has them." },
-			{ "Camera", "Look", "Director", "bFollowFace", "Close-ups follow the face", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Staging", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
 				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Camera", "Staging", "Director", "bObstacleCheck", "Avoid walls and objects", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Staging", "Director", "bAvoidBystandersNpc", "Avoid people in the way", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Game's camera in quest scenes", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Focus", "Camera", "bFocusOnSubject", "Focus on the person in shot", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Focus", "Camera", "sFocusStyle", "Focus style", Kind::kChoice, 0, 0, nullptr,
 				"Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere.", kFocusStyles },
 
@@ -80,20 +78,16 @@ namespace CCC::Menu
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
 
 			// ---- You ----
-			{ "You", "Your character", "Body", "bRevealPlayer", "Show your character", Kind::kBool, 0, 1, nullptr,
-				"Starfield hides you in conversations." },
 			{ "You", "Your face", "Face", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
 				"Your face answers the NPC's lines and your choices." },
 
 			// ---- Screen ----
 			{ "Screen", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Screen", "Letterbox", "Interface", "fLetterboxHeight", "Bar height", Kind::kFloat, 0.02f, 0.3f, "%.2f", "A share of the screen's height, each bar." },
-			{ "Screen", "Letterbox", "Interface", "fLetterboxFade", "Fade (s)", Kind::kFloat, 0.0f, 3.0f, "%.1f", nullptr },
 			{ "Screen", "Letterbox", "Interface", "bSubtitlesInBars", "Subtitles in the bottom bar", Kind::kBool, 0, 1, nullptr,
 				"On: centred in the bottom bar while the bars are in. Off: where the game puts them (vanilla positioning, kept for mods that place subtitles themselves), which can overlap the top edge of the bottom bar." },
 			{ "Screen", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while they speak", Kind::kBool, 0, 1, nullptr,
 				"The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does." },
-			{ "Screen", "Dialogue options", "Interface", "fOptionsFade", "Fade (s)", Kind::kFloat, 0.0f, 1.5f, "%.1f", "0 = no fade." },
 			{ "Screen", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
 				"The shot and the line's expression in the top bar." },
 			{ "Screen", "Testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
@@ -119,9 +113,7 @@ namespace CCC::Menu
 			const char* parent;
 		};
 		constexpr Needs kNeeds[]{
-			{ "sFocusStyle", "bFocusOnSubject" },
 			{ "fLetterboxHeight", "bLetterbox" },
-			{ "fLetterboxFade", "bLetterbox" },
 			{ "bSubtitlesInBars", "bLetterbox" },
 			{ "bAutoListen", "bFilmConversationsNpc" },
 			{ "bAutoListenSprinting", "bAutoListen" },

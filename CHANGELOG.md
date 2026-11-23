@@ -4,6 +4,30 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.61 - 2026-11-23
+
+### Changed (the INI, section by section: [General] and [Director], the user's call)
+- A new `[PresetTuning]` section, before `[Shots]` and `[Advanced]`: each preset's own
+  numbers, meant for the preset editor after 1.0. From `[Director]`: the camera's and the room
+  shots' furthest distances, their emotion close-up chances by tier, the extreme share and the
+  longest close-up, the reaction shots' timing and chance, listening reactions in close-up, and
+  the close-ups of you by tier. `[Shots]` moved next to it.
+- `fChoiceCloseUpSecondsPlayer` to `[Advanced]`.
+- `bObstacleCheck`, `bAvoidBystandersNpc`, `bFollowFace` and `bFocusOnSubject` to `[Debug]`,
+  for troubleshooting (the user: no reason to turn them off otherwise), and off the settings
+  page. Without focus on the person in shot, the game's blur focuses about 2 m from the
+  camera and anyone further away is soft.
+- `fConversationLens` from `[Camera]` to `[PresetTuning]`. `[Camera]` keeps the sway (back on
+  the settings page: the user wants that override at hand; a preset editor would set each
+  preset's own, and this overrides them all), the game's camera in quest scenes and the focus
+  style.
+- `[Body]` is gone: showing your character (`bRevealPlayer`) to `[Debug]` (off, the shots of you
+  show where you'd be). The letterbox's slide time (`fLetterboxFade`) and the options' fade
+  (`fOptionsFade`) to `[Advanced]`. All three off the settings page: 24 entries.
+- `[Director]` keeps 10 settings, all choices: the preset, the pace, the 180-degree rule,
+  camera moves, and emotion close-ups, the persuasion beat, reaction shots and tagged-choice
+  close-ups on or off.
+
 ## 0.9.60 - 2026-11-22
 
 ### Changed (the INI review, first pass: the user took the proposal in docs/INI_SETTINGS.md)
