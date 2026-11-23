@@ -25,8 +25,8 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   persuasion, each cut to and away from in 2 s.
 
 ### Docs
-- README: the settings page's text size is SFSE Menu Framework's own (`UIScale` and
-  `FontSizeMedium` in its INI), for every mod's page.
+- README: the settings page's text size is SFSE Menu Framework's own, for every mod's page:
+  its own Settings page (UI scale, font size, font, applied at once) or its INI.
 
 ## 0.9.66 - 2026-11-23
 

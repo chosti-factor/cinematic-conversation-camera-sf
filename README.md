@@ -302,9 +302,9 @@ Mulling (not decided):
 - Keep Starfield's own dialogue camera setting **on** (this mod hooks into it)
 - Disable other dialogue camera mods
 - Optional: [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) for the
-  in-game settings page. Its text size is the framework's own, for every mod's page:
-  `UIScale` and `FontSizeMedium` under `[Fonts]` in `SFSEMenuFramework.ini` (on a 4K screen,
-  a `UIScale` of 1.25 to 1.5 reads more easily)
+  in-game settings page. Its text size is the framework's own, for every mod's page: in the
+  framework's own Settings (F1, then Settings: UI scale, font size, font), applied at once, or
+  `UIScale` and `FontSizeMedium` under `[Fonts]` in `SFSEMenuFramework.ini`
 
 ## Install
 
