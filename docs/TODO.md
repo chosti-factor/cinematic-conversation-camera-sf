@@ -131,9 +131,10 @@ Wednesday the 25th, about two days earlier.
 - [ ] Cora's lines overlapping at the Lodge (0.9.57 runs), the 0.9.43 bug back. The user's
       tests: filming off, Cora clean; filming Walter and Vasco (stopped by moving), Cora
       overlapping; mod off, clean. Both broken runs had the filming stopped mid-scene by moving;
-      0.9.43's tests let scenes play out. Next (the user, 2026-11-23): let the filming end on
-      its own, then Cora. Clean: look at the stop-by-moving path. Overlapping: bring back the
-      `bFilmTest*` switches (docs/MEMORY.md) and bisect again
+      0.9.43's tests let scenes play out. 2026-11-22 22:48: the filming of Walter and Vasco
+      left to end on its own ("they've stopped talking"), then Cora: clean. So the trigger is
+      stopping a filming mid-line (moving while someone in the scene talks): the view and
+      first person snap back while a line plays. Next: find which part of that stop it is
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
