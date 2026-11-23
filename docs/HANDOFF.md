@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.43 (2026-11-21).
+Last updated: 0.9.59 (2026-11-22).
 
 ## Working rules
 
@@ -56,7 +56,25 @@ Last updated: 0.9.43 (2026-11-21).
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
 
-## Where things stand (2026-11-19, 0.9.29): feature freeze
+## Where things stand (2026-11-22, 0.9.59)
+
+- Polish passes done: redundancy, debugging, optimization (2026-11-22), measuring code and
+  diagnostics removed (0.9.50, 0.9.59). Next: the INI and defaults review with the settings
+  page's layout and options (some hidden, some for a post-1.0 preset editor); then the RC
+  (testing messages off, a full test round); 1.0 beta Friday 2026-11-27.
+- Exits: first person cuts early (`fExitCutSeconds` 0.4 s) to your view turned to your body;
+  third person holds the last shot to the game's hand-back and cuts on that frame
+  (`iExitStyle=2`, the user's standard). Bars go before the cut (accepted; stand-ins Mulling).
+- Shot-to-shot cuts (2026-11-22, 0.9.51-0.9.57): the zooms at some cuts were the first-frames
+  check taking the mod's own wide lenses (over 60 degrees) for your gameplay lens, so the new
+  lens wasn't set with the camera (fixed 0.9.57, ~60 cuts measured clean since). The focus at a
+  cut is on the cut's own frame (0.8.10's way; four other timings tried and dropped, MEMORY.md).
+  A rare soft frame left (1 in ~60). Clip method: per-frame sharpness, difference and zoom
+  (ORB scale between frames), sequential decode; clips over 400 MB can't be fetched.
+- Known issue for 1.0: overlapping lines in a conversation after filming people talking,
+  intermittent (README, MEMORY.md); the hunt post-1.0.
+
+## Earlier (2026-11-19, 0.9.29): feature freeze
 
 - Features frozen on 2026-11-19 (the user), after the 0.9.29 test. From here: the four
   polish passes in the release plan below (redundancy, debugging, optimization, INI

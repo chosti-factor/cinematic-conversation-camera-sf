@@ -32,7 +32,6 @@ namespace CCC
 		// this far from where it started does.
 		float    filmStopSeconds{ 0.3f };
 		float    filmStopDistance{ 0.25f };
-		bool     filmTestStopAfterLine{ true };  // test (0.9.58): moving mid-line, the view held to the line's end
 		float    filmWalkOnDistance{ 3.0f };
 		int      roomShotMinRoom{ 60 };    // room shots only where the room gives this % of CCC's distance
 		float    roomShotMaxIndoors{ -1.0f };   // metres; 0 = as far as CCC's framing wants, -1 = the preset's own (0.8.1)

@@ -4,6 +4,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.59 - 2026-11-22
+
+### Removed (before the INI review)
+- The cut timing trace (0.9.56, detailed log only): it found the zoom at cuts (fixed 0.9.57).
+- `bFilmTestStopAfterLine` (0.9.58): with it off, two filmings stopped mid-line were followed by
+  clean conversations too, so it told nothing; the overlapping lines are a known issue.
+- What each did and found: docs/MEMORY.md.
+
 ## 0.9.58 - 2026-11-22
 
 ### Known issue (the user's call, 2026-11-22)

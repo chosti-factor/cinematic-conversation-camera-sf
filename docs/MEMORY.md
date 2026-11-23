@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.50 (2026-11-22).
+Last updated: 0.9.59 (2026-11-22).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -250,6 +250,18 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   neural rendering off (0.9.55 clip, 21 cuts) the same oddities: 4 lens zooms (1.22, 0.83, 1.56,
   1.04 times), 6 early-focus frames, the worst cuts with both. Next: 0.9.56's cut timing trace.
 
+- **The cut timing trace** (0.9.56-0.9.58, detailed log only): for 120 ms from each cut,
+  "Cut timing +ms [thread]" lines for the mod's camera updates (the render camera's lens at
+  their start, the shot's lens), the lens written with the camera, the game's lens updates at
+  all three callers (asked, set, the camera's lens before and after) and the focus writes.
+  Found: the game's lens update (64682) runs only every other camera update, on the same
+  worker thread just before it, and never put an old lens back; at three cuts, all from
+  MediumPlayer (62 degrees), the mod hadn't written the new lens with the camera, because the
+  first-frames check (`wideFrame`: the game's FOV over 60 degrees taken for your gameplay lens
+  still on) took the mod's own wide lens for it. Fixed in 0.9.57 (the check leaves out the lens
+  the mod put on): no zoom in the ~60 cuts measured since. The focus writes on a cut's own frame
+  happen before the trace started, so they weren't in it.
+
 ## Reactions and filming
 
 - **`iReactionSentencesPlayer`** (2), **`fReactionSecondsPlayer`** (2.5 s on you, then back to
@@ -290,6 +302,16 @@ automatic fallback when the body hasn't appeared after a moment. Removed:
   else on: clean. The obstacle casts were out already: they use the dialogue camera's
   collision query (`g_dialogueStateObject + 0x48`), only known after a conversation of yours,
   and the 0.9.40 run broke with filming before any. Switches removed in 0.9.43.
+
+- **`bFilmTestStopAfterLine`** (0.9.58, removed 0.9.59): the overlapping lines came back at the
+  Lodge (0.9.57: Cora, twice, each after a filming of Walter with Matteo or Vasco stopped by
+  moving while one of them talked; clean with filming off, with the mod off, and after a filming
+  left to end on its own). The test: moving mid-line gave your controls back at once but held
+  the view on the filmed shot until that line ended. On, clean; but off, two filmings stopped
+  mid-line were followed by clean conversations with Cora too. 2 broken of 7 conversations
+  after a filming, same steps: intermittent; a known issue for 1.0 (README). Player Camera During
+  Dialogue lists the same symptom and keeps its camera changes away from an NPC's multi-part
+  response until it has played (its "dialogue-skip bug"); Cora's responses are multi-part.
 
 ## Exits, later
 

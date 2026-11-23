@@ -137,9 +137,6 @@ namespace CCC
 			bool                                  bodyReady{ true };         // safe to show the player
 			float                                 startFov{ 0.0f };          // the gameplay field of view at the start (0.8.18)
 			float                                 cutLens{ 0.0f };           // the lens last put on with the camera (0.9.51)
-			std::uint32_t                         traceCuts{ 0 };            // the cut timing trace (0.9.56)
-			long long                             traceLastUs{ 0 };
-			float                                 traceLastLens{ 0.0f };
 			int                                   lensSteady{ 0 };           // frames since the lens last changed (0.9.52)
 			bool                                  lensScaleLogged{ false };
 			bool                                  readySeen{ false };        // from first person: your body seen ready (0.9.4)
@@ -432,25 +429,6 @@ namespace CCC
 		std::atomic<void*> g_lensCamera{ nullptr };
 		std::atomic<int>   g_exitLensFrames{ 0 };  // lens updates after an exit still to keep on your gameplay lens
 		float              g_lensScale = 0.0f;  // the game's frustum for a lens against the plain maths (0.9.52)
-
-		// The cut timing trace (0.9.56, detailed log only): for 120 ms from each cut, when the mod's
-		// camera update, the game's lens updates and the focus writes run, on which thread, and the
-		// lens on the render camera before and after each. To find why a cut's lens now and then
-		// lands a frame late and its focus a frame early (the 0.9.55 clips, DLSS on and off).
-		std::atomic<long long> g_traceCutUs{ 0 };
-		std::atomic<long long> g_traceUntilUs{ 0 };
-		long long NowUs()
-		{
-			return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-		}
-		bool Tracing()
-		{
-			return NowUs() < g_traceUntilUs.load(std::memory_order_relaxed);
-		}
-		void Trace(std::string_view a_what)
-		{
-			REX::INFO("Cut timing +{:.2f} ms [{}] {}", (NowUs() - g_traceCutUs.load(std::memory_order_relaxed)) / 1000.0, ::GetCurrentThreadId(), a_what);
-		}
 		std::atomic<bool>  g_cutOwnsLens{ false };  // exit style 2's cut sets the lens itself, with the camera (0.9.16)
 		float              g_lastStartFov[2]{ 0.0f, 0.0f };  // the gameplay lens at the last conversation start seen, first/third person
 		std::atomic<float> g_exitLensValue{ 0.0f };  // the lens kept on through this exit
@@ -2704,23 +2682,6 @@ namespace CCC
 			if (!pov) {
 				ApplyHandheld(*pose, Director::Handheld(), now);
 			}
-			if (s.debugLog && !pov) {
-				const std::uint32_t cuts = directed ? Director::Cuts() : g_state.traceCuts;
-				const float         onCamera = Camera::RenderLensDegrees();
-				const long long     nowUs = NowUs();
-				if (cuts != g_state.traceCuts && g_state.framesThisConversation > 1) {
-					g_traceCutUs.store(nowUs, std::memory_order_relaxed);
-					g_traceUntilUs.store(nowUs + 120000, std::memory_order_relaxed);
-					Trace(std::format("the update before: at {:.2f} ms, camera lens {:.1f}", (g_state.traceLastUs - nowUs) / 1000.0, g_state.traceLastLens));
-					Trace(std::format("cut to {} (frame {}): camera update, camera lens {:.1f}, the shot's {:.1f}", Director::Current(), g_state.framesThisConversation,
-						onCamera, Director::WantedLens()));
-				} else if (Tracing()) {
-					Trace(std::format("camera update (frame {}), camera lens {:.1f}, the shot's {:.1f}", g_state.framesThisConversation, onCamera, Director::WantedLens()));
-				}
-				g_state.traceCuts = cuts;
-				g_state.traceLastUs = nowUs;
-				g_state.traceLastLens = onCamera;
-			}
 			bool applied = Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
 			// The first frame or two of a conversation, the game still draws through the gameplay
 			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
@@ -2744,9 +2705,6 @@ namespace CCC
 					SetGameLens(lens);
 					if (g_lensScale > 0.0f) {
 						Camera::SetRenderLens(lens, g_lensScale);
-					}
-					if (Tracing()) {
-						Trace(std::format("lens {:.1f} written with the camera; camera lens now {:.1f}", lens, Camera::RenderLensDegrees()));
 					}
 				} else if (++g_state.lensSteady == 12 && g_state.cutLens >= 10.0f) {
 					if (const float scale = Camera::RenderLensScale(g_state.cutLens); scale > 0.2f && scale < 5.0f) {
@@ -3256,13 +3214,7 @@ namespace CCC
 					return;  // 0.9.16: exit style 2's cut sets the frustum itself, with the camera
 				}
 				RememberGameplayLens(a_camera, a_fov);
-				const float set = ExitLens(LensFor(a_fov), true);
-				const bool  tracing = Tracing();
-				const float before = tracing ? Camera::RenderLensDegrees() : 0.0f;
-				Hook(a_camera, set);
-				if (tracing) {
-					Trace(std::format("game lens update: asked {:.1f}, set {:.1f}; camera lens {:.1f} -> {:.1f}", a_fov, set, before, Camera::RenderLensDegrees()));
-				}
+				Hook(a_camera, ExitLens(LensFor(a_fov), true));
 			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_LensMain", REL::EHookStep::None, REL::ID(64682), 0xF43, Thunk };
 		};
@@ -3352,11 +3304,7 @@ namespace CCC
 			static void Thunk(void* a_camera, float a_fov)
 			{
 				if (!g_cutOwnsLens.load(std::memory_order_relaxed)) {
-					const float set = ExitLens(LensFor(a_fov), false);
-					Hook(a_camera, set);
-					if (Tracing()) {
-						Trace(std::format("game lens, second caller: asked {:.1f}, set {:.1f}; camera lens {:.1f}", a_fov, set, Camera::RenderLensDegrees()));
-					}
+					Hook(a_camera, ExitLens(LensFor(a_fov), false));
 				}
 			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens2", REL::EHookStep::None, REL::ID(113316), 0x1FD, Thunk };
@@ -3366,11 +3314,7 @@ namespace CCC
 			static void Thunk(void* a_camera, float a_fov)
 			{
 				if (!g_cutOwnsLens.load(std::memory_order_relaxed)) {
-					const float set = ExitLens(LensFor(a_fov), false);
-					Hook(a_camera, set);
-					if (Tracing()) {
-						Trace(std::format("game lens, third caller: asked {:.1f}, set {:.1f}; camera lens {:.1f}", a_fov, set, Camera::RenderLensDegrees()));
-					}
+					Hook(a_camera, ExitLens(LensFor(a_fov), false));
 				}
 			}
 			static inline REL::THook<void(void*, float)> Hook{ "CCC_Lens3", REL::EHookStep::None, REL::ID(113488), 0x498, Thunk };
@@ -3974,9 +3918,6 @@ namespace CCC
 			}
 			g_blurWritten.store(a_distance, std::memory_order_relaxed);
 			WriteBlurRecords(a_distance, st.deepFocusLongShots, st.deepFocusBeyond);
-			if (Tracing()) {
-				Trace(std::format("focus written: {:.2f} m", a_distance));
-			}
 		}
 
 		// The line's facial expression ("emotion"), as the game's animators tagged it:
@@ -4770,10 +4711,6 @@ namespace CCC
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
 			std::chrono::steady_clock::time_point stoppedAt{};   // when filming last stopped (0.8.15)
-			bool                                  stopPending{ false };  // bFilmTestStopAfterLine: you moved mid-line (0.9.58 test)
-			std::chrono::steady_clock::time_point stopPendingSince{};
-			std::chrono::steady_clock::time_point stopPendingLine{};     // the line being spoken then
-			std::uint32_t                         stopPendingSpeaker{ 0 };
 			std::chrono::steady_clock::time_point ownUntil{};    // last seen in a conversation of your own (0.9.39)
 			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
 			std::vector<std::uintptr_t>           infos;     // the lines filmed (by words and record), to notice repeats
@@ -5040,7 +4977,6 @@ namespace CCC
 					return;
 				}
 				g_film.active = false;
-				g_filmMain.stopPending = false;
 				g_film.smoothSpeaker.reset();
 				g_film.smoothListener.reset();
 				g_film.pose.reset();
@@ -5325,29 +5261,7 @@ namespace CCC
 				const float moved = inputMoved ? 1.0f :
 				                    g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
 				                    !g_filmMain.autoStarted && FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
-				// bFilmTestStopAfterLine (0.9.58, a test): moving while someone in the scene talks gives
-				// you your controls back at once, but the view stays on the filmed shot until the line
-				// ends (10 s at most), then the filming stops as usual. The 0.9.57 tests: a filming
-				// stopped by moving mid-line left the next conversation with Cora with lines
-				// overlapping; one left to end on its own didn't.
-				if (g_filmMain.stopPending) {
-					if (speaker != g_filmMain.stopPendingSpeaker || latest != g_filmMain.stopPendingLine || a_now - g_filmMain.stopPendingSince > 10s || pressed) {
-						REX::INFO("Filming people talking: the line you moved during is over after {:.2f} s",
-							std::chrono::duration<float>(a_now - g_filmMain.stopPendingSince).count());
-						StopFilming("you moved (the view held to the line's end, the test)");
-						g_filmMain.declinedScene = g_filmMain.scene;
-						g_filmMain.declinedAt = a_now;
-					}
-				} else if (moved > 0.5f && !pressed && s.filmTestStopAfterLine && speaker != 0) {
-					g_filmMain.stopPending = true;
-					g_filmMain.stopPendingSince = a_now;
-					g_filmMain.stopPendingLine = latest;
-					g_filmMain.stopPendingSpeaker = speaker;
-					g_filmMain.holdingYou = false;
-					SetMovementHeld(false);
-					SetLookingHeld(false);
-					REX::INFO("Filming people talking: you moved while {} talks; your controls are back, the view stays until the line ends (the test)", TalkerName(speaker));
-				} else if (pressed) {
+				if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
 					g_filmMain.declinedScene = g_filmMain.scene;

@@ -83,8 +83,6 @@ namespace CCC::Camera
 	void SetRenderLens(float a_degrees, float a_scale = 1.0f);
 	// The render camera's frustum against the plain maths for a_degrees (0 if unknown).
 	float RenderLensScale(float a_degrees);
-	// The render camera's lens now, plain maths, horizontal degrees (0 if unknown; the cut timing trace, 0.9.56).
-	float RenderLensDegrees();
 	bool ShowGameplayView(RE::NiAVObject* a_root, const Pose& a_view);
 
 }

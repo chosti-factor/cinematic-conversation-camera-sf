@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.50 (2026-11-22). Dates assume the Friday 27 November release; for
+Last updated: 0.9.59 (2026-11-22). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -125,7 +125,7 @@ Wednesday the 25th, about two days earlier.
       DLSS (0.9.55 test with it off: the same). 0.9.56: the cut timing trace (detailed log):
       the zooms were cuts from shots over 60 degrees, taken for the start's gameplay lens
       (fixed 0.9.57). 0.9.57 clips: 15 of 15 cuts clean outdoors, then about 45 at the Lodge
-      with no zoom and one mild early softening. Done; the trace comes out next. Post-1.0
+      with no zoom and one mild early softening. Done; the trace came out in 0.9.59. Post-1.0
       Mulling if the early focus ever bothers: how the game's quest-scene cameras cut
       cleanly (the user)
 - [x] Cora's lines overlapping: listed as a known issue for 1.0 (README; the user, 2026-11-22),
