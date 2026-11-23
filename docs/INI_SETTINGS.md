@@ -1,12 +1,46 @@
-# INI and settings page review
+# INI settings
 
-Last updated: 0.9.60 (2026-11-22). First pass decided (the user, 2026-11-22: "go with your
-recommendations"; start on its own off, the prompt on) and built in 0.9.60: the page as in
-section 2, the defaults below, the text fixes in section 4. `bSubtitlesInBars` and
-`bAutoListenSprinting` stay off by default.
-Second step (the user, 2026-11-22): section 6's levels as proposed, shown with option 2 (one
-[Advanced] section) and the 20 Hidden settings out of the INI; no old names or sections read
-(nothing released yet). Built in 0.9.60 too.
+Last updated: 0.9.60 (2026-11-22).
+
+`Data\SFSE\Plugins\CinematicConversationCameraSF.ini` (what each of its sections holds: the
+README's Settings table). Here: the settings page and the INI, the hidden settings, every
+setting's place (section 6), and the review that set them out (sections 1-5).
+
+## The settings page and the INI
+
+Each setting is explained in the INI itself. A few more, found by testing and not worth
+changing, aren't in the INI but are read from `[Advanced]` if you add them (defaults shown):
+`fShortLineSeconds=1.2` (lines shorter don't count for cutting), `fObstacleRadius=0.05`,
+`fBystanderStillNpc=1.5`, `fFaceDeadband=0.04` (head movement the camera ignores),
+`fBusyFollowSmoothing=1.0` and `fBusyHeadSpeed=0.25` (following a speaker on the move),
+`fExitCutSeconds=0.4` (the first-person exit's cut after the last line),
+`fFilmStopSeconds=0.3`, and the plain over-the-shoulder shot's offsets in metres:
+`fDistanceBehind=0.65`, `fSideOffset=0.32`, `fHeightOffset=0.06`, `fLookHeightOffset=-0.03`,
+`fSeatedForward=0.25`, `fSeatedSide=0.9`, `fSeatedHeight=0.3`, `fOverSeatedBehind=0.35`,
+`fOverSeatedSide=0.6`, `fOverSeatedHeight=-0.25`, `fVendorSideNpc=0.9`,
+`fVendorHeightNpc=0.05`.
+
+With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
+main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
+five pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The rest
+stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
+timing), meant for a preset editor after 1.0, and technical tuning. The page shows
+your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
+writes changes to the `_user.ini`; **Reset** beside a setting removes your change. A setting
+that only works while another is on sits indented under it, and is greyed out with "(off)"
+while that one is off (its tooltip says which). Changes apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
+Mod Organizer it lands in Mod Organizer's `overwrite` folder (`overwrite\SFSE\Plugins`),
+where the game still reads it. Per-shot tweaks ([Shots]) and everything in [Advanced] are in
+the INI only.
+
+## The review (2026-11-21 to 22)
+
+First pass decided (the user, 2026-11-22: "go with your recommendations"; start on its own
+off, the prompt on) and built in 0.9.60: the page as in section 2, the defaults in section 3,
+the text fixes in section 4. `bSubtitlesInBars` and `bAutoListenSprinting` stay off by
+default. Second step (the user, 2026-11-22): section 6's levels as proposed, shown with
+option 2 (one [Advanced] section) and the 20 Hidden settings out of the INI; no old names or
+sections read (nothing released yet). Built in 0.9.60 too.
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options
 on it; some options hidden (INI only), some kept for a preset editor after 1.0 (Mulling).

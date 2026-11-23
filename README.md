@@ -242,7 +242,7 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
     3. Optimization: the cost of each frame and each scan measured, then made cheaper
        (done 2026-11-22; the measuring code and the finished diagnostics taken out in 0.9.50).
     4. The INI and its defaults reviewed last, once the settings are final (0.9.60, first
-       pass: the settings page trimmed to the main choices, docs/INI_REVIEW.md).
+       pass: the settings page trimmed to the main choices, docs/INI_SETTINGS.md).
   - Last, just before 1.0: the detailed log and the testing messages off by default (done in
     0.9.60), then a full test round on the release candidate.
 - 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
@@ -379,30 +379,8 @@ conversations, within half a second), so changes apply without restarting the ga
 | `[Advanced]` | Technical settings, rarely worth changing: the shot library on/off, never across the eyeline, who gets the camera, plain shots for seated people and merchants, room shots in small rooms, reaction line lengths, the expressions' tiers, the persuasion tags, follow smoothing, small and large speakers, the Wide focus distance, the full body from first person, the exit style, filming's hand-back timings and stop distances, the listen button's hold, the testing messages' time |
 | `[GameSettings]` | Changing the game's own settings while it runs |
 
-Each setting is explained in the INI itself. A few more, found by testing and not worth
-changing, aren't in the INI but are read from `[Advanced]` if you add them (defaults shown):
-`fShortLineSeconds=1.2` (lines shorter don't count for cutting), `fObstacleRadius=0.05`,
-`fBystanderStillNpc=1.5`, `fFaceDeadband=0.04` (head movement the camera ignores),
-`fBusyFollowSmoothing=1.0` and `fBusyHeadSpeed=0.25` (following a speaker on the move),
-`fExitCutSeconds=0.4` (the first-person exit's cut after the last line),
-`fFilmStopSeconds=0.3`, and the plain over-the-shoulder shot's offsets in metres:
-`fDistanceBehind=0.65`, `fSideOffset=0.32`, `fHeightOffset=0.06`, `fLookHeightOffset=-0.03`,
-`fSeatedForward=0.25`, `fSeatedSide=0.9`, `fSeatedHeight=0.3`, `fOverSeatedBehind=0.35`,
-`fOverSeatedSide=0.6`, `fOverSeatedHeight=-0.25`, `fVendorSideNpc=0.9`,
-`fVendorHeightNpc=0.05`.
-
-With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
-main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
-five pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The rest
-stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
-timing), meant for a preset editor after 1.0, and technical tuning. The page shows
-your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
-writes changes to the `_user.ini`; **Reset** beside a setting removes your change. A setting
-that only works while another is on sits indented under it, and is greyed out with "(off)"
-while that one is off (its tooltip says which). Changes apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
-Mod Organizer it lands in Mod Organizer's `overwrite` folder (`overwrite\SFSE\Plugins`),
-where the game still reads it. Test switches, transitions, per-shot tweaks and the plain
-camera are in the INI only.
+Each setting is explained in the INI itself. The settings page, the hidden settings and
+every setting's place: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).
 
 ## Testing and logs
 

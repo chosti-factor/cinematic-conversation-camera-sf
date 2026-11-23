@@ -6,7 +6,7 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.60 - 2026-11-22
 
-### Changed (the INI review, first pass: the user took the proposal in docs/INI_REVIEW.md)
+### Changed (the INI review, first pass: the user took the proposal in docs/INI_SETTINGS.md)
 - The settings page has the main choices only: 30 entries instead of 55. Off it, still in the
   INI and read as before:
   - a preset's own numbers, for a preset editor after 1.0: camera sway, lens, the furthest
@@ -29,7 +29,7 @@ test build; "diagnostic" items only add information to the log for testing.
   `_user.ini`; version history taken out of the comments (the CHANGELOG keeps it); the exit
   style's comment shortened; "GroundLevel isn't available yet" gone.
 - The INI's technical settings (31) moved to a new `[Advanced]` section at its end (the
-  user's pick of the table in docs/INI_REVIEW.md, section 6); `[Transitions]` and
+  user's pick of the table in docs/INI_SETTINGS.md, section 6); `[Transitions]` and
   `[PlainCamera]` are gone with it, and the shot library's switch is `bDirector` there (it was
   `[Director] bEnabled`). 20 fine-tuning settings found by testing are out of the INI, still
   read from `[Advanced]` if added (listed with their defaults in the README). No old names

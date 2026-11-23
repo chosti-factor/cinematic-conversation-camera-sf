@@ -36,6 +36,8 @@ Last updated: 0.9.59 (2026-11-22).
     on each frame, the measured numbers, what was tried): every build that touches a start
     or an exit, without exception. Read it before touching start or exit code.
   - docs/PRESETS.md: every build that touches presets, shots, lenses, moves or cutting.
+  - docs/INI_SETTINGS.md: every build that adds, moves, hides or removes a setting, or
+    changes the settings page (its table in section 6 and the hidden list).
   - docs/EMOTIONS.md: every build that touches line expressions, emotion close-ups or your
     face.
   - docs/REACTIONS.md: every build that touches reaction shots or the persuasion beat.
