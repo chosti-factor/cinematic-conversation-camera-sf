@@ -134,7 +134,8 @@ Wednesday the 25th, about two days earlier.
       0.9.43's tests let scenes play out. 2026-11-22 22:48: the filming of Walter and Vasco
       left to end on its own ("they've stopped talking"), then Cora: clean. So the trigger is
       stopping a filming mid-line (moving while someone in the scene talks): the view and
-      first person snap back while a line plays. Next: find which part of that stop it is
+      first person snap back while a line plays. 0.9.58: `bFilmTestStopAfterLine` holds the
+      view to the line's end (controls back at once); test it the same way
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the

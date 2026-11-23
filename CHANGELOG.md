@@ -4,6 +4,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.58 - 2026-11-22
+
+### Test (out before 1.0)
+- `bFilmTestStopAfterLine` ([Debug], on in this build): moving while someone in a filmed scene
+  talks gives you your controls back at once, but the view stays on the filmed shot until that
+  line ends (10 s at most), then the filming stops as usual. The user's tests (0.9.57): a
+  filming of Walter and Vasco stopped by moving mid-line left the next conversation, with
+  Cora, with lines overlapping (the 0.9.43 bug); left to end on its own, Cora was clean; with
+  filming off or the mod off, clean. This tells whether the view snapping back mid-line is the
+  trigger. Logged: "you moved while ... talks" and "the line you moved during is over".
+
 ## 0.9.57 - 2026-11-22
 
 ### Fixed (found with 0.9.56's cut timing trace)

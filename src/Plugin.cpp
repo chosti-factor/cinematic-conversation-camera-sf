@@ -4770,6 +4770,10 @@ namespace CCC
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
 			std::chrono::steady_clock::time_point stoppedAt{};   // when filming last stopped (0.8.15)
+			bool                                  stopPending{ false };  // bFilmTestStopAfterLine: you moved mid-line (0.9.58 test)
+			std::chrono::steady_clock::time_point stopPendingSince{};
+			std::chrono::steady_clock::time_point stopPendingLine{};     // the line being spoken then
+			std::uint32_t                         stopPendingSpeaker{ 0 };
 			std::chrono::steady_clock::time_point ownUntil{};    // last seen in a conversation of your own (0.9.39)
 			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
 			std::vector<std::uintptr_t>           infos;     // the lines filmed (by words and record), to notice repeats
@@ -5036,6 +5040,7 @@ namespace CCC
 					return;
 				}
 				g_film.active = false;
+				g_filmMain.stopPending = false;
 				g_film.smoothSpeaker.reset();
 				g_film.smoothListener.reset();
 				g_film.pose.reset();
@@ -5320,7 +5325,29 @@ namespace CCC
 				const float moved = inputMoved ? 1.0f :
 				                    g_filmMain.settled ? (FlatDistance(feet, g_filmMain.playerAt) > s.filmStopDistance ? 1.0f : 0.0f) :
 				                    !g_filmMain.autoStarted && FlatDistance(feet, g_filmMain.startFeet) > s.filmWalkOnDistance ? 1.0f : 0.0f;
-				if (pressed) {
+				// bFilmTestStopAfterLine (0.9.58, a test): moving while someone in the scene talks gives
+				// you your controls back at once, but the view stays on the filmed shot until the line
+				// ends (10 s at most), then the filming stops as usual. The 0.9.57 tests: a filming
+				// stopped by moving mid-line left the next conversation with Cora with lines
+				// overlapping; one left to end on its own didn't.
+				if (g_filmMain.stopPending) {
+					if (speaker != g_filmMain.stopPendingSpeaker || latest != g_filmMain.stopPendingLine || a_now - g_filmMain.stopPendingSince > 10s || pressed) {
+						REX::INFO("Filming people talking: the line you moved during is over after {:.2f} s",
+							std::chrono::duration<float>(a_now - g_filmMain.stopPendingSince).count());
+						StopFilming("you moved (the view held to the line's end, the test)");
+						g_filmMain.declinedScene = g_filmMain.scene;
+						g_filmMain.declinedAt = a_now;
+					}
+				} else if (moved > 0.5f && !pressed && s.filmTestStopAfterLine && speaker != 0) {
+					g_filmMain.stopPending = true;
+					g_filmMain.stopPendingSince = a_now;
+					g_filmMain.stopPendingLine = latest;
+					g_filmMain.stopPendingSpeaker = speaker;
+					g_filmMain.holdingYou = false;
+					SetMovementHeld(false);
+					SetLookingHeld(false);
+					REX::INFO("Filming people talking: you moved while {} talks; your controls are back, the view stays until the line ends (the test)", TalkerName(speaker));
+				} else if (pressed) {
 					StopFilming("listen key");
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
 					g_filmMain.declinedScene = g_filmMain.scene;
