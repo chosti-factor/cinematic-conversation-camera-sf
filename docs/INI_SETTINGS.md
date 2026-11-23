@@ -34,8 +34,10 @@ four pages (Camera, Close-ups and reactions, Screen, Filming people talking). Th
 stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
 timing), meant for a preset editor after 1.0, and technical tuning. The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
-writes changes to the `_user.ini`; **Reset** beside a setting removes your change. A setting
-that only works while another is on sits indented under it, and is greyed out with "(off)"
+writes changes to the `_user.ini`; **Reset** beside a setting removes your change. Every
+setting has a tooltip; on/off settings are switches (green when on). Each page's settings come
+in groups, each under a greyed line with its name. A setting that only works while another is
+on sits indented under it, joined to it by a greyed corner line, and is greyed out with "(off)"
 while that one is off (its tooltip says which). Changes apply from the next conversation. If there's no `_user.ini` yet, the page creates one; with
 Mod Organizer it lands in Mod Organizer's `overwrite` folder (`overwrite\SFSE\Plugins`),
 where the game still reads it. Per-shot tweaks ([Shots]) and everything in [Advanced] are in

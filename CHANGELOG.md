@@ -4,6 +4,23 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.64 - 2026-11-23
+
+### Changed (the settings page, the user's asks)
+- Every setting has a tooltip: added for the game's camera in quest scenes, the letterbox,
+  filming people talking and its range; fuller ones for emotion close-ups (what the preset's
+  own is), holding on their answer (skill checks too), reaction shots and the skill-choice
+  close-up (the preset's own), the bar height (0.12 is about 2.39:1) and the testing messages
+  (off normally).
+- On/off settings are switches, as on a phone (green when on, grey when off), instead of
+  checkboxes; clicking the label flips them too.
+- Settings regrouped so like sits with like: Camera (the mod; look: preset, pace, focus style;
+  movement: camera moves, sway; staging: 180-degree rule, quest scenes), Close-ups and reactions
+  (them; you), Screen (letterbox, dialogue options, testing), Filming people talking (people
+  talking near you: film them, range; how it starts: the prompt, on its own, while sprinting).
+- Each group's name sits on a greyed line with a gap above it; a setting that needs another
+  is indented almost twice as far (34 px a step), joined to it by a greyed corner line.
+
 ## 0.9.63 - 2026-11-23
 
 ### Changed (the INI, [Advanced] thinned, the user's call)
