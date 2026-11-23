@@ -109,6 +109,7 @@ namespace CCC::Director
 			int   minLines{ 2 };
 			int   maxLines{ 5 };
 			float shortestHold{ 2.0f };
+			clock::time_point reaimAt{};  // the shot on them turned to a new speaker (0.9.69)
 			int                       npcSerial{ 0 };           // the last line counter seen (0.8.3)
 			bool                      inReaction{ false };      // a reaction shot is on (0.8.6: an insert)
 			std::optional<ShotType>   reactionReturn;           // the speaker's shot to go back to after it
@@ -1130,6 +1131,8 @@ namespace CCC::Director
 		// again (0.9.23: an emotion close-up's cut, then "new angle" on the same frame from the
 		// time held before it, flashed one frame of the close-up).
 		const auto  heldNow = [&]() { return std::chrono::duration<float>(a_now - g.cutAt).count(); };
+		// A new angle or a wider shot also waits after the shot turned to a new speaker (0.9.67).
+		const auto  reaimHeld = [&]() { return std::chrono::duration<float>(a_now - g.reaimAt).count() >= g.shortestHold; };
 		auto&       side = a_frame.npcTurn ? g.npc : g.player;
 		// A cut owed at a line's start waits for the line's reaction to be decided (0.9.23),
 		// at most a second.
@@ -1314,7 +1317,7 @@ namespace CCC::Director
 				}
 			} else if (const float limit = CloseUpLimit();
 					   limit > 0.0f && a_frame.npcTurn && g.currentNpcSide && alreadyClose && !g.beatActive && !g.extremeLineOver &&
-					   ((lineCutNow && heldNow() >= limit) || heldNow() >= limit + 6.0f)) {
+					   ((lineCutNow && heldNow() >= limit) || heldNow() >= limit + 6.0f) && reaimHeld()) {
 				// 0.9.23: one close-up of them held this long (a run of emotional lines held one
 				// for 28 s): a wider shot of them, at a line's start (mid-line 6 s later at most).
 				// No emotion close-up for half the limit after it.
@@ -1390,7 +1393,7 @@ namespace CCC::Director
 					NoteEmotionCut(ShotType::kCloseUp);
 				}
 				g.intensePending = false;
-			} else if (side.changeDue && lineCutNow && heldNow() >= g.shortestHold) {
+			} else if (side.changeDue && lineCutNow && heldNow() >= g.shortestHold && reaimHeld()) {
 				if (const auto pick = Pick(a_frame); pick && pick != g.current) {
 					Cut(*pick, a_frame, a_now, "new angle", true);
 				} else {
@@ -1660,9 +1663,7 @@ namespace CCC::Director
 
 	void NoteSpeakerChange(std::chrono::steady_clock::time_point a_now)
 	{
-		if (g.current) {
-			g.cutAt = a_now;
-		}
+		g.reaimAt = a_now;  // 0.9.69: its own time, not a cut's (an emotion close-up comes at the line's start)
 	}
 
 	float WantedLens()

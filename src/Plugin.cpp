@@ -58,6 +58,8 @@ namespace CCC
 			std::chrono::steady_clock::time_point lastFrame{};
 			std::chrono::steady_clock::time_point npcQuietSince{};
 			std::chrono::steady_clock::time_point speakerChangedAt{};  // another NPC took the line (0.9.67)
+			std::chrono::steady_clock::time_point reaimAt{};           // ... while an NPC was on screen: the shot turned to them (0.9.69)
+			bool                                  speakerHoldLogged{ false };
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
 			std::uint32_t                         failuresLogged{ 0 };
@@ -782,11 +784,16 @@ namespace CCC
 		// shot on screen has been up (since the last cut of either kind: to the other person, or
 		// the director's own), and the least it stays up before a cut that nothing forces: the
 		// preset's shortest hold, paced, so each preset keeps its rhythm.
-		float OnScreenSeconds(std::chrono::steady_clock::time_point a_now)
+		// a_reaim: the shot on them turning to a new speaker counts too (0.9.69: not for a
+		// reaction, which takes that turn's place).
+		float OnScreenSeconds(std::chrono::steady_clock::time_point a_now, bool a_reaim)
 		{
 			float on = std::chrono::duration<float>(a_now - g_state.lastCut).count();
 			if (Settings::Get().director && !g_state.plainShots) {
 				on = (std::min)(on, Director::SinceCut(a_now));
+			}
+			if (a_reaim) {
+				on = (std::min)(on, std::chrono::duration<float>(a_now - g_state.reaimAt).count());
 			}
 			return on;
 		}
@@ -830,12 +837,18 @@ namespace CCC
 			if (talking) {
 				g_state.yourTurn = false;
 			}
-			// 0.9.67: a reaction waits until the shot on them has been up the preset's shortest hold
-			// (the log: a reaction 1.6 s after a cut). Its length is counted from when it shows.
+			// 0.9.67: no reaction until the shot on them has been up the preset's shortest hold (the
+			// log: one 1.6 s after a cut). 0.9.69: not waited for but left to a later line, as one the
+			// chance roll said no to. Waiting cut into the line late: the 0.9.68 test had reactions of
+			// 0.4 s and 1.0 s, cut to just before the line ended, in scenes with three people.
 			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom && g_state.reactionOnAt == std::chrono::steady_clock::time_point{} &&
-				g_state.subject == Subject::kNpc && OnScreenSeconds(a_now) < LeastHold()) {
-				g_state.npcWasTalking = true;
-				return Subject::kNpc;
+				g_state.subject == Subject::kNpc && OnScreenSeconds(a_now, false) < LeastHold()) {
+				g_state.reactionActive = false;
+				g_state.reactionCloseUp = false;
+				g_state.reactionOwed = true;
+				if (s.debugLog) {
+					REX::INFO("Reaction: left to a later line (the shot on them has been up {:.1f} s, under the {:.1f} s shortest hold)", OnScreenSeconds(a_now, false), LeastHold());
+				}
 			}
 			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
 				// A reaction shot: you, listening, for reactionHold seconds from the cut to you.
@@ -870,7 +883,7 @@ namespace CCC
 			// 0.9.67: and not before the shot on them has been up the preset's shortest hold. Your
 			// turn (picking an option) can wait a moment; the 0.9.60 log had their close-up for
 			// 0.8 s, cut in as the line ended and straight back to you for the options.
-			if (g_state.subject == Subject::kNpc && (a_now - g_state.npcQuietSince < kPlayerCutDelay || OnScreenSeconds(a_now) < LeastHold())) {
+			if (g_state.subject == Subject::kNpc && (a_now - g_state.npcQuietSince < kPlayerCutDelay || OnScreenSeconds(a_now, true) < LeastHold())) {
 				return Subject::kNpc;
 			}
 			if (g_state.subject == Subject::kNone) {
@@ -1963,11 +1976,13 @@ namespace CCC
 				}
 				if (g_state.speakerId != 0 && !g_state.smallSpeaker && !g_state.handedBack) {
 					DecidePlainShots(static_cast<RE::Actor*>(speaker), npcHead->z - speaker->GetPosition().z, false);
-					// 0.9.67: the shot on them now frames the new speaker, a cut on screen; the
-					// next cut waits as after any other (the log: a wider shot 0.1 s later).
+					// 0.9.67: the shot on them now frames the new speaker, a cut on screen; a new angle
+					// or a wider shot waits as after any other (the log: a wider shot 0.1 s later).
+					// 0.9.69: not counted as a cut for their emotion close-up or a reaction, which
+					// come at the line's start (0.9.68: an emotion close-up 0.7 s after the turn).
 					g_state.speakerChangedAt = now;
 					if (g_state.subject == Subject::kNpc) {
-						g_state.lastCut = now;
+						g_state.reaimAt = now;
 						if (s.director && !g_state.plainShots) {
 							Director::NoteSpeakerChange(now);
 						}
@@ -2659,10 +2674,25 @@ namespace CCC
 			// second later, as their voice started (the 0.9.60 log: four such 0.3 s shots in one
 			// scene). Your shot stays as it was until that cut (a second at most), unless this line
 			// is a reaction of yours, which stays on you and takes the new framing at once.
-			if (subject == Subject::kPlayer && g_state.lastPose && !pov && !g_state.reactionActive && !g_state.choiceCloseUp &&
-				g_state.speakerChangedAt != std::chrono::steady_clock::time_point{} && now - g_state.speakerChangedAt < 1s && g_state.lastCut < g_state.speakerChangedAt &&
-				(!directed || Director::SinceCut(now) > std::chrono::duration<float>(now - g_state.speakerChangedAt).count())) {
-				pose = *g_state.lastPose;
+			// 0.9.69: and with them on screen, the shot stays on the last speaker until the new one's
+			// line is decided (half a second at most): a reaction then comes straight from it, not
+			// after a frame or a third of a second of the shot turned to the new speaker.
+			{
+				const bool  changed = g_state.speakerChangedAt != std::chrono::steady_clock::time_point{} && g_state.lastCut < g_state.speakerChangedAt;
+				const float since = std::chrono::duration<float>(now - g_state.speakerChangedAt).count();
+				const bool  noCutSince = !directed || Director::SinceCut(now) > since;
+				const bool  holdYou = subject == Subject::kPlayer && !g_state.reactionActive && !g_state.choiceCloseUp && since < 1.0f;
+				const bool  holdThem = subject == Subject::kNpc && g_state.reaimAt == g_state.speakerChangedAt && since < 0.5f &&
+				                      (g_state.lineStart < g_state.speakerChangedAt || g_state.reactionPending);
+				if (changed && noCutSince && g_state.lastPose && !pov && (holdYou || holdThem)) {
+					pose = *g_state.lastPose;
+					if (s.debugLog && !g_state.speakerHoldLogged) {
+						g_state.speakerHoldLogged = true;
+						REX::INFO("Speaker change: the last shot held ({}) until the cut", holdYou ? "you on screen" : "their line not decided yet");
+					}
+				} else {
+					g_state.speakerHoldLogged = false;
+				}
 			}
 
 			// Safety net while we confirm Starfield's distance units: never put the camera

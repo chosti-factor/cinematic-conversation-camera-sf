@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.69 - 2026-11-23
+
+### Fixed (0.9.67's pacing in scenes with three or more people; the user: flickers)
+From the 0.9.68 test log (Ularu Chen and Imogene Salzo, Benjamin Bayu and Yannick Legrande).
+- A reaction of you that would come before the shot on them has been up the preset's shortest
+  hold is left to a later line, not waited for. Waiting (0.9.67) cut to you late in the line:
+  reactions of 0.4 s and 1.0 s, cut to just before the line ended.
+- Another NPC taking the line no longer counts as a cut for their emotion close-up or a
+  reaction: both come at the line's start again, as before 0.9.67, not 0.7 s or 2.5 s in. It
+  still holds off a new angle or a wider shot.
+- With someone on screen when another NPC takes the line, the shot stays on the last speaker
+  until the new line is decided (half a second at most), so a reaction or an emotion close-up
+  comes straight from it, not after a moment of the shot turned to the new speaker.
+- The detailed log notes each of these (a reaction left to a later line, a shot held at a
+  speaker change).
+
 ## 0.9.68 - 2026-11-23
 
 ### Fixed
