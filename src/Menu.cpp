@@ -449,6 +449,7 @@ namespace CCC::Menu
 			// at the bottom, easy to miss).
 			ImGuiMCP::TextDisabled("%s", "Changes apply from the next conversation (made during one, from the one after).");
 			const char* group = nullptr;
+			bool        headsUp = false;  // "Start on its own" is on: its note at the end of the page (0.9.68)
 			for (std::size_t i = 0; i < kCount; ++i) {
 				const auto& e = kEntries[i];
 				if (std::string_view{ e.page } != a_page) {
@@ -481,8 +482,10 @@ namespace CCC::Menu
 					}
 				}
 				// 0.9.64 (the user: hard to tell apart): a wider step, and a greyed corner line from
-				// the setting above into this one, as in a tree.
-				constexpr float kStep = 34.0f;
+				// the setting above into this one, as in a tree. 0.9.68 (the user: at least four
+				// times more): 3.4 times the font size, 136 px at the framework's 40 px (it was 34),
+				// so it keeps its proportion at any UI scale.
+				const float kStep = ImGuiMCP::GetFontSize() * 3.4f;
 				if (depth > 0) {
 					ImGuiMCP::Indent(kStep * static_cast<float>(depth));
 					const auto  at = ImGuiMCP::GetCursorScreenPos();
@@ -505,16 +508,21 @@ namespace CCC::Menu
 				}
 				g_needsNote.clear();
 				// While "Start on its own" is on, what it does to your camera and your controls,
-				// spelled out under it (0.9.33, the user's request); not while filming is off.
+				// spelled out (0.9.33, the user's request); not while filming is off. 0.9.68 (the
+				// user): at the end of the page, not between the setting and the next one.
 				if (std::string_view{ e.key } == "bAutoListen" && !off && AsFloat(g_values[i].text, 1.0f) != 0.0f) {
-					ImGuiMCP::PushTextWrapPos(0.0f);
-					ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s",
-						"Heads up: when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.");
-					ImGuiMCP::PopTextWrapPos();
+					headsUp = true;
 				}
 				if (depth > 0) {
 					ImGuiMCP::Unindent(kStep * static_cast<float>(depth));
 				}
+			}
+			if (headsUp) {
+				ImGuiMCP::Spacing();
+				ImGuiMCP::PushTextWrapPos(0.0f);
+				ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s",
+					"Heads up: with \"Start on its own\" on, when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.");
+				ImGuiMCP::PopTextWrapPos();
 			}
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();

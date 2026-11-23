@@ -718,7 +718,13 @@ namespace CCC
 				// instead; the render camera goes back to the game just before the third-person
 				// camera's own first update.
 				bool tpExit = false;
-				if (!g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
+				// 0.9.68: none of this for a conversation the game's own camera filmed (a quest scene,
+				// bGameCameraInScenes): its exit is the game's. Walking away from Ularu Chen's scene
+				// (the 0.9.67 test) ended it with the game's conversation camera still on for 0.8 s,
+				// and your view drawn for a frame and the gameplay lens forced on that camera: the
+				// scene's shot widened, out of focus, at an odd angle, before the game's own exit.
+				const bool ourExit = !g_state.handedBack;
+				if (ourExit && !g_state.startedFirstPerson && !g_state.restoreFirstPerson && g_thirdPersonView && !g_state.seatedAtStart) {
 					// From third person the cut to your view is this frame (0.9.48), turned to behind
 					// your body here (with style 1, too, after its closing shot).
 					if (g_state.exitCutFrames == 0) {
@@ -740,7 +746,7 @@ namespace CCC
 				// conversation lens, which looked like your view zoomed in). Keep your view drawn
 				// until the first-person camera's own next update instead, as the third-person exit
 				// does.
-				if (!tpExit && g_state.startedFirstPerson && g_exitSkipped > 0 && g_firstPersonView) {
+				if (ourExit && !tpExit && g_state.startedFirstPerson && g_exitSkipped > 0 && g_firstPersonView) {
 					if (auto* camera = RE::PlayerCamera::GetSingleton(); camera && Camera::ShowGameplayView(camera->cameraRoot.get(), *g_firstPersonView)) {
 						tpExit = true;
 						g_tpExitPending = true;
@@ -748,7 +754,7 @@ namespace CCC
 						REX::INFO("Exit: your first-person view kept drawn until the first-person camera's next update");
 					}
 				}
-				if (!tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
+				if (ourExit && !tpExit && !g_state.startedFirstPerson && g_state.seatedAtStart) {
 					PutGameplayLensBack(false);
 					REX::INFO("Exit: seated in third person; the game's seated camera takes over (0.9.18)");
 				}

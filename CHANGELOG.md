@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.68 - 2026-11-23
+
+### Fixed
+- Leaving a quest scene the game's own camera films (`bGameCameraInScenes`) by walking away:
+  the scene's shot widened, out of focus and at an odd angle, for a moment before the game's
+  exit. The game kept its conversation camera on for 0.8 s after the conversation ended, and
+  this mod's exit (your view drawn for a frame, your gameplay lens forced) ran on top of it.
+  Conversations the game's camera films now end with the game's own exit, untouched. (From
+  before 0.9.67; seen in its test, leaving Ularu Chen's scene, twice.)
+
+### Changed (the settings page, the user)
+- Settings that depend on another are indented four times as far (3.4 times the font size,
+  136 px at the framework's 40 px; it was 34), so it keeps its proportion at any UI scale.
+- The "Heads up" note for "Start on its own" sits at the end of the page, not between that
+  setting and the next one.
+
 ## 0.9.67 - 2026-11-23
 
 ### Changed (quest scenes, the user: shots cycling too fast, some too short)
