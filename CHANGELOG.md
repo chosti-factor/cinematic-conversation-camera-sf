@@ -4,6 +4,31 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.60 - 2026-11-22
+
+### Changed (the INI review, first pass: the user took the proposal in docs/INI_REVIEW.md)
+- The settings page has the main choices only: 30 entries instead of 55. Off it, still in the
+  INI and read as before:
+  - a preset's own numbers, for a preset editor after 1.0: camera sway, lens, the furthest
+    distances indoors and outdoors, their close-up chances by tier, the extreme close-up
+    share, the longest close-up, the reaction chance, listening reactions in close-up, the
+    skill-choice close-up's length, extreme close-ups of you;
+  - technical tuning: never across the eyeline, the plain shot for seated people and
+    merchants, the three large-speaker settings, full body from first person, your
+    background's expression and asking a question (%), the three "ending it by moving"
+    settings.
+  A line at the page's foot says the rest is in the INI, each explained.
+- Defaults: the detailed log off (`bDebugLog=0`), the testing messages off
+  (`bShowMessages=0`), and filming people talking no longer starts on its own
+  (`bAutoListen=0`; the listen prompt stays on). Settings you've changed on the page or in
+  your `_user.ini` keep your value.
+- "Emotion close-ups" help text: close-ups come on every tier of expression (always on strong
+  ones, now and then on milder ones), not only strong lines.
+- The INI's comments: the header says how the files are read again (when they change, not
+  before every conversation, since 0.9.41) and that the settings page writes to the
+  `_user.ini`; version history taken out of the comments (the CHANGELOG keeps it); the exit
+  style's comment shortened; "GroundLevel isn't available yet" gone.
+
 ## 0.9.59 - 2026-11-22
 
 ### Removed (before the INI review)

@@ -146,11 +146,12 @@ Wednesday the 25th, about two days earlier.
       bug: the game's sequencing of a multi-part response seems fragile to camera-state or
       dialogue-target changes. Cora's responses are multi-part; filming switches the game's
       camera state (first to third person and back). CCC (Skyrim) has nothing on it
-- [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
-      labels, help and ranges against the INI)
-- [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
+- [x] INI and defaults review, first pass (0.9.60; docs/INI_REVIEW.md): the page trimmed to
+      the main choices, defaults (log, messages, start on its own off), comment fixes
+- [x] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
       design isn't clear enough for people; which options to keep on the page, which to hide
-      (INI only), and which belong in a future preset editor (post-1.0, Mulling)
+      (INI only), and which belong in a future preset editor (post-1.0, Mulling). First pass in
+      0.9.60; a second look after the user has used the new page
 
 ## 5. Release candidate (about 25 to 26 Nov)
 

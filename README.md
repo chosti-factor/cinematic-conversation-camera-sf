@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.58 (2026-11-22).
+Last updated: 0.9.60 (2026-11-22).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -75,9 +75,9 @@ What CCC doesn't do.
   the game's own camera.
 - **Preset key:** U switches to the next preset on the fly, even mid-conversation
   (`iPresetKey`).
-- **Testing messages:** each line's expression, your face's answer and the shot used, with
-  why, in the top bar while a conversation is filmed, and the preset in use in the bottom
-  bar (`bShowMessages`, `fMessageSeconds`).
+- **Testing messages** (off by default): each line's expression, your face's answer and the
+  shot used, with why, in the top bar while a conversation is filmed, and the preset in use
+  in the bottom bar (`bShowMessages`, `fMessageSeconds`).
 
 ### Changed from CCC
 
@@ -156,9 +156,9 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
 - **People talking near you** (CCC 1.5.0 films them by key, or once you stand still; here
   also as you walk past, with a prompt): NPC-to-NPC conversations are noticed, who's
   addressing whom included, and filmed: a prompt on screen ("Listen in on nearby
-  conversation. Press N", or hold B on a controller) and/or starting on its own when a
-  conversation begins near you, even as you walk or jog past (sprinting too with
-  `bAutoListenSprinting`), and stops you
+  conversation. Press N", or hold B on a controller) and/or, if you turn it on (off by
+  default since 0.9.60), starting on its own when a conversation begins near you, even as you
+  walk or jog past (sprinting too with `bAutoListenSprinting`), and stops you
   there: your movement is held until you let go of the controls, and moving again ends it;
   looking around is off while it films (`[Overhear]`: `bListenPrompt`, `bAutoListen`; no prompt while it starts on its own).
   Only for the game's conversation scenes, not barks; one scene at a time, the nearest
@@ -241,10 +241,10 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
        scenes, combat, quick conversations in a row).
     3. Optimization: the cost of each frame and each scan measured, then made cheaper
        (done 2026-11-22; the measuring code and the finished diagnostics taken out in 0.9.50).
-    4. The INI and its defaults reviewed last, once the settings are final.
-  - Last, just before 1.0: the log's testing diagnostics and the testing messages off by
-    default (they stay on until then, for testing), then a full test round on the release
-    candidate.
+    4. The INI and its defaults reviewed last, once the settings are final (0.9.60, first
+       pass: the settings page trimmed to the main choices, docs/INI_REVIEW.md).
+  - Last, just before 1.0: the detailed log and the testing messages off by default (done in
+    0.9.60), then a full test round on the release candidate.
 - 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
   replacer, a dialogue menu replacer, a subtitle mod) and listing compatibility.
 
@@ -362,8 +362,8 @@ places in the game's menus.
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini`. Put your own changes in
 `CinematicConversationCameraSF_user.ini` next to it (same sections and keys) so updates
-don't overwrite them. The files are read again before every conversation, so changes
-apply without restarting the game.
+don't overwrite them. The files are read again whenever one of them changes (outside
+conversations, within half a second), so changes apply without restarting the game.
 
 | Section | What's in it |
 |---|---|
@@ -382,9 +382,11 @@ apply without restarting the game.
 
 Each setting is explained in the INI itself.
 
-With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, most
-of them are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on five
-pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The page shows
+With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
+main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
+five pages (Camera, Close-ups and reactions, You, Screen, Filming people talking). The rest
+stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
+timing), meant for a preset editor after 1.0, and technical tuning. The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
 writes changes to the `_user.ini`; **Reset** beside a setting removes your change. A setting
 that only works while another is on sits indented under it, and is greyed out with "(off)"

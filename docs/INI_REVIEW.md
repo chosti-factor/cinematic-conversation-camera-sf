@@ -1,8 +1,9 @@
-# INI and settings page review (proposal)
+# INI and settings page review
 
-Last updated: 0.9.59 (2026-11-22). A proposal for the user to decide on; nothing here is in
-the code yet. Once decided, this file records what was chosen and is then folded into the
-CHANGELOG and README.
+Last updated: 0.9.60 (2026-11-22). First pass decided (the user, 2026-11-22: "go with your
+recommendations"; start on its own off, the prompt on) and built in 0.9.60: the page as in
+section 2, the defaults below, the text fixes in section 4. `bSubtitlesInBars` and
+`bAutoListenSprinting` stay off by default.
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options
 on it; some options hidden (INI only), some kept for a preset editor after 1.0 (Mulling).

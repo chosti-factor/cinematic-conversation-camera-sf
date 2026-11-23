@@ -57,70 +57,33 @@ namespace CCC::Menu
 				kPresets },
 			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
-			{ "Camera", "Look", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
-				"0 a tripod, 100 fully handheld." },
-			{ "Camera", "Look", "Camera", "fConversationLens", "Lens (degrees)", Kind::kOwnFloat, 20, 70, "%.0f",
-				"One lens for every angle instead of each angle's own. 30 is the game's own." },
 			{ "Camera", "Look", "Director", "bCameraMoves", "Camera moves", Kind::kBool, 0, 1, nullptr,
 				"Push-ins, drifts, cranes and the like, as each preset has them." },
 			{ "Camera", "Look", "Director", "bFollowFace", "Close-ups follow the face", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Distance", "Director", "fMaxCameraDistance", "Furthest indoors (m)", Kind::kZeroFloat, 1, 15, "%.1f",
-				"How far the camera may stand from the person it frames, indoors." },
-			{ "Camera", "Distance", "Director", "fMaxCameraDistanceExterior", "Furthest outdoors (m)", Kind::kZeroFloat, 1, 15, "%.1f",
-				"How far the camera may stand from the person it frames, outdoors." },
 			{ "Camera", "Staging", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
 				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Camera", "Staging", "Director", "bEnforceLine", "Never across the eyeline", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Staging", "Director", "bObstacleCheck", "Avoid walls and objects", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Staging", "Director", "bAvoidBystandersNpc", "Avoid people in the way", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Staging", "Director", "bPlainShotsSeatedNpc", "Plain shot for seated people", Kind::kBool, 0, 1, nullptr,
-				"An over-the-shoulder shot instead of the shot library, whose angles often put the chair in the way." },
-			{ "Camera", "Staging", "Director", "bPlainShotsMerchantsNpc", "Plain shot for merchants", Kind::kBool, 0, 1, nullptr,
-				"An over-the-shoulder shot instead of the shot library, whose angles often put the counter in the way." },
 			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Game's camera in quest scenes", Kind::kBool, 0, 1, nullptr, nullptr },
-			{ "Camera", "Staging", "Camera", "fLargeSpeakerHeightNpc", "Large speaker from (m)", Kind::kFloat, 0.0f, 3.0f, "%.2f",
-				"Head this high above their feet (Vasco 1.75, people about 1.6): shots of you keep wider so their body doesn't hide you. 0 = off." },
-			{ "Camera", "Staging", "Camera", "fLargeSpeakerAnglePlayer", "Large speaker: shots of you from (degrees)", Kind::kFloat, 0.0f, 60.0f, "%.0f",
-				"How far off the line between you the shots of you stay with a large speaker." },
-			{ "Camera", "Staging", "Camera", "fLargeSpeakerPlainAnglePlayer", "Large speaker: plain shot of you (degrees)", Kind::kFloat, 0.0f, 60.0f, "%.0f",
-				"The plain over-the-shoulder shot of you, swung round this far with a large speaker (standing close, 38 still showed part of Vasco)." },
 			{ "Camera", "Focus", "Camera", "bFocusOnSubject", "Focus on the person in shot", Kind::kBool, 0, 1, nullptr, nullptr },
 			{ "Camera", "Focus", "Camera", "sFocusStyle", "Focus style", Kind::kChoice, 0, 0, nullptr,
 				"Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere.", kFocusStyles },
 
 			// ---- Close-ups and reactions ----
 			{ "Close-ups and reactions", "Their close-ups", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
-				"A close-up of the speaker on lines with a strong expression." },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceMildNpc", "Mild lines", Kind::kInt, 0, 100, "%d%%", nullptr },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceMediumNpc", "Medium lines", Kind::kInt, 0, 100, "%d%%", nullptr },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "iCloseUpChanceStrongNpc", "Strong lines", Kind::kInt, 0, 100, "%d%%", nullptr },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "iExtremeCloseUpChanceNpc", "Extreme close-ups", Kind::kOwnInt, 0, 100, "%d%%",
-				"Of those close-ups, how many are extreme. The preset's own: Frontier 25%, the others 40%." },
-			{ "Close-ups and reactions", "Their close-ups", "Director", "fCloseUpLimitSecondsNpc", "Longest close-up (s)", Kind::kOwnFloat, 0.0f, 60.0f, "%.0f",
-				"One close-up of them at most this long (4-60), then a wider shot of them; 0 = no limit. The preset's own: Frontier 12, Starborn 18, Constellation 14, Nebula 12, CCC's none." },
+				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often: in the INI)." },
 			{ "Close-ups and reactions", "Persuasion", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
 				"Cutting to you listening during their longer lines." },
-			{ "Close-ups and reactions", "You", "Director", "iReactionChancePlayer", "Reaction chance", Kind::kInt, 0, 100, "%d%%", nullptr },
-			{ "Close-ups and reactions", "You", "Director", "bListeningCloseUpsPlayer", "Listening reactions in close-up", Kind::kTri, 0, 0, nullptr,
-				"Reactions of you listening may be close-ups. The preset's own: yes, except Frontier (mediums and three-quarters)." },
 			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option." },
-			{ "Close-ups and reactions", "You", "Director", "fChoiceCloseUpSecondsPlayer", "Skill-choice close-up (s)", Kind::kFloat, 0.5f, 6.0f, "%.1f",
-				"How long the close-up of you lasts as you pick a tagged option, over the start of their answer." },
-			{ "Close-ups and reactions", "You", "Director", "iExtremeCloseUpChancePlayer", "Extreme close-ups of you", Kind::kInt, 0, 100, "%d%%", nullptr },
 
 			// ---- You ----
 			{ "You", "Your character", "Body", "bRevealPlayer", "Show your character", Kind::kBool, 0, 1, nullptr,
 				"Starfield hides you in conversations." },
-			{ "You", "Your character", "Body", "bFixFirstPersonBodyPlayer", "Full body from first person", Kind::kBool, 0, 1, nullptr,
-				"Build your full body when a conversation starts in first person (otherwise the first-person body shows)." },
 			{ "You", "Your face", "Face", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
 				"Your face answers the NPC's lines and your choices." },
-			{ "You", "Your face", "Face", "iSignatureChancePlayer", "Your background's expression", Kind::kInt, 0, 100, "%d%%",
-				"At moments your face would be neutral, how often it shows your background's expression instead." },
-			{ "You", "Your face", "Face", "iQuestionChancePlayer", "Asking a question", Kind::kInt, 0, 100, "%d%%", nullptr },
 
 			// ---- Screen ----
 			{ "Screen", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr, nullptr },
@@ -145,12 +108,6 @@ namespace CCC::Menu
 			{ "Filming people talking", "People talking near you", "Overhear", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
 				"A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it." },
 			{ "Filming people talking", "People talking near you", "Overhear", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f", nullptr },
-			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmStopDistance", "Distance that ends it (m)", Kind::kFloat, 0.1f, 2.0f, "%.2f",
-				"Once you've stood still, moving this far from that spot ends the filming. Filming that starts on its own also ends as soon as you move again after letting go of the controls." },
-			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmStopSeconds", "Standing still first (s)", Kind::kFloat, 0.1f, 2.0f, "%.2f",
-				"How long you stand still before the distance above applies." },
-			{ "Filming people talking", "Ending it by moving", "Overhear", "fFilmWalkOnDistance", "Walking on before you stop (m)", Kind::kFloat, 0.5f, 10.0f, "%.1f",
-				"Started with the listen key as you walk up: walking on this far from where it started ends it. Filming that starts on its own holds you still until you let go of the controls instead." },
 		};
 
 		// Settings that only do something while another is on (0.9.44, the user's request): drawn
@@ -163,17 +120,6 @@ namespace CCC::Menu
 		};
 		constexpr Needs kNeeds[]{
 			{ "sFocusStyle", "bFocusOnSubject" },
-			{ "fLargeSpeakerAnglePlayer", "fLargeSpeakerHeightNpc" },
-			{ "fLargeSpeakerPlainAnglePlayer", "fLargeSpeakerHeightNpc" },
-			{ "iCloseUpChanceMildNpc", "bEmotionCloseUpsNpc" },
-			{ "iCloseUpChanceMediumNpc", "bEmotionCloseUpsNpc" },
-			{ "iCloseUpChanceStrongNpc", "bEmotionCloseUpsNpc" },
-			{ "iExtremeCloseUpChanceNpc", "bEmotionCloseUpsNpc" },
-			{ "iReactionChancePlayer", "bReactionShotsPlayer" },
-			{ "bListeningCloseUpsPlayer", "bReactionShotsPlayer" },
-			{ "fChoiceCloseUpSecondsPlayer", "bChoiceCloseUpsPlayer" },
-			{ "iSignatureChancePlayer", "bFacePlayer" },
-			{ "iQuestionChancePlayer", "bFacePlayer" },
 			{ "fLetterboxHeight", "bLetterbox" },
 			{ "fLetterboxFade", "bLetterbox" },
 			{ "bSubtitlesInBars", "bLetterbox" },
@@ -181,9 +127,6 @@ namespace CCC::Menu
 			{ "bAutoListenSprinting", "bAutoListen" },
 			{ "bListenPrompt", "bFilmConversationsNpc" },
 			{ "fListenRange", "bFilmConversationsNpc" },
-			{ "fFilmStopDistance", "bFilmConversationsNpc" },
-			{ "fFilmStopSeconds", "bFilmConversationsNpc" },
-			{ "fFilmWalkOnDistance", "bFilmConversationsNpc" },
 		};
 
 		const char* ParentOf(const char* a_key)
@@ -399,9 +342,7 @@ namespace CCC::Menu
 					// rounded straight back), and the finest ones in 0.05 (a controller crossed
 					// them 0.01 at a time).
 					const std::string_view key{ e.key };
-					const float            step = key == "fCuttingPace"                                                                          ? 0.5f :
-					                              key == "fLargeSpeakerHeightNpc" || key == "fFilmStopDistance" || key == "fFilmStopSeconds" ? 0.05f :
-					                                                                                                                           0.0f;
+					const float            step = key == "fCuttingPace" ? 0.5f : 0.0f;  // (the 0.05 steps' sliders left the page in 0.9.60)
 					if (step > 0.0f) {
 						const float fallback = key == "fCuttingPace" ? 0.0f : e.min;
 						int         steps = static_cast<int>(std::lround(std::clamp(AsFloat(v.text, fallback), e.min, e.max) / step));
@@ -458,11 +399,6 @@ namespace CCC::Menu
 						} else {
 							float value = std::clamp(raw, e.min, e.max);
 							ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.1f");
-							// The close-up limit is 0 (none) or 4-60: in between snaps to the nearer
-							// (0.9.35; before, 0.1-3.9 quietly became 4).
-							if (std::string_view{ e.key } == "fCloseUpLimitSecondsNpc" && value > 0.0f && value < 4.0f) {
-								value = value < 2.0f ? 0.0f : 4.0f;
-							}
 							if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 								Write(a_index, std::format("{:.1f}", value));
 							} else if (ImGuiMCP::IsItemActive()) {
@@ -562,7 +498,7 @@ namespace CCC::Menu
 			}
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();
-			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). The preset key (U) switches presets at once, mid-conversation too.");
+			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins). The preset key (U) switches presets at once, mid-conversation too.");
 			if (!g_status.empty()) {
 				ImGuiMCP::TextDisabled("%s", g_status.c_str());
 			}

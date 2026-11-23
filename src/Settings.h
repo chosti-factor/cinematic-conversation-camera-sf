@@ -12,8 +12,8 @@ namespace CCC
 	struct Settings
 	{
 		bool     enabled{ true };
-		bool     debugLog{ true };
-		bool     showMessages{ true };  // on-screen messages: each line's expression tag and each shot (testing aid)
+		bool     debugLog{ false };  // off by default from 0.9.60 (the RC; on for bug reports)
+		bool     showMessages{ false };  // on-screen messages: each line's expression tag and each shot (testing aid; off from 0.9.60)
 		float    messageSeconds{ 6.0f };  // how long a message stays in the top bar
 		int      presetKey{ 0x55 };       // switches presets on the fly (U; 0 = none), 0.8.3
 		float    conversationLens{ -1.0f };  // the conversation lens, degrees (-1 = the preset's own)
@@ -23,7 +23,7 @@ namespace CCC
 		int      listenButton{ 0x2000 };     // XInput button mask, held to listen (B); 0 = none
 		float    listenHold{ 0.5f };         // seconds the button is held
 		bool     listenPrompt{ true };       // "Listen in on nearby conversation" on screen (0.8.2)
-		bool     autoListen{ true };         // start on its own when you sit, or stand still near them (0.8.2)
+		bool     autoListen{ false };        // start on its own as a scene starts near you (0.8.2; off by default from 0.9.60, the user)
 		bool     autoListenSprinting{ false };  // ... while you sprint past too (0.9.39; off: only walking and jogging)
 		float    filmEndSeconds{ 0.5f };       // filming people talking ends this long after the last word (0.8.4)
 		float    filmEndSecondsScene{ 4.0f };  // ... while they're still in one of the game's scenes
