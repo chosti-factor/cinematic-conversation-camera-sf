@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.55 (2026-11-22).
+Last updated: 0.9.58 (2026-11-22).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -286,6 +286,11 @@ Planned:
   when they fire; English only, its own setting.
 
 Mulling (not decided):
+- The overlapping lines after filming people talking (Known issues): found how to set it off
+  reliably, then why. A lead: Player Camera During Dialogue keeps camera changes away from an
+  NPC's multi-part response until it has fully played, against a dialogue-skip bug of its own.
+- The rare soft frame at a cut (the new shot's focus reaching the old shot's last frame): how
+  the game's own quest-scene cameras cut cleanly, as a model (the user, 2026-11-22).
 - The letterbox kept through a conversation's exit until the cut back to your view (the user,
   2026-11-22). The bars live in the game's dialogue menu, which closes as the last line ends,
   so they go 0.4 s (first person) or about 1.5 s (third person) before the cut. Stand-in bars
@@ -342,6 +347,16 @@ What works with CCC SF, what doesn't, and what's still to be tested:
 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). In short: other dialogue camera mods don't mix
 with it; UI mods work as long as the dialogue options list and the subtitle keep their usual
 places in the game's menus.
+
+## Known issues
+
+- **Overlapping lines after filming people talking (rare).** Now and then, after the mod has
+  filmed people talking near you, a later conversation has the speaker's lines playing over
+  each other. It hasn't happened without a filming before it, and it isn't reliably
+  reproducible: in the tests so far, 2 of 7 conversations after a filming, with the same steps
+  each time. Loading a save clears it. If you see it, please send the log with the detailed log
+  on, and say what was filmed before and how the filming ended. (Player Camera During Dialogue
+  lists the same symptom as a known issue of its own.)
 
 ## Settings
 

@@ -6,6 +6,13 @@ test build; "diagnostic" items only add information to the log for testing.
 
 ## 0.9.58 - 2026-11-22
 
+### Known issue (the user's call, 2026-11-22)
+- Overlapping lines in a conversation after filming people talking: rare and intermittent
+  (the tests: 2 of 7 conversations after a filming, same steps; never without a filming, with
+  filming off or with the mod off). Listed in the README; the hunt goes on after 1.0. The
+  `bFilmTestStopAfterLine` test proved nothing (with it off, two mid-line stops were clean
+  too) and comes out in the next build.
+
 ### Test (out before 1.0)
 - `bFilmTestStopAfterLine` ([Debug], on in this build): moving while someone in a filmed scene
   talks gives you your controls back at once, but the view stays on the filmed shot until that

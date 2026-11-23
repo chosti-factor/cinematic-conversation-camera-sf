@@ -128,14 +128,24 @@ Wednesday the 25th, about two days earlier.
       with no zoom and one mild early softening. Done; the trace comes out next. Post-1.0
       Mulling if the early focus ever bothers: how the game's quest-scene cameras cut
       cleanly (the user)
-- [ ] Cora's lines overlapping at the Lodge (0.9.57 runs), the 0.9.43 bug back. The user's
+- [x] Cora's lines overlapping: listed as a known issue for 1.0 (README; the user, 2026-11-22),
+      the hunt post-1.0 (Mulling). Notes kept below.
+- Cora's lines overlapping at the Lodge (0.9.57 runs), the 0.9.43 bug back. The user's
       tests: filming off, Cora clean; filming Walter and Vasco (stopped by moving), Cora
       overlapping; mod off, clean. Both broken runs had the filming stopped mid-scene by moving;
       0.9.43's tests let scenes play out. 2026-11-22 22:48: the filming of Walter and Vasco
       left to end on its own ("they've stopped talking"), then Cora: clean. So the trigger is
       stopping a filming mid-line (moving while someone in the scene talks): the view and
       first person snap back while a line plays. 0.9.58: `bFilmTestStopAfterLine` holds the
-      view to the line's end (controls back at once); test it the same way
+      view to the line's end (controls back at once); test it the same way. 0.9.58 tests: on,
+      clean; off, mid-line stops twice, clean both times. So intermittent: 2 broken of 7
+      conversations after a filming, same steps. Clues for later: Player Camera During
+      Dialogue lists "rare dialogue voice-line overlap" as a known issue, and its code holds
+      off any camera change from a dialogue choice until the NPC's whole response (its voice
+      fragments, with up to 1.5 s gaps) has played, against what it calls the dialogue-skip
+      bug: the game's sequencing of a multi-part response seems fragile to camera-state or
+      dialogue-target changes. Cora's responses are multi-part; filming switches the game's
+      camera state (first to third person and back). CCC (Skyrim) has nothing on it
 - [ ] INI and defaults review: comments, defaults, the `_user.ini`, the settings page (its
       labels, help and ranges against the INI)
 - [ ] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
