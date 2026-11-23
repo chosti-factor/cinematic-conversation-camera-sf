@@ -85,6 +85,11 @@ namespace CCC::Director
 	[[nodiscard]] float WantedLens();
 	// The shortest time a shot stays on screen in this conversation (the preset's, paced).
 	[[nodiscard]] float ShortestHold();
+	// Seconds since the director's last cut (0.9.67).
+	[[nodiscard]] float SinceCut(std::chrono::steady_clock::time_point a_now);
+	// Another NPC took over the line and the shot on screen now frames them (0.9.67): that's a
+	// cut on screen, so the next one waits as after any other.
+	void NoteSpeakerChange(std::chrono::steady_clock::time_point a_now);
 
 	// iExitStyle 1 (0.9.14): the closing shot for the hold after the last line, the NPC
 	// alone (medium, close-up or three-quarter, the first one that fits), so you aren't in

@@ -1653,6 +1653,18 @@ namespace CCC::Director
 		return g.shortestHold;  // set once per conversation, at its start
 	}
 
+	float SinceCut(std::chrono::steady_clock::time_point a_now)
+	{
+		return std::chrono::duration<float>(a_now - g.cutAt).count();
+	}
+
+	void NoteSpeakerChange(std::chrono::steady_clock::time_point a_now)
+	{
+		if (g.current) {
+			g.cutAt = a_now;
+		}
+	}
+
 	float WantedLens()
 	{
 		// The shot's own (0.8.12, CCC's lens per angle), unless your own lens is set or the

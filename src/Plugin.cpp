@@ -57,6 +57,7 @@ namespace CCC
 			Subject                               subject{ Subject::kNone };
 			std::chrono::steady_clock::time_point lastFrame{};
 			std::chrono::steady_clock::time_point npcQuietSince{};
+			std::chrono::steady_clock::time_point speakerChangedAt{};  // another NPC took the line (0.9.67)
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
 			std::uint32_t                         failuresLogged{ 0 };
@@ -771,6 +772,24 @@ namespace CCC
 			g_state = State{};
 		}
 
+		// 0.9.67 (quest scenes, the user: shots that cycle too fast, some too short): how long the
+		// shot on screen has been up (since the last cut of either kind: to the other person, or
+		// the director's own), and the least it stays up before a cut that nothing forces: the
+		// preset's shortest hold, paced, so each preset keeps its rhythm.
+		float OnScreenSeconds(std::chrono::steady_clock::time_point a_now)
+		{
+			float on = std::chrono::duration<float>(a_now - g_state.lastCut).count();
+			if (Settings::Get().director && !g_state.plainShots) {
+				on = (std::min)(on, Director::SinceCut(a_now));
+			}
+			return on;
+		}
+
+		float LeastHold()
+		{
+			return Settings::Get().director ? Director::ShortestHold() : 0.0f;
+		}
+
 		Subject ChooseSubject(RE::TESObjectREFR* a_speaker, std::chrono::steady_clock::time_point a_now)
 		{
 			const auto& s = Settings::Get();
@@ -805,6 +824,13 @@ namespace CCC
 			if (talking) {
 				g_state.yourTurn = false;
 			}
+			// 0.9.67: a reaction waits until the shot on them has been up the preset's shortest hold
+			// (the log: a reaction 1.6 s after a cut). Its length is counted from when it shows.
+			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom && g_state.reactionOnAt == std::chrono::steady_clock::time_point{} &&
+				g_state.subject == Subject::kNpc && OnScreenSeconds(a_now) < LeastHold()) {
+				g_state.npcWasTalking = true;
+				return Subject::kNpc;
+			}
 			if (talking && g_state.reactionActive && a_now >= g_state.reactionFrom) {
 				// A reaction shot: you, listening, for reactionHold seconds from the cut to you.
 				if (g_state.reactionOnAt == std::chrono::steady_clock::time_point{}) {
@@ -835,7 +861,10 @@ namespace CCC
 				g_state.npcWasTalking = false;
 				g_state.npcQuietSince = a_now;
 			}
-			if (g_state.subject == Subject::kNpc && a_now - g_state.npcQuietSince < kPlayerCutDelay) {
+			// 0.9.67: and not before the shot on them has been up the preset's shortest hold. Your
+			// turn (picking an option) can wait a moment; the 0.9.60 log had their close-up for
+			// 0.8 s, cut in as the line ended and straight back to you for the options.
+			if (g_state.subject == Subject::kNpc && (a_now - g_state.npcQuietSince < kPlayerCutDelay || OnScreenSeconds(a_now) < LeastHold())) {
 				return Subject::kNpc;
 			}
 			if (g_state.subject == Subject::kNone) {
@@ -1928,6 +1957,15 @@ namespace CCC
 				}
 				if (g_state.speakerId != 0 && !g_state.smallSpeaker && !g_state.handedBack) {
 					DecidePlainShots(static_cast<RE::Actor*>(speaker), npcHead->z - speaker->GetPosition().z, false);
+					// 0.9.67: the shot on them now frames the new speaker, a cut on screen; the
+					// next cut waits as after any other (the log: a wider shot 0.1 s later).
+					g_state.speakerChangedAt = now;
+					if (g_state.subject == Subject::kNpc) {
+						g_state.lastCut = now;
+						if (s.director && !g_state.plainShots) {
+							Director::NoteSpeakerChange(now);
+						}
+					}
 				}
 				g_state.speakerId = speaker->formID;
 			}
@@ -2608,6 +2646,17 @@ namespace CCC
 			if (!pose) {
 				LogFailure("characters overlap; leaving vanilla camera");
 				return;
+			}
+			// 0.9.67 (quest scenes, the user: some shots too short): another NPC takes the line
+			// while you're on screen. Your shot is framed against the speaker, so it turned towards
+			// the new one as their subtitle came up, and the cut to them followed a third of a
+			// second later, as their voice started (the 0.9.60 log: four such 0.3 s shots in one
+			// scene). Your shot stays as it was until that cut (a second at most), unless this line
+			// is a reaction of yours, which stays on you and takes the new framing at once.
+			if (subject == Subject::kPlayer && g_state.lastPose && !pov && !g_state.reactionActive && !g_state.choiceCloseUp &&
+				g_state.speakerChangedAt != std::chrono::steady_clock::time_point{} && now - g_state.speakerChangedAt < 1s && g_state.lastCut < g_state.speakerChangedAt &&
+				(!directed || Director::SinceCut(now) > std::chrono::duration<float>(now - g_state.speakerChangedAt).count())) {
+				pose = *g_state.lastPose;
 			}
 
 			// Safety net while we confirm Starfield's distance units: never put the camera
@@ -3987,8 +4036,11 @@ namespace CCC
 						}
 						g_state.choiceCloseUp = true;
 						g_state.choiceExtreme = extreme;
+						// 0.9.67: never shorter than the preset's shortest hold (the 0.9.60 quest-scene
+						// log: five 2.0 s close-ups in one persuasion, each cut to and from in 2 s).
+						const float choiceSeconds = (std::max)(Settings::Get().choiceCloseUpSeconds, Settings::Get().director ? Director::ShortestHold() : 0.0f);
 						g_state.choiceInsertUntil = std::chrono::steady_clock::now() +
-						                            std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(Settings::Get().choiceCloseUpSeconds));
+						                            std::chrono::duration_cast<std::chrono::steady_clock::duration>(std::chrono::duration<float>(choiceSeconds));
 						REX::INFO("Your choice '{}'{}: a close-up of you{}", tagged ? a_text.substr(0, close + 1) : a_text.substr(0, 40), a_persuasion ? " in a persuasion" : "",
 							extreme ? " (extreme: a confrontational skill)" : "");
 					}

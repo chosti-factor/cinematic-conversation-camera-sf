@@ -155,10 +155,13 @@ Wednesday the 25th, about two days earlier.
 
 ## 5. Release candidate (about 25 to 26 Nov)
 
-- [ ] SFSE Menu Framework: a global way to set the F1 menu's font and its size or scaling (the
-      user plays at 4K, where it can be too small). Check the framework's own files and settings
-      on the user's PC once it's linked. Not a text-size slider on this mod's pages only (the
-      user, 2026-11-23)
+- [x] SFSE Menu Framework: a global way to set the F1 menu's font and its size or scaling (the
+      user plays at 4K, where it can be too small). Found on the user's PC (framework 1.2.0):
+      `SFSEMenuFramework.ini` [Fonts] has `PrimaryFont`, `FontWeight`, `FontSizeMedium` (40)
+      and `UIScale` (1), for every mod's page; in the README (0.9.67)
+- [ ] Quest-scene pacing (the user, 2026-11-22): 0.9.67 from the 0.9.60 log (shots under the
+      preset's shortest hold, by cause). To test in quest scenes; then the default of
+      `bGameCameraInScenes` (the user: this mod's camera could be the default)
 - [x] Pre-1.0 code review (0.9.66, 2026-11-23): no warnings, no leftovers of the experiments,
       INI, code and page agree, defaults match the INI. Fixed: the sway slider's tooltip, the
       preset reset under a preset key choice; the preset key only while filming; sway's

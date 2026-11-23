@@ -20,7 +20,7 @@ changing, aren't in the INI but are read from `[Advanced]` if you add them (defa
 `fOverSeatedSide=0.6`, `fOverSeatedHeight=-0.25`, `fVendorSideNpc=0.9`,
 `fVendorHeightNpc=0.05`. And since 0.9.63: `fReactionLineMinSecondsPlayer=2.5` and
 `fReactionLineMaxSecondsPlayer=7` (the lengths of their lines a reaction of you can start on),
-`fChoiceCloseUpSecondsPlayer=2` (the tagged-choice close-up's length), `iRoomShotMinRoom=60`
+`fChoiceCloseUpSecondsPlayer=2` (the tagged-choice close-up's length; never shorter than the preset's shortest hold, 0.9.67), `iRoomShotMinRoom=60`
 (room shots left out in rooms giving less than this % of the distance they want),
 `fFollowSmoothing=0.35` (seconds of smoothing when the camera follows someone who moves),
 `fWideFocusBeyond=3.5` (focus style Wide: the sharp zone deepens beyond this many metres),

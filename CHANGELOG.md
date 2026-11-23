@@ -4,6 +4,30 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.67 - 2026-11-23
+
+### Changed (quest scenes, the user: shots cycling too fast, some too short)
+From the 0.9.60 log of quest scenes filmed by this mod (Ularu Chen and Imogene Salzo, Nyx,
+Sophia Grace, Trevor Petyarre; Nebula), every shot under 2.5 s sorted by cause. Each rule
+below waits for the preset's own shortest hold (paced), so each preset keeps its rhythm.
+- No cut back to you, as their line ends, before the shot on them has been up the shortest
+  hold. Their close-up was cut to as a short line ended and away again 0.8 s later, for the
+  options; a wider shot of a persuasion's long answer lasted 1.0 s.
+- When another NPC takes the line while you're on screen, your shot stays as it was until the
+  cut to them. It was turned towards the new speaker as their subtitle came up, and cut away
+  a third of a second later, as their voice started: four 0.3 s shots in one scene.
+- When another NPC takes the line while one is on screen (the shot now framing the new
+  speaker), the next cut waits as after any other: a wider shot came 0.1 s after one.
+- A reaction of you waits until the shot on them has been up the shortest hold (one came
+  1.6 s after a cut).
+- The close-up of you on a tagged choice or a persuasion option lasts at least the shortest
+  hold (`fChoiceCloseUpSecondsPlayer`, 2 s, was the length whatever the preset): five in one
+  persuasion, each cut to and away from in 2 s.
+
+### Docs
+- README: the settings page's text size is SFSE Menu Framework's own (`UIScale` and
+  `FontSizeMedium` in its INI), for every mod's page.
+
 ## 0.9.66 - 2026-11-23
 
 ### Fixed (the pre-1.0 code review)
