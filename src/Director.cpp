@@ -898,7 +898,7 @@ namespace CCC::Director
 					solved.facePitch < 0.0f ? "lowered" : "raised", std::abs(solved.facePitch));
 			}
 			const bool close = a_type == ShotType::kCloseUp || a_type == ShotType::kExtremeClose;
-			const auto clear = ClearanceFor(a_type, a_frame, close && a_why && std::string_view{ a_why }.find("intense") != std::string_view::npos ? IntenseSetup(a_type) : setup);
+			const auto clear = ClearanceFor(a_type, a_frame, close && a_why && std::string_view{ a_why }.find("emotion close-up") != std::string_view::npos ? IntenseSetup(a_type) : setup);
 			g.limit = clear.usable || clear.fallbackOk ? clear.limit : std::numeric_limits<float>::infinity();
 			LogSkipped();
 			REX::INFO("Director: {} -> {} ({}; {:.1f} m away at {:.1f} degrees; move {} {}; new angle after {} more lines){}", a_why, Shots::Key(a_type),
@@ -1210,7 +1210,7 @@ namespace CCC::Director
 			if (g.intensePending && a_frame.npcTurn && (!g.current || a_frame.npcTurn != g.currentNpcSide)) {
 				// The turn passes to them on an intense line: the turn's cut is the close-up.
 				if (const auto shot = IntenseShot(a_frame)) {
-					Cut(*shot, a_frame, a_now, "turn, intense line", true);
+					Cut(*shot, a_frame, a_now, "turn, emotion close-up", true);
 					g.intenseSetup = IntenseSetup(*shot);
 					NoteEmotionCut(*shot);
 					g.intensePending = false;
@@ -1346,7 +1346,7 @@ namespace CCC::Director
 				// line's reaction is decided (the 0.9.24 test: three one-frame close-ups, each
 				// taken over by a reaction on the next frame).
 				if (const auto shot = IntenseShot(a_frame)) {
-					Cut(*shot, a_frame, a_now, "intense line", true);
+					Cut(*shot, a_frame, a_now, "emotion close-up", true);
 					g.intenseSetup = IntenseSetup(*shot);
 					NoteEmotionCut(*shot);
 					g.intenseShot = shot;
@@ -1361,7 +1361,7 @@ namespace CCC::Director
 					const char*             why = "after the extreme close-up";
 					if (g.intensePending && Placeable(ShotType::kCloseUp, a_frame)) {
 						shot = ShotType::kCloseUp;
-						why = "intense line, after the extreme close-up";
+						why = "emotion close-up, after the extreme close-up";
 					} else if (side.shot && *side.shot != ShotType::kCloseUp && *side.shot != ShotType::kExtremeClose && Usable(*side.shot, a_frame)) {
 						shot = side.shot;
 					} else {

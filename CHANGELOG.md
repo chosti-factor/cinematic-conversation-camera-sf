@@ -9,6 +9,9 @@ test build; "diagnostic" items only add information to the log for testing.
 ### Changed (the user's call)
 - `[Face]` merged into `[Director]`: `bFacePlayer` (your expressions) sits after the reaction
   and tagged-choice switches, as on the settings page.
+- The testing messages' and the log's reason for an emotion close-up says so: "emotion
+  close-up", "turn, emotion close-up", "emotion close-up, after the extreme close-up" (it was
+  "intense line", a word used nowhere else; the user).
 - `[Overhear]` renamed `[SceneFilming]` (filming people talking near you). No old name is read
   (nothing released): a `_user.ini` with `[Overhear]` lines needs them under the new name.
 
