@@ -183,7 +183,7 @@ Wednesday the 25th, about two days earlier.
       the game takes over along your body (matched to 0.05 degrees on all five exits). 0.9.40
       cuts to your body's heading. Tested 2026-11-21: pristine.
 
-- [ ] Testing messages and the detailed log off by default
+- [x] Testing messages and the detailed log off by default (0.9.60)
 - [x] Take out the measuring code once the optimization pass is done (the user, 2026-11-21; done in 0.9.50, before the INI review, with the finished diagnostics):
       the cost meters and their log lines (0.9.37), the HUD's parts (0.9.40), the main-thread
       task's parts (0.9.43); and the diagnostics that only fed finished investigations (the

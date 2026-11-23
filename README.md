@@ -207,46 +207,17 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md). What was tried and removed along the way (test
 switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
-### Planned, roughly in order
+### Before 1.0
 
-- Done in 0.8.x: CCC's presets made faithful to CCC 1.5.0 (each angle's own lens, its
-  cutting), CCC SF's presets rebuilt with film flavours, filming people talking near you
-  (prompt and auto-start, scenes one at a time, followed into the next, group shots,
-  letterbox), your character's face, reworked reaction shots, holding on the answer after a
-  persuasion, emotion close-ups by tier.
-- 0.9.x, polish and optimization, in this order:
-  - Done in 0.9.0: the old INI names (from before the Npc/Player renames, and Stardust) no
-    longer read; `iCloseUpDistance` removed (every preset has its own lenses now).
-  - Seated conversations: strong vertical jitter at the start (0.8.5 test, The Rock); in
-    first person on a bar stool your full body isn't built, so you're kept out of frame;
-    talking to a seated person from the side (about 90 degrees) leaves you out of the
-    picture (0.8.17 moved the plain shot so a seated NPC isn't hidden behind your body).
-  - Built in 0.9.12, testing: an in-game settings page through
-    [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) (optional; F1):
-    preset, reaction shots, emotion close-ups, sway and the rest, with the INI still working
-    without it.
-  - Done in 0.9.19 and 0.9.22: large speakers such as Vasco, whose bigger body blocked you in
-    the narrower shots of you (those keep to wider angles now, the plain fallback shot too;
-    `fLargeSpeakerHeightNpc`, `fLargeSpeakerAnglePlayer`).
-  - Emotion close-ups tuned from testing (see [docs/EMOTIONS.md](docs/EMOTIONS.md)).
-  - Compatibility testing with popular UI mods.
-  - Quest scenes: logged in 0.9.20, what each one is made of (its actions, and whether it
-    directs a camera of its own), to prepare the change planned after 1.0.
-  - Once feature complete, four passes, in this order:
-    1. Redundancy: code no longer in use and remnants of earlier versions taken out
-       (finished experiments, old exit covers, diagnostics that have served their purpose).
-    2. Debugging: looking for hidden bugs, such as a setting that doesn't do what the INI
-       says (`bEnabled=0` didn't turn the whole mod off until 0.9.11; `iMinLines` was
-       ignored until 0.9.8), and edge cases (loading or a menu mid-conversation, ships,
-       scenes, combat, quick conversations in a row).
-    3. Optimization: the cost of each frame and each scan measured, then made cheaper
-       (done 2026-11-22; the measuring code and the finished diagnostics taken out in 0.9.50).
-    4. The INI and its defaults reviewed last, once the settings are final (0.9.60, first
-       pass: the settings page trimmed to the main choices, docs/INI_SETTINGS.md).
-  - Last, just before 1.0: the detailed log and the testing messages off by default (done in
-    0.9.60), then a full test round on the release candidate.
-- 1.0, public beta (late November 2026), after testing with popular UI mods (a HUD
-  replacer, a dialogue menu replacer, a subtitle mod) and listing compatibility.
+Feature complete since 2026-11-19; the four polish passes are done (redundancy, debugging,
+optimization, and the INI and settings page review in 0.9.60, [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md)).
+Left:
+- A second look at the settings page, once it's been played with.
+- The release candidate: a full test round (starts, exits, every preset, seated people,
+  merchants, filming people talking, the settings page).
+- The Nexus page (with the credits), a short clip, and a word to the Starfield modding
+  community a few days ahead.
+- 1.0, public beta: Friday 27 November 2026.
 
 ### After 1.0
 
@@ -281,9 +252,9 @@ Planned:
 - More of the text of your lines for your face (and close-ups of you on strong ones): beyond
   the skill, background and trait tags and a question mark, clear cues in the wording, such
   as thanks, apologies, refusals, threats, jokes, condolences and goodbyes. High-confidence
-  cues only, built from a tally of the options actually picked in play (the log records each
-  one; since 0.9.12 the options offered and picked also go to their own file) and logged
-  when they fire; English only, its own setting.
+  cues only, built from the tally of options offered and picked in play (2,913 options, 676
+  picks: docs/research/your-lines-tally.tsv, summed up in docs/EMOTIONS.md) and logged when
+  they fire; English only, its own setting.
 
 Mulling (not decided):
 - The overlapping lines after filming people talking (Known issues): a way to set it off
@@ -298,7 +269,8 @@ Mulling (not decided):
   come first (docs/MEMORY.md).
 - A preset editor (the user, 2026-11-21): the per-preset settings (shot choices, close-up
   chances, cutting pace and the like) edited in one place, instead of spread over the settings
-  page and the INI.
+  page and the INI. The 13 settings taken off the settings page for it in 0.9.60:
+  docs/INI_SETTINGS.md.
 - Every preset revisited with what 1.0's players report, tweaked further, and maybe new ones
   (the user, 2026-11-20).
 - Coming back from a reaction as a turn of its own, so it can bring a fresh angle (0.9.31
