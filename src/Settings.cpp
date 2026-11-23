@@ -100,7 +100,7 @@ namespace CCC
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
 			a_s.showMessages = ReadInt(a_path, L"Debug", L"bShowMessages", a_s.showMessages ? 1 : 0) != 0;
 			a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
-			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
+			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
 			a_s.filmConversations = ReadInt(a_path, L"Overhear", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;
 			a_s.listenKey = std::clamp(ReadInt(a_path, L"Overhear", L"iListenKey", a_s.listenKey), 0, 254);
 			a_s.listenRange = std::clamp(ReadFloat(a_path, L"Overhear", L"fListenRange", a_s.listenRange), 3.0f, 25.0f);
@@ -133,7 +133,7 @@ namespace CCC
 			a_s.hideOptionsWhileSpeaking = ReadInt(a_path, L"Interface", L"bHideOptionsWhileSpeaking", a_s.hideOptionsWhileSpeaking ? 1 : 0) != 0;
 			a_s.optionsFade = std::clamp(ReadFloat(a_path, L"Advanced", L"fOptionsFade", a_s.optionsFade), 0.0f, 1.5f);
 
-			a_s.director = ReadInt(a_path, L"Advanced", L"bDirector", a_s.director ? 1 : 0) != 0;
+			a_s.director = ReadInt(a_path, L"Debug", L"bDirector", a_s.director ? 1 : 0) != 0;
 			a_s.preset = ReadString(a_path, L"Director", L"sPreset", a_s.preset);
 			// 0.9.8: the named cutting styles (sCuttingStyle) are gone; the cutting pace nudges the
 			// preset's own rhythm instead of replacing it. The fine-tuning keys override it (0 =
@@ -174,7 +174,7 @@ namespace CCC
 			a_s.reactionAfterSeconds = a_s.reactionAfterSeconds < 0.0f ? -1.0f : std::clamp(a_s.reactionAfterSeconds, 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
-			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
+			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"PresetTuning", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
 			a_s.avoidBystanders = ReadInt(a_path, L"Debug", L"bAvoidBystandersNpc", a_s.avoidBystanders ? 1 : 0) != 0;
 			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Advanced", L"fBystanderStillNpc", a_s.bystanderStill), 0.0f, 10.0f);
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", a_s.persuasionBeat ? 1 : 0) != 0;
@@ -235,7 +235,7 @@ namespace CCC
 			a_s.vendorHeight = ReadFloat(a_path, L"Advanced", L"fVendorHeightNpc", a_s.vendorHeight);
 
 			a_s.revealPlayer = ReadInt(a_path, L"Debug", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
-			a_s.fixFirstPersonBody = ReadInt(a_path, L"Advanced", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
+			a_s.fixFirstPersonBody = ReadInt(a_path, L"Debug", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
 
 			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Advanced", L"iExitStyle", a_s.exitStyle), 1, 2);
 			a_s.exitCutSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fExitCutSeconds", a_s.exitCutSeconds), 0.0f, 1.0f);

@@ -1,6 +1,6 @@
 # INI settings
 
-Last updated: 0.9.62 (2026-11-23).
+Last updated: 0.9.63 (2026-11-23).
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini` (what each of its sections holds: the
 README's Settings table). Here: the settings page and the INI, the hidden settings, every
@@ -18,7 +18,15 @@ changing, aren't in the INI but are read from `[Advanced]` if you add them (defa
 `fDistanceBehind=0.65`, `fSideOffset=0.32`, `fHeightOffset=0.06`, `fLookHeightOffset=-0.03`,
 `fSeatedForward=0.25`, `fSeatedSide=0.9`, `fSeatedHeight=0.3`, `fOverSeatedBehind=0.35`,
 `fOverSeatedSide=0.6`, `fOverSeatedHeight=-0.25`, `fVendorSideNpc=0.9`,
-`fVendorHeightNpc=0.05`.
+`fVendorHeightNpc=0.05`. And since 0.9.63: `fReactionLineMinSecondsPlayer=2.5` and
+`fReactionLineMaxSecondsPlayer=7` (the lengths of their lines a reaction of you can start on),
+`fChoiceCloseUpSecondsPlayer=2` (the tagged-choice close-up's length), `iRoomShotMinRoom=60`
+(room shots left out in rooms giving less than this % of the distance they want),
+`fFollowSmoothing=0.35` (seconds of smoothing when the camera follows someone who moves),
+`fWideFocusBeyond=3.5` (focus style Wide: the sharp zone deepens beyond this many metres),
+`fListenHold=0.5` (the controller's listen button, held this long), and `iMinLines`,
+`iMaxLines`, `fShortestHold` (the cutting rhythm's lines between new angles and shortest hold,
+overriding the preset's paced values; the cutting pace covers them).
 
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
@@ -57,6 +65,11 @@ focus style. [Body] gone: showing your character to [Debug]. [Interface]: the le
 slide and the options' fade to [Advanced]. [Overhear] unchanged. [Face] (0.9.62): the
 background and question chances to [PresetTuning]. The settings page: 24 entries on four
 pages ("Your expressions" on "Close-ups and reactions"; the "You" page gone).
+[Advanced] (0.9.63, the user's call): 10 settings hidden, the shot library, the full body from
+first person and the testing messages' time to [Debug], the long-line reaction length to
+[PresetTuning]; 19 left, in four groups (shots, close-ups, exits and screen, filming people
+talking). [PresetTuning] in five groups (lens and distances, their close-ups, reactions of you,
+close-ups of you, your face).
 (Section 6's "Where now" column is as of the first pass.)
 
 The aim (the user, 2026-11-21): a settings page that's clear for people, with fewer options

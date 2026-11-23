@@ -4,6 +4,22 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.63 - 2026-11-23
+
+### Changed (the INI, [Advanced] thinned, the user's call)
+- Hidden (out of the INI, still read from `[Advanced]` if added; listed with their defaults in
+  docs/INI_SETTINGS.md): `iMinLines`, `iMaxLines`, `fShortestHold` (the cutting pace covers
+  them), `fReactionLineMinSecondsPlayer`, `fReactionLineMaxSecondsPlayer`,
+  `fChoiceCloseUpSecondsPlayer`, `iRoomShotMinRoom`, `fFollowSmoothing`, `fWideFocusBeyond`,
+  `fListenHold`.
+- To `[Debug]`: `bDirector` (the shot library), `bFixFirstPersonBodyPlayer` (the step most
+  likely to clash with a body or first-person mod: off to rule that out) and `fMessageSeconds`.
+- To `[PresetTuning]`: `fReactionLongLineSecondsPlayer` (how long a reaction of you lasts on a
+  long line, a preset's feel).
+- `[Advanced]` keeps 19, in four groups: shots, close-ups, exits and screen, filming people
+  talking. `[PresetTuning]` (20) in five: lens and distances, their close-ups, reactions of
+  you, close-ups of you, your face.
+
 ## 0.9.62 - 2026-11-23
 
 ### Changed (the INI, section by section: [Overhear] and [Face], the user's call)
