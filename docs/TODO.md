@@ -217,6 +217,15 @@ Wednesday the 25th, about two days earlier.
 ## Moved to after 1.0
 
 - The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
+- Watch for (the release-candidate test, 2026-11-24, 1.0.0 test build): one crash, in the game's
+  UI engine (Scaleform's AS3 garbage collector, on a BSJobs thread, DialogueMenu and HUDMenu on
+  the stack, Starfield.exe+0x338377C), about 50 ms into a conversation with Tank at the Trackers
+  Alliance HQ, just after this mod added the letterbox bars to the dialogue menu; a minute after
+  a filming of Inevitable and Agent No. 1 was ended by talking to Inevitable (a conversation of
+  one frame). None of this mod's functions on the stack. Not reproduced: the same steps again
+  (filming, A on Inevitable, a one-frame conversation, then Tank) ran clean, as did the other
+  20 conversations of the two sessions. If it comes back in reports: the HUD's changes to the
+  dialogue menu's movie from the main thread, while its own jobs run, are the first suspect.
 - Speaker changes in scenes of three or more: where the game reports its camera's move at once,
   two frames of the new speaker in a slightly wrong framing just after the cut (0.9.75; the
   0.9.74 guess was wrong; docs/MEMORY.md)
