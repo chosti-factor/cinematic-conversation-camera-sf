@@ -59,7 +59,9 @@ What CCC doesn't do.
 - **Seated people and merchants** get a plain over-the-shoulder shot instead of the shot
   library, whose angles often put the chair, the shop counter or the clutter around it in
   front of them (`bPlainShotsSeatedNpc`, `bPlainShotsMerchantsNpc`). Merchants are
-  recognised by the game's vendor flag on their faction, wherever the shop is.
+  recognised by the game's vendor flag on their faction, wherever the shop is. In a quest
+  scene you take part in, a merchant is one of several people taking turns and gets the shot
+  library like the others (0.9.72).
 - **Four more presets, each with a film flavour:** Frontier (a space western), Starborn
   (*Interstellar* with a touch of Kubrick), Constellation (a hard sci-fi documentary) and
   Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).

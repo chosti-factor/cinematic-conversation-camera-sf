@@ -60,6 +60,7 @@ namespace CCC
 			std::chrono::steady_clock::time_point speakerChangedAt{};  // another NPC took the line (0.9.67)
 			std::chrono::steady_clock::time_point reaimAt{};           // ... while an NPC was on screen: the shot turned to them (0.9.69)
 			bool                                  speakerHoldLogged{ false };
+			bool                                  questScene{ false };  // you're in a quest scene (not an everyday one) (0.9.72)
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
 			std::uint32_t                         failuresLogged{ 0 };
@@ -1162,8 +1163,15 @@ namespace CCC
 			}
 			const auto merchant = MerchantFaction(a_speaker, a_log && s.debugLog);
 			g_state.merchant = !merchant.empty();
-			if (reason.empty() && s.plainShotsMerchants && !merchant.empty()) {
+			// 0.9.72 (the user): not in a quest scene you take part in. There the merchant is one of
+			// several people taking turns (Yannick Legrande in Benjamin Bayu's scene), and the
+			// switches between the plain shots and the shot library at each speaker change made
+			// the rough cuts in the 0.9.69 clips. The counter is in the way less than that.
+			if (reason.empty() && s.plainShotsMerchants && !merchant.empty() && !g_state.questScene) {
 				reason = "merchant (faction " + merchant + ")";
+			}
+			if (reason.empty() && s.plainShotsMerchants && !merchant.empty() && g_state.questScene && (a_log || s.debugLog)) {
+				REX::INFO("Shots: a merchant, but in a quest scene with you: the shot library (0.9.72)");
 			}
 			if (!reason.empty() != g_state.plainShots || a_log) {
 				REX::INFO("Shots: {}", reason.empty() ? "shot library" : "plain over-the-shoulder shot; " + reason);
@@ -1968,6 +1976,7 @@ namespace CCC
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
 				}
 				g_state.backgroundScene = speakerInScene && !g_state.handedBack;
+				g_state.questScene = playerInScene && !ambient;  // 0.9.72: merchants filmed with the shot library in it
 				if (!g_state.smallSpeaker && !g_state.handedBack) {
 					DecidePlainShots(static_cast<RE::Actor*>(speaker), height, true);
 				}

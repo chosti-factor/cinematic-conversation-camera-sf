@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.72 - 2026-11-24
+
+### Changed (the user)
+- Merchants in a quest scene you take part in are filmed with the shot library, like the
+  others there, not the plain shots (`bPlainShotsMerchantsNpc` still applies everywhere else,
+  shopping included). In Benjamin Bayu's scene, Yannick Legrande behind his counter switched
+  the camera between the plain shots and the shot library at every turn, the cause of 0.9.71's
+  fixes. Seated people keep the plain shots (a chair in front of them is worse than a counter).
+
 ## 0.9.71 - 2026-11-24
 
 ### Fixed (rough cuts in scenes with three or more people; the 0.9.69 clips of Benjamin Bayu and
