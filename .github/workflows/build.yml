@@ -2,6 +2,8 @@ name: Build
 
 on:
   push:
+    branches: [ '**' ]
+    tags: [ 'v*' ]
     paths-ignore:
       - '**.md'
   pull_request:
@@ -48,8 +50,8 @@ jobs:
           Copy-Item README.md package/
 
 
-      # A second download route: one rolling pre-release, "Test build", whose file each build on
-      # main replaces. Alpha only; per-version releases start at beta.
+      # One rolling pre-release, "Test build", whose file each build on main replaces: the
+      # newest build, for testing. Versioned releases come from v* tags (below).
       - name: Update the test build pre-release
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
         shell: pwsh
@@ -61,7 +63,7 @@ jobs:
           $tag = "test-build"
           $zip = "CinematicConversationCameraSF-test-build.zip"
           Compress-Archive -Path package/* -DestinationPath $zip -Force
-          $notes = "ALPHA - for testing only. Not ready for general use; settings and behaviour change from build to build, and it writes detailed logs.`n`nCurrent build: $version (commit ${{ github.sha }}). Copy the Data folder into your Starfield folder, or install the zip with a mod manager."
+          $notes = "The newest build from the main branch, for testing; it can change from build to build. For the current release, see the versioned releases.`n`nBuild: $version (commit ${{ github.sha }}). Install the zip with a mod manager, or copy its Data folder into your Starfield folder."
           # Move the tag to this build, then replace the file and the notes.
           gh api -X PATCH "repos/${{ github.repository }}/git/refs/tags/$tag" -f sha=${{ github.sha }} -F force=true 2>$null
           if ($LASTEXITCODE -ne 0) {
@@ -70,10 +72,26 @@ jobs:
           gh release view $tag 2>$null
           if ($LASTEXITCODE -eq 0) {
             gh release upload $tag $zip --clobber
-            gh release edit $tag --prerelease --title "Test build $version (alpha)" --notes $notes
+            gh release edit $tag --prerelease --title "Test build $version" --notes $notes
           } else {
-            gh release create $tag $zip --prerelease --verify-tag --title "Test build $version (alpha)" --notes $notes
+            gh release create $tag $zip --prerelease --verify-tag --title "Test build $version" --notes $notes
           }
+
+      # A versioned release (1.0 on): pushing a tag vX.Y.Z builds that commit and publishes
+      # CinematicConversationCameraSF-X.Y.Z.zip. The tag has to match xmake.lua's version.
+      - name: Versioned release
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Select-String -Path xmake.lua -Pattern 'set_version\("([^"]+)"' | Select-Object -First 1).Matches[0].Groups[1].Value
+          $tag = "${{ github.ref_name }}"
+          if ("v$version" -ne $tag) { throw "tag $tag doesn't match xmake.lua's version $version" }
+          $zip = "CinematicConversationCameraSF-$version.zip"
+          Compress-Archive -Path package/* -DestinationPath $zip -Force
+          $notes = "Cinematic Conversation Camera SF $version.`n`nInstall the zip with a mod manager, or copy its Data folder into your Starfield folder. Requires Starfield 1.16.244, SFSE and Address Library for SFSE Plugins; SFSE Menu Framework is optional (the in-game settings page). What changed: CHANGELOG.md."
+          gh release create $tag $zip --verify-tag --title "Cinematic Conversation Camera SF $version" --notes $notes
 
       - name: Upload mod
         continue-on-error: true

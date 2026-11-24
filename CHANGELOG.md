@@ -1,8 +1,20 @@
 # Changelog
 
 All notable changes to Cinematic Conversation Camera SF, newest first. The format follows
-[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
-test build; "diagnostic" items only add information to the log for testing.
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/). 1.0.0 is the first public release
+(a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
+to the log for testing.
+
+## 1.0.0 - 2026-11-24 (public beta)
+
+The first public release. The code is 0.9.77's; what changes is the release itself.
+- The version is 1.0.0. The README's status and install sections describe the release (Nexus
+  Mods, or the versioned releases here) instead of the alpha test build; its known issues add
+  the one-frame glitch at some speaker changes in scenes with three or more people, your
+  character looking at the wrong person in those scenes, and an NPC now and then fading in.
+- The build makes a versioned release from a `v` tag (`CinematicConversationCameraSF-1.0.0.zip`,
+  checked against the version); the rolling Test build stays, its notes no longer saying alpha
+  or that it writes detailed logs (off by default since 0.9.63).
 
 ## 0.9.77 - 2026-11-24
 

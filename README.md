@@ -16,9 +16,9 @@ first showed it could be done. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: alpha (0.9.x, polish)
+## Status: 1.0, public beta
 
-Last updated: 0.9.70 (2026-11-23).
+Last updated: 1.0.0 (2026-11-24).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -212,17 +212,12 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md). What was tried and removed along the way (test
 switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
-### Before 1.0
+### 1.0
 
-Feature complete since 2026-11-19; the four polish passes are done (redundancy, debugging,
-optimization, and the INI and settings page review in 0.9.60, [docs/INI_HISTORY.md](docs/INI_HISTORY.md)).
-Left:
-- A second look at the settings page, once it's been played with.
-- The release candidate: a full test round (starts, exits, every preset, seated people,
-  merchants, filming people talking, the settings page).
-- The Nexus page (with the credits), a short clip, and a word to the Starfield modding
-  community a few days ahead.
-- 1.0, public beta: Friday 27 November 2026.
+The first public release, a beta: feature complete since 2026-11-19, then four polish passes
+(redundancy, debugging, optimization, and the INI and settings page review,
+[docs/INI_HISTORY.md](docs/INI_HISTORY.md)) and the quest scenes filmed by this mod by default
+(0.9.67-0.9.77). Reports welcome: see Testing and logs below.
 
 ### After 1.0
 
@@ -315,12 +310,11 @@ Mulling (not decided):
 
 ## Install
 
-1. Download `CinematicConversationCameraSF-test-build.zip` from the **Test build**
-   pre-release under **Releases** (always the newest alpha build), or the
-   `CinematicConversationCameraSF` artifact from the latest successful run under
-   **Actions** → **Build**.
-2. Copy its `Data` folder into your Starfield folder (or install the zip with your
-   mod manager).
+1. Download the mod from its Nexus Mods page, or `CinematicConversationCameraSF-<version>.zip`
+   from the latest release under **Releases** here. (The **Test build** pre-release always has
+   the newest build from the main branch, for testing.)
+2. Install the zip with your mod manager, or copy its `Data` folder into your Starfield
+   folder.
 
 The `.pdb` file next to the DLL is its debug symbols: a crash logger uses it to name the
 mod's functions in a crash log, which makes a crash report far more useful. It does nothing
@@ -334,6 +328,13 @@ with it; UI mods work as long as the dialogue options list and the subtitle keep
 places in the game's menus.
 
 ## Known issues
+
+- **A one-frame glitch at some speaker changes in scenes with three or more people.** When
+  someone else takes the line, the game moves its own conversation camera to them; about half
+  the time, one frame shows this mod's shot slightly or clearly out of place. Planned after 1.0
+  (docs/MEMORY.md has what's known).
+- **Your character looking at the wrong person** in conversations with three or more people,
+  and **an NPC now and then fading in** a moment after a conversation starts: planned after 1.0.
 
 - **Overlapping lines after filming people talking (rare).** Now and then, after the mod has
   filmed people talking near you, a later conversation has the speaker's lines playing over
@@ -374,7 +375,7 @@ about: [docs/INI_HISTORY.md](docs/INI_HISTORY.md).
 The log is at
 `Documents\My Games\Starfield\SFSE\Logs\CinematicConversationCameraSF.log`. It records
 every shot the director chooses and why. Please include it with any report, with the detailed
-log on (`bDebugLog=1`, or **Detailed log** on the settings page's Screen page).
+log on (`bDebugLog=1`, or **Detailed log** on the settings page's General page).
 
 ## Building
 
