@@ -35,7 +35,9 @@ you add the section, for testing only (docs/MEMORY.md).
 
 Hidden since 0.9.72, on since 0.9.73: `bSpeakerChangeRoot=1` under `[Advanced]` (0 turns it
 off): at a speaker change, the shot placed against where the game's conversation camera is about
-to be, as at a conversation's start (CHANGELOG 0.9.72-0.9.73).
+to be, as at a conversation's start (CHANGELOG 0.9.72-0.9.73). A test since 0.9.74:
+`iSpeakerChangeOldRoot=2` (0 by default): where the game reports its camera's move at once,
+the shot placed against its old spot for that many frames (CHANGELOG 0.9.74).
 
 Hidden too since 0.9.70 (the user: until the preset editor after 1.0), each preset's own
 numbers, 20 settings, read from `[Advanced]` if you add them, and changes to single shots, a

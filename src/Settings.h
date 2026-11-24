@@ -132,6 +132,7 @@ namespace CCC
 		bool        enforceLine{ true };      // no angle (with face turns and moves) crosses the eyeline
 		bool        followFace{ true };       // close-ups turn toward where the face points
 		int         choiceCloseUps{ -1 };     // a close-up of you on a tagged option: -1 the preset's own (CCC SF's), 0 off, 1 on (0.8.16)
+		int         speakerChangeOldRoot{ 0 };  // hidden test (0.9.74): frames placed against the old camera spot when the game reports its move at once
 		bool        speakerChangeRoot{ true };  // hidden (0.9.72 test, on since 0.9.73): the shot placed against the game's camera's next spot at a speaker change
 		float       choiceCloseUpSeconds{ 2.0f };  // ... shown as you pick, over the start of their answer, this long (0.9.23)
 		float       closeUpLimit{ -1.0f };    // one close-up of them at most this long, then a wider shot of them: -1 the preset's own, 0 none (0.9.23)

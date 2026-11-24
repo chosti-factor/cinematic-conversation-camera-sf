@@ -64,6 +64,8 @@ namespace CCC
 			std::optional<Camera::Pose>           lastReportedRoot;     // the game's camera root as reported last frame (0.9.72)
 			std::optional<Camera::Pose>           rootBeforeChange;     // ... on the frame before a speaker change
 			int                                   rootWatch{ 0 };       // frames since that change, watched
+			bool                                  rootAtOnce{ false };  // the game reported its camera's move on the change's own frame (0.9.74)
+			bool                                  rootLearned{ false }; // the new spot learned from this change (0.9.74)
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
 			std::uint32_t                         failuresLogged{ 0 };
@@ -2003,6 +2005,8 @@ namespace CCC
 					g_state.speakerChangedAt = now;
 					g_state.rootBeforeChange = g_state.lastReportedRoot;
 					g_state.rootWatch = 0;
+					g_state.rootAtOnce = false;
+					g_state.rootLearned = false;
 					if (g_state.subject == Subject::kNpc) {
 						g_state.reaimAt = now;
 						if (s.director && !g_state.plainShots) {
@@ -2591,8 +2595,46 @@ namespace CCC
 						REX::INFO("Speaker change, frame +{}: the game's camera reported {:.2f} m from where it was before the change; {:.2f} m from the spot predicted for the new speaker",
 							g_state.rootWatch, moved, off);
 					}
+					if (g_state.rootWatch == 0) {
+						g_state.rootAtOnce = moved >= 0.03f;
+					}
 					if (s.speakerChangeRoot && g_state.rootWatch < 3 && moved < 0.03f && !predictedRoot && !startRoot) {
 						speakerRoot = p;
+					}
+					// 0.9.74 test (iSpeakerChangeOldRoot, hidden, 0 = off): when the game reports its move
+					// on the change's own frame, the shot placed against where its camera was for this
+					// many frames (the guess: those frames are still drawn from there; 0.9.73's clips
+					// showed the new speaker in a slightly wrong framing for two frames).
+					if (g_state.rootAtOnce && g_state.rootWatch < s.speakerChangeOldRoot && !predictedRoot && !startRoot) {
+						speakerRoot = b;
+					}
+					// 0.9.74: where the game's camera landed for the new speaker, learned as at a
+					// conversation's start, so the prediction above (2-8 cm off in 0.9.73's test)
+					// closes in over a scene. Only spots close to the usual one.
+					if (moved >= 0.03f && !g_state.rootLearned) {
+						g_state.rootLearned = true;
+						const float ox = reported->position.x - npcHead->x, oy = reported->position.y - npcHead->y, oz = reported->position.z - npcHead->z;
+						const float along = ox * hx + oy * hy;
+						if (std::abs(along - g_learnedDistance) < 0.12f && std::abs(oz - g_learnedUp) < 0.08f) {
+							g_learnedDistance = 0.75f * g_learnedDistance + 0.25f * along;
+							g_learnedUp = 0.75f * g_learnedUp + 0.25f * oz;
+						}
+						const auto& r = *reported;
+						const float ax = r.lookAt.x - r.position.x, ay = r.lookAt.y - r.position.y, az = r.lookAt.z - r.position.z;
+						const float bx = npcHead->x - r.position.x, by = npcHead->y - r.position.y, bz = npcHead->z - r.position.z;
+						const float ah = std::sqrt(ax * ax + ay * ay), bh = std::sqrt(bx * bx + by * by);
+						if (ah > 1e-3f && bh > 1e-3f) {
+							const float pitchOff = std::atan2(az, ah) - std::atan2(bz, bh);
+							const float yawOff = std::remainder(std::atan2(ay, ax) - std::atan2(by, bx), 2.0f * std::numbers::pi_v<float>);
+							if (std::abs(pitchOff) < 0.35f && std::abs(yawOff) < 0.35f) {
+								g_learnedPitch = 0.5f * g_learnedPitch + 0.5f * pitchOff;
+								g_learnedYaw = 0.5f * g_learnedYaw + 0.5f * yawOff;
+							}
+						}
+						if (s.debugLog) {
+							REX::INFO("Speaker change: the game's camera spot learned ({:.2f} m from their head, {:.2f} m up; aim {:+.1f} / {:+.1f} degrees)", g_learnedDistance, g_learnedUp,
+								g_learnedPitch * 57.29578f, g_learnedYaw * 57.29578f);
+						}
 					}
 					++g_state.rootWatch;
 				}

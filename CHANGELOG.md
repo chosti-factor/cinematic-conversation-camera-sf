@@ -4,6 +4,20 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.74 - 2026-11-24
+
+### Changed (the jumps left at speaker changes; the user)
+- The spot the game's camera moves to at a speaker change is learned from each change (as at a
+  conversation's start), so the prediction 0.9.73 places the shot against, 2-8 cm off in the
+  test, closes in over a scene: a smaller nudge before the cut where the game reports its move
+  a frame late. The detailed log notes each spot learned.
+
+### Test (hidden, off)
+- `iSpeakerChangeOldRoot=2` under `[Advanced]`: where the game reports its camera's move on the
+  speaker change's own frame, the shot placed against where its camera was, for that many frames
+  (0-3). The guess: those frames are still drawn from there, the cause of the two frames of the
+  new speaker in a slightly wrong framing just after the cut.
+
 ## 0.9.73 - 2026-11-24
 
 ### Fixed (scenes with three or more people: the flash at a speaker change)
