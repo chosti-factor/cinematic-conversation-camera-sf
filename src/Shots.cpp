@@ -54,7 +54,9 @@ namespace CCC::Shots
 			case ShotType::kThreeQuarterNpc:        return { true,  0.46f, 40.0f,   5.0f, false, A::kSubject, false, M::kDrift,     10.0f,  0.14f, 0.18f };
 			case ShotType::kMediumProfile:          return { true,  0.34f, 66.0f,   4.0f, false, A::kSubject, false, M::kLocked,    0.00f,  0.12f, 0.22f };
 			case ShotType::kLowProfile:             return { true,  0.50f, 78.0f, -22.0f, false, A::kSubject, false, M::kTiltUp,    16.0f,  0.08f, 0.20f };
-			case ShotType::kOverhead:               return { true,  0.28f, 40.0f,  62.0f, false, A::kSubject, false, M::kCraneDown, 26.0f,  0.00f, 0.10f };
+			// 1.0 (the user): headroom 0.16, was CCC's 0.00. The top letterbox bar (12% of the
+			// height) nearly covered Agent No. 1's head.
+			case ShotType::kOverhead:               return { true,  0.28f, 40.0f,  62.0f, false, A::kSubject, false, M::kCraneDown, 26.0f,  0.16f, 0.10f };
 			case ShotType::kOverPlayerShoulderLow:  return { true,  0.46f, 22.0f, -26.0f, true,  A::kSubject, false, M::kPushIn,    0.12f,  0.10f, 0.22f };
 			case ShotType::kOverPlayerShoulderHigh: return { true,  0.40f, 24.0f,  34.0f, true,  A::kSubject, false, M::kTiltDown,  16.0f,  0.10f, 0.22f };
 			case ShotType::kOverPlayerShoulderWide: return { true,  0.24f, 28.0f,  12.0f, true,  A::kSubject, false, M::kPullOut,   0.14f,  0.02f, 0.18f };
@@ -72,7 +74,7 @@ namespace CCC::Shots
 			case ShotType::kOverNpcShoulderHigh:    return { false, 0.38f, 24.0f,  34.0f, true,  A::kSubject, false, M::kTiltDown,  16.0f,  0.10f, 0.22f };
 			case ShotType::kOverNpcShoulderWide:    return { false, 0.24f, 28.0f,  12.0f, true,  A::kSubject, false, M::kPullOut,   0.14f,  0.02f, 0.18f };
 			case ShotType::kLongPlayer:             return { false, 0.16f, 42.0f,  16.0f, false, A::kSubject, false, M::kCraneUp,   34.0f, -0.10f, 0.12f };
-			case ShotType::kPlayerOverhead:         return { false, 0.28f, 40.0f,  62.0f, false, A::kSubject, false, M::kCraneDown, 26.0f,  0.00f, 0.10f };
+			case ShotType::kPlayerOverhead:         return { false, 0.28f, 40.0f,  62.0f, false, A::kSubject, false, M::kCraneDown, 26.0f,  0.16f, 0.10f };
 
 			case ShotType::kTwoShot:                return { true,  0.20f, 90.0f,   8.0f, false, A::kMidpoint, true, M::kDrift,     7.0f,   0.06f, 0.00f };
 			case ShotType::kProfile:                return { true,  0.30f, 90.0f,   2.0f, false, A::kMidpoint, true, M::kLocked,    0.00f,  0.08f, 0.00f };

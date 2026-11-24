@@ -882,7 +882,11 @@ namespace CCC::Director
 			g.cutAt = a_now;
 			// An extreme close-up is never a person's usual angle (0.8.15, as CCC: it's reserved for
 			// the lines that call for it; the 0.8.14 test kept you on one for ten turns in Close).
-			if (a_newAngle && a_type != ShotType::kExtremeClose && a_type != ShotType::kExtremeClosePlayer) {
+			// 1.0 (the user): nor the overhead, an accent too. As one's usual angle it came back after
+			// each reaction with its crane down again, and held for four lines (Agent No. 1, 22 s).
+			const bool accent = a_type == ShotType::kExtremeClose || a_type == ShotType::kExtremeClosePlayer || a_type == ShotType::kOverhead ||
+			                    a_type == ShotType::kPlayerOverhead;
+			if (a_newAngle && !accent) {
 				side.shot = a_type;
 				side.lines = 0;
 				side.linesTarget = NewLineTarget();

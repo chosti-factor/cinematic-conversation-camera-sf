@@ -173,6 +173,9 @@ that shot. (Generated from the presets in the code.)
   they come with the emotion close-ups (strong lines in Close, every tier in CCC SF's
   presets), and in reactions when your face shows something. Their weights in the table
   above only matter there.
+- **Overheads are accents (1.0).** An overhead shot (of them or of you) can be picked, but never
+  becomes a person's usual angle: the next turn or new angle moves on from it, and a reaction
+  doesn't return to it. Its framing keeps the head clear of the top letterbox bar.
 - **Your own mix** (hidden until the preset editor after 1.0; for testing, docs/INI_SETTINGS.md, and the shot
   names in docs/INI_HISTORY.md's appendix).
   A `[Shots]` section added to the INI changes every preset: `CloseUp=60` sets a

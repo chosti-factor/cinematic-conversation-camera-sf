@@ -7,7 +7,16 @@ to the log for testing.
 
 ## 1.0.0 - 2026-11-24 (public beta)
 
-The first public release. The code is 0.9.77's; what changes is the release itself.
+The first public release: 0.9.77, the two overhead changes below, and the release itself.
+
+### Changed (the release-candidate test, the user)
+- The overhead shots are accents, as the extreme close-ups are: never a person's usual angle.
+  As Agent No. 1's, the camera came back to hers after a reaction of you with its crane down
+  again, 13 s after the first, and held it for 22 s over four of her lines.
+- The overhead shots keep the head clear of the top letterbox bar (headroom 0.16 of the
+  picture's height, was 0.00, CCC's): the bar nearly covered Agent No. 1's head.
+
+### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus
   Mods, or the versioned releases here) instead of the alpha test build; its known issues add
   the one-frame glitch at some speaker changes in scenes with three or more people, your
