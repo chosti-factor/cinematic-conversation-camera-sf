@@ -2593,7 +2593,11 @@ namespace CCC
 						REX::INFO("Speaker change, frame +{}: the game's camera reported {:.2f} m from where it was before the change; {:.2f} m from the spot predicted for the new speaker",
 							g_state.rootWatch, moved, off);
 					}
-					if (s.speakerChangeRoot && g_state.rootWatch < 3 && moved < 0.03f && !predictedRoot && !startRoot) {
+					// 0.9.77 (the pre-1.0 review): the change's own frame only. In every late report
+					// in the tests (29) the game's camera was reported moved on the next frame; over
+					// three frames, a change where the game's camera didn't move at all would have had
+					// the shot placed against a spot it never went to for three frames, not one.
+					if (s.speakerChangeRoot && g_state.rootWatch == 0 && moved < 0.03f && !predictedRoot && !startRoot) {
 						speakerRoot = p;
 					}
 					// 0.9.74: where the game's camera landed for the new speaker, learned as at a

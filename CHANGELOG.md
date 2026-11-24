@@ -4,6 +4,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.77 - 2026-11-24
+
+### Changed (the pre-1.0 code review)
+- `bSpeakerChangeRoot` places the shot against the game's camera's predicted spot on the
+  speaker change's own frame only (it was up to three frames while the move went unreported).
+  In all 29 late reports in the tests (three runs) the move was reported on the next frame, so nothing
+  changes there; a speaker change where the game's camera doesn't move at all would now cost
+  one misplaced frame at most, not three.
+
 ## 0.9.76 - 2026-11-24
 
 ### Changed (the user)
