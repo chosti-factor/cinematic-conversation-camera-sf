@@ -4,6 +4,13 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.76 - 2026-11-24
+
+### Changed (the user)
+- `bGameCameraInScenes` is off by default: this mod films quest scenes you take part in too,
+  with tonight's pacing and speaker-change fixes (0.9.67-0.9.75). 1 (or the settings page)
+  leaves them to the game's own camera, as before.
+
 ## 0.9.75 - 2026-11-24
 
 ### Removed

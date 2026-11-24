@@ -72,9 +72,10 @@ What CCC doesn't do.
   just before the game hands the camera back from first person and on the frame it does from
   third person; or a closing shot of the NPC alone as
   the dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
-- **The game's camera where the shots don't fit:** small speakers (robots) and quest scenes
-  you take part in (someone walks up and starts talking, several people taking turns) keep
-  the game's own camera.
+- **The game's camera where the shots don't fit:** small speakers (robots) keep the game's
+  own camera. Quest scenes you take part in (someone walks up and starts talking, several
+  people taking turns) are filmed by this mod too; `bGameCameraInScenes=1` (or the settings
+  page) leaves them to the game's own camera instead.
 - **Preset key:** U switches to the next preset on the fly while a conversation (or people
   talking near you) is filmed (`iPresetKey`).
 - **Testing messages** (off by default): each line's expression, your face's answer and the
@@ -238,11 +239,9 @@ Planned:
   game hiding people close to its camera, the cause of the same fade while filming people
   talking (fixed there in 0.9.29 by keeping the camera further away); a fix that keeps the
   people in shot fully visible would cover both.
-- Quest scenes that are just people talking filmed by this mod: today every quest scene you
-  take part in goes to the game's camera, the safe choice, because some direct their own
-  shots. Scenes with no camera actions of their own would keep this mod's camera, and later
-  the game's camera would take over only while a scene's camera action runs. Built on the
-  scene logs gathered from 0.9.20 on.
+- Quest scenes that direct their own camera: this mod films every quest scene since 0.9.76
+  (with `bGameCameraInScenes=1` none). Better: the game's camera only while a scene's own
+  camera action runs, this mod's otherwise. Built on the scene logs gathered from 0.9.20 on.
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
 - Large speakers measured by their actual body, replacing the height rule (height is only
   part of it: robots like Vasco are wide and bulky too). The line from the camera to your

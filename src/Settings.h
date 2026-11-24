@@ -178,7 +178,7 @@ namespace CCC
 		float largeSpeakerHeight{ 1.70f };
 		float largeSpeakerAngle{ 38.0f };
 		float largeSpeakerPlainAngle{ 45.0f };  // ... and the plain over-the-shoulder shot of you (0.9.25)
-		bool  gameCameraInScenes{ true };
+		bool  gameCameraInScenes{ false };  // 0.9.76: this mod films quest scenes by default (the user)
 		// Focus on the person in shot (0.5.0): the game's conversation blur is focused at the
 		// distance from the camera to whoever is in shot. Focus style (0.5.1): Cinematic = the
 		// game's own sharp zone (more background blur); Wide = a much deeper sharp zone on shots
