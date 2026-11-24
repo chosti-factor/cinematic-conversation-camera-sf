@@ -37,7 +37,9 @@ Last updated: 0.9.59 (2026-11-22).
     or an exit, without exception. Read it before touching start or exit code.
   - docs/PRESETS.md: every build that touches presets, shots, lenses, moves or cutting.
   - docs/INI_SETTINGS.md: every build that adds, moves, hides or removes a setting, or
-    changes the settings page (its table in section 6 and the hidden list).
+    changes a default or the settings page: the current settings only (its tables and counts).
+  - docs/INI_HISTORY.md: the INI reviews and the reasons behind the layout (history; the
+    preset numbers' full INI text in its appendix).
   - docs/EMOTIONS.md: every build that touches line expressions, emotion close-ups or your
     face.
   - docs/REACTIONS.md: every build that touches reaction shots or the persuasion beat.

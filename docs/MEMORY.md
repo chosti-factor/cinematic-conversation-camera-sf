@@ -423,6 +423,32 @@ What each measured or logged, and what it found:
   line emotions, scene checks, filming decisions, obstacle checks, camera mode changes, the
   nearby-people summary every 10 s. The INI read after a change is logged always.
 
+## Speaker changes in scenes (0.9.72-0.9.75)
+
+- **The cause found:** at each speaker change the game moves its own conversation camera to
+  the new speaker (0.6-5 m), to within 1-8 cm of the spot it uses at a conversation's start
+  (2 m from their head towards your feet, 0.07 m up). In about half the changes it reports the
+  move a frame late; that frame was drawn from the new spot with this mod's shot placed against
+  the old one (a wrong frame: behind someone's head, inside a wall). `bSpeakerChangeRoot`
+  (0.9.72 test, on since 0.9.73) places the shot against the predicted spot then: fixed.
+- **Tried and removed:** `iSpeakerChangeOldRoot` (0.9.74 test): where the game reports its move
+  at once, the shot placed against the old spot for 1-3 frames, on the guess that those frames
+  were still drawn from there. Wrong: two or three wrong frames per change instead of the small
+  jump (the new speaker in a framing close to this mod's for two frames, then this mod's). The
+  jump is left for after 1.0.
+- **What the failed test showed** (0.9.74 clips, Bayu's scene, aligned to the log): where the
+  game reports its move at once, the wrong frame comes before this mod sees the speaker change:
+  the game switches speaker and moves its camera after this mod's camera update on that frame
+  (so the frame is drawn from the new spot with the old placement; one case showed a whole frame
+  of another shot of Yannick before his close-up). On the next frame this mod sees both and
+  places the shot right; holding the old spot (the test) made those frames wrong too. Nothing
+  done once the change is seen can fix it. The way in: place the shot again later in the frame,
+  after the game's own speaker change (a hook that runs after it, or the render camera's own
+  update), checked against the game's camera root just before drawing.
+- **The jumps measured** (0.9.74 run A, ten changes): the small jump or nudge is a shift of 1-2%
+  of the picture's width (about a degree), scale within 3%: the same size with the spot learned
+  as without.
+
 ## Hidden, never tested
 
 - **`[GameSettings]`** (hidden 0.9.70, the user): the game's own settings changed while

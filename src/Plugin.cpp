@@ -64,7 +64,6 @@ namespace CCC
 			std::optional<Camera::Pose>           lastReportedRoot;     // the game's camera root as reported last frame (0.9.72)
 			std::optional<Camera::Pose>           rootBeforeChange;     // ... on the frame before a speaker change
 			int                                   rootWatch{ 0 };       // frames since that change, watched
-			bool                                  rootAtOnce{ false };  // the game reported its camera's move on the change's own frame (0.9.74)
 			bool                                  rootLearned{ false }; // the new spot learned from this change (0.9.74)
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
@@ -2005,7 +2004,6 @@ namespace CCC
 					g_state.speakerChangedAt = now;
 					g_state.rootBeforeChange = g_state.lastReportedRoot;
 					g_state.rootWatch = 0;
-					g_state.rootAtOnce = false;
 					g_state.rootLearned = false;
 					if (g_state.subject == Subject::kNpc) {
 						g_state.reaimAt = now;
@@ -2595,18 +2593,8 @@ namespace CCC
 						REX::INFO("Speaker change, frame +{}: the game's camera reported {:.2f} m from where it was before the change; {:.2f} m from the spot predicted for the new speaker",
 							g_state.rootWatch, moved, off);
 					}
-					if (g_state.rootWatch == 0) {
-						g_state.rootAtOnce = moved >= 0.03f;
-					}
 					if (s.speakerChangeRoot && g_state.rootWatch < 3 && moved < 0.03f && !predictedRoot && !startRoot) {
 						speakerRoot = p;
-					}
-					// 0.9.74 test (iSpeakerChangeOldRoot, hidden, 0 = off): when the game reports its move
-					// on the change's own frame, the shot placed against where its camera was for this
-					// many frames (the guess: those frames are still drawn from there; 0.9.73's clips
-					// showed the new speaker in a slightly wrong framing for two frames).
-					if (g_state.rootAtOnce && g_state.rootWatch < s.speakerChangeOldRoot && !predictedRoot && !startRoot) {
-						speakerRoot = b;
 					}
 					// 0.9.74: where the game's camera landed for the new speaker, learned as at a
 					// conversation's start, so the prediction above (2-8 cm off in 0.9.73's test)

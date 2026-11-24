@@ -214,7 +214,7 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 ### Before 1.0
 
 Feature complete since 2026-11-19; the four polish passes are done (redundancy, debugging,
-optimization, and the INI and settings page review in 0.9.60, [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md)).
+optimization, and the INI and settings page review in 0.9.60, [docs/INI_HISTORY.md](docs/INI_HISTORY.md)).
 Left:
 - A second look at the settings page, once it's been played with.
 - The release candidate: a full test round (starts, exits, every preset, seated people,
@@ -278,7 +278,7 @@ Mulling (not decided):
 - A preset editor (the user, 2026-11-21): the per-preset settings (shot choices, close-up
   chances, cutting pace and the like) edited in one place, instead of spread over the settings
   page and the INI. The 13 settings taken off the settings page for it in 0.9.60:
-  docs/INI_SETTINGS.md.
+  docs/INI_HISTORY.md.
 - Every preset revisited with what 1.0's players report, tweaked further, and maybe new ones
   (the user, 2026-11-20).
 - Coming back from a reaction as a turn of its own, so it can bring a fresh angle (0.9.31
@@ -366,8 +366,9 @@ face's background and question looks) and changes to single shots (`[Shots]`) ar
 until the preset editor after 1.0 (0.9.70, the user): not in the INI, but read if you add
 them, for testing. All of them, explained: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).
 
-Each setting is explained in the INI itself. The settings page, the hidden settings and
-every setting's place: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).
+Each setting is explained in the INI itself. Every setting, its section, default, settings
+page and whether it's hidden: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md); how the layout came
+about: [docs/INI_HISTORY.md](docs/INI_HISTORY.md).
 
 ## Testing and logs
 

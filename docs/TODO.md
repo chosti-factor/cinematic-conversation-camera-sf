@@ -146,7 +146,7 @@ Wednesday the 25th, about two days earlier.
       bug: the game's sequencing of a multi-part response seems fragile to camera-state or
       dialogue-target changes. Cora's responses are multi-part; filming switches the game's
       camera state (first to third person and back). CCC (Skyrim) has nothing on it
-- [x] INI and defaults review, first pass (0.9.60; docs/INI_SETTINGS.md): the page trimmed to
+- [x] INI and defaults review, first pass (0.9.60; docs/INI_HISTORY.md): the page trimmed to
       the main choices, defaults (log, messages, start on its own off), comment fixes
 - [x] With it, a review of the settings page's layout and options (the user, 2026-11-21): the
       design isn't clear enough for people; which options to keep on the page, which to hide
@@ -217,6 +217,9 @@ Wednesday the 25th, about two days earlier.
 ## Moved to after 1.0
 
 - The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
+- Speaker changes in scenes of three or more: where the game reports its camera's move at once,
+  two frames of the new speaker in a slightly wrong framing just after the cut (0.9.75; the
+  0.9.74 guess was wrong; docs/MEMORY.md)
 - Your character looking at the wrong person in conversations with three or more people (the
   user, 2026-11-23: after 1.0 unless easy; it isn't: needs the game's head tracking; README Planned)
 - [x] Filming people talking: the near person in over-the-shoulder shots hidden by the game's

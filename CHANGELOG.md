@@ -4,6 +4,24 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.75 - 2026-11-24
+
+### Removed
+- The `iSpeakerChangeOldRoot` test (0.9.74). Its guess was wrong: in the test (Benjamin
+  Bayu's scene, twice, clips frame by frame), with it on every speaker change where the game
+  reports its camera's move at once had two or three wrong frames instead of one small jump.
+  The jump stays, after 1.0 (docs/MEMORY.md).
+
+### Docs (the user)
+- docs/INI_SETTINGS.md is now only the current settings: every one with its section, default,
+  settings page and whether it's hidden, and the counts. The old one, the reviews and the
+  reasons behind the layout, is docs/INI_HISTORY.md (with the preset numbers' INI text).
+
+### Test results (0.9.74)
+- The learned camera spot settled at 1.97-2.01 m from the speaker's head; the prediction was
+  1-6 cm off (2-8 before). The nudge before the cut, where the game reports its move a frame
+  late, looks about the same in the clips: kept, it does no harm.
+
 ## 0.9.74 - 2026-11-24
 
 ### Changed (the jumps left at speaker changes; the user)
