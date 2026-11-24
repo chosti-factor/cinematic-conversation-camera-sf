@@ -430,7 +430,7 @@ Decisions (all built in 0.9.23; the NebulaTest preset comes out before 1.0):
   eyes reach the lower third of the frame. To judge it: a temporary "Nebula test" preset
   (the user chose this over a testing setting or [Shots] weights): Nebula with the three low
   angles making half of the angles picked; sPreset and the U key. Taken out before 1.0.
-- Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user). In every
+- Overhead shots: kept in Nebula as a flourish, weight 15 -> 12 each (the user); back to 15 in 1.0, as accents. In every
   preset, the overhead of you is never used for a reaction (the user; old proposal 1).
 - Bug, all presets: the close-up of you for a tagged choice ([Commerce] in the run) came one
   turn late, at your next reply (the player is silent, so the NPC answers at once), and only

@@ -368,9 +368,10 @@ namespace CCC::Director
 			PresetEntry{ ShotType::kProfile, 15, Move::kDrift, 12, 5.0f, 60.0f },
 			PresetEntry{ ShotType::kLongNpc, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
 			PresetEntry{ ShotType::kLongPlayer, 25, Move::kCraneUp, 30, 6.0f, 80.0f },
-			// 0.9.23: a flourish, a little rarer (15 -> 12).
-			PresetEntry{ ShotType::kOverhead, 12, Move::kCraneDown, 26, 5.0f, 85.0f },
-			PresetEntry{ ShotType::kPlayerOverhead, 12, Move::kCraneDown, 26, 5.0f, 85.0f },
+			// 0.9.23: a flourish, a little rarer (15 -> 12). 1.0: back to 15, now that it's an
+			// accent (never one's usual angle, so it no longer comes back after reactions).
+			PresetEntry{ ShotType::kOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
+			PresetEntry{ ShotType::kPlayerOverhead, 15, Move::kCraneDown, 26, 5.0f, 85.0f },
 			PresetEntry{ ShotType::kWide, 25, Move::kPullOut, 22, 6.0f, 88.0f },
 			PresetEntry{ ShotType::kMaster, 25, Move::kCraneUp, 45, 7.0f, 95.0f },
 			PresetEntry{ ShotType::kDistant, 20, Move::kPullOut, 35, 6.0f, 45.0f },

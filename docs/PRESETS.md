@@ -133,8 +133,8 @@ that shot. (Generated from the presets in the code.)
 | Two-shot | 4% drift, 72° |  | 7% drift, 80° | 5% drift, 65° |  | 6% drift, 60° | 4% drift, 72° |
 | Long, full figure (NPC) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 10% crane up, 55° | 3% crane up, 80° |
 | Long, full figure (you) |  |  | 11% crane up, 80° | 2% crane up, 70° |  | 10% crane up, 55° | 3% crane up, 80° |
-| Overhead (NPC) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
-| Overhead (you) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 1% crane down, 85° |
+| Overhead (NPC) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 2% crane down, 85° |
+| Overhead (you) |  |  | 6% still, 85° |  |  | 3% crane down, 70° | 2% crane down, 85° |
 | Wide (room shot) |  |  | 13% pull out, 88° | 2% pull out, 80° |  | 7% drift, 60° | 3% pull out, 88° |
 | Distant (room shot) |  | 7% pull out, 40° | 9% still, 45° | 1% still, 45° | 11% still, 40° | 9% drift, 45° | 2% pull out, 45° |
 | Distant, low (room shot) |  |  |  |  |  |  | 2% drift, 45° |
