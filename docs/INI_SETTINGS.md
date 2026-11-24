@@ -1,6 +1,6 @@
 # INI settings
 
-Last updated: 0.9.66 (2026-11-23).
+Last updated: 0.9.70 (2026-11-23).
 
 `Data\SFSE\Plugins\CinematicConversationCameraSF.ini` (what each of its sections holds: the
 README's Settings table). Here: the settings page and the INI, the hidden settings, every
@@ -33,12 +33,16 @@ while it runs, one per line, `name:Section=value`, e.g. `fDialogueCameraResumeTi
 take a line out to put the game's value back). Never tested in play: read and applied if
 you add the section, for testing only (docs/MEMORY.md).
 
+Hidden too since 0.9.70 (the user: until the preset editor after 1.0), each preset's own
+numbers, 20 settings, read from `[Advanced]` if you add them, and changes to single shots, a
+`[Shots]` section if you add it. Each, explained as it was in the INI: the appendix at the end.
+
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
 five pages (General, Camera, Close-ups and reactions, Screen, Filming people talking; General
-since 0.9.70: the mod's switch and the detailed log). The rest
-stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
-timing), meant for a preset editor after 1.0, and technical tuning. The page shows
+since 0.9.70: the mod's switch and the detailed log). The rest stays in the INI (the camera
+sway, keys, technical tuning); a preset's own numbers (close-up chances, lens, distances,
+reaction timing) are hidden until the preset editor after 1.0 (above). The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
 writes changes to the `_user.ini`; **Reset** beside a setting removes your change. Every
 setting has a tooltip; on/off settings are switches (green when on). Each page's settings come
@@ -233,8 +237,8 @@ Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<
 | Director | `iMaxLines` | 5 | INI | Advanced | Most lines before a new angle (commented out: the preset's own) |
 | Director | `fShortestHold` | 2.0 | INI | Advanced | Shortest hold of a shot (commented out: the preset's own) |
 | Director | `fShortLineSeconds` | 1.2 | INI | Hidden | Lines shorter than this don't count for cutting |
-| Director | `fMaxCameraDistance` | 0 | INI | Standard | Furthest the camera stands, indoors (0 = the preset's own) |
-| Director | `fMaxCameraDistanceExterior` | 0 | INI | Standard | Furthest the camera stands, outdoors (0 = the preset's own) |
+| Director | `fMaxCameraDistance` | 0 | Hidden (0.9.70) | Standard | Furthest the camera stands, indoors (0 = the preset's own) |
+| Director | `fMaxCameraDistanceExterior` | 0 | Hidden (0.9.70) | Standard | Furthest the camera stands, outdoors (0 = the preset's own) |
 | Director | `bObstacleCheck` | 1 | INI + page | Page | Avoid walls and objects |
 | Director | `fObstacleRadius` | 0.05 | INI | Hidden | Width of the obstacle check (the game's own value) |
 | Director | `bTrue180` | 0 | INI + page | Page | 180-degree rule |
@@ -243,37 +247,37 @@ Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<
 | Director | `bReactionShotsPlayer` | -1 | INI + page | Page | Reaction shots of you |
 | Director | `bChoiceCloseUpsPlayer` | -1 | INI + page | Page | Close-up of you on skill choices |
 | Director | `fChoiceCloseUpSecondsPlayer` | 2 | INI | Standard | How long that close-up lasts |
-| Director | `fReactionAfterSecondsPlayer` | -1 | INI | Standard | Their talking before a reaction of you is due |
-| Director | `iReactionChancePlayer` | 100 | INI | Standard | Chance a due reaction is taken |
+| Director | `fReactionAfterSecondsPlayer` | -1 | Hidden (0.9.70) | Standard | Their talking before a reaction of you is due |
+| Director | `iReactionChancePlayer` | 100 | Hidden (0.9.70) | Standard | Chance a due reaction is taken |
 | Director | `fReactionLineMinSecondsPlayer` | 2.5 | INI | Advanced | Shortest line a reaction can take |
 | Director | `fReactionLineMaxSecondsPlayer` | 7 | INI | Advanced | Longest line a reaction takes whole |
-| Director | `fReactionLongLineSecondsPlayer` | 4 | INI | Advanced | Longer lines: how much of it is shown on you |
-| Director | `iCloseUpChanceMildPlayer` | 25 | INI | Standard | Close-up of you: mild expressions (%) |
-| Director | `iCloseUpChanceMediumPlayer` | 40 | INI | Standard | Close-up of you: medium expressions (%) |
-| Director | `iCloseUpChanceStrongPlayer` | 100 | INI | Standard | Close-up of you: strong expressions (%) |
-| Director | `iExtremeCloseUpChancePlayer` | 40 | INI | Standard | Extreme close-ups of you (%) |
-| Director | `bListeningCloseUpsPlayer` | -1 | INI | Standard | Listening reactions may be close-ups |
+| Director | `fReactionLongLineSecondsPlayer` | 4 | Hidden (0.9.70) | Advanced | Longer lines: how much of it is shown on you |
+| Director | `iCloseUpChanceMildPlayer` | 25 | Hidden (0.9.70) | Standard | Close-up of you: mild expressions (%) |
+| Director | `iCloseUpChanceMediumPlayer` | 40 | Hidden (0.9.70) | Standard | Close-up of you: medium expressions (%) |
+| Director | `iCloseUpChanceStrongPlayer` | 100 | Hidden (0.9.70) | Standard | Close-up of you: strong expressions (%) |
+| Director | `iExtremeCloseUpChancePlayer` | 40 | Hidden (0.9.70) | Standard | Extreme close-ups of you (%) |
+| Director | `bListeningCloseUpsPlayer` | -1 | Hidden (0.9.70) | Standard | Listening reactions may be close-ups |
 | Director | `bAvoidBystandersNpc` | 1 | INI + page | Page | Avoid people in the way |
 | Director | `fBystanderStillNpc` | 1.5 | INI | Hidden | How long someone stands still to count as in the way |
 | Director | `bPersuasionBeatNpc` | 1 | INI + page | Page | Hold on their answer (persuasion) |
 | Director | `sBeatTags` | Intimidate,Intimidati... | INI | Advanced | Skill tags that get the persuasion beat |
 | Director | `bEmotionCloseUpsNpc` | -1 | INI + page | Page | Emotion close-ups of the speaker |
 | Director | `sCloseUpEmotionsMildNpc` | Amused,Confident,Thin... | INI | Advanced | Which expressions are mild |
-| Director | `iCloseUpChanceMildNpc` | 25 | INI | Standard | Close-up chance, mild lines (%) |
+| Director | `iCloseUpChanceMildNpc` | 25 | Hidden (0.9.70) | Standard | Close-up chance, mild lines (%) |
 | Director | `sCloseUpEmotionsMediumNpc` | Concerned,Serious,Smi... | INI | Advanced | Which expressions are medium |
-| Director | `iCloseUpChanceMediumNpc` | 40 | INI | Standard | Close-up chance, medium lines (%) |
+| Director | `iCloseUpChanceMediumNpc` | 40 | Hidden (0.9.70) | Standard | Close-up chance, medium lines (%) |
 | Director | `sCloseUpEmotionsStrongNpc` | VeryAngry,Rage,Angry,... | INI | Advanced | Which expressions are strong |
-| Director | `iCloseUpChanceStrongNpc` | 100 | INI | Standard | Close-up chance, strong lines (%) |
-| Director | `iExtremeCloseUpChanceNpc` | -1 | INI | Standard | Share of their close-ups that are extreme |
-| Director | `fCloseUpLimitSecondsNpc` | -1 | INI | Standard | Longest one close-up of them holds |
+| Director | `iCloseUpChanceStrongNpc` | 100 | Hidden (0.9.70) | Standard | Close-up chance, strong lines (%) |
+| Director | `iExtremeCloseUpChanceNpc` | -1 | Hidden (0.9.70) | Standard | Share of their close-ups that are extreme |
+| Director | `fCloseUpLimitSecondsNpc` | -1 | Hidden (0.9.70) | Standard | Longest one close-up of them holds |
 | Director | `iRoomShotMinRoom` | 60 | INI | Advanced | Room shots left out in rooms smaller than this (%) |
-| Director | `fRoomShotMaxIndoors` | -1 | INI | Standard | Furthest back room shots stand, indoors |
-| Director | `fRoomShotMaxOutdoors` | -1 | INI | Standard | Furthest back room shots stand, outdoors |
+| Director | `fRoomShotMaxIndoors` | -1 | Hidden (0.9.70) | Standard | Furthest back room shots stand, indoors |
+| Director | `fRoomShotMaxOutdoors` | -1 | Hidden (0.9.70) | Standard | Furthest back room shots stand, outdoors |
 | Director | `bPlainShotsSeatedNpc` | 1 | INI | Advanced | Plain shot for seated people |
 | Director | `bPlainShotsMerchantsNpc` | 1 | INI | Advanced | Plain shot for merchants |
 | Director | `bCameraMoves` | 1 | INI + page | Page | Camera moves (push-ins, drifts...) |
-| Shots | `(per shot, e.g. CloseUp)` | 80 | INI | Standard | Per-shot tweaks: weight, move, amount, time (examples, commented out) |
-| Camera | `fConversationLens` | -1 | INI | Standard | One lens for every angle (-1 = each angle's own) |
+| Shots | `(per shot, e.g. CloseUp)` | 80 | Hidden (0.9.70) | Standard | Per-shot tweaks: weight, move, amount, time (examples, commented out) |
+| Camera | `fConversationLens` | -1 | Hidden (0.9.70) | Standard | One lens for every angle (-1 = each angle's own) |
 | Camera | `iShotMode` | 2 | INI | Advanced | Who gets the camera (shot/reverse-shot, or one side only) |
 | Camera | `fFaceDeadband` | 0.04 | INI | Hidden | Head movement the camera ignores |
 | Camera | `iCameraSway` | -1 | INI | Standard | Camera sway (-1 = the preset's own) |
@@ -324,8 +328,8 @@ Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<
 | SceneFilming | `fListenHold` | 0.5 | INI | Advanced | How long the button is held |
 | SceneFilming | `fListenRange` | 12 | INI + page | Page | Range |
 | Face | `bFacePlayer` | 1 | INI + page | Page | Your expressions |
-| Face | `iSignatureChancePlayer` | 30 | INI | Standard | Your background's expression (%) |
-| Face | `iQuestionChancePlayer` | 40 | INI | Standard | Asking a question (%) |
+| Face | `iSignatureChancePlayer` | 30 | Hidden (0.9.70) | Standard | Your background's expression (%) |
+| Face | `iQuestionChancePlayer` | 40 | Hidden (0.9.70) | Standard | Asking a question (%) |
 | Debug | `bShowMessages` | 0 | INI + page | Page | Testing messages |
 | Debug | `fMessageSeconds` | 6 | INI | Advanced | How long a testing message stays |
 | Debug | `iPresetKey` | 85 | INI | Standard | The preset key (U) |
@@ -339,3 +343,134 @@ Ways to show Advanced (to decide):
    for players; the code reads each setting from [Advanced] first and its old section second,
    so `_user.ini` files keep working.
 3. **"(advanced)" in each comment**, settings left in place. Simplest, least clear.
+
+## Appendix: hidden until the preset editor (0.9.70)
+
+What the INI had for each preset's own numbers and for single shots, as it was, until the
+preset editor after 1.0. The 20 settings now go under `[Advanced]` (in your `_user.ini`);
+`[Shots]` keeps its own section. All apply to every preset; -1 (or 0 where it says so) is
+each preset's own.
+
+```ini
+; (was [PresetTuning]; now under [Advanced])
+; Each preset's own numbers, for fine-tuning a preset's style (a preset editor is planned
+; after 1.0). -1 (or 0 where it says so) = the preset's own; a number sets it for every
+; preset. All of it, preset by preset: docs/PRESETS.md.
+
+; ---- Lens and distances ---------------------------------------------------------------
+; The conversation lens, in degrees. Starfield films conversations through a narrow 30
+; degree lens, so CCC's framings need the camera about twice as far back as in Skyrim: wide
+; shots rarely fit indoors and over-the-shoulder shots meet walls more often. A wider lens
+; frames the same shots from closer, with less of the flattened, telephoto look. Only while
+; this mod films a conversation.
+; -1 = the preset's own: each angle with its own lens, as the preset sets them (CCC's
+;      numbers in CCC's presets; see docs/PRESETS.md)
+; 20-70 = one lens for every angle and every preset (30 = the game's own)
+fConversationLens=-1
+
+; The furthest the camera may stand from the person it frames, in metres, indoors and
+; outdoors. Starfield's conversation lens is narrower than the ones CCC uses in Skyrim,
+; so its framings want the camera further back. 0 = the preset's own, as far as its
+; widest shot wants (obstacle detection keeps the camera out of walls):
+;   Close     5 m indoors,  5 m outdoors
+;   Standard  7 m indoors, 10.5 m outdoors (the two-shot of you both needs 10.2 m)
+;   Room      7 m indoors, 13 m outdoors (the full-figure shots need 12.7 m)
+;   Starborn  5 m indoors,  5 m outdoors (as Close)
+;   Constellation, Frontier, Nebula  7 m indoors, 13 m outdoors (as Room)
+; Any other value (1-15) is your own limit, whatever the preset; lower values make the
+; wider shots tighter, never wider.
+fMaxCameraDistance=0
+fMaxCameraDistanceExterior=0
+; Room shots (Wide, Master, Distant, DistantLow; which preset uses which: docs/PRESETS.md)
+; stand where the room measurement found space on the conversation's side, with both faces
+; in view, as far back as CCC's framing wants. How far back they may stand, in metres,
+; indoors and outdoors. -1 = the preset's own (CCC's presets: as far as CCC's framing wants,
+; about 12 to 18 m at the 45 degree lens; CCC SF's: 9 m indoors, 12 m outdoors); 0 = as far as
+; CCC's framing wants in any preset; any other value is your own limit. The limit is for the
+; furthest (Master); Distant and Wide stay closer in proportion. Closer makes the people
+; larger.
+fRoomShotMaxIndoors=-1
+fRoomShotMaxOutdoors=-1
+
+; ---- Their close-ups ------------------------------------------------------------------
+; Emotion close-ups of the speaker (bEmotionCloseUpsNpc): the chance (%) for each tier of
+; expression (which expressions are in which tier: sCloseUpEmotions...Npc in [Advanced]):
+;   mild    everyday tone
+;   medium  real but often understated feeling
+;   strong  what close-ups are for
+; At these chances, about one NPC line in five gets one.
+iCloseUpChanceMildNpc=25
+iCloseUpChanceMediumNpc=40
+iCloseUpChanceStrongNpc=100
+; Of those close-ups, how many (%) are extreme close-ups (CCC: about a third).
+; -1 = the preset's own: Frontier 25 (the western keeps them rare), the others 40.
+iExtremeCloseUpChanceNpc=-1
+; The longest one close-up of them holds (seconds, 4-60) before a wider shot of them (a run
+; of emotional lines can otherwise hold one for half a minute): -1 = the preset's own
+; (Frontier 12, Starborn 18, Constellation 14, Nebula 12; none in CCC's presets); 0 = none.
+fCloseUpLimitSecondsNpc=-1
+
+; ---- Reactions of you -----------------------------------------------------------------
+; Reaction shots of you (bReactionShotsPlayer): due after fReactionAfterSecondsPlayer of their
+; talking without a shot of you (your own turns start the count again), taken
+; iReactionChancePlayer % of the time. -1 = the preset's own (Frontier 10 s, Starborn 9 s,
+; Constellation 12 s, Nebula 7 s).
+fReactionAfterSecondsPlayer=-1
+iReactionChancePlayer=100
+; How long a reaction of you lasts on a long line of theirs: a line up to a second longer
+; than this is shown on you whole; a longer one is shown on you for this many seconds, then
+; back to them (0 = wait for a line that suits).
+fReactionLongLineSecondsPlayer=4
+; ---- Close-ups of you -----------------------------------------------------------------
+; A reaction is either you listening (the preset's angle of you: your regular shots, never
+; the room or a two-shot) or, when your face shows an expression on that line, a close-up
+; of you, by the expression's tier (the same lists as for them): these % of the time
+; (iExtremeCloseUpChancePlayer of those extreme close-ups; also the share for the close-up of
+; you on a tagged choice that isn't confrontational).
+iCloseUpChanceMildPlayer=25
+iCloseUpChanceMediumPlayer=40
+iCloseUpChanceStrongPlayer=100
+; (Constellation has no extreme close-ups of you: a documentary doesn't go that close.)
+iExtremeCloseUpChancePlayer=40
+; Listening reactions on a close-up of you too: -1 = the preset's own (yes, except Frontier,
+; which keeps them in mediums and three-quarters and saves your close-ups for your
+; expressions); 0 no, 1 yes. A reaction is never the overhead shot of you.
+bListeningCloseUpsPlayer=-1
+
+; ---- Your face ------------------------------------------------------------------------
+; Your face (bFacePlayer in [Director]); the same for every preset for now, which the preset
+; editor could change.
+; Your background shows on your face now and then: at moments it would otherwise be neutral
+; (an NPC line with no expression, an option without a skill tag), this chance (%, 0-100)
+; of your background's expression instead: Space Scoundrel and Cyber Runner smirk, Gangster
+; looks smug, Bounty Hunter suspicious, Diplomat and Homesteader friendly, Professor and
+; Sculptor thoughtful, Soldier and Beast Hunter serious, Bouncer and Ronin stern, Chef happy,
+; Combat Medic concerned, Explorer awed, Industrialist confident, Long Hauler tired, Pilgrim
+; at ease, Cyberneticist and Xenobiologist focused. Full tables: docs/EMOTIONS.md.
+iSignatureChancePlayer=30
+; An option without a tag that asks a question ("...?"): this chance (%, 0-100) you ask it
+; with a questioning look.
+iQuestionChancePlayer=40
+
+[Shots]
+; Change individual shots of the preset. Remove the ";" to use a line.
+; Weight (how often it's picked, 0-100; 0 turns it off, and a shot the preset doesn't
+; use can be added this way):
+;CloseUp=80
+; Move: None, Push in, Pull out, Crane up, Crane down, Tilt up, Tilt down, Drift,
+; Zoom in, Zoom out (done as push/pull here), Orbit left, Orbit right, Slide left,
+; Slide right. Amount 0-100, time in seconds.
+;CloseUpMove=Push in
+;CloseUpMoveAmount=40
+;CloseUpMoveTime=6
+;
+; Shot names, of them: OverPlayerShoulder, OverPlayerShoulderLow, OverPlayerShoulderHigh,
+; OverPlayerShoulderWide, DirtyNpc, ThreeQuarterNpc, CloseUp, ExtremeClose, CloseLow,
+; CloseHigh, CloseProfile, CloseWide, MediumNpc, MediumProfile, LowAngle, LowProfile,
+; LongNpc, Overhead
+; Of you: OverNpcShoulder, OverNpcShoulderLow, OverNpcShoulderHigh, OverNpcShoulderWide,
+; DirtyPlayer, ThreeQuarterPlayer, ClosePlayer, ExtremeClosePlayer, MediumPlayer,
+; PlayerProfile, PlayerLow, HighAngle, LongPlayer, PlayerOverhead
+; Of both: TwoShot, Profile (the two-shot needs about 10 m, so outdoors only by default)
+; Of the room (where the room measurement finds space): Wide, Master, Distant, DistantLow
+```

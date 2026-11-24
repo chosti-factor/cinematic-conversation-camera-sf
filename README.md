@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: alpha (0.9.x, polish)
 
-Last updated: 0.9.66 (2026-11-23).
+Last updated: 0.9.70 (2026-11-23).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -200,8 +200,10 @@ Sam, Barrett, Andreja and Muria (0.9.23-0.9.25).
 In every preset a room or shared shot (the two of you, the room) stays your angle for 2 of
 your turns at most, and a reaction is never the overhead shot of you. `iCameraSway` sets the
 sway for every preset instead of the preset's own (0 = tripod, 100 = fully handheld);
-`fConversationLens` sets one lens for every angle; `fCloseUpLimitSecondsNpc` and
-`iExtremeCloseUpChanceNpc` set the close-up limit and the extreme share for every preset.
+and each preset's own numbers (`fConversationLens`, one lens for every angle;
+`fCloseUpLimitSecondsNpc` and `iExtremeCloseUpChanceNpc`, the close-up limit and the extreme
+share; and the rest) are hidden until the preset editor after 1.0: read from `[Advanced]` if
+you add them, for testing ([docs/INI_SETTINGS.md](docs/INI_SETTINGS.md)).
 Every preset's shots, shares, moves and lenses: [docs/PRESETS.md](docs/PRESETS.md).
 How the camera starts and ends a conversation, frame by frame, with the measured numbers:
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md). What was tried and removed along the way (test
@@ -355,9 +357,12 @@ conversations, within half a second), so changes apply without restarting the ga
 | `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
 | `[SceneFilming]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
 | `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character, the shot library, the full body from first person) |
-| `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come and how long they last on a long line, close-ups of you by tier, your face's background expressions and questioning looks (for a preset editor after 1.0) |
-| `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
 | `[Advanced]` | Technical settings, rarely worth changing, in four groups: shots (never across the eyeline, who gets the camera, plain shots for seated people and merchants, small and large speakers), close-ups (the expressions' tiers, the persuasion tags), exits and screen (the exit style, the letterbox's slide, the options' fade), filming people talking (hand-back timings, stop distances) |
+
+Each preset's own numbers (lens, distances, close-up and reaction chances and timing, your
+face's background and question looks) and changes to single shots (`[Shots]`) are hidden
+until the preset editor after 1.0 (0.9.70, the user): not in the INI, but read if you add
+them, for testing. All of them, explained: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).
 
 Each setting is explained in the INI itself. The settings page, the hidden settings and
 every setting's place: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).

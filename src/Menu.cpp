@@ -43,7 +43,8 @@ namespace CCC::Menu
 		constexpr const char* kFocusStyles[]{ "Wide", "Cinematic" };
 
 		// The player-facing settings (0.9.60-0.9.63, the INI review: the main choices; the rest is
-		// in the INI's [PresetTuning], [Advanced] and [Debug]; docs/INI_SETTINGS.md). Every entry
+		// in the INI's [Advanced] and [Debug], and each preset's own numbers hidden until the preset
+		// editor (0.9.70); docs/INI_SETTINGS.md). Every entry
 		// has a tooltip (0.9.64, the user).
 		const Entry kEntries[]{
 			// ---- General (0.9.70, the user: the mod's switch and the detailed log on a page of their own) ----
@@ -70,7 +71,7 @@ namespace CCC::Menu
 				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's own camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
 			// ---- Close-ups and reactions ----
 			{ "Close-ups and reactions", "Them", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
-				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often: [PresetTuning] in the INI). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },
+				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },
 			{ "Close-ups and reactions", "Them", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round, the verdict included, and to options with a skill check ([Intimidate], [Manipulate]...)." },
 			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,

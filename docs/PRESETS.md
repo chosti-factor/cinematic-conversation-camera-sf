@@ -173,9 +173,10 @@ that shot. (Generated from the presets in the code.)
   they come with the emotion close-ups (strong lines in Close, every tier in CCC SF's
   presets), and in reactions when your face shows something. Their weights in the table
   above only matter there.
-- **Your own mix.** The `[Shots]` section of the INI changes any preset: `CloseUp=60` sets a
+- **Your own mix** (hidden until the preset editor after 1.0; for testing, docs/INI_SETTINGS.md).
+  A `[Shots]` section added to the INI changes every preset: `CloseUp=60` sets a
   shot's weight (0 turns it off), `CloseUpMove=Push in`, `CloseUpMoveAmount=40`,
   `CloseUpMoveTime=6`. `fMaxCameraDistance`, `fMaxCameraDistanceExterior`,
-  `fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` and `fConversationLens` set your own
-  distances and one lens for every angle; `iCameraSway`, `fCuttingPace` (nudges the preset's rhythm; -2 to +2 in steps of 0.5),
+  `fRoomShotMaxIndoors`, `fRoomShotMaxOutdoors` and `fConversationLens` (in `[Advanced]`)
+  set your own distances and one lens for every angle; `iCameraSway`, `fCuttingPace` (nudges the preset's rhythm; -2 to +2 in steps of 0.5),
   `bEmotionCloseUpsNpc` and `bReactionShotsPlayer` override the preset's own.

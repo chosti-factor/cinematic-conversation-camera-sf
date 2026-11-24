@@ -115,17 +115,17 @@ namespace CCC
 			a_s.filmStopDistance = std::clamp(ReadFloat(a_path, L"Advanced", L"fFilmStopDistance", a_s.filmStopDistance), 0.1f, 2.0f);
 			a_s.filmWalkOnDistance = std::clamp(ReadFloat(a_path, L"Advanced", L"fFilmWalkOnDistance", a_s.filmWalkOnDistance), 0.5f, 10.0f);
 			a_s.roomShotMinRoom = std::clamp(ReadInt(a_path, L"Advanced", L"iRoomShotMinRoom", a_s.roomShotMinRoom), 30, 100);
-			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"PresetTuning", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
-			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"PresetTuning", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
-			a_s.conversationLens = ReadFloat(a_path, L"PresetTuning", L"fConversationLens", a_s.conversationLens);
+			a_s.roomShotMaxIndoors = std::clamp(ReadFloat(a_path, L"Advanced", L"fRoomShotMaxIndoors", a_s.roomShotMaxIndoors), -1.0f, 25.0f);
+			a_s.roomShotMaxOutdoors = std::clamp(ReadFloat(a_path, L"Advanced", L"fRoomShotMaxOutdoors", a_s.roomShotMaxOutdoors), -1.0f, 25.0f);
+			a_s.conversationLens = ReadFloat(a_path, L"Advanced", L"fConversationLens", a_s.conversationLens);
 			// -1 (or anything below 10) = the preset's own lenses; 30 = the game's own.
 			a_s.conversationLens = a_s.conversationLens < 10.0f ? -1.0f : std::clamp(a_s.conversationLens, 20.0f, 70.0f);
 			a_s.playerFace = ReadInt(a_path, L"Director", L"bFacePlayer", a_s.playerFace ? 1 : 0) != 0;
-			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
-			a_s.signatureChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
-			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
-			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
-			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
+			a_s.questionFaceChance = std::clamp(ReadInt(a_path, L"Advanced", L"iQuestionChancePlayer", a_s.questionFaceChance), 0, 100);
+			a_s.signatureChance = std::clamp(ReadInt(a_path, L"Advanced", L"iSignatureChancePlayer", a_s.signatureChance), 0, 100);
+			a_s.closeUpChanceMildPlayer = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceMildPlayer", a_s.closeUpChanceMildPlayer), 0, 100);
+			a_s.closeUpChanceMediumPlayer = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceMediumPlayer", a_s.closeUpChanceMediumPlayer), 0, 100);
+			a_s.closeUpChanceStrongPlayer = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceStrongPlayer", a_s.closeUpChanceStrongPlayer), 0, 100);
 			a_s.letterbox = ReadInt(a_path, L"Interface", L"bLetterbox", a_s.letterbox ? 1 : 0) != 0;
 			a_s.letterboxHeight = std::clamp(ReadFloat(a_path, L"Interface", L"fLetterboxHeight", a_s.letterboxHeight), 0.02f, 0.3f);
 			a_s.letterboxFade = std::clamp(ReadFloat(a_path, L"Advanced", L"fLetterboxFade", a_s.letterboxFade), 0.0f, 3.0f);
@@ -156,8 +156,8 @@ namespace CCC
 			a_s.shortestHold = a_s.shortestHold <= 0.0f ? 0.0f : std::clamp(a_s.shortestHold, 0.3f, 9.0f);
 			// 0 = the preset's own cap; anything else is the player's limit, 1-15 m.
 			const auto cap = [](float a_value) { return a_value <= 0.0f ? 0.0f : std::clamp(a_value, 1.0f, 15.0f); };
-			a_s.maxCameraDistance = cap(ReadFloat(a_path, L"PresetTuning", L"fMaxCameraDistance", a_s.maxCameraDistance));
-			a_s.maxCameraDistanceExterior = cap(ReadFloat(a_path, L"PresetTuning", L"fMaxCameraDistanceExterior", a_s.maxCameraDistanceExterior));
+			a_s.maxCameraDistance = cap(ReadFloat(a_path, L"Advanced", L"fMaxCameraDistance", a_s.maxCameraDistance));
+			a_s.maxCameraDistanceExterior = cap(ReadFloat(a_path, L"Advanced", L"fMaxCameraDistanceExterior", a_s.maxCameraDistanceExterior));
 			a_s.obstacleCheck = ReadInt(a_path, L"Debug", L"bObstacleCheck", a_s.obstacleCheck ? 1 : 0) != 0;
 			a_s.obstacleRadius = std::clamp(ReadFloat(a_path, L"Advanced", L"fObstacleRadius", a_s.obstacleRadius), 0.01f, 0.3f);
 			a_s.true180 = ReadInt(a_path, L"Director", L"bTrue180", a_s.true180 ? 1 : 0) != 0;
@@ -165,16 +165,16 @@ namespace CCC
 			a_s.followFace = ReadInt(a_path, L"Debug", L"bFollowFace", a_s.followFace ? 1 : 0) != 0;
 			a_s.choiceCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bChoiceCloseUpsPlayer", a_s.choiceCloseUps), -1, 1);
 			a_s.choiceCloseUpSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fChoiceCloseUpSecondsPlayer", a_s.choiceCloseUpSeconds), 0.5f, 6.0f);
-			a_s.closeUpLimit = ReadFloat(a_path, L"PresetTuning", L"fCloseUpLimitSecondsNpc", a_s.closeUpLimit);
+			a_s.closeUpLimit = ReadFloat(a_path, L"Advanced", L"fCloseUpLimitSecondsNpc", a_s.closeUpLimit);
 			a_s.closeUpLimit = a_s.closeUpLimit < 0.0f ? -1.0f : a_s.closeUpLimit == 0.0f ? 0.0f : std::clamp(a_s.closeUpLimit, 4.0f, 60.0f);
-			a_s.listeningCloseUps = std::clamp(ReadInt(a_path, L"PresetTuning", L"bListeningCloseUpsPlayer", a_s.listeningCloseUps), -1, 1);
+			a_s.listeningCloseUps = std::clamp(ReadInt(a_path, L"Advanced", L"bListeningCloseUpsPlayer", a_s.listeningCloseUps), -1, 1);
 			a_s.reactionShots = std::clamp(ReadInt(a_path, L"Director", L"bReactionShotsPlayer", a_s.reactionShots), -1, 1);
-			a_s.reactionChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iReactionChancePlayer", a_s.reactionChance), 0, 100);
-			a_s.reactionAfterSeconds = ReadFloat(a_path, L"PresetTuning", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds);
+			a_s.reactionChance = std::clamp(ReadInt(a_path, L"Advanced", L"iReactionChancePlayer", a_s.reactionChance), 0, 100);
+			a_s.reactionAfterSeconds = ReadFloat(a_path, L"Advanced", L"fReactionAfterSecondsPlayer", a_s.reactionAfterSeconds);
 			a_s.reactionAfterSeconds = a_s.reactionAfterSeconds < 0.0f ? -1.0f : std::clamp(a_s.reactionAfterSeconds, 2.0f, 120.0f);
 			a_s.reactionLineMin = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLineMinSecondsPlayer", a_s.reactionLineMin), 0.5f, 20.0f);
 			a_s.reactionLineMax = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLineMaxSecondsPlayer", a_s.reactionLineMax), a_s.reactionLineMin, 30.0f);
-			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"PresetTuning", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
+			a_s.reactionLongLineHold = std::clamp(ReadFloat(a_path, L"Advanced", L"fReactionLongLineSecondsPlayer", a_s.reactionLongLineHold), 0.0f, 30.0f);
 			a_s.avoidBystanders = ReadInt(a_path, L"Debug", L"bAvoidBystandersNpc", a_s.avoidBystanders ? 1 : 0) != 0;
 			a_s.bystanderStill = std::clamp(ReadFloat(a_path, L"Advanced", L"fBystanderStillNpc", a_s.bystanderStill), 0.0f, 10.0f);
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", a_s.persuasionBeat ? 1 : 0) != 0;
@@ -185,12 +185,12 @@ namespace CCC
 			a_s.closeUpEmotionsMild = ReadString(a_path, L"Advanced", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);
 			a_s.closeUpEmotionsMedium = ReadString(a_path, L"Advanced", L"sCloseUpEmotionsMediumNpc", a_s.closeUpEmotionsMedium);
 			a_s.closeUpEmotionsStrong = ReadString(a_path, L"Advanced", L"sCloseUpEmotionsStrongNpc", a_s.closeUpEmotionsStrong);
-			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"PresetTuning", L"iExtremeCloseUpChanceNpc", a_s.extremeCloseUpChance), -1, 100);
-			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
-			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
-			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"PresetTuning", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
+			a_s.extremeCloseUpChance = std::clamp(ReadInt(a_path, L"Advanced", L"iExtremeCloseUpChanceNpc", a_s.extremeCloseUpChance), -1, 100);
+			a_s.closeUpChanceMild = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceMildNpc", a_s.closeUpChanceMild), 0, 100);
+			a_s.closeUpChanceMedium = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceMediumNpc", a_s.closeUpChanceMedium), 0, 100);
+			a_s.closeUpChanceStrong = std::clamp(ReadInt(a_path, L"Advanced", L"iCloseUpChanceStrongNpc", a_s.closeUpChanceStrong), 0, 100);
 			// -1 was "the preset's own" in 0.9.19-0.9.20 only; a _user.ini that still has it keeps 40.
-			if (const int extremePlayer = ReadInt(a_path, L"PresetTuning", L"iExtremeCloseUpChancePlayer", a_s.extremeCloseUpChancePlayer); extremePlayer >= 0) {
+			if (const int extremePlayer = ReadInt(a_path, L"Advanced", L"iExtremeCloseUpChancePlayer", a_s.extremeCloseUpChancePlayer); extremePlayer >= 0) {
 				a_s.extremeCloseUpChancePlayer = (std::min)(extremePlayer, 100);
 			}
 			a_s.plainShotsSeated = ReadInt(a_path, L"Advanced", L"bPlainShotsSeatedNpc", a_s.plainShotsSeated ? 1 : 0) != 0;

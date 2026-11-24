@@ -10,6 +10,10 @@ test build; "diagnostic" items only add information to the log for testing.
 - A General page, first: the mod's switch (Cinematic conversations) and the detailed log (for
   bug reports). They were on the Camera and Screen pages. The testing messages stay on Screen.
 
+- Each preset's own numbers and single-shot changes are hidden until the preset editor after
+  1.0 (the user): `[PresetTuning]` (20 settings) and `[Shots]` are out of the INI. The 20 are
+  read from `[Advanced]` if added, `[Shots]` as before; each explained in docs/INI_SETTINGS.md
+  (an appendix with the INI's text). 54 settings in the INI now, 50 hidden.
 - `[GameSettings]` is hidden: out of the INI (it had one commented example, never tried in
   play), still read if you add it (docs/INI_SETTINGS.md, docs/MEMORY.md).
 
