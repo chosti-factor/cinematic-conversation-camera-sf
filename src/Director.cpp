@@ -153,6 +153,7 @@ namespace CCC::Director
 			float                   limit{ std::numeric_limits<float>::infinity() };
 			bool                    playerClose{ false };  // holding your emotion close-up
 			bool                    intenseShown{ false };  // this line's emotion close-up was shown (to come back to after a reaction)
+			clock::time_point       talkedAt{};             // the speaker last heard (0.9.71: the gap between two lines)
 			int                     serial{ 0 };            // the last line counter seen (0.8.3)
 			clock::time_point       lineAt{};               // when their current line started
 			bool                    opening{ false };       // the first shot from first person, you out of the picture (0.9.2)
@@ -1532,7 +1533,15 @@ namespace CCC::Director
 				}
 				// A persuasion's answer gets its close-up whatever the preset's emotion close-ups (0.8.17:
 				// in Standard and Room, which have none, seated people never got one).
-				if (!a_frame.npcTalking || !a_frame.npcTurn || (EmotionCloseUps() == 0 && !a_frame.persuasionBeat)) {
+				// 0.9.71: the close-up stays through the gap between two lines (half a second), so
+				// the next line decides what follows. Back to the plain shot as the line ended, the
+				// next line came 70 ms later: four frames of the plain shot between a close-up and
+				// the next speaker's shot (the 0.9.69 clip, Yannick Legrande behind his counter).
+				if (a_frame.npcTalking) {
+					gp.talkedAt = a_now;
+				}
+				const bool betweenLines = !a_frame.npcTalking && a_frame.npcTurn && gp.shot && a_now - gp.talkedAt < std::chrono::milliseconds(500);
+				if ((!a_frame.npcTalking && !betweenLines) || !a_frame.npcTurn || (EmotionCloseUps() == 0 && !a_frame.persuasionBeat)) {
 					if (gp.shot) {
 						REX::INFO("Director: emotion close-up over; back to the plain shot");
 					}
@@ -1658,7 +1667,10 @@ namespace CCC::Director
 
 	float SinceCut(std::chrono::steady_clock::time_point a_now)
 	{
-		return std::chrono::duration<float>(a_now - g.cutAt).count();
+		// 0.9.71: an emotion close-up over the plain shots (seated people, merchants) counts too.
+		// Left out, a speaker change held the last shot over one (the 0.9.69 log: Yannick
+		// Legrande's close-up held back while his line was decided).
+		return std::chrono::duration<float>(a_now - (std::max)(g.cutAt, gp.cutAt)).count();
 	}
 
 	void NoteSpeakerChange(std::chrono::steady_clock::time_point a_now)

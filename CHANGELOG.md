@@ -4,6 +4,25 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.71 - 2026-11-24
+
+### Fixed (rough cuts in scenes with three or more people; the 0.9.69 clips of Benjamin Bayu and
+Yannick Legrande, frame by frame, and the log)
+The Ularu Chen scene (no merchant in it) was clean; the rough cuts came where a merchant
+(Yannick, behind his counter, filmed with the plain shots) and someone filmed with the shot
+library took turns.
+- A merchant's or seated person's emotion close-up stays through the gap between two lines
+  (half a second). It went back to the plain shot as the line ended, and the next line came
+  70 ms later: four frames of the plain shot between his close-up and the next speaker's.
+- When another NPC takes the line while you're on screen, the camera stays on you until their
+  line is decided (half a second at most), then makes one cut. It cut to them at once, and
+  their emotion close-up followed a frame or three later.
+- A shot held at a speaker change keeps its focus and its lens. The focus was measured to the
+  new speaker, so the held shot sharpened or softened three frames before the cut; the lens
+  could follow the shot behind it.
+- A merchant's or seated person's emotion close-up counts as a cut for these holds and for the
+  shortest hold.
+
 ## 0.9.70 - 2026-11-23
 
 ### Changed (the settings page, the user)

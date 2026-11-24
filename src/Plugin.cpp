@@ -837,6 +837,14 @@ namespace CCC
 			if (talking) {
 				g_state.yourTurn = false;
 			}
+			// 0.9.71: another NPC takes the line while you're on screen: stay on you until their line
+			// is decided (half a second at most), then one cut: to them, their emotion close-up, or a
+			// reaction of you. Cut to them at once, the shot of them came first and their close-up a
+			// frame or three later (the 0.9.69 clip, Benjamin Bayu after Yannick Legrande).
+			if (g_state.subject == Subject::kPlayer && !g_state.choiceCloseUp && g_state.speakerChangedAt != std::chrono::steady_clock::time_point{} &&
+				a_now - g_state.speakerChangedAt < 500ms && (g_state.lineStart < g_state.speakerChangedAt || g_state.reactionPending)) {
+				return Subject::kPlayer;
+			}
 			// 0.9.67: no reaction until the shot on them has been up the preset's shortest hold (the
 			// log: one 1.6 s after a cut). 0.9.69: not waited for but left to a later line, as one the
 			// chance roll said no to. Waiting cut into the line late: the 0.9.68 test had reactions of
@@ -2677,6 +2685,7 @@ namespace CCC
 			// 0.9.69: and with them on screen, the shot stays on the last speaker until the new one's
 			// line is decided (half a second at most): a reaction then comes straight from it, not
 			// after a frame or a third of a second of the shot turned to the new speaker.
+			bool heldShot = false;  // the last shot held at a speaker change: its focus too (0.9.71)
 			{
 				const bool  changed = g_state.speakerChangedAt != std::chrono::steady_clock::time_point{} && g_state.lastCut < g_state.speakerChangedAt;
 				const float since = std::chrono::duration<float>(now - g_state.speakerChangedAt).count();
@@ -2686,6 +2695,10 @@ namespace CCC
 				                      (g_state.lineStart < g_state.speakerChangedAt || g_state.reactionPending);
 				if (changed && noCutSince && g_state.lastPose && !pov && (holdYou || holdThem)) {
 					pose = *g_state.lastPose;
+					heldShot = true;
+					if (g_state.cutLens >= 10.0f) {
+						g_lensWanted.store(g_state.cutLens, std::memory_order_relaxed);  // the game's own lens update too
+					}
 					if (s.debugLog && !g_state.speakerHoldLogged) {
 						g_state.speakerHoldLogged = true;
 						REX::INFO("Speaker change: the last shot held ({}) until the cut", holdYou ? "you on screen" : "their line not decided yet");
@@ -2758,8 +2771,13 @@ namespace CCC
 				// (0.9.50 clips). Tried and dropped (docs/MEMORY.md): a frame later (0.9.51), no blur
 				// on the cut's frame (0.9.52), that eased back (0.9.53), and the sharp zone stretched
 				// over both people on the cut's frame (0.9.54's test: blurrier, not sharper).
-				g_shotDistance.store(distance, std::memory_order_relaxed);
-				FocusOnShot(distance);
+				// 0.9.71: not while the last shot is held at a speaker change. The distance was taken
+				// to the new speaker, so the held shot's focus jumped for a frame or two (the 0.9.69
+				// clip: the old shot sharpened three frames before the cut).
+				if (!heldShot) {
+					g_shotDistance.store(distance, std::memory_order_relaxed);
+					FocusOnShot(distance);
+				}
 			}
 			// Prefer moving only the rendered view; if the render camera can't be found,
 			// fall back to the game camera so shots still work (NPCs may turn, as in 0.1.x).
@@ -2783,7 +2801,9 @@ namespace CCC
 				// writes reaches the drawing on its own time. Now the lens is also written on the
 				// render camera itself, beside the camera's position, scaled to the game's own maths
 				// for a lens (learned from a steady shot: what the game's lens left on the camera).
-				const float lens = Director::WantedLens();
+				// 0.9.71: a shot held at a speaker change keeps its lens too (the shot behind it can
+				// change, e.g. to a merchant's plain shot, with a lens of its own).
+				const float lens = heldShot ? g_state.cutLens : Director::WantedLens();
 				if (lens >= 10.0f && std::abs(lens - g_state.cutLens) > 0.05f && !FilmingActive()) {
 					g_state.cutLens = lens;
 					g_state.lensSteady = 0;
