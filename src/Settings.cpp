@@ -180,6 +180,7 @@ namespace CCC
 			a_s.persuasionBeat = ReadInt(a_path, L"Director", L"bPersuasionBeatNpc", a_s.persuasionBeat ? 1 : 0) != 0;
 			a_s.beatTags = ReadString(a_path, L"Advanced", L"sBeatTags", a_s.beatTags);
 			a_s.faceDeadband = std::clamp(ReadFloat(a_path, L"Advanced", L"fFaceDeadband", a_s.faceDeadband), 0.0f, 0.2f);
+			a_s.seatedSwayCap = std::clamp(ReadFloat(a_path, L"Advanced", L"fSeatedSwayCap", a_s.seatedSwayCap), 0.0f, 0.5f);
 			a_s.cameraSway = std::clamp(ReadInt(a_path, L"Camera", L"iCameraSway", a_s.cameraSway), -1, 100);
 			a_s.emotionCloseUps = std::clamp(ReadInt(a_path, L"Director", L"bEmotionCloseUpsNpc", a_s.emotionCloseUps), -1, 1);
 			a_s.closeUpEmotionsMild = ReadString(a_path, L"Advanced", L"sCloseUpEmotionsMildNpc", a_s.closeUpEmotionsMild);

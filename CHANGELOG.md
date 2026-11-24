@@ -39,6 +39,13 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   followed smoothly and only snapped for 2 m or more; it's now taken afresh at every speaker
   change (Emma Wilcox and Sarah at one table: a messy cut to Sarah).
 
+### Changed (the release-candidate test, the user)
+- Someone sitting sways with the camera only so far: the framed head stays within 8 cm of where
+  it rests, and the rest point follows the head over a few seconds (hidden `fSeatedSwayCap`,
+  [Advanced], 0 = no cap). Leaning on a table and back, as your character does at the Wilcox
+  table, went past the 4 cm dead band, so the camera followed the whole lean. Standing people
+  and every preset's sway are as before.
+
 ### Changed (the settings page)
 - "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 

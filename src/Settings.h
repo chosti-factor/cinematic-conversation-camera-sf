@@ -147,6 +147,7 @@ namespace CCC
 		bool        persuasionBeat{ true };   // the answer to a persuasion's outcome or a skill check: held close-up
 		std::string beatTags{ "Intimidate,Intimidation,Manipulate,Manipulation,Bribe,Deceive,Deception,Lie,Threaten,Diplomacy,Negotiate,Negotiation,Commerce" };
 		float       faceDeadband{ 0.04f };    // head movement ignored before the camera follows (m)
+		float       seatedSwayCap{ 0.08f };   // someone sitting: how far the framed head may sway from where it rests (m; 0 = no cap, 1.0)
 		int         cameraSway{ -1 };         // % of the heads' sway the camera's angle follows (0 = none, 100 = full); -1 = the preset's own (0.8.14)
 		bool        cameraMoves{ true };
 		// Emotion close-ups (0.4.14): when the speaker starts a line whose expression tag is

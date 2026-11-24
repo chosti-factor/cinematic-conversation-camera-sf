@@ -109,6 +109,8 @@ namespace CCC
 			std::optional<RE::NiPoint3>           lastRawNpcHead{};
 			std::optional<RE::NiPoint3>           slackNpcHead{};    // head point after the dead band
 			std::optional<RE::NiPoint3>           slackPlayerHead{};
+			std::optional<RE::NiPoint3>           restNpcHead{};     // seated: where the head rests, the sway capped around it (1.0)
+			std::optional<RE::NiPoint3>           restPlayerHead{};
 			Camera::FaceTrack                     npcFace{};         // which way each face points
 			Camera::FaceTrack                     playerFace{};
 			float                                 side{ 1.0f };      // side of the eyeline this conversation is staged on
@@ -233,6 +235,7 @@ namespace CCC
 		// Head above feet: measured 1.62 m with the full third-person body posed, 1.52 m while
 		// the body is still in its first-person form (0.3.5 log). Anything under this is not ready.
 		constexpr float kStandingHeadHeight = 1.58f;
+		constexpr float kSeatedRestSeconds = 3.0f;  // seated sway cap: how slowly the rest point follows the head (1.0)
 		constexpr auto kRepairTimeout = 1800ms;
 		constexpr std::uint32_t kRepairSettleFrames = 6;
 
@@ -658,14 +661,18 @@ namespace CCC
 		// object (found in the 0.3.28 dumps).
 		constexpr std::size_t kPlayerCameraFovOffset = 0x280;
 
-		// You're sitting on something (a chair, a bar stool): your process's occupied furniture.
-		bool PlayerOnFurniture()
+		// Someone sitting on something (a chair, a bar stool): their process's occupied furniture.
+		bool OnFurniture(RE::Actor* a_actor)
 		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player || !player->currentProcess || !player->currentProcess->middleHigh) {
+			if (!a_actor || !a_actor->currentProcess || !a_actor->currentProcess->middleHigh) {
 				return false;
 			}
-			return static_cast<bool>(player->currentProcess->middleHigh->occupiedFurniture.get());
+			return static_cast<bool>(a_actor->currentProcess->middleHigh->occupiedFurniture.get());
+		}
+
+		bool PlayerOnFurniture()
+		{
+			return OnFurniture(RE::PlayerCharacter::GetSingleton());
 		}
 
 		void Begin()
@@ -2015,6 +2022,7 @@ namespace CCC
 					// 0.5 m off, against 1-8 cm with speakers further apart).
 					g_state.smoothNpcHead.reset();
 					g_state.slackNpcHead.reset();
+					g_state.restNpcHead.reset();
 					g_state.lastRawNpcHead.reset();
 					g_state.npcHeadSpeed = 0.0f;
 					g_state.npcHeadBusy = false;
@@ -2149,6 +2157,49 @@ namespace CCC
 						npcHead->z + (npcSwayHead.z - npcHead->z) * w };
 					playerHead = RE::NiPoint3{ playerHead->x + (playerSwayHead.x - playerHead->x) * w, playerHead->y + (playerSwayHead.y - playerHead->y) * w,
 						playerHead->z + (playerSwayHead.z - playerHead->z) * w };
+				}
+				// 1.0 (the user): someone sitting sways with the camera as before, but only so far.
+				// Leaning on a table and back (your character's seated idle at the Wilcox table)
+				// went past the dead band, so the camera followed the whole lean. The framed point
+				// now stays within fSeatedSwayCap of where the head rests; the rest point follows
+				// the head over a few seconds, so a new posture is taken up gently.
+				if (s.seatedSwayCap > 0.0f) {
+					const float dt = std::clamp(delta, 0.0f, 0.1f);
+					auto cap = [&](std::optional<RE::NiPoint3>& a_rest, const RE::NiPoint3& a_point) {
+						if (!a_rest) {
+							a_rest = a_point;
+							return a_point;
+						}
+						float dx = a_point.x - a_rest->x, dy = a_point.y - a_rest->y, dz = a_point.z - a_rest->z;
+						float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+						if (dist > 1.0f) {  // a jump (a new speaker, a teleport): start again from here
+							a_rest = a_point;
+							return a_point;
+						}
+						const float a = 1.0f - std::exp(-dt / kSeatedRestSeconds);
+						a_rest->x += dx * a;
+						a_rest->y += dy * a;
+						a_rest->z += dz * a;
+						dx = a_point.x - a_rest->x;
+						dy = a_point.y - a_rest->y;
+						dz = a_point.z - a_rest->z;
+						dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+						if (dist <= s.seatedSwayCap) {
+							return a_point;
+						}
+						const float f = s.seatedSwayCap / dist;
+						return RE::NiPoint3{ a_rest->x + dx * f, a_rest->y + dy * f, a_rest->z + dz * f };
+					};
+					if (OnFurniture(static_cast<RE::Actor*>(speaker))) {
+						npcHead = cap(g_state.restNpcHead, *npcHead);
+					} else {
+						g_state.restNpcHead.reset();
+					}
+					if (OnFurniture(player)) {
+						playerHead = cap(g_state.restPlayerHead, *playerHead);
+					} else {
+						g_state.restPlayerHead.reset();
+					}
 				}
 			}
 

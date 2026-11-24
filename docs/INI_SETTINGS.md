@@ -4,7 +4,7 @@ Every setting the mod reads, where it goes, its default, and whether it's on the
 settings page or hidden. The INI explains each one in full; this is the reference. How the
 layout came about (the reviews, what moved where and why): [INI_HISTORY.md](INI_HISTORY.md).
 
-Last updated: 0.9.75 (2026-11-24).
+Last updated: 1.0.0 (2026-11-24).
 
 - **The INI:** `Data\SFSE\Plugins\CinematicConversationCameraSF.ini`. Your own changes go in
   `CinematicConversationCameraSF_user.ini` (same folder, same section names), which updates
@@ -137,7 +137,7 @@ them: [INI_HISTORY.md](INI_HISTORY.md), the appendix.
 | `iCloseUpChanceMediumNpc` | 40 | Close-up chance, medium lines (%) |
 | `iCloseUpChanceStrongNpc` | 100 | Close-up chance, strong lines (%) |
 
-## Hidden: technical (31)
+## Hidden: technical (32)
 
 Fine-tuning found by testing, rarely worth changing. Add under the section shown.
 
@@ -156,6 +156,7 @@ Fine-tuning found by testing, rarely worth changing. Add under the section shown
 | `fReactionLineMaxSecondsPlayer` | [Advanced] | 7 | Longest line a reaction takes whole |
 | `fBystanderStillNpc` | [Advanced] | 1.5 | How long someone stands still to count as in the way |
 | `fFaceDeadband` | [Advanced] | 0.04 | Head movement the camera ignores |
+| `fSeatedSwayCap` | [Advanced] | 0.08 | Someone sitting: how far the camera follows their head from where it rests, in metres (0 = no cap) |
 | `fFollowSmoothing` | [Advanced] | 0.35 | Smoothing when following someone who moves |
 | `fBusyFollowSmoothing` | [Advanced] | 1 | Smoothing for a speaker on the move |
 | `fBusyHeadSpeed` | [Advanced] | 0.25 | Head speed that counts as on the move |
@@ -189,4 +190,4 @@ Fine-tuning found by testing, rarely worth changing. Add under the section shown
 |---|---|
 | Settings page | 24 |
 | In the INI | 54 ([General] 2, [Director] 9, [Camera] 3, [Interface] 4, [SceneFilming] 7, [Debug] 10, [Advanced] 19) |
-| Hidden settings | 51 (20 preset numbers, 31 technical), plus `[Shots]`, `[GameSettings]` and the per-preset cutting paces |
+| Hidden settings | 52 (20 preset numbers, 32 technical), plus `[Shots]`, `[GameSettings]` and the per-preset cutting paces |
