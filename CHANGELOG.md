@@ -10,6 +10,9 @@ test build; "diagnostic" items only add information to the log for testing.
 - A General page, first: the mod's switch (Cinematic conversations) and the detailed log (for
   bug reports). They were on the Camera and Screen pages. The testing messages stay on Screen.
 
+- `[GameSettings]` is hidden: out of the INI (it had one commented example, never tried in
+  play), still read if you add it (docs/INI_SETTINGS.md, docs/MEMORY.md).
+
 ### Docs
 - README, after 1.0: your character looking at the wrong person in conversations with three
   or more people (the user); NPCs fading in now and then was already there.

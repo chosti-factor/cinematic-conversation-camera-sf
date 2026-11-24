@@ -423,6 +423,16 @@ What each measured or logged, and what it found:
   line emotions, scene checks, filming decisions, obstacle checks, camera mode changes, the
   nearby-people summary every 10 s. The INI read after a change is logged always.
 
+## Hidden, never tested
+
+- **`[GameSettings]`** (hidden 0.9.70, the user): the game's own settings changed while
+  it runs, one per line (`name:Section=value`), each game value saved and put back when its
+  line goes. It shipped with one commented example, `fDialogueCameraResumeTime:Dialogue=0`
+  ("possibly makes conversation starts a little sharper"), never tried in play; the starts
+  were made clean another way (0.9.6's start prediction). The code stays (it's read and
+  applied only if the section is added by hand); listed with the hidden settings in
+  docs/INI_SETTINGS.md.
+
 ## Old setting names
 
 - **`iCuttingPace`** (0.9.8 to 0.9.25, whole steps −2 to +2): `fCuttingPace` since 0.9.26 (half

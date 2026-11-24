@@ -358,7 +358,6 @@ conversations, within half a second), so changes apply without restarting the ga
 | `[PresetTuning]` | Each preset's own numbers: one lens for every angle (instead of each angle's own), camera and room-shot distances, emotion close-up chances by tier, the extreme share, the longest close-up, when and how often reaction shots of you come and how long they last on a long line, close-ups of you by tier, your face's background expressions and questioning looks (for a preset editor after 1.0) |
 | `[Shots]` | Per-shot tweaks: how often each shot is used, its move, amount and duration |
 | `[Advanced]` | Technical settings, rarely worth changing, in four groups: shots (never across the eyeline, who gets the camera, plain shots for seated people and merchants, small and large speakers), close-ups (the expressions' tiers, the persuasion tags), exits and screen (the exit style, the letterbox's slide, the options' fade), filming people talking (hand-back timings, stop distances) |
-| `[GameSettings]` | Changing the game's own settings while it runs |
 
 Each setting is explained in the INI itself. The settings page, the hidden settings and
 every setting's place: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).

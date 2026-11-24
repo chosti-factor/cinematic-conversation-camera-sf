@@ -28,6 +28,11 @@ changing, aren't in the INI but are read from `[Advanced]` if you add them (defa
 `iMaxLines`, `fShortestHold` (the cutting rhythm's lines between new angles and shortest hold,
 overriding the preset's paced values; the cutting pace covers them).
 
+Hidden too since 0.9.70: the `[GameSettings]` section (the game's own settings, changed
+while it runs, one per line, `name:Section=value`, e.g. `fDialogueCameraResumeTime:Dialogue=0`;
+take a line out to put the game's value back). Never tested in play: read and applied if
+you add the section, for testing only (docs/MEMORY.md).
+
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
 five pages (General, Camera, Close-ups and reactions, Screen, Filming people talking; General
@@ -324,7 +329,7 @@ Counts: Page 30, Standard 25, Advanced 31, Hidden 20 (106 in all; `fCuttingPace<
 | Debug | `bShowMessages` | 0 | INI + page | Page | Testing messages |
 | Debug | `fMessageSeconds` | 6 | INI | Advanced | How long a testing message stays |
 | Debug | `iPresetKey` | 85 | INI | Standard | The preset key (U) |
-| GameSettings | (the game's own settings) | - | INI | Advanced | Changing game settings while it runs (one commented example) |
+| GameSettings | (the game's own settings) | - | Hidden (0.9.70) | Advanced | Changing game settings while it runs (never tested in play) |
 
 Ways to show Advanced (to decide):
 1. **A marked block at the end of each section:** `; ---- Advanced: rarely worth changing ----`
