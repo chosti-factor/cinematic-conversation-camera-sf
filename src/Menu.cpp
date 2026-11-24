@@ -46,9 +46,12 @@ namespace CCC::Menu
 		// in the INI's [PresetTuning], [Advanced] and [Debug]; docs/INI_SETTINGS.md). Every entry
 		// has a tooltip (0.9.64, the user).
 		const Entry kEntries[]{
-			// ---- Camera ----
-			{ "Camera", "The mod", "General", "bEnabled", "Cinematic conversations", Kind::kBool, 0, 1, nullptr,
+			// ---- General (0.9.70, the user: the mod's switch and the detailed log on a page of their own) ----
+			{ "General", "The mod", "General", "bEnabled", "Cinematic conversations", Kind::kBool, 0, 1, nullptr,
 				"Off: the whole mod stands down and conversations use the game's own camera." },
+			{ "General", "Bug reports", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
+				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
+			// ---- Camera ----
 			{ "Camera", "Look", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
 				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
@@ -87,8 +90,6 @@ namespace CCC::Menu
 				"The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does." },
 			{ "Screen", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
 				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
-			{ "Screen", "Testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
-				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
 			// ---- Filming people talking ----
 			{ "Filming people talking", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
 				"Film people talking to each other near you (the game's conversation scenes, not one-liners): a new shot for each line, letterboxed. Started with the listen prompt or on its own (below); moving ends it." },
@@ -532,6 +533,7 @@ namespace CCC::Menu
 			}
 		}
 
+		void __stdcall DrawGeneral() { DrawPage("General"); }
 		void __stdcall DrawCamera() { DrawPage("Camera"); }
 		void __stdcall DrawCloseUps() { DrawPage("Close-ups and reactions"); }
 		void __stdcall DrawScreen() { DrawPage("Screen"); }
@@ -552,6 +554,7 @@ namespace CCC::Menu
 		}
 		ReadAll();
 		SFSEMenuFramework::SetSection("Cinematic Conversation Camera SF");
+		SFSEMenuFramework::AddSectionItem("General", &DrawGeneral);
 		SFSEMenuFramework::AddSectionItem("Camera", &DrawCamera);
 		SFSEMenuFramework::AddSectionItem("Close-ups and reactions", &DrawCloseUps);
 		SFSEMenuFramework::AddSectionItem("Screen", &DrawScreen);

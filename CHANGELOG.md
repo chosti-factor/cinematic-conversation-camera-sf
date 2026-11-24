@@ -4,6 +4,16 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.70 - 2026-11-23
+
+### Changed (the settings page, the user)
+- A General page, first: the mod's switch (Cinematic conversations) and the detailed log (for
+  bug reports). They were on the Camera and Screen pages. The testing messages stay on Screen.
+
+### Docs
+- README, after 1.0: your character looking at the wrong person in conversations with three
+  or more people (the user); NPCs fading in now and then was already there.
+
 ## 0.9.69 - 2026-11-23
 
 ### Fixed (0.9.67's pacing in scenes with three or more people; the user: flickers)

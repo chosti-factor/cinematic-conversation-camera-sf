@@ -217,6 +217,8 @@ Wednesday the 25th, about two days earlier.
 ## Moved to after 1.0
 
 - The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
+- Your character looking at the wrong person in conversations with three or more people (the
+  user, 2026-11-23: after 1.0 unless easy; it isn't: needs the game's head tracking; README Planned)
 - [x] Filming people talking: the near person in over-the-shoulder shots hidden by the game's
   camera and fading back in after the cut (Walter, 0.9.29 test). The camera kept 1.4 m from
   them (0.9.29); to check in the next test, with the distance in the log

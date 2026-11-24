@@ -30,7 +30,8 @@ overriding the preset's paced values; the cutting pace covers them).
 
 With [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) installed, the
 main choices are also in the game: Mod Menu (F1) → **Cinematic Conversation Camera SF**, on
-four pages (Camera, Close-ups and reactions, Screen, Filming people talking). The rest
+five pages (General, Camera, Close-ups and reactions, Screen, Filming people talking; General
+since 0.9.70: the mod's switch and the detailed log). The rest
 stays in the INI: a preset's own numbers (close-up chances, lens, sway, distances, reaction
 timing), meant for a preset editor after 1.0, and technical tuning. The page shows
 your `_user.ini`'s value where you've changed a setting and the main INI's otherwise, and
