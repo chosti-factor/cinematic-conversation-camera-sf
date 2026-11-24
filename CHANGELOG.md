@@ -33,6 +33,14 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   in at once, drawn on the HUD messages menu (as when filming people talking) until the
   dialogue menu's take over. A failed call into a menu waits half a second too (was the next
   frame).
+- A cut to a new speaker sitting or standing close to the last one (under 2 m) slid from the last
+  speaker's head to the new one's for about a second, and the spot predicted for the game's
+  camera at the change was worked out from that sliding point (0.5 m off). The head was
+  followed smoothly and only snapped for 2 m or more; it's now taken afresh at every speaker
+  change (Emma Wilcox and Sarah at one table: a messy cut to Sarah).
+
+### Changed (the settings page)
+- "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus

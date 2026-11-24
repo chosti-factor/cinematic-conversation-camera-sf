@@ -67,8 +67,8 @@ namespace CCC::Menu
 				"0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander." },
 			{ "Camera", "Staging", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
 				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Game's camera in quest scenes", Kind::kBool, 0, 1, nullptr,
-				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's own camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
+			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Vanilla camera in quest scenes", Kind::kBool, 0, 1, nullptr,
+				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's vanilla camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
 			// ---- Close-ups and reactions ----
 			{ "Close-ups and reactions", "Them", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
 				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },

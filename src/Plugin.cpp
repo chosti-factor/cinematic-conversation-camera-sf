@@ -2006,6 +2006,18 @@ namespace CCC
 					// 0.9.69: not counted as a cut for their emotion close-up or a reaction, which
 					// come at the line's start (0.9.68: an emotion close-up 0.7 s after the turn).
 					g_state.speakerChangedAt = now;
+					// 1.0: the new speaker's head from this frame, not glided to. The head is
+					// followed smoothly (fFollowSmoothing, 0.35 s), snapping only for 2 m or more,
+					// so with two speakers closer than that the framing slid from the last one's
+					// head to the new one's for about a second after the cut, and the spot predicted
+					// for the game's camera was worked out from the wrong head (the release-candidate
+					// test: Emma Wilcox and Sarah at one table, a messy cut to Sarah; the prediction
+					// 0.5 m off, against 1-8 cm with speakers further apart).
+					g_state.smoothNpcHead.reset();
+					g_state.slackNpcHead.reset();
+					g_state.lastRawNpcHead.reset();
+					g_state.npcHeadSpeed = 0.0f;
+					g_state.npcHeadBusy = false;
 					g_state.rootBeforeChange = g_state.lastReportedRoot;
 					g_state.rootWatch = 0;
 					g_state.rootLearned = false;

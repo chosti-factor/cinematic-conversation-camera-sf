@@ -45,7 +45,7 @@ Last updated: 0.9.75 (2026-11-24).
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
 | `iCameraSway` | -1 | Camera | Camera sway (-1 = the preset's own) |
-| `bGameCameraInScenes` | 0 | Camera | Game's camera in quest scenes (0: this mod films them too) |
+| `bGameCameraInScenes` | 0 | Camera | Vanilla camera in quest scenes (0: this mod films them too) |
 | `sFocusStyle` | Wide | Camera | Focus style (Wide, Cinematic) |
 
 ## [Interface]

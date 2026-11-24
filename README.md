@@ -74,8 +74,8 @@ What CCC doesn't do.
   the dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
 - **The game's camera where the shots don't fit:** small speakers (robots) keep the game's
   own camera. Quest scenes you take part in (someone walks up and starts talking, several
-  people taking turns) are filmed by this mod too; `bGameCameraInScenes=1` (or the settings
-  page) leaves them to the game's own camera instead.
+  people taking turns) are filmed by this mod too; `bGameCameraInScenes=1` (the settings
+  page's "Vanilla camera in quest scenes") leaves them to the game's vanilla camera instead.
 - **Preset key:** U switches to the next preset on the fly while a conversation (or people
   talking near you) is filmed (`iPresetKey`).
 - **Testing messages** (off by default): each line's expression, your face's answer and the
