@@ -16,6 +16,14 @@ The first public release: 0.9.77, the two overhead changes below, and the releas
 - The overhead shots keep the head clear of the top letterbox bar (headroom 0.16 of the
   picture's height, was 0.00, CCC's): the bar nearly covered Agent No. 1's head.
 
+### Fixed (the release-candidate test)
+- Talking to someone while this mod films people talking (pressing A on one of them, or anyone
+  nearby): the conversation was ended on its first frame and played through the game's
+  first-person view. The game hadn't switched to its dialogue camera yet (filming had it in
+  third person), and that was taken for the conversation having ended. Such a conversation now
+  gets a second and a half for the switch (Noel at the Lodge, Inevitable at the Trackers
+  Alliance HQ).
+
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus
   Mods, or the versioned releases here) instead of the alpha test build; its known issues add

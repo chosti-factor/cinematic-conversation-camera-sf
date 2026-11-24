@@ -308,6 +308,9 @@ namespace CCC
 		constexpr auto kPlayerCutDelay = std::chrono::milliseconds(350);
 
 		bool g_hooksSafe = false;
+		// 1.0: a conversation that started with the game not (yet) in its dialogue camera: when
+		// you talk to someone while this mod films people talking (its third-person view).
+		std::chrono::steady_clock::time_point g_startedOutsideDialogueAt{};
 
 		// The hook runs on engine worker threads and the watchdog on the main thread.
 		// The hook never waits for this lock (it skips the frame instead), so the engine's
@@ -1877,6 +1880,7 @@ namespace CCC
 				// keep going so the test build still tells us whether placement works.
 				if (g_state.framesThisConversation == 0) {
 					REX::WARN("Camera state is {} (expected {} for dialogue); continuing anyway", stateIndex, static_cast<int>(RE::CameraState::kDialogue));
+					g_startedOutsideDialogueAt = std::chrono::steady_clock::now();
 				}
 			}
 			g_lastSkipReason.clear();
@@ -6156,7 +6160,26 @@ namespace CCC
 
 				// While repairing, the game is briefly out of its dialogue camera on purpose.
 				static std::chrono::steady_clock::time_point leftDialogueAt{};
-				const bool leftDialogue = g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue);
+				// 1.0 (the release-candidate test): not in the first second and a half of a conversation
+				// that started outside the dialogue camera (talking to someone while this mod films
+				// people talking). It was ended on its first frame (Noel at the Lodge; Inevitable at
+				// the Trackers Alliance), and the rest of it played through the game's first-person view.
+				static bool seenDialogue = false;
+				if (!g_state.active) {
+					seenDialogue = false;
+				} else if (camera && camera->QCameraEquals(RE::CameraState::kDialogue)) {
+					seenDialogue = true;
+				}
+				const bool startGrace = g_state.active && !seenDialogue && g_startedOutsideDialogueAt != std::chrono::steady_clock::time_point{} &&
+				                        now - g_startedOutsideDialogueAt < 1500ms;
+				if (g_state.active && startGrace) {
+					static std::chrono::steady_clock::time_point loggedFor{};
+					if (loggedFor != g_startedOutsideDialogueAt) {
+						loggedFor = g_startedOutsideDialogueAt;
+						REX::INFO("Conversation started outside the dialogue camera; waiting up to 1.5 s for the game to switch to it");
+					}
+				}
+				const bool leftDialogue = g_state.active && !repairing && camera && !camera->QCameraEquals(RE::CameraState::kDialogue) && !startGrace;
 				if (!leftDialogue) {
 					leftDialogueAt = {};
 				} else if (leftDialogueAt == std::chrono::steady_clock::time_point{}) {
