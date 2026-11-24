@@ -25,6 +25,14 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   third person), and that was taken for the conversation having ended. Such a conversation now
   gets a second and a half for the switch (Noel at the Lodge, Inevitable at the Trackers
   Alliance HQ).
+- Two crashes in the game's UI engine as a conversation started (Tank at the Trackers Alliance
+  HQ; Nyx at Neon, the first conversation after starting the game). The dialogue menu is built
+  as the conversation starts, partly on another of the game's threads, and this mod's letterbox
+  bars and option features went into it 5-35 ms after it opened, while it could still be being
+  built. A new menu is now left alone for its first half second; the letterbox bars still come
+  in at once, drawn on the HUD messages menu (as when filming people talking) until the
+  dialogue menu's take over. A failed call into a menu waits half a second too (was the next
+  frame).
 
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus

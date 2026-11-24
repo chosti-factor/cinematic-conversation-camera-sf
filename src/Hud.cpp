@@ -2,6 +2,8 @@
 
 #include "Settings.h"
 
+#include <cstring>
+
 namespace CCC::Hud
 {
 	namespace
@@ -192,6 +194,69 @@ namespace CCC::Hud
 		}
 
 		// ---- Finding a menu's movie and its root -------------------------------------------
+		// ---- A menu's movie settling (1.0) ----------------------------------------------------
+		// A menu's movie is touched only once it has been the same movie for half a second. The
+		// dialogue menu is built as the conversation starts, partly on the game's loading thread
+		// (IOManager), which runs the movie's ActionScript; a call into the movie from here at the
+		// same time can break Scaleform's state. The release-candidate test: two crashes in
+		// Scaleform's ActionScript on another thread with the dialogue menu on the stack, 50 ms
+		// and 30 ms after the first call into a new dialogue menu (Tank at 02:43; Nyx at 15:31,
+		// the first conversation after starting the game, where the first call faulted and the
+		// game froze). Until then the calls came 5-35 ms after the menu opened.
+		constexpr auto kSettle = std::chrono::milliseconds(500);
+
+		struct MovieSeen
+		{
+			const char*                           menu{ nullptr };
+			const void*                           movie{ nullptr };
+			std::chrono::steady_clock::time_point since{};
+		};
+		std::array<MovieSeen, 6> g_seen{};
+
+		MovieSeen* Seen(const char* a_menu)
+		{
+			for (auto& e : g_seen) {
+				if (e.menu && std::strcmp(e.menu, a_menu) == 0) {
+					return &e;
+				}
+				if (!e.menu) {
+					e.menu = a_menu;
+					return &e;
+				}
+			}
+			return nullptr;
+		}
+
+		// True once a_movie has been this menu's movie for kSettle.
+		bool Settled(const char* a_menu, const void* a_movie)
+		{
+			auto* seen = Seen(a_menu);
+			if (!seen) {
+				return true;
+			}
+			const auto now = std::chrono::steady_clock::now();
+			if (seen->movie != a_movie) {
+				seen->movie = a_movie;
+				seen->since = now;
+			}
+			return a_movie && now - seen->since >= kSettle;
+		}
+
+		// The menu closed (or a call faulted): its next movie waits again.
+		void Forget(const char* a_menu)
+		{
+			if (auto* seen = Seen(a_menu)) {
+				seen->movie = nullptr;
+			}
+		}
+
+		void ForgetAll()
+		{
+			for (auto& e : g_seen) {
+				e.movie = nullptr;
+			}
+		}
+
 		struct MovieRef
 		{
 			RE::Scaleform::Ptr<RE::Scaleform::GFx::Movie> movie;
@@ -206,11 +271,15 @@ namespace CCC::Hud
 			}
 			const RE::BSFixedString name{ a_menu };
 			if (!ui->IsMenuOpen(name)) {
+				Forget(a_menu);
 				return std::nullopt;
 			}
 			MovieRef ref;
 			ref.movie = ui->GetMenuMovie(name);
 			auto* movie = ref.movie.get();
+			if (!Settled(a_menu, movie)) {
+				return std::nullopt;  // a new movie, perhaps still being built (1.0)
+			}
 			if (!movie || !VtableIs(movie, 303817)) {
 				static bool warned = false;
 				if (!warned && movie) {
@@ -1466,6 +1535,22 @@ namespace CCC::Hud
 		}
 		auto*      ui = RE::UI::GetSingleton();
 		const bool dialogueOpen = ui && ui->IsMenuOpen(RE::BSFixedString{ "DialogueMenu" });
+		// The dialogue menu settling (1.0): its bars wait, and the HUD messages menu's (the
+		// filming bars, the same size, drawn over it) stand in, so the bars still come in as the
+		// conversation starts; once it's settled its own take over where those are.
+		bool dialogueSettling = false;
+		if (ui) {
+			// The HUD messages menu, always open, is kept known so its stand-in bars are
+			// ready at once (only a new movie of it, after a load, waits).
+			const auto hud = ui->GetMenuMovie(RE::BSFixedString{ "HUDMessagesMenu" });
+			Settled("HUDMessagesMenu", hud.get());
+		}
+		if (!dialogueOpen) {
+			Forget("DialogueMenu");
+		} else if (ui) {
+			const auto movie = ui->GetMenuMovie(RE::BSFixedString{ "DialogueMenu" });
+			dialogueSettling = !Settled("DialogueMenu", movie.get());
+		}
 		if (s.showMessages && !g_broken) {
 			UpdateMessage(a_filming && dialogueOpen, a_delta);
 			UpdatePresetLabel(a_filming && dialogueOpen && !g_presetLabel.text.empty());
@@ -1474,11 +1559,15 @@ namespace CCC::Hud
 			UpdatePresetLabel(false);
 		}
 		if (s.letterbox && !g_broken) {
+			if (a_filming && dialogueOpen && !dialogueSettling && g_filmBars.ease > g_bars.ease) {
+				g_bars.ease = g_filmBars.ease;  // taking over from the stand-in bars (1.0)
+			}
 			UpdateLetterbox(g_bars, "DialogueMenu", a_filming && dialogueOpen, a_delta);
 			// Filming people talking near you (0.8.10): the same bars, on the HUD messages menu
-			// (under its subtitles), as no dialogue menu is open.
+			// (under its subtitles), as no dialogue menu is open; and while the dialogue menu
+			// settles (1.0).
 			if (!g_broken) {
-				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", g_filmingOthers && !dialogueOpen, a_delta);
+				UpdateLetterbox(g_filmBars, "HUDMessagesMenu", (g_filmingOthers && !dialogueOpen) || (a_filming && dialogueSettling), a_delta);
 			}
 			if (!g_broken && (s.subtitlesInBars || g_sub.active)) {
 				// The conversation's bars, or filming people talking's (0.9.31: the subtitle only
@@ -1501,8 +1590,9 @@ namespace CCC::Hud
 		if (g_fault) {
 			g_fault = false;
 			++g_faults;
+			ForgetAll();  // (1.0) every menu waits half a second again before the next call
 			REX::WARN("HUD: a Scaleform call ({}) failed ({} of 3){}", g_faultWhat, g_faults,
-				g_faults >= 3 ? "; letterbox and dialogue option features are off for this session" : "; trying again next frame");
+				g_faults >= 3 ? "; letterbox and dialogue option features are off for this session" : "; trying again in half a second");
 			if (g_faults >= 3) {
 				g_broken = true;
 			}
