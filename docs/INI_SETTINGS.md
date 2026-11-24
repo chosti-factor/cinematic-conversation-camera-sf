@@ -33,6 +33,10 @@ while it runs, one per line, `name:Section=value`, e.g. `fDialogueCameraResumeTi
 take a line out to put the game's value back). Never tested in play: read and applied if
 you add the section, for testing only (docs/MEMORY.md).
 
+A test since 0.9.72: `bSpeakerChangeRoot=1` under `[Advanced]` (0 by default): at a speaker
+change, the shot placed against where the game's conversation camera is about to be, as at a
+conversation's start (CHANGELOG 0.9.72).
+
 Hidden too since 0.9.70 (the user: until the preset editor after 1.0), each preset's own
 numbers, 20 settings, read from `[Advanced]` if you add them, and changes to single shots, a
 `[Shots]` section if you add it. Each, explained as it was in the INI: the appendix at the end.

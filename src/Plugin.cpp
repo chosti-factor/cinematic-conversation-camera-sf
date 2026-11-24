@@ -61,6 +61,9 @@ namespace CCC
 			std::chrono::steady_clock::time_point reaimAt{};           // ... while an NPC was on screen: the shot turned to them (0.9.69)
 			bool                                  speakerHoldLogged{ false };
 			bool                                  questScene{ false };  // you're in a quest scene (not an everyday one) (0.9.72)
+			std::optional<Camera::Pose>           lastReportedRoot;     // the game's camera root as reported last frame (0.9.72)
+			std::optional<Camera::Pose>           rootBeforeChange;     // ... on the frame before a speaker change
+			int                                   rootWatch{ 0 };       // frames since that change, watched
 			bool                                  npcWasTalking{ false };
 			std::uint32_t                         framesThisConversation{ 0 };
 			std::uint32_t                         failuresLogged{ 0 };
@@ -1998,6 +2001,8 @@ namespace CCC
 					// 0.9.69: not counted as a cut for their emotion close-up or a reaction, which
 					// come at the line's start (0.9.68: an emotion close-up 0.7 s after the turn).
 					g_state.speakerChangedAt = now;
+					g_state.rootBeforeChange = g_state.lastReportedRoot;
+					g_state.rootWatch = 0;
 					if (g_state.subject == Subject::kNpc) {
 						g_state.reaimAt = now;
 						if (s.director && !g_state.plainShots) {
@@ -2554,6 +2559,43 @@ namespace CCC
 					}
 				}
 			}
+			// 0.9.72: a speaker change. The game moves its own conversation camera to the new speaker
+			// (the 0.9.69 clips: a frame of a close-up of the new speaker, not ours, as one took
+			// the line), and, as at a conversation's start, perhaps draws from there a frame before
+			// it reports it. Logged with the detailed log for the next test (where the reported
+			// camera is on each of the six frames after the change); bSpeakerChangeRoot (hidden,
+			// [Advanced], 0 by default until the log confirms it) places the shot against where the
+			// game's camera is about to be, as the start does.
+			std::optional<Camera::Pose> speakerRoot;
+			{
+				const auto reported = Camera::PoseOf(camera->cameraRoot.get());
+				if (g_state.rootBeforeChange && reported && g_state.rootWatch < 6) {
+					const auto& b = *g_state.rootBeforeChange;
+					const float dx = reported->position.x - b.position.x, dy = reported->position.y - b.position.y, dz = reported->position.z - b.position.z;
+					const float moved = std::sqrt(dx * dx + dy * dy + dz * dz);
+					const auto  feet = player->GetPosition();
+					float       hx = feet.x - npcHead->x, hy = feet.y - npcHead->y;
+					const float hl = std::sqrt(hx * hx + hy * hy);
+					if (hl > 1e-3f) {
+						hx /= hl;
+						hy /= hl;
+					}
+					Camera::Pose p;
+					p.position = { npcHead->x + hx * g_learnedDistance, npcHead->y + hy * g_learnedDistance, npcHead->z + g_learnedUp };
+					p.lookAt = PredictedAim(p.position, *npcHead);
+					const float px = reported->position.x - p.position.x, py = reported->position.y - p.position.y, pz = reported->position.z - p.position.z;
+					const float off = std::sqrt(px * px + py * py + pz * pz);
+					if (s.debugLog) {
+						REX::INFO("Speaker change, frame +{}: the game's camera reported {:.2f} m from where it was before the change; {:.2f} m from the spot predicted for the new speaker",
+							g_state.rootWatch, moved, off);
+					}
+					if (s.speakerChangeRoot && g_state.rootWatch < 3 && moved < 0.03f && !predictedRoot && !startRoot) {
+						speakerRoot = p;
+					}
+					++g_state.rootWatch;
+				}
+				g_state.lastReportedRoot = reported;
+			}
 			g_waitingLens.store(0.0f, std::memory_order_relaxed);
 			std::optional<Camera::Pose> directed;
 			if (s.director && !pov && g_state.plainShots) {
@@ -2794,7 +2836,7 @@ namespace CCC
 			if (!pov) {
 				ApplyHandheld(*pose, Director::Handheld(), now);
 			}
-			bool applied = Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : (startRoot ? &*startRoot : nullptr));
+			bool applied = Camera::ApplyRender(root, *pose, delta, false, predictedRoot ? predictedRoot : startRoot ? &*startRoot : speakerRoot ? &*speakerRoot : nullptr);
 			// The first frame or two of a conversation, the game still draws through the gameplay
 			// lens (94 degrees) before its own is set: the 0.9.3 clips showed the first shot wide,
 			// then at its lens, a zoom. Those frames are drawn through the shot's lens too (0.9.4).

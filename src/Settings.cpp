@@ -237,6 +237,7 @@ namespace CCC
 			a_s.revealPlayer = ReadInt(a_path, L"Debug", L"bRevealPlayer", a_s.revealPlayer ? 1 : 0) != 0;
 			a_s.fixFirstPersonBody = ReadInt(a_path, L"Debug", L"bFixFirstPersonBodyPlayer", a_s.fixFirstPersonBody ? 1 : 0) != 0;
 
+			a_s.speakerChangeRoot = ReadInt(a_path, L"Advanced", L"bSpeakerChangeRoot", a_s.speakerChangeRoot ? 1 : 0) != 0;
 			a_s.exitStyle = std::clamp(ReadInt(a_path, L"Advanced", L"iExitStyle", a_s.exitStyle), 1, 2);
 			a_s.exitCutSeconds = std::clamp(ReadFloat(a_path, L"Advanced", L"fExitCutSeconds", a_s.exitCutSeconds), 0.0f, 1.0f);
 

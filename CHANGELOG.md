@@ -13,6 +13,16 @@ test build; "diagnostic" items only add information to the log for testing.
   the camera between the plain shots and the shot library at every turn, the cause of 0.9.71's
   fixes. Seated people keep the plain shots (a chair in front of them is worse than a counter).
 
+### Diagnostic and test (the 0.9.69 Ularu Chen clips, frame by frame)
+- One flash left in the Ularu scene, as Imogene Salzo took the line: a frame of a frontal
+  close-up of her that isn't one of this mod's shots, between Ularu's close-up and the reaction
+  of you that followed. The likely cause, as at a conversation's start: the game moves its own
+  conversation camera to the new speaker and draws from there a frame before it reports it, so
+  this mod's shot is placed against the old spot for that frame. The detailed log now records
+  where the game's camera is reported on each of the six frames after a speaker change, and
+  `bSpeakerChangeRoot=1` (hidden, `[Advanced]`, off) places the shot against the spot the game's
+  camera is about to move to, as the start does, for a comparison run.
+
 ## 0.9.71 - 2026-11-24
 
 ### Fixed (rough cuts in scenes with three or more people; the 0.9.69 clips of Benjamin Bayu and
