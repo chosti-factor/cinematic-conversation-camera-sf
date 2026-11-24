@@ -4,6 +4,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Every 0.x version is an alpha
 test build; "diagnostic" items only add information to the log for testing.
 
+## 0.9.73 - 2026-11-24
+
+### Fixed (scenes with three or more people: the flash at a speaker change)
+- `bSpeakerChangeRoot` is on by default (still hidden in `[Advanced]`, 0 turns it off). The
+  0.9.72 test, two runs of Ularu Chen's and Benjamin Bayu's scenes (clips and log, frame by
+  frame): at every speaker change the game moves its own conversation camera to the new
+  speaker (0.6 to 5 m), to within 2-8 cm of the spot predicted for it. In 9 of 16 changes it
+  reports the move a frame late, and the picture of that frame was this mod's shot dragged by
+  the move: a view from behind Imogene's head, two black frames inside a wall, a wrong shot of
+  Bayu. With the shot placed against the predicted spot (run B), all 9 were gone; left is a
+  slight nudge of the held shot two frames before the cut.
+- Still there (after 1.0 unless it's easy): in the other 7 changes, where the game reports the
+  move at once, the new speaker shows for two frames in a framing close to, but not quite, this
+  mod's (likely the game's own shot of them), then this mod's: a small jump just after the cut.
+
 ## 0.9.72 - 2026-11-24
 
 ### Changed (the user)

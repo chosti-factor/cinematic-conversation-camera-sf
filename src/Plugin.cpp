@@ -2564,8 +2564,10 @@ namespace CCC
 			// the line), and, as at a conversation's start, perhaps draws from there a frame before
 			// it reports it. Logged with the detailed log for the next test (where the reported
 			// camera is on each of the six frames after the change); bSpeakerChangeRoot (hidden,
-			// [Advanced], 0 by default until the log confirms it) places the shot against where the
-			// game's camera is about to be, as the start does.
+			// [Advanced]) places the shot against where the game's camera is about to be, as the
+			// start does. 0.9.73: on by default (the 0.9.72 runs A and B: the log showed the game's
+			// camera moving 0.6-5 m to the new speaker, within 2-8 cm of the predicted spot, a frame
+			// late in 9 of 16 changes; the flash of a wrong shot gone from all 9 with it on).
 			std::optional<Camera::Pose> speakerRoot;
 			{
 				const auto reported = Camera::PoseOf(camera->cameraRoot.get());
