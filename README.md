@@ -357,7 +357,7 @@ conversations, within half a second), so changes apply without restarting the ga
 | `[Director]` | Preset, cutting pace, 180-degree rule, camera moves, emotion close-ups on or off, persuasion beat, reaction shots of you, close-ups of you on tagged choices, your character's face on or off |
 | `[Camera]` | Camera sway, the game's camera in quest scenes, the focus style |
 | `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
-| `[SceneFilming]` | Filming people talking near you: on/off, starting on its own, the prompt, the listen key and button, how far |
+| `[SceneFilming]` | Filming people talking near you (the settings page's Scene filming page): on/off, starting on its own, the prompt, the listen key and button, how far |
 | `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character, the shot library, the full body from first person) |
 | `[Advanced]` | Technical settings, rarely worth changing, in four groups: shots (never across the eyeline, who gets the camera, plain shots for seated people and merchants, small and large speakers), close-ups (the expressions' tiers, the persuasion tags), exits and screen (the exit style, the letterbox's slide, the options' fade), filming people talking (hand-back timings, stop distances) |
 

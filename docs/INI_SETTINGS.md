@@ -11,7 +11,7 @@ Last updated: 1.0.0 (2026-11-24).
   don't overwrite; the settings page writes there too. Both files are read again whenever one
   changes (outside conversations, within half a second).
 - **Settings page:** SFSE Menu Framework (F1), **Cinematic Conversation Camera SF**, five pages:
-  General, Camera, Close-ups and reactions, Screen, Filming people talking. Its text size is the
+  General, Director, Camera, Interface, Scene filming (each named after its INI section). Its text size is the
   framework's own (its Settings: UI scale, font size).
 - **Hidden:** not in the shipped INI, but read if you add them to your `_user.ini`, under the
   section shown. For testing and fine-tuning; each preset's own numbers stay hidden until the
@@ -25,20 +25,21 @@ Last updated: 1.0.0 (2026-11-24).
 |---|---|---|---|
 | `bEnabled` | 1 | General | The whole mod on or off (off: the game's own conversation camera) |
 | `bDebugLog` | 0 | General | Detailed log, for bug reports |
+| `bShowMessages` | 0 | General | Testing messages (in [Debug] before 1.0, still read there) |
 
 ## [Director]
 
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
-| `sPreset` | Nebula | Camera | The preset: Standard, Close, Room (CCC's); Frontier, Starborn, Constellation, Nebula (CCC SF's) |
-| `fCuttingPace` | 0 | Camera | How lively the cutting is (also per preset: fCuttingPace<Preset>) |
-| `bTrue180` | 0 | Camera | 180-degree rule |
-| `bCameraMoves` | 1 | Camera | Camera moves (push-ins, drifts...) |
-| `bEmotionCloseUpsNpc` | -1 | Close-ups and reactions | Emotion close-ups of the speaker |
-| `bPersuasionBeatNpc` | 1 | Close-ups and reactions | Hold on their answer: a close-up of the NPC's answer to each persuasion round and skill check |
-| `bReactionShotsPlayer` | -1 | Close-ups and reactions | Reaction shots of you |
-| `bChoiceCloseUpsPlayer` | -1 | Close-ups and reactions | Close-up of you on skill choices |
-| `bFacePlayer` | 1 | Close-ups and reactions | Your expressions |
+| `sPreset` | Nebula | Director | The preset: Standard, Close, Room (CCC's); Frontier, Starborn, Constellation, Nebula (CCC SF's) |
+| `fCuttingPace` | 0 | Director | How lively the cutting is (also per preset: fCuttingPace<Preset>) |
+| `bTrue180` | 0 | Director | 180-degree rule |
+| `bCameraMoves` | 1 | Director | Camera moves (push-ins, drifts...) |
+| `bEmotionCloseUpsNpc` | -1 | Director | Emotion close-ups of the speaker |
+| `bPersuasionBeatNpc` | 1 | Director | Hold on their answer: a close-up of the NPC's answer to each persuasion round and skill check |
+| `bReactionShotsPlayer` | -1 | Director | Reaction shots of you |
+| `bChoiceCloseUpsPlayer` | -1 | Director | Close-up of you on skill choices |
+| `bFacePlayer` | 1 | Director | Your expressions |
 
 ## [Camera]
 
@@ -52,28 +53,27 @@ Last updated: 1.0.0 (2026-11-24).
 
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
-| `bLetterbox` | 1 | Screen | Letterbox bars |
-| `fLetterboxHeight` | 0.12 | Screen | Bar height |
-| `bSubtitlesInBars` | 0 | Screen | Subtitles in the bottom bar |
-| `bHideOptionsWhileSpeaking` | 1 | Screen | Hide the options while they speak |
+| `bLetterbox` | 1 | Interface | Letterbox bars |
+| `fLetterboxHeight` | 0.12 | Interface | Bar height |
+| `bSubtitlesInBars` | 0 | Interface | Subtitles in the bottom bar |
+| `bHideOptionsWhileSpeaking` | 1 | Interface | Hide the options while they speak |
 
 ## [SceneFilming]
 
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
-| `bFilmConversationsNpc` | 1 | Filming people talking | Film people talking near you |
-| `bListenPrompt` | 1 | Filming people talking | Listen prompt |
-| `bAutoListen` | 0 | Filming people talking | Start on its own |
-| `bAutoListenSprinting` | 0 | Filming people talking | Start on its own while sprinting |
+| `bFilmConversationsNpc` | 1 | Scene filming | Film people talking near you |
+| `bListenPrompt` | 1 | Scene filming | Listen prompt |
+| `bAutoListen` | 0 | Scene filming | Start on its own |
+| `bAutoListenSprinting` | 0 | Scene filming | Start on its own while sprinting |
 | `iListenKey` | 78 (N) |  | The listen key (keyboard) |
 | `iListenButton` | 8192 (B) |  | The listen button (controller) |
-| `fListenRange` | 12 | Filming people talking | Range |
+| `fListenRange` | 12 | Scene filming | Range |
 
 ## [Debug]
 
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
-| `bShowMessages` | 0 | Screen | Testing messages |
 | `fMessageSeconds` | 6 |  | How long a testing message stays |
 | `iPresetKey` | 85 (U) |  | The preset key (U) |
 | `bObstacleCheck` | 1 |  | Avoid walls and objects |
@@ -189,5 +189,5 @@ Fine-tuning found by testing, rarely worth changing. Add under the section shown
 | Where | How many |
 |---|---|
 | Settings page | 24 |
-| In the INI | 54 ([General] 2, [Director] 9, [Camera] 3, [Interface] 4, [SceneFilming] 7, [Debug] 10, [Advanced] 19) |
+| In the INI | 54 ([General] 3, [Director] 9, [Camera] 3, [Interface] 4, [SceneFilming] 7, [Debug] 9, [Advanced] 19) |
 | Hidden settings | 52 (20 preset numbers, 32 technical), plus `[Shots]`, `[GameSettings]` and the per-preset cutting paces |

@@ -47,60 +47,61 @@ namespace CCC::Menu
 		// editor (0.9.70); docs/INI_SETTINGS.md). Every entry
 		// has a tooltip (0.9.64, the user).
 		const Entry kEntries[]{
-			// ---- General (0.9.70, the user: the mod's switch and the detailed log on a page of their own) ----
+			// ---- General (0.9.70, the user: the mod's switch and the detailed log on a page of their own;
+			// 1.0: the testing messages with them, their key moved to [General]) ----
 			{ "General", "The mod", "General", "bEnabled", "Cinematic conversations", Kind::kBool, 0, 1, nullptr,
 				"Off: the whole mod stands down and conversations use the game's own camera." },
-			{ "General", "Bug reports", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
+			{ "General", "Bug reports and testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
 				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
-			// ---- Camera ----
-			{ "Camera", "Look", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
+			{ "General", "Bug reports and testing", "General", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
+				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
+			// ---- Director (1.0, the user: each page named after its INI section, friendly headings within) ----
+			{ "Director", "Shots and cutting", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
 				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
 				kPresets },
-			{ "Camera", "Look", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
+			{ "Director", "Shots and cutting", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
 				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
-			{ "Camera", "Look", "Camera", "sFocusStyle", "Focus style", Kind::kChoice, 0, 0, nullptr,
-				"Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere.", kFocusStyles },
-			{ "Camera", "Movement", "Director", "bCameraMoves", "Camera moves", Kind::kBool, 0, 1, nullptr,
+			{ "Director", "Shots and cutting", "Director", "bCameraMoves", "Camera moves", Kind::kBool, 0, 1, nullptr,
 				"Push-ins, drifts, cranes and the like, as each preset has them." },
-			{ "Camera", "Movement", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
-				"0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander." },
-			{ "Camera", "Staging", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
+			{ "Director", "Shots and cutting", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
 				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Camera", "Staging", "Camera", "bGameCameraInScenes", "Vanilla camera in quest scenes", Kind::kBool, 0, 1, nullptr,
-				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's vanilla camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
-			// ---- Close-ups and reactions ----
-			{ "Close-ups and reactions", "Them", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
+			{ "Director", "Close-ups of them", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
 				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },
-			{ "Close-ups and reactions", "Them", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
+			{ "Director", "Close-ups of them", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round, the verdict included, and to options with a skill check ([Intimidate], [Manipulate]...)." },
-			{ "Close-ups and reactions", "You", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
+			{ "Director", "Close-ups and reactions of you", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
 				"Cutting to you listening during their longer stretches of talk, for one of their lines. The preset's own: off in CCC's presets, on in CCC SF's." },
-			{ "Close-ups and reactions", "You", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
+			{ "Director", "Close-ups and reactions of you", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
 				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option, for the line you say. The preset's own: on in CCC SF's presets, off in CCC's." },
-			{ "Close-ups and reactions", "You", "Director", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
+			{ "Director", "Close-ups and reactions of you", "Director", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
 				"Your face answers the NPC's lines and your choices (the game keeps it neutral)." },
-			// ---- Screen ----
-			{ "Screen", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr,
+			// ---- Camera ----
+			{ "Camera", "Focus", "Camera", "sFocusStyle", "Focus style", Kind::kChoice, 0, 0, nullptr,
+				"Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere.", kFocusStyles },
+			{ "Camera", "Handheld feel", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
+				"0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander." },
+			{ "Camera", "Quest scenes", "Camera", "bGameCameraInScenes", "Vanilla camera in quest scenes", Kind::kBool, 0, 1, nullptr,
+				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's vanilla camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
+			// ---- Interface ----
+			{ "Interface", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr,
 				"Black bars across the top and bottom of the screen while a conversation is filmed, like a film frame. They sit under the dialogue menu, so its subtitles and options stay on top." },
-			{ "Screen", "Letterbox", "Interface", "fLetterboxHeight", "Bar height", Kind::kFloat, 0.02f, 0.3f, "%.2f",
+			{ "Interface", "Letterbox", "Interface", "fLetterboxHeight", "Bar height", Kind::kFloat, 0.02f, 0.3f, "%.2f",
 				"Each bar's share of the screen's height. 0.12 is close to a 2.39:1 film frame on a 16:9 screen." },
-			{ "Screen", "Letterbox", "Interface", "bSubtitlesInBars", "Subtitles in the bottom bar", Kind::kBool, 0, 1, nullptr,
+			{ "Interface", "Letterbox", "Interface", "bSubtitlesInBars", "Subtitles in the bottom bar", Kind::kBool, 0, 1, nullptr,
 				"On: centred in the bottom bar while the bars are in. Off: where the game puts them (vanilla positioning, kept for mods that place subtitles themselves), which can overlap the top edge of the bottom bar." },
-			{ "Screen", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while they speak", Kind::kBool, 0, 1, nullptr,
+			{ "Interface", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while they speak", Kind::kBool, 0, 1, nullptr,
 				"The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does." },
-			{ "Screen", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
-				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
-			// ---- Filming people talking ----
-			{ "Filming people talking", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
+			// ---- Scene filming ----
+			{ "Scene filming", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
 				"Film people talking to each other near you (the game's conversation scenes, not one-liners): a new shot for each line, letterboxed. Started with the listen prompt or on its own (below); moving ends it." },
-			{ "Filming people talking", "People talking near you", "SceneFilming", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f",
+			{ "Scene filming", "People talking near you", "SceneFilming", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f",
 				"How near a conversation has to be, in metres, to be offered or filmed." },
-			{ "Filming people talking", "How it starts", "SceneFilming", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
+			{ "Scene filming", "How it starts", "SceneFilming", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
 				"A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it." },
-			{ "Filming people talking", "How it starts", "SceneFilming", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
+			{ "Scene filming", "How it starts", "SceneFilming", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
 				"As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it." },
-			{ "Filming people talking", "How it starts", "SceneFilming", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
+			{ "Scene filming", "How it starts", "SceneFilming", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
 				"Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks." },
 		};
 
@@ -535,10 +536,10 @@ namespace CCC::Menu
 		}
 
 		void __stdcall DrawGeneral() { DrawPage("General"); }
+		void __stdcall DrawDirector() { DrawPage("Director"); }
 		void __stdcall DrawCamera() { DrawPage("Camera"); }
-		void __stdcall DrawCloseUps() { DrawPage("Close-ups and reactions"); }
-		void __stdcall DrawScreen() { DrawPage("Screen"); }
-		void __stdcall DrawFilming() { DrawPage("Filming people talking"); }
+		void __stdcall DrawInterface() { DrawPage("Interface"); }
+		void __stdcall DrawFilming() { DrawPage("Scene filming"); }
 	}
 
 	bool IsOpen()
@@ -556,10 +557,10 @@ namespace CCC::Menu
 		ReadAll();
 		SFSEMenuFramework::SetSection("Cinematic Conversation Camera SF");
 		SFSEMenuFramework::AddSectionItem("General", &DrawGeneral);
+		SFSEMenuFramework::AddSectionItem("Director", &DrawDirector);
 		SFSEMenuFramework::AddSectionItem("Camera", &DrawCamera);
-		SFSEMenuFramework::AddSectionItem("Close-ups and reactions", &DrawCloseUps);
-		SFSEMenuFramework::AddSectionItem("Screen", &DrawScreen);
-		SFSEMenuFramework::AddSectionItem("Filming people talking", &DrawFilming);
+		SFSEMenuFramework::AddSectionItem("Interface", &DrawInterface);
+		SFSEMenuFramework::AddSectionItem("Scene filming", &DrawFilming);
 		REX::INFO("Settings page: added to SFSE Menu Framework ({} settings)", kCount);
 	}
 }

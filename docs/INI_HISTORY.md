@@ -42,6 +42,14 @@ Hidden since 0.9.72, on since 0.9.73: `bSpeakerChangeRoot=1` under `[Advanced]` 
 off): at a speaker change, the shot placed against where the game's conversation camera is about
 to be, as at a conversation's start (CHANGELOG 0.9.72-0.9.73).
 
+1.0 (the user): the settings page's pages named after the INI sections, so a setting is found
+under the same name in both: General, Director, Camera, Interface, Scene filming (were General,
+Camera, Close-ups and reactions, Screen, Filming people talking), with friendly headings within
+(Shots and cutting, Close-ups of them, Close-ups and reactions of you; Focus, Handheld feel,
+Quest scenes; Letterbox, Dialogue options). The preset, cutting pace, camera moves and the
+180-degree rule went from Camera to Director, their section. `bShowMessages` moved from [Debug]
+to [General], on the General page with the detailed log (still read from [Debug]).
+
 Hidden since 1.0: `fSeatedSwayCap=0.08` under `[Advanced]` (0 = no cap): someone sitting sways
 with the camera only so far from where their head rests, up and down; sideways half of it (the
 user: leaning on a table and back moved the camera too hard, the side-to-side sway most;
