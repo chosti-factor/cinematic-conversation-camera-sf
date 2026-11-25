@@ -216,6 +216,12 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
+- Cleaner transitions in conversations with three or more people (the user, 1.0 release-candidate
+  test: good overall, but the cuts at speaker changes should be cleaner).
+- Speaker changes with you seated: the spot predicted for the game's camera 0.2-0.4 m off at the
+  Wilcox table (1-4 cm standing, Bayu and Yannick); the game seems to place its camera from
+  something else when you sit. Log your head and feet at the change to find out.
+
 - The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
 - Watch for: crashes in the game's UI engine (Scaleform's ActionScript, on another thread,
   DialogueMenu on the stack) as a conversation starts. Two in the release-candidate test

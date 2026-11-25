@@ -156,7 +156,7 @@ Fine-tuning found by testing, rarely worth changing. Add under the section shown
 | `fReactionLineMaxSecondsPlayer` | [Advanced] | 7 | Longest line a reaction takes whole |
 | `fBystanderStillNpc` | [Advanced] | 1.5 | How long someone stands still to count as in the way |
 | `fFaceDeadband` | [Advanced] | 0.04 | Head movement the camera ignores |
-| `fSeatedSwayCap` | [Advanced] | 0.08 | Someone sitting: how far the camera follows their head from where it rests, in metres (0 = no cap) |
+| `fSeatedSwayCap` | [Advanced] | 0.08 | Someone sitting: how far the camera follows their head up and down from where it rests, in metres; sideways half of it (0 = no cap) |
 | `fFollowSmoothing` | [Advanced] | 0.35 | Smoothing when following someone who moves |
 | `fBusyFollowSmoothing` | [Advanced] | 1 | Smoothing for a speaker on the move |
 | `fBusyHeadSpeed` | [Advanced] | 0.25 | Head speed that counts as on the move |

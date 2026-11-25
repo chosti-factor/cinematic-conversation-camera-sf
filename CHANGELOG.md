@@ -41,8 +41,10 @@ The first public release: 0.9.77, the overhead changes below, and the release it
 
 ### Changed (the release-candidate test, the user)
 - Someone sitting sways with the camera only so far: the framed head stays within 8 cm of where
-  it rests, and the rest point follows the head over a few seconds (hidden `fSeatedSwayCap`,
-  [Advanced], 0 = no cap). Leaning on a table and back, as your character does at the Wilcox
+  it rests up and down and 4 cm sideways (the side-to-side sway the more noticeable: a head
+  moving sideways also turns the line between the two people, which every shot is set from),
+  and the rest point follows the head over a few seconds (hidden `fSeatedSwayCap`, [Advanced],
+  the up-and-down cap, sideways half of it; 0 = no cap). Leaning on a table and back, as your character does at the Wilcox
   table, went past the 4 cm dead band, so the camera followed the whole lean. Standing people
   and every preset's sway are as before.
 

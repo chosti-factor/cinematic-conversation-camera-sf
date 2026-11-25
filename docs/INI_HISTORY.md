@@ -43,8 +43,9 @@ off): at a speaker change, the shot placed against where the game's conversation
 to be, as at a conversation's start (CHANGELOG 0.9.72-0.9.73).
 
 Hidden since 1.0: `fSeatedSwayCap=0.08` under `[Advanced]` (0 = no cap): someone sitting sways
-with the camera only so far from where their head rests (the user: leaning on a table and back
-moved the camera too hard; CHANGELOG 1.0.0).
+with the camera only so far from where their head rests, up and down; sideways half of it (the
+user: leaning on a table and back moved the camera too hard, the side-to-side sway most;
+CHANGELOG 1.0.0).
 
 Hidden too since 0.9.70 (the user: until the preset editor after 1.0), each preset's own
 numbers, 20 settings, read from `[Advanced]` if you add them, and changes to single shots, a

@@ -111,6 +111,8 @@ namespace CCC
 			std::optional<RE::NiPoint3>           slackPlayerHead{};
 			std::optional<RE::NiPoint3>           restNpcHead{};     // seated: where the head rests, the sway capped around it (1.0)
 			std::optional<RE::NiPoint3>           restPlayerHead{};
+			bool                                  seatedCapLoggedNpc{ false };
+			bool                                  seatedCapLoggedPlayer{ false };
 			Camera::FaceTrack                     npcFace{};         // which way each face points
 			Camera::FaceTrack                     playerFace{};
 			float                                 side{ 1.0f };      // side of the eyeline this conversation is staged on
@@ -2161,18 +2163,21 @@ namespace CCC
 				// 1.0 (the user): someone sitting sways with the camera as before, but only so far.
 				// Leaning on a table and back (your character's seated idle at the Wilcox table)
 				// went past the dead band, so the camera followed the whole lean. The framed point
-				// now stays within fSeatedSwayCap of where the head rests; the rest point follows
-				// the head over a few seconds, so a new posture is taken up gently.
+				// now stays within fSeatedSwayCap of where the head rests up and down, and half that
+				// sideways (the user's second test: the side-to-side sway the one still noticeable;
+				// a head moving sideways also turns the line between the two people, which every
+				// shot is set from, so it shows more); the rest point follows the head over a few
+				// seconds, so a new posture is taken up gently.
 				if (s.seatedSwayCap > 0.0f) {
 					const float dt = std::clamp(delta, 0.0f, 0.1f);
-					auto cap = [&](std::optional<RE::NiPoint3>& a_rest, const RE::NiPoint3& a_point) {
+					const float capUp = s.seatedSwayCap, capSide = s.seatedSwayCap * 0.5f;
+					auto cap = [&](std::optional<RE::NiPoint3>& a_rest, const RE::NiPoint3& a_point, bool& a_logged, const char* a_who) {
 						if (!a_rest) {
 							a_rest = a_point;
 							return a_point;
 						}
 						float dx = a_point.x - a_rest->x, dy = a_point.y - a_rest->y, dz = a_point.z - a_rest->z;
-						float dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-						if (dist > 1.0f) {  // a jump (a new speaker, a teleport): start again from here
+						if (dx * dx + dy * dy + dz * dz > 1.0f) {  // a jump (a new speaker, a teleport): start again from here
 							a_rest = a_point;
 							return a_point;
 						}
@@ -2183,20 +2188,25 @@ namespace CCC
 						dx = a_point.x - a_rest->x;
 						dy = a_point.y - a_rest->y;
 						dz = a_point.z - a_rest->z;
-						dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-						if (dist <= s.seatedSwayCap) {
+						const float side = std::sqrt(dx * dx + dy * dy);
+						if (side <= capSide && std::abs(dz) <= capUp) {
 							return a_point;
 						}
-						const float f = s.seatedSwayCap / dist;
-						return RE::NiPoint3{ a_rest->x + dx * f, a_rest->y + dy * f, a_rest->z + dz * f };
+						if (!a_logged && s.debugLog) {
+							a_logged = true;
+							REX::INFO("Seated sway: {} leaning {:.0f} cm sideways, {:.0f} cm up or down from where the head rests; the camera follows {:.0f} and {:.0f} cm at most",
+								a_who, side * 100.0f, std::abs(dz) * 100.0f, capSide * 100.0f, capUp * 100.0f);
+						}
+						const float f = side > capSide ? capSide / side : 1.0f;
+						return RE::NiPoint3{ a_rest->x + dx * f, a_rest->y + dy * f, a_rest->z + std::clamp(dz, -capUp, capUp) };
 					};
 					if (OnFurniture(static_cast<RE::Actor*>(speaker))) {
-						npcHead = cap(g_state.restNpcHead, *npcHead);
+						npcHead = cap(g_state.restNpcHead, *npcHead, g_state.seatedCapLoggedNpc, "the speaker");
 					} else {
 						g_state.restNpcHead.reset();
 					}
 					if (OnFurniture(player)) {
-						playerHead = cap(g_state.restPlayerHead, *playerHead);
+						playerHead = cap(g_state.restPlayerHead, *playerHead, g_state.seatedCapLoggedPlayer, "you");
 					} else {
 						g_state.restPlayerHead.reset();
 					}
