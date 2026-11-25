@@ -308,8 +308,10 @@ Last updated: 1.0.0 (2026-11-25).
   - Your face (`src/Face.cpp`): ChangeAnimFaceArchetype (ID 100510); background from the
     perk-rank lookup behind HasPerk (ID 101224); tables in docs/EMOTIONS.md.
 - Earlier: the game's high-process actor list is at ProcessLists +0x60, not CommonLibSF's
-  +0x58 (reported upstream, libxse/commonlibsf#57, confirmed by another modder; the user
-  will offer a PR if it isn't fixed by about 2026-11-28).
+  +0x58 (reported upstream, libxse/commonlibsf#57, confirmed by another modder). The fix is
+  libxse/commonlibsf#58 (2026-11-25, from the user's fork, branch fix/processlists-offsets). If
+  it's merged and this project's CommonLibSF is updated, the code that reads +0x60 directly
+  can use the header's `highActorHandles` again.
 - Actor::IsInCombat is vtable slot 0x16B (+0xB58) in 1.16.244, not CommonLibSF's 0x16C
   (Papyrus natives at RVA 0x1F1F690 and 0x1FC6DE0); GetCombatGroup likewise looks one
   slot early (+0xAF8). Don't trust CommonLibSF's Actor virtual indices near there.
