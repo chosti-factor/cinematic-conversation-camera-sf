@@ -111,7 +111,7 @@ Last updated: 0.9.59 (2026-11-22).
   user's call, for compatibility).
 - UI mods: all five in the pool tested compatible (rbtUI2, Enhanced Dialogue Interface,
   Enhanced Subtitles, Venworks Customizable HUD with Canvas, StarUI HUD); see
-  docs/COMPATIBILITY.md. AutoZoom with its plugin on: compatible too (the user, 0.9.29).
+  docs/COMPATIBILITY.md. AutoZoom (Nexus 10543) with its plugin on: compatible in 0.9.29; partially compatible in the 1.0 test (freezes of the body and the ship; the user).
 - After CCC SF (the user, 2026-11-19): a project of their own, a DLL version of AutoZoom,
   to avoid some of its bugs. Separate from this repository.
 - 0.9.30 test (the redundancy pass): Tuala's lines out of lip sync in 'MQ102_003_JohnSaveaScene'

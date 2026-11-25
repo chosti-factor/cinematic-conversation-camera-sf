@@ -3,6 +3,7 @@
 
 #include "Settings.h"
 
+#include <cstdio>
 #include <ranges>
 #include <span>
 
@@ -61,9 +62,9 @@ namespace CCC::Menu
 				"Push-ins, drifts, cranes and the like, as each preset has them." },
 			{ "Director", "Shots and cutting", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
 				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Director", "Close-ups of them", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
+			{ "Director", "Close-ups of NPCs", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
 				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },
-			{ "Director", "Close-ups of them", "Director", "bPersuasionBeatNpc", "Hold on their answer", Kind::kBool, 0, 1, nullptr,
+			{ "Director", "Close-ups of NPCs", "Director", "bPersuasionBeatNpc", "Hold on the NPC's answer", Kind::kBool, 0, 1, nullptr,
 				"A close-up of the NPC's answer to every persuasion round, the verdict included, and to options with a skill check ([Intimidate], [Manipulate]...)." },
 			{ "Director", "Close-ups and reactions of you", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
 				"Cutting to you listening during their longer stretches of talk, for one of their lines. The preset's own: off in CCC's presets, on in CCC SF's." },
@@ -85,7 +86,7 @@ namespace CCC::Menu
 				"Each bar's share of the screen's height. 0.12 is close to a 2.39:1 film frame on a 16:9 screen." },
 			{ "Interface", "Letterbox", "Interface", "bSubtitlesInBars", "Subtitles in the bottom bar", Kind::kBool, 0, 1, nullptr,
 				"On: centred in the bottom bar while the bars are in. Off: where the game puts them (vanilla positioning, kept for mods that place subtitles themselves), which can overlap the top edge of the bottom bar." },
-			{ "Interface", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while they speak", Kind::kBool, 0, 1, nullptr,
+			{ "Interface", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while NPCs speak", Kind::kBool, 0, 1, nullptr,
 				"The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does." },
 			// ---- Scene filming ----
 			{ "Scene filming", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
@@ -204,6 +205,7 @@ namespace CCC::Menu
 
 		constexpr std::size_t kCount = std::extent_v<decltype(kEntries)>;
 		std::array<Value, kCount>              g_values;
+		std::array<std::optional<std::string>, kCount> g_defaults;  // the shipped INI's values (1.0)
 		std::chrono::steady_clock::time_point  g_readAt{};
 		std::string                            g_status;
 
@@ -225,8 +227,70 @@ namespace CCC::Menu
 				} else {
 					g_values[i] = { "", false };
 				}
+				g_defaults[i] = ReadKey(kIniPath, e.section, e.key);
 			}
 			g_readAt = std::chrono::steady_clock::now();
+		}
+
+		int   AsInt(const std::string& a_text, int a_default);
+		float AsFloat(const std::string& a_text, float a_default);
+
+		// The default (1.0, the user: "Reset" was unclear, and came and went): the shipped INI's
+		// value, which every setting on the page has.
+		std::optional<std::string> DefaultOf(const Entry& a_entry)
+		{
+			const auto i = static_cast<std::size_t>(&a_entry - kEntries);
+			if (i >= kCount) {
+				return std::nullopt;
+			}
+			return g_defaults[i];
+		}
+
+		bool Same(const Entry& a_entry, const std::string& a_a, const std::string& a_b)
+		{
+			if (a_entry.kind == Kind::kChoice) {
+				std::string a{ a_a }, b{ a_b };
+				std::ranges::transform(a, a.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				std::ranges::transform(b, b.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				return a == b;
+			}
+			if (a_entry.kind == Kind::kOwnInt) {
+				const int low = static_cast<int>(a_entry.min);
+				const int a = AsInt(a_a, -1), b = AsInt(a_b, -1);
+				return (a < low && b < low) || a == b;
+			}
+			return std::abs(AsFloat(a_a, 0.0f) - AsFloat(a_b, 0.0f)) < 1.0e-3f;
+		}
+
+		// A value as the page shows it, for the default button.
+		std::string Shown(const Entry& a_entry, const std::string& a_text)
+		{
+			switch (a_entry.kind) {
+			case Kind::kBool:
+				return AsInt(a_text, 0) != 0 ? "On" : "Off";
+			case Kind::kTri:
+				{
+					const int v = AsInt(a_text, -1);
+					return v < 0 ? "Preset's own" : v == 0 ? "Off" : "On";
+				}
+			case Kind::kOwnInt:
+				{
+					const int v = AsInt(a_text, -1);
+					return v < static_cast<int>(a_entry.min) ? "Preset's own" : std::format("{}%", v);
+				}
+			case Kind::kFloat:
+				if (std::string_view{ a_entry.key } == "fCuttingPace") {
+					return std::format("{:+.1f}", AsFloat(a_text, 0.0f));
+				}
+				{
+					char buffer[32]{};
+					std::snprintf(buffer, sizeof(buffer), a_entry.format ? a_entry.format : "%.2f", AsFloat(a_text, a_entry.min));
+					return buffer;
+				}
+			case Kind::kChoice:
+				return a_text;
+			}
+			return a_text;
 		}
 
 		void Write(std::size_t a_index, const std::string& a_text)
@@ -236,6 +300,16 @@ namespace CCC::Menu
 			const auto  section = Wide(e.section);
 			const auto  key = Wide(name.c_str());
 			const auto  text = Wide(a_text.c_str());
+			// Back at the default (1.0): your line comes out of the _user.ini rather than repeating it.
+			if (const auto def = DefaultOf(e); def && Same(e, a_text, *def)) {
+				::WritePrivateProfileStringW(section.c_str(), key.c_str(), nullptr, kUserIniPath);
+				if (std::string_view{ e.key } == "sPreset") {
+					Settings::SetPresetOverride("");
+				}
+				ReadAll();
+				g_status = std::format("{} is back at its default ({}).", name, Shown(e, *def));
+				return;
+			}
 			if (::WritePrivateProfileStringW(section.c_str(), key.c_str(), text.c_str(), kUserIniPath)) {
 				g_values[a_index] = { a_text, true };
 				g_status = std::format("Saved {}={} to your _user.ini.", name, a_text);
@@ -258,7 +332,8 @@ namespace CCC::Menu
 				Settings::SetPresetOverride("");  // 0.9.66: as on a change; a preset key choice kept the reset from showing
 			}
 			ReadAll();
-			g_status = std::format("{} back to the INI's value.", name);
+			const auto def = DefaultOf(e);
+			g_status = def ? std::format("{} is back at its default ({}).", name, Shown(e, *def)) : std::format("{} back to the INI's value.", name);
 		}
 
 		int AsInt(const std::string& a_text, int a_default)
@@ -460,7 +535,17 @@ namespace CCC::Menu
 					break;
 				}
 			}
-			if (v.mine) {
+			// 1.0 (the user: "Reset" was hard to reach, came and went, and didn't say what it reset
+			// to): a button naming the default, there exactly while the setting isn't at it.
+			if (const auto def = DefaultOf(e); def && !Same(e, v.text, *def)) {
+				ImGuiMCP::SameLine();
+				const auto label = std::format("Default: {}", Shown(e, *def));
+				if (ImGuiMCP::SmallButton(label.c_str())) {
+					Reset(a_index);
+				}
+				const auto tip = std::format("Sets it back to its default ({}) and takes your change out of the _user.ini.", Shown(e, *def));
+				ImGuiMCP::SetItemTooltip("%s", tip.c_str());
+			} else if (!def && v.mine) {
 				ImGuiMCP::SameLine();
 				if (ImGuiMCP::SmallButton("Reset")) {
 					Reset(a_index);
@@ -476,6 +561,9 @@ namespace CCC::Menu
 			if (std::chrono::steady_clock::now() - g_readAt > std::chrono::seconds(2) && !ImGuiMCP::IsAnyItemActive()) {
 				ReadAll();
 			}
+			// Lists and sliders a third of the framework's width (1.0, the user: far longer than
+			// their contents), never too narrow for the longest preset name.
+			ImGuiMCP::PushItemWidth((std::max)(ImGuiMCP::GetContentRegionAvail().x * 0.22f, ImGuiMCP::GetFontSize() * 8.5f));
 			const char* group = nullptr;
 			bool        headsUp = false;  // "Start on its own" is on: its note at the end of the page (0.9.68)
 			for (std::size_t i = 0; i < kCount; ++i) {
@@ -543,6 +631,7 @@ namespace CCC::Menu
 					ImGuiMCP::Unindent(kStep * static_cast<float>(depth));
 				}
 			}
+			ImGuiMCP::PopItemWidth();
 			// The page's notes, together at its end, one bullet each (1.0, the user: "changes apply
 			// from the next conversation" was at the top of every page, away from the rest; 0.9.27
 			// had moved it up from the bottom, where it ran on with the rest and was missed).

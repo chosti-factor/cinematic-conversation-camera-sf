@@ -4,7 +4,7 @@ A working list for the Nexus page: which mods work with Cinematic Conversation C
 which don't, and what still needs a test. Grouped by how sure we are. Game version
 1.16.244; CCC SF 0.9.27 to 0.9.29.
 
-Last updated: 0.9.34 (2026-11-20).
+Last updated: 1.0.0 (2026-11-24).
 
 ## What CCC SF touches (why some mods matter and most don't)
 
@@ -36,7 +36,6 @@ listed here).
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work |
-| [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) | Camera zoom | Tested (0.9.29) with its plugin on: conversations and filming people talking unaffected |
 | [StarUI HUD](https://www.nexusmods.com/starfield/mods/3444) | HUD widgets | Tested (0.9.28): the bars, the subtitle in the bar, the options and the testing messages all work. Again with 0.9.34, together with Enhanced Dialogue Interface and Enhanced Subtitles: its HUD hides and comes back with the game's while filming people talking |
 | [Enhanced Dialogue Interface](https://nexusmods.com/starfield/mods/871) | Dialogue menu | Tested on its own (0.9.27): the bars, the options hidden while the NPC speaks, the subtitle in the bar and your choices all work. It highlights every option, so CCC SF reads your choice from the list's own selection instead |
 | PraxisUI Inventory | Inventory menu | |
@@ -47,6 +46,12 @@ listed here).
 | Souls of Cities; NPCs Have Routines and Stores Have Schedules; Better NPCs | NPCs | |
 | Starfield Engine Fixes; Address Library for SFSE Plugins; Cassiopeia Papyrus Extender; Console Command Runner; BA2 Limit Fix | Frameworks and fixes | |
 | Mod Organizer 2 | Mod manager | The settings page's `_user.ini` lands in MO2's `overwrite` folder, where the game still reads it |
+
+## Partially compatible (tested)
+
+| Mod | Area | What happens |
+| --- | --- | --- |
+| [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (Nexus mod 10543: the plugin `AutoZoom.esm` that switches you to first person when you load into an interior and back to third person outside; not the other zoom mods of similar names) | Camera, first and third person | Conversations and filming people talking work (0.9.29), but in the 1.0 test it caused unexpected freezes of your character's body and of the ship. Use it with that in mind, or leave it off |
 
 ## Likely compatible (untested)
 
@@ -72,7 +77,8 @@ None so far.
 Five UI mods, one at a time; for each, a conversation from first person and one from third,
 and one filming of people talking nearby. Checks: the bars slide in, the subtitle sits in the
 bottom bar, the options fade and come back, the testing messages show. Then AutoZoom on once
-(done in 0.9.29: compatible).
+(done in 0.9.29: compatible; again in the 1.0 test: partially compatible, freezes of the body
+and the ship).
 
 | Mod | Area | Recent | Popularity | Status |
 | --- | --- | --- | --- | --- |

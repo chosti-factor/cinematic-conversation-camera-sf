@@ -216,6 +216,13 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
+- Inside ships: more testing (the user, 1.0 test: the Cryoknox, Sarah, the camera bouncing; fixed
+  for 1.0 by not cycling the camera while you sit). Why the full body isn't built there from first
+  person, seated: find out, so you're in frame.
+- The SFSE Menu Framework crashed once in the 1.0 test (21:49, its own code: MenuOwnership
+  SetLayerDisabled, in the window's message handling; none of this mod on the stack). Its build is
+  the window-blur one; worth reporting to its author if it comes back.
+
 - Cleaner transitions in conversations with three or more people (the user, 1.0 release-candidate
   test: good overall, but the cuts at speaker changes should be cleaner).
 - Speaker changes with you seated: the spot predicted for the game's camera 0.2-0.4 m off at the

@@ -325,7 +325,9 @@ in the game; leave it in place.
 What works with CCC SF, what doesn't, and what's still to be tested:
 [docs/COMPATIBILITY.md](docs/COMPATIBILITY.md). In short: other dialogue camera mods don't mix
 with it; UI mods work as long as the dialogue options list and the subtitle keep their usual
-places in the game's menus.
+places in the game's menus. [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (the one
+that switches to first person indoors) is only partially compatible: it caused freezes of your
+character's body and of the ship in the 1.0 test.
 
 ## Known issues
 

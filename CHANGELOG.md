@@ -48,6 +48,12 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   table, went past the 4 cm dead band, so the camera followed the whole lean. Standing people
   and every preset's sway are as before.
 
+- Talking to someone while you sit, from first person, where the game didn't build your full body
+  (Sarah aboard the Cryoknox): the camera cycle that builds it switched the game's camera between
+  first and third person four times and gave up, as it takes a body as built only at standing
+  height. Sitting, it isn't tried: you stay out of frame for that conversation (the user: "the
+  camera bounced around like crazy").
+
 ### Changed (the settings page)
 - "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 - The pages are named after the INI sections, so a setting has the same home in both (the
@@ -58,6 +64,11 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   it's off, and the notes (changes apply from the next conversation, where they're saved, the
   preset key, and the filming heads-up) are together at the end of each page, one bullet each
   (the note on when changes apply was at the top of every page) (the user).
+- "Reset" is now a button naming the default ("Default: Wide"), shown exactly while a setting
+  isn't at its default; clicking it, or setting the default by hand, takes the line out of your
+  `_user.ini` (the user: Reset was hard to reach, came and went, and didn't say what it reset
+  to). Lists and sliders are a third as wide. "Them" is "NPCs" ("Close-ups of NPCs", "Hold on
+  the NPC's answer", "Hide while NPCs speak").
 - `bDebugLog` (the detailed log) is in [Debug] now, beside `bShowMessages` (testing messages):
   both on the new Debug page. [General] holds only `bEnabled`, the General page only the mod's
   switch. Under [General] `bDebugLog` is no longer read: move it in your `_user.ini`.

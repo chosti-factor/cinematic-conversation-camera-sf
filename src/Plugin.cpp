@@ -3836,6 +3836,19 @@ namespace CCC
 						g_state.reRepairs = 99;
 						return;
 					}
+					if (g_state.seatedAtStart || PlayerOnFurniture()) {
+						// 1.0 (the user: a conversation with Sarah aboard the Cryoknox, the camera
+						// "bounced around like crazy"): you sitting. The camera cycle takes the body as
+						// built only at standing height, which a seated body never reaches, so it
+						// switched the game's camera to first and third person and back four times,
+						// failed each time, and gave up. Sitting, you stay out of frame instead.
+						REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); you're sitting, where the camera cycle can't tell a built body, so no camera switching: you stay out of frame this conversation", waited, PlayerHeadAboveFeet());
+						g_state.needsBodyRepair = false;
+						g_state.bodyReady = false;
+						g_state.hidePlayer = true;
+						g_state.reRepairs = 99;
+						return;
+					}
 					REX::WARN("Body rebuild (direct): no full body after {} ms (head {:.2f} m above feet); falling back to the camera cycle", waited, PlayerHeadAboveFeet());
 					g_state.directFailed = true;
 					g_state.povNpcShot = true;  // the camera cycle needs its opening shot
