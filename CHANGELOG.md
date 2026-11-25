@@ -54,6 +54,10 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   user): General, Director, Camera, Interface, Scene filming, Debug (were General, Camera,
   Close-ups and reactions, Screen, Filming people talking), with friendly headings within. The preset,
   cutting pace, camera moves and the 180-degree rule are on Director with the close-ups.
+- The headings within each page are white and bold (were grey), a switch's label is greyed while
+  it's off, and the notes (changes apply from the next conversation, where they're saved, the
+  preset key, and the filming heads-up) are together at the end of each page, one bullet each
+  (the note on when changes apply was at the top of every page) (the user).
 - `bDebugLog` (the detailed log) is in [Debug] now, beside `bShowMessages` (testing messages):
   both on the new Debug page. [General] holds only `bEnabled`, the General page only the mod's
   switch. Under [General] `bDebugLog` is no longer read: move it in your `_user.ini`.

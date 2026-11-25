@@ -281,6 +281,27 @@ namespace CCC::Menu
 
 		// ---- Drawing ------------------------------------------------------------------------
 
+		// A group's heading (1.0, the user: it was greyed, easy to miss): white and bold (drawn twice,
+		// a hair apart; the framework has no bold font), with a line after it to the page's edge.
+		void Heading(const char* a_text)
+		{
+			const auto  pos = ImGuiMCP::GetCursorScreenPos();
+			const auto  size = ImGuiMCP::CalcTextSize(a_text);
+			const float avail = ImGuiMCP::GetContentRegionAvail().x;
+			const float bold = (std::max)(1.0f, ImGuiMCP::GetFontSize() / 28.0f);
+			const auto  white = ImGuiMCP::GetColorU32(ImGuiMCP::ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f });
+			auto*       list = ImGuiMCP::GetWindowDrawList();
+			ImGuiMCP::ImDrawListManager::AddText(list, pos, white, a_text);
+			ImGuiMCP::ImDrawListManager::AddText(list, ImGuiMCP::ImVec2{ pos.x + bold, pos.y }, white, a_text);
+			const float y = pos.y + size.y * 0.5f;
+			const float from = pos.x + size.x + bold + ImGuiMCP::GetFontSize() * 0.5f;
+			if (from < pos.x + avail) {
+				ImGuiMCP::ImDrawListManager::AddLine(list, ImGuiMCP::ImVec2{ from, y }, ImGuiMCP::ImVec2{ pos.x + avail, y },
+					ImGuiMCP::GetColorU32(ImGuiMCP::ImGuiCol_Separator), 1.0f);
+			}
+			ImGuiMCP::Dummy(ImGuiMCP::ImVec2{ (std::max)(1.0f, avail), size.y });
+		}
+
 		std::string g_needsNote;  // while drawing a greyed-out setting: what it needs
 
 		void Help(const Entry& a_entry)
@@ -315,7 +336,14 @@ namespace CCC::Menu
 				ImGuiMCP::GetColorU32(ImGuiMCP::ImVec4{ 1.0f, 1.0f, 1.0f, 1.0f }), 24);
 			ImGuiMCP::SameLine();
 			ImGuiMCP::AlignTextToFramePadding();
+			// 1.0 (the user): the label greyed while the switch is off, as the switch's track is.
+			if (!*a_on) {
+				ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Text, ImGuiMCP::GetStyle()->Colors[ImGuiMCP::ImGuiCol_TextDisabled]);
+			}
 			ImGuiMCP::TextUnformatted(a_label ? a_label : a_entry.label);
+			if (!*a_on) {
+				ImGuiMCP::PopStyleColor(1);
+			}
 			if (ImGuiMCP::IsItemClicked()) {
 				flipped = true;
 			}
@@ -448,9 +476,6 @@ namespace CCC::Menu
 			if (std::chrono::steady_clock::now() - g_readAt > std::chrono::seconds(2) && !ImGuiMCP::IsAnyItemActive()) {
 				ReadAll();
 			}
-			// Where changes go and when they apply, at the top of every page (0.9.27; it was only
-			// at the bottom, easy to miss).
-			ImGuiMCP::TextDisabled("%s", "Changes apply from the next conversation (made during one, from the one after).");
 			const char* group = nullptr;
 			bool        headsUp = false;  // "Start on its own" is on: its note at the end of the page (0.9.68)
 			for (std::size_t i = 0; i < kCount; ++i) {
@@ -466,9 +491,7 @@ namespace CCC::Menu
 						ImGuiMCP::Spacing();
 					}
 					group = e.group;
-					ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Text, ImGuiMCP::GetStyle()->Colors[ImGuiMCP::ImGuiCol_TextDisabled]);
-					ImGuiMCP::SeparatorText(group);
-					ImGuiMCP::PopStyleColor(1);
+					Heading(group);
 				}
 				// Indented under what it needs, greyed out while that's off (0.9.44).
 				int         depth = 0;
@@ -520,16 +543,28 @@ namespace CCC::Menu
 					ImGuiMCP::Unindent(kStep * static_cast<float>(depth));
 				}
 			}
-			if (headsUp) {
-				ImGuiMCP::Spacing();
-				ImGuiMCP::PushTextWrapPos(0.0f);
-				ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s",
-					"Heads up: with \"Start on its own\" on, when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.");
-				ImGuiMCP::PopTextWrapPos();
-			}
+			// The page's notes, together at its end, one bullet each (1.0, the user: "changes apply
+			// from the next conversation" was at the top of every page, away from the rest; 0.9.27
+			// had moved it up from the bottom, where it ran on with the rest and was missed).
 			ImGuiMCP::Spacing();
 			ImGuiMCP::Separator();
-			ImGuiMCP::TextDisabled("%s", "Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins). The preset key (U) switches presets on the fly during a conversation.");
+			auto note = [](const char* a_text, bool a_warning) {
+				ImGuiMCP::Bullet();
+				ImGuiMCP::SameLine();
+				ImGuiMCP::PushTextWrapPos(0.0f);
+				if (a_warning) {
+					ImGuiMCP::TextColored(ImGuiMCP::ImVec4{ 1.0f, 0.78f, 0.35f, 1.0f }, "%s", a_text);
+				} else {
+					ImGuiMCP::TextDisabled("%s", a_text);
+				}
+				ImGuiMCP::PopTextWrapPos();
+			};
+			if (headsUp) {
+				note("Heads up: with \"Start on its own\" on, when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.", true);
+			}
+			note("Changes apply from the next conversation (made during one, from the one after).", false);
+			note("Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins).", false);
+			note("The preset key (U) switches presets on the fly during a conversation.", false);
 			if (!g_status.empty()) {
 				ImGuiMCP::TextDisabled("%s", g_status.c_str());
 			}
