@@ -311,7 +311,9 @@ Last updated: 1.0.0 (2026-11-25).
     perk-rank lookup behind HasPerk (ID 101224); tables in docs/EMOTIONS.md.
 - Earlier: the game's high-process actor list is at ProcessLists +0x60, not CommonLibSF's
   +0x58 (reported upstream, libxse/commonlibsf#57, confirmed by another modder). The fix is
-  libxse/commonlibsf#58 (2026-11-25, from the user's fork, branch fix/processlists-offsets). If
+  libxse/commonlibsf#59 (2026-11-25, from the user's fork, branch fix/processlists-offsets-v2;
+  #58 closed by mistake: a commit amended in a shallow clone lost its parent, and GitHub closes
+  a pull request whose branch no longer shares history; amend only in a full-depth clone). If
   it's merged and this project's CommonLibSF is updated, the code that reads +0x60 directly
   can use the header's `highActorHandles` again.
 - Actor::IsInCombat is vtable slot 0x16B (+0xB58) in 1.16.244, not CommonLibSF's 0x16C
