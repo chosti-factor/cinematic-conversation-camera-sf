@@ -5,9 +5,10 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.0.0 - 2026-11-24 (public beta)
+## 1.0.0 - 2026-11-25 (public beta)
 
-The first public release: 0.9.77, the overhead changes below, and the release itself.
+The first public release: 0.9.77, the release-candidate test's changes below, and the release
+itself.
 
 ### Changed (the release-candidate test, the user)
 - The overhead shots are accents, as the extreme close-ups are: never a person's usual angle.
@@ -17,6 +18,13 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   picture's height, was 0.00, CCC's): the bar nearly covered Agent No. 1's head.
 - Nebula's overhead shots back to a weight of 15 each (from 12, 0.9.23), now that they can't
   take over: about 1 in 55 new angles for each, 1 in 28 for either.
+- Someone sitting sways with the camera only so far: the framed head stays within 8 cm of where
+  it rests up and down and 4 cm sideways (the side-to-side sway the more noticeable: a head
+  moving sideways also turns the line between the two people, which every shot is set from),
+  and the rest point follows the head over a few seconds (hidden `fSeatedSwayCap`, [Advanced],
+  the up-and-down cap, sideways half of it; 0 = no cap). Leaning on a table and back, as your
+  character does at the Wilcox table, went past the 4 cm dead band, so the camera followed the
+  whole lean. Standing people and every preset's sway are as before.
 
 ### Fixed (the release-candidate test)
 - Talking to someone while this mod films people talking (pressing A on one of them, or anyone
@@ -38,22 +46,11 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   camera at the change was worked out from that sliding point (0.5 m off). The head was
   followed smoothly and only snapped for 2 m or more; it's now taken afresh at every speaker
   change (Emma Wilcox and Sarah at one table: a messy cut to Sarah).
-
-### Changed (the release-candidate test, the user)
-- Someone sitting sways with the camera only so far: the framed head stays within 8 cm of where
-  it rests up and down and 4 cm sideways (the side-to-side sway the more noticeable: a head
-  moving sideways also turns the line between the two people, which every shot is set from),
-  and the rest point follows the head over a few seconds (hidden `fSeatedSwayCap`, [Advanced],
-  the up-and-down cap, sideways half of it; 0 = no cap). Leaning on a table and back, as your character does at the Wilcox
-  table, went past the 4 cm dead band, so the camera followed the whole lean. Standing people
-  and every preset's sway are as before.
-
 - Talking to someone while you sit, from first person, where the game didn't build your full body
   (Sarah aboard the Cryoknox): the camera cycle that builds it switched the game's camera between
   first and third person four times and gave up, as it takes a body as built only at standing
   height. Sitting, it isn't tried: you stay out of frame for that conversation (the user: "the
   camera bounced around like crazy").
-
 - Someone sitting low (Karl Fielding, his head 0.76 m above his feet) was taken for a small
   robot and left to the game's camera. Someone sitting on something is never a small speaker
   now; a low head is logged with the speaker's race, to learn from.
@@ -62,8 +59,8 @@ The first public release: 0.9.77, the overhead changes below, and the release it
 - "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 - The pages are named after the INI sections, so a setting has the same home in both (the
   user): General, Director, Camera, Interface, Scene filming, Debug (were General, Camera,
-  Close-ups and reactions, Screen, Filming people talking), with friendly headings within. The preset,
-  cutting pace, camera moves and the 180-degree rule are on Director with the close-ups.
+  Close-ups and reactions, Screen, Filming people talking), with friendly headings within. The
+  preset, cutting pace, camera moves and the 180-degree rule are on Director with the close-ups.
 - The headings within each page are white and bold (were grey), a switch's label is greyed while
   it's off, and the notes (changes apply from the next conversation, where they're saved, the
   preset key, and the filming heads-up) are together at the end of each page, one bullet each
@@ -77,11 +74,17 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   both on the new Debug page. [General] holds only `bEnabled`, the General page only the mod's
   switch. Under [General] `bDebugLog` is no longer read: move it in your `_user.ini`.
 
+### Compatibility
+- [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (Nexus 10543, the plugin that
+  switches you to first person indoors) is partially compatible: in the 1.0 test it caused
+  freezes of your character's body and of the ship (docs/COMPATIBILITY.md).
+
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus
   Mods, or the versioned releases here) instead of the alpha test build; its known issues add
   the one-frame glitch at some speaker changes in scenes with three or more people, your
-  character looking at the wrong person in those scenes, and an NPC now and then fading in.
+  character looking at the wrong person in those scenes, an NPC now and then fading in, you
+  out of frame now and then while you sit from first person, and AutoZoom.
 - The build makes a versioned release from a `v` tag (`CinematicConversationCameraSF-1.0.0.zip`,
   checked against the version); the rolling Test build stays, its notes no longer saying alpha
   or that it writes detailed logs (off by default since 0.9.63).

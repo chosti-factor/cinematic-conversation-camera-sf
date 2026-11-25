@@ -2,9 +2,9 @@
 
 A working list for the Nexus page: which mods work with Cinematic Conversation Camera SF,
 which don't, and what still needs a test. Grouped by how sure we are. Game version
-1.16.244; CCC SF 0.9.27 to 0.9.29.
+1.16.244; CCC SF 0.9.27 to 1.0.0.
 
-Last updated: 1.0.0 (2026-11-24).
+Last updated: 1.0.0 (2026-11-25).
 
 ## What CCC SF touches (why some mods matter and most don't)
 
@@ -26,13 +26,13 @@ CCC SF touches.
 
 ## Tested compatible
 
-Active alongside CCC SF through every 0.9.x test, which makes them the most tested of all (the
+Active alongside CCC SF through every 0.9.x test and the 1.0 test, which makes them the most tested of all (the
 test setup runs about 330 mods with 257 active plugins; the ones that matter to CCC SF are
 listed here).
 
 | Mod | Area | Notes |
 | --- | --- | --- |
-| [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) | Settings page | Optional; gives CCC SF its in-game settings page (F1) |
+| [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) | Settings page | Optional; gives CCC SF its in-game settings page (F1). One crash in its own code in the 1.0 test (its window-blur build, in its window handling; none of CCC SF on the stack), not seen again |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
 | [Venworks Customizable HUD and Themes](https://www.nexusmods.com/starfield/mods/17104) with [Venworks Canvas](https://www.nexusmods.com/starfield/mods/18327) | HUD | Tested (0.9.28; HUD 2.1.0, Canvas 1.0.5, Core 2.1.8): the bars, the subtitle in the bar, the options and the testing messages all work |

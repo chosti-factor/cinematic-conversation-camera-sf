@@ -4,15 +4,17 @@ Every setting the mod reads, where it goes, its default, and whether it's on the
 settings page or hidden. The INI explains each one in full; this is the reference. How the
 layout came about (the reviews, what moved where and why): [INI_HISTORY.md](INI_HISTORY.md).
 
-Last updated: 1.0.0 (2026-11-24).
+Last updated: 1.0.0 (2026-11-25).
 
 - **The INI:** `Data\SFSE\Plugins\CinematicConversationCameraSF.ini`. Your own changes go in
   `CinematicConversationCameraSF_user.ini` (same folder, same section names), which updates
   don't overwrite; the settings page writes there too. Both files are read again whenever one
   changes (outside conversations, within half a second).
-- **Settings page:** SFSE Menu Framework (F1), **Cinematic Conversation Camera SF**, five pages:
-  General, Director, Camera, Interface, Scene filming, Debug (each named after its INI section). Its text size is the
-  framework's own (its Settings: UI scale, font size).
+- **Settings page:** SFSE Menu Framework (F1), **Cinematic Conversation Camera SF**, six pages:
+  General, Director, Camera, Interface, Scene filming, Debug (each named after its INI
+  section). A setting changed from its default shows a "Default: X" button that puts it back
+  (and takes the line out of the `_user.ini`). Its text size is the framework's own (its
+  Settings: UI scale, font size).
 - **Hidden:** not in the shipped INI, but read if you add them to your `_user.ini`, under the
   section shown. For testing and fine-tuning; each preset's own numbers stay hidden until the
   preset editor after 1.0.

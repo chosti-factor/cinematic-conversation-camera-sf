@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 0.9.59 (2026-11-22).
+Last updated: 1.0.0 (2026-11-25).
 
 ## Working rules
 
@@ -58,9 +58,33 @@ Last updated: 0.9.59 (2026-11-22).
   interface, 0.8 room shots, the lens and filming people talking, 0.9 polish and
   optimization); 1.0 is the public beta.
 - The code can't be compiled locally in the cloud workspace; the GitHub build is the
-  compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`.
+  compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`
+  (in the cloud session GitHub's GraphQL is refused: use the REST API, `gh api
+  repos/{owner}/{repo}/actions/runs`, `.../releases`).
+- Releases: a `v` tag (`v1.0.0`) builds the versioned release zip, checked against the
+  version in `xmake.lua`; pushed only when the user says "tag it". From the cloud session a
+  tag push was refused (HTTP 403, 2026-11-25; branch pushes work), so the user pushes the tag.
+- The session's stop hook flags the owner-authored commits as "Unverified" and asks for them to
+  be re-authored as Claude: they stay the owner's (the rule above); say so briefly and go on.
 
-## Where things stand (2026-11-22, 0.9.59)
+## Where things stand (2026-11-25, 1.0.0)
+
+- 1.0.0 is built and tested (the release-candidate test, six sessions on 2026-11-24, then the
+  last fixes; CHANGELOG 1.0.0). The `v1.0.0` tag is the user's to push (above); then the Nexus
+  page, the clip and the outreach (TODO 5-6). Release Friday 2026-11-27.
+- What the release-candidate test changed, in short: a new menu movie is left alone for half a
+  second (two Scaleform crashes as conversations started); a conversation that starts while
+  this mod films people talking gets 1.5 s for the game's dialogue camera; the head is taken
+  afresh at every speaker change (close speakers slid); someone sitting sways the camera only
+  so far (`fSeatedSwayCap`); no camera cycle while you sit; someone sitting low isn't a small
+  speaker; overheads are accents; the settings page's pages named after the INI sections, with
+  default buttons, and `bDebugLog` and `bShowMessages` in [Debug].
+- Known for after 1.0 (TODO "Moved to after 1.0", README): cleaner speaker changes with three or
+  more people; you out of frame while seated from first person; more testing in ships; your
+  character looking at the wrong person; NPCs now and then fading in; overlapping lines after
+  filming (rare). AutoZoom is partially compatible (COMPATIBILITY.md).
+
+## Earlier (2026-11-22, 0.9.59)
 
 - Polish passes done: redundancy, debugging, optimization (2026-11-22), measuring code and
   diagnostics removed (0.9.50, 0.9.59). Next: the INI and defaults review with the settings
@@ -331,7 +355,10 @@ Last updated: 0.9.59 (2026-11-22).
   zero-float (0 = preset's own), choice (sPreset, sFocusStyle). Values come from the _user.ini
   if set there, else the main INI, re-read every 2 s; writes go to the _user.ini at once
   (sliders on release) and Reset deletes the user key. A preset choice clears the preset key's
-  override. Registered at SFSE kPostLoad; returns quietly without the framework. The SDK is in
+  override. Since 1.0: 24 settings on six pages named after the INI sections (General,
+  Director, Camera, Interface, Scene filming, Debug), white bold headings, a "Default: X"
+  button while a setting isn't at the shipped INI's value (it and setting the default by hand
+  delete the user key), lists and sliders a third of the width, the notes bulleted at the end. Registered at SFSE kPostLoad; returns quietly without the framework. The SDK is in
   `extern/` (xmake adds its include dirs and `_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING`).
   Keep its ranges in step with Settings.cpp's clamps (the lens is 20-70).
 - After 1.0, planned (see README "After 1.0"): smoother start and exit styles (the user,

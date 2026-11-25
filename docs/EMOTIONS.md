@@ -4,7 +4,8 @@ Every spoken NPC line carries one of the game's facial-expression tags
 (`AnimFaceArchetype*` keywords), read by this mod for the emotion close-ups and for your
 character's face. Kept up to date with every build that changes them.
 
-Last updated: 0.9.50 (2026-11-22: the tally of your lines kept as research data; 0.9.23, 2026-11-18: the close-up limit; the tagged option's close-up as you pick;
+Last updated: 1.0.0 (2026-11-25: checked against the 1.0 build; the choice close-up's length,
+Frontier's extreme share). Before: 0.9.50 (2026-11-22: the tally of your lines kept as research data; 0.9.23, 2026-11-18: the close-up limit; the tagged option's close-up as you pick;
 none extreme of you in Constellation).
 
 ## The rules now (0.9.0)
@@ -26,8 +27,8 @@ none extreme of you in Constellation).
 
 - About one NPC line in five overall (from the tally below); emotional characters get more
   (Sarah: about a third).
-- **Extreme close-ups:** `iExtremeCloseUpChanceNpc` (40%) of them, each for its own line
-  only, never two in a row; reactions never cut into one.
+- **Extreme close-ups:** `iExtremeCloseUpChanceNpc` (40%; Frontier 25%) of them, each for its
+  own line only, never two in a row; reactions never cut into one.
 - **One close-up at most this long** (0.9.23, CCC SF's presets): Frontier and Nebula 12 s,
   Constellation 14, Starborn 18 (`fCloseUpLimitSecondsNpc`; CCC's presets none). Then a
   three-quarter or medium of them at the next line's start (mid-line 6 s later at most), and
@@ -39,7 +40,8 @@ none extreme of you in Constellation).
   close-up for Intimidate, Threaten, Manipulate, Deceive, Lie and Attack, the others extreme
   40% of the time (CCC SF's presets; none extreme in Constellation, 0.9.23), and every option
   in a persuasion (0.8.17). Since 0.9.23 it comes as you pick, over the start of their
-  answer (2 s, `fChoiceCloseUpSecondsPlayer`); it used to come a turn late. After a
+  answer (the longer of 2 s, `fChoiceCloseUpSecondsPlayer`, and the preset's shortest hold,
+  since 0.9.67); it used to come a turn late. After a
   persuasion's verdict, a reaction shot of you, close by your expression's tier (0.8.18,
   CCC SF's presets). See "Your character's face" below.
 - **Persuasion answers** get a close-up of the NPC whatever their expression

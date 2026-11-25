@@ -1,7 +1,7 @@
 # Starts and exits: how the camera is handled
 
 Technical reference for how a conversation's camera starts and ends, with the numbers
-measured in testing. Kept up to date with every build (last updated: 0.9.46, 2026-11-22).
+measured in testing. Kept up to date with every build (last updated: 1.0.0, 2026-11-25).
 Version notes in brackets say when something was found or changed; the full story is in
 [CHANGELOG.md](../CHANGELOG.md).
 
@@ -108,8 +108,15 @@ were dropped: [MEMORY.md](MEMORY.md).
   - **picked up again (0.9.10):** within 5 s of your body last being built, at the same
     height ± 0.08 m. For a conversation the mod ended and restarted, such as buying a drink,
     which paused the game's dialogue camera for about a second.
-- **Timing:** usually built **109–145 ms** after the request. Asks again at 1.2 s, 1.5 s and
-  2.5 s if not. Falls back to the camera cycle at 2 s (4 s in a background scene).
+- **Timing:** usually built **109–145 ms** after the request (118-825 ms in the 1.0 test).
+  Asks again at 1.2 s, 1.5 s and 2.5 s if not. Falls back to the camera cycle at 2 s; not in a
+  background scene (at 4 s you stay out of frame) and, since 1.0, not while you sit (at 2 s
+  you stay out of frame): the cycle takes the body as built only at standing height, so seated
+  it switched the game's camera back and forth four times and gave up (Sarah aboard the
+  Cryoknox).
+- **Seated, never built (1.0 test):** in a chair in the CF01 brig (twice) and aboard the
+  Cryoknox, your head stayed at 1.22-1.24 m through all three requests: never taken as built,
+  so you're out of frame. Whether that body is already the full one is open (TODO).
 - **Meanwhile:**
   - You're hidden.
   - The opening shot is a clean single of the NPC: three-quarter, medium or medium profile;
@@ -119,6 +126,22 @@ were dropped: [MEMORY.md](MEMORY.md).
   → dialogue camera. It shows on screen (0.9.7 test): two frames of a close-up of the NPC's
   torso, then about 0.3 s of your own view. Not used by default.
 - **The rebuild's side effect at the exit:** see the first-person exit below.
+
+### Started while this mod films people talking (1.0)
+
+- Filming has the game's camera in third person, so a conversation started then (pressing A
+  on someone, or on one of the people filmed) begins outside the dialogue camera. Until 1.0 the
+  watchdog took that for the conversation having ended, on its first frame, and the rest
+  played through the game's first-person view (Noel, Inevitable). Such a start now gets 1.5 s
+  for the game to switch to its dialogue camera; in the 1.0 test it switched within 7 ms.
+
+### The letterbox at the start (1.0)
+
+- The dialogue menu is new at each conversation, and its movie is built partly on the game's
+  loading thread; this mod's calls into it 5-35 ms after it opened crashed twice (MEMORY.md).
+  A new menu movie is left alone for its first 0.5 s. Meanwhile the bars are drawn on the HUD
+  messages menu (as for filming), from about 10 ms after the start, and the dialogue menu's
+  own take over at the same height once it's settled: no gap in the clip (the 1.0 test).
 
 ### From third person
 
@@ -131,6 +154,9 @@ were dropped: [MEMORY.md](MEMORY.md).
 - **Seated NPCs** (head under `fSeatedHeadHeight` = 1.35 m above their feet) and
   **merchants** (vendor faction) get a plain over-the-shoulder shot instead of the shot
   library.
+- **Small speakers** (head under `fMinSpeakerHeightNpc` = 1 m above their feet, or no head
+  bone) keep the game's camera; since 1.0 not someone sitting on something (Karl Fielding, 0.76
+  m), and a low head is logged with the speaker's race.
 - **Seated NPC, you standing:** the over-the-shoulder stands 0.35 m behind, 0.6 m to the
   side, 0.25 m lower (`fOverSeated*`).
 - **Starts are otherwise the same for standing, seated, merchant and bar-stool

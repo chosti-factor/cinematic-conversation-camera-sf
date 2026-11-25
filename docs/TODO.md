@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 0.9.66 (2026-11-23). Dates assume the Friday 27 November release; for
+Last updated: 1.0.0 (2026-11-25). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -83,7 +83,8 @@ Wednesday the 25th, about two days earlier.
 - [x] The tally of your lines started (0.9.12; while the detailed log is on)
 - [x] Compatibility with UI mods: the testing pool of five in docs/COMPATIBILITY.md (rbtUI2,
       Enhanced Dialogue Interface, Enhanced Subtitles, Venworks HUD and StarUI HUD all work),
-      and AutoZoom with its plugin on (compatible, 0.9.29)
+      and AutoZoom with its plugin on (compatible, 0.9.29; partially compatible in the 1.0 test:
+      freezes of your body and the ship)
 - [x] Quest scenes: what each one is made of is logged (0.9.20: its actions by type, and
       whether it directs a camera). Using it to keep this mod's camera on quest scenes that
       are just people talking moved to after 1.0
@@ -109,7 +110,7 @@ Wednesday the 25th, about two days earlier.
       subtitle 65-120 of it); one spike, 14.8 ms, the INI re-read after an edit on the
       settings page; with the log off (0.9.44-0.9.45): 16-27 us outside conversations, 50-310
       in them, no spike over 5 ms but the INI read after an edit. Done 2026-11-22)
-- [ ] Before the INI review (the user, 2026-11-22): the shot-to-shot cuts that aren't clean
+- [x] Before the INI review (the user, 2026-11-22; carried on and done in the next item): the shot-to-shot cuts that aren't clean
       (some flicker or "teleport"; most are instant). Lead: in the 0.9.47 clip 2 of 6 cuts
       showed the old shot a frame with the new shot's focus before the camera moved. Next: a
       session with the detailed log on, longer conversations (Nebula cuts most), clips; every
@@ -202,8 +203,11 @@ Wednesday the 25th, about two days earlier.
       task's parts (0.9.43); and the diagnostics that only fed finished investigations (the
       exit frame comparison, 0.9.38). Into docs/MEMORY.md with what they measured.
 - [x] Take out the lip-sync test switches (`bFilmTest*`, 0.9.41) once it's found; into docs/MEMORY.md (0.9.43)
-- [ ] Full test round on the release candidate (starts, exits, every preset, seated,
-      merchants, filming, the settings page)
+- [x] Full test round on the release candidate (starts, exits, every preset, seated,
+      merchants, filming, the settings page): 2026-11-24, six sessions; what it found is in
+      CHANGELOG 1.0.0 (two crashes as conversations started, talking to someone being filmed,
+      speaker changes between people close together, the seated sway, the camera cycle while
+      seated, Karl Fielding taken for a robot, the settings page), the rest below
 - [ ] Nexus page and its credits section (from CREDITS.md)
 - [ ] 60-90 s clip
 - [ ] Outreach a few days before (machinima podcast, Starfield mod YouTubers, the Starfield
@@ -211,21 +215,24 @@ Wednesday the 25th, about two days earlier.
 
 ## 6. Release
 
+- [ ] The `v1.0.0` tag pushed (its build makes the versioned release zip). 2026-11-25: refused
+      from the Claude session (the tag push got HTTP 403; branch pushes work), so the user pushes
+      it: `git tag -a v1.0.0 -m "Cinematic Conversation Camera SF 1.0.0 (public beta)"` on the
+      release commit, then `git push origin v1.0.0`
 - [ ] 1.0 public beta on Nexus: Friday 27 Nov, 9-11 am Central (or Wednesday the 25th)
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
 ## Moved to after 1.0
 
-- From first person, seated (the brig in CF01 with Kibwe, twice; the Cryoknox): your head stays at
-  1.22-1.24 m above your feet through three requests for the full body, so it's never taken as
-  built and you stay out of frame. Find out whether the body there is already the full one (then
-  the seated check needs another test) or the game won't build it while you sit.
+- From first person, seated (the brig in CF01 with Kibwe, twice; aboard the Cryoknox): your head
+  stays at 1.22-1.24 m above your feet through three requests for the full body, so it's never
+  taken as built and you stay out of frame (since 1.0.0 without the camera cycle, which made the
+  camera bounce aboard the Cryoknox). Find out whether the body there is already the full one
+  (then the seated check needs another test) or the game won't build it while you sit.
 - Your shot when you answer quickly: about 1 s on screen (four times in the 1.0 test's last
   session) before the cut back to the NPC. Holding it to the preset's shortest hold would start
   the NPC's line off screen; try it if those cuts feel abrupt.
-- Inside ships: more testing (the user, 1.0 test: the Cryoknox, Sarah, the camera bouncing; fixed
-  for 1.0 by not cycling the camera while you sit). Why the full body isn't built there from first
-  person, seated: find out, so you're in frame.
+- Inside ships: more testing (the user, 1.0 test).
 - The SFSE Menu Framework crashed once in the 1.0 test (21:49, its own code: MenuOwnership
   SetLayerDisabled, in the window's message handling; none of this mod on the stack). Its build is
   the window-blur one; worth reporting to its author if it comes back.

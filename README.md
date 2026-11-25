@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: 1.0, public beta
 
-Last updated: 1.0.0 (2026-11-24).
+Last updated: 1.0.0 (2026-11-25).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -67,13 +67,15 @@ What CCC doesn't do.
   Nebula (a space opera), with their own lenses, moves, cutting and sway (see Presets below).
 - **Handheld feel:** how much the camera sways with the people in it, from a tripod (0) to
   fully handheld (100); each preset has its own (CCC's on a tripod as in CCC, Starborn barely
-  there, Constellation handheld), or `iCameraSway` sets one.
+  there, Constellation handheld), or `iCameraSway` sets one. Someone sitting sways the camera
+  only so far (8 cm up and down, 4 cm sideways from where their head rests), so leaning on a
+  table and back doesn't carry the camera with it (`fSeatedSwayCap`, hidden).
 - **How a conversation ends** (`iExitStyle`): a cut back to your own view (the default),
   just before the game hands the camera back from first person and on the frame it does from
   third person; or a closing shot of the NPC alone as
   the dialogue menu closes. Clean in both perspectives, and starts with at most a brief flash.
 - **The game's camera where the shots don't fit:** small speakers (robots) keep the game's
-  own camera. Quest scenes you take part in (someone walks up and starts talking, several
+  own camera; someone sitting low is never taken for one. Quest scenes you take part in (someone walks up and starts talking, several
   people taking turns) are filmed by this mod too; `bGameCameraInScenes=1` (the settings
   page's "Vanilla camera in quest scenes") leaves them to the game's vanilla camera instead.
 - **Preset key:** U switches to the next preset on the fly while a conversation (or people
@@ -145,7 +147,9 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
 - **Your character in shot from first person** (because of Starfield: its first-person view
   has no full body to film, where CCC switches Skyrim to third person): your full body is
   built at the start of the conversation (about a tenth of a second), including with seated
-  NPCs, and you're back in first person when it ends.
+  NPCs, and you're back in first person when it ends. Where the game doesn't build it (now and
+  then while you sit), you're kept out of frame for that conversation rather than the camera
+  switching views to force it (Known issues).
 - **Your character's face** (CCC's Responsive Expressions read the English wording of your
   lines; here the expression tags and option tags lead): the game keeps it neutral and your
   lines carry no expression tags, so the mod sets it: your face answers each NPC line's
@@ -175,7 +179,9 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   outside the distance at which the game hides people close to its camera.
 - **Settings:** an in-game page through SFSE Menu Framework, as CCC uses SKSE Menu
   Framework, with changes saved to a `_user.ini` as CCC's go to `SD_user.ini`; optional
-  here, and the INI works without it (see Settings below).
+  here, and the INI works without it (see Settings below). Its six pages are named after the
+  INI's sections (General, Director, Camera, Interface, Scene filming, Debug), and a setting
+  changed from its default shows a button naming the default, which puts it back.
 
 ### Presets
 
@@ -216,12 +222,18 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
 The first public release, a beta: feature complete since 2026-11-19, then four polish passes
 (redundancy, debugging, optimization, and the INI and settings page review,
-[docs/INI_HISTORY.md](docs/INI_HISTORY.md)) and the quest scenes filmed by this mod by default
-(0.9.67-0.9.77). Reports welcome: see Testing and logs below.
+[docs/INI_HISTORY.md](docs/INI_HISTORY.md)), the quest scenes filmed by this mod by default
+(0.9.67-0.9.77), and the release-candidate test's fixes (1.0.0: two crashes as conversations
+started, speaker changes between people close together, the seated sway, the settings page).
+Reports welcome: see Testing and logs below.
 
 ### After 1.0
 
 Planned:
+- Cleaner cuts in conversations with three or more people (the user, 1.0 test: good overall,
+  but the cuts at speaker changes should be cleaner).
+- More testing inside ships, and your character in frame while you sit from first person
+  (the game doesn't always build your full body there; Known issues).
 - The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
   mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
   the game's actor values, not yet confirmed for 1.16.244 (the user, 2026-11-20: after 1.0).
@@ -337,6 +349,11 @@ character's body and of the ship in the 1.0 test.
   (docs/MEMORY.md has what's known).
 - **Your character looking at the wrong person** in conversations with three or more people,
   and **an NPC now and then fading in** a moment after a conversation starts: planned after 1.0.
+- **Sitting yourself, from first person, you're sometimes not in the shots.** The game doesn't
+  always build your full body while you sit (a chair in the CF01 brig, a seat aboard your
+  ship), so the mod keeps you out of frame for that conversation. Planned after 1.0.
+- **AutoZoom** ([Nexus 10543](https://www.nexusmods.com/starfield/mods/10543)): freezes of your
+  character's body and of the ship with it on (Compatibility).
 
 - **Overlapping lines after filming people talking (rare).** Now and then, after the mod has
   filmed people talking near you, a later conversation has the speaker's lines playing over
@@ -355,12 +372,12 @@ conversations, within half a second), so changes apply without restarting the ga
 
 | Section | What's in it |
 |---|---|
-| `[General]` | On/off, the detailed log |
+| `[General]` | On/off |
 | `[Director]` | Preset, cutting pace, 180-degree rule, camera moves, emotion close-ups on or off, persuasion beat, reaction shots of you, close-ups of you on tagged choices, your character's face on or off |
 | `[Camera]` | Camera sway, the game's camera in quest scenes, the focus style |
 | `[Interface]` | Letterbox and its height, subtitles in the bars, dialogue options hidden while the NPC speaks |
 | `[SceneFilming]` | Filming people talking near you (the settings page's Scene filming page): on/off, starting on its own, the prompt, the listen key and button, how far |
-| `[Debug]` | Testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character, the shot library, the full body from first person) |
+| `[Debug]` | The detailed log, testing messages, the preset key, and checks to turn off for troubleshooting (obstacles, bystanders, close-ups following the face, focus on the person in shot, showing your character, the shot library, the full body from first person) |
 | `[Advanced]` | Technical settings, rarely worth changing, in four groups: shots (never across the eyeline, who gets the camera, plain shots for seated people and merchants, small and large speakers), close-ups (the expressions' tiers, the persuasion tags), exits and screen (the exit style, the letterbox's slide, the options' fade), filming people talking (hand-back timings, stop distances) |
 
 Each preset's own numbers (lens, distances, close-up and reaction chances and timing, your

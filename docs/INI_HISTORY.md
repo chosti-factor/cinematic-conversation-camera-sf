@@ -1,6 +1,9 @@
 # INI history
 
-How the INI and the settings page came to be laid out as they are: the reviews (0.9.60-0.9.75),
+Last updated: 1.0.0 (2026-11-25).
+
+How the INI and the settings page came to be laid out as they are: the reviews (0.9.60-0.9.75,
+and the 1.0 changes),
 what moved where and why, and the INI's full text for each preset's own numbers (the appendix),
 hidden until the preset editor. Kept as it was written, so some of it is out of date: the
 current settings, defaults and sections are in [INI_SETTINGS.md](INI_SETTINGS.md).

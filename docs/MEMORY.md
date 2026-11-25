@@ -7,7 +7,7 @@ and exits), [PRESETS.md](PRESETS.md), [REACTIONS.md](REACTIONS.md) and
 [EMOTIONS.md](EMOTIONS.md); the full story of each version is in
 [CHANGELOG.md](../CHANGELOG.md).
 
-Last updated: 0.9.59 (2026-11-22).
+Last updated: 1.0.0 (2026-11-25).
 
 **The code as it was before the pass:** commit `04abb04` (0.9.29). Any removed piece can be
 read back with `git show 04abb04:src/Plugin.cpp` (or `Settings.h`, `Settings.cpp`,
@@ -448,6 +448,40 @@ What each measured or logged, and what it found:
 - **The jumps measured** (0.9.74 run A, ten changes): the small jump or nudge is a shift of 1-2%
   of the picture's width (about a degree), scale within 3%: the same size with the spot learned
   as without.
+
+## Changed away in 1.0 (the release-candidate test)
+
+What the release-candidate test replaced, with what was learned; read back from the commit
+before each change.
+
+- **The HUD's Scaleform calls into a new menu straight away** (before `0448e5e`): the letterbox
+  bars and the option features went into the dialogue menu 5-35 ms after it opened, and a
+  failed call was retried the next frame. Two crashes came of it, both in Scaleform's
+  ActionScript on another of the game's threads with the dialogue menu on the stack: Tank
+  (BSJobs, ActionScript's garbage collector, 50 ms after the bars went in) and Nyx (IOManager,
+  the first conversation after starting the game, the first call faulted at 30 ms and the game
+  froze for 14 s before the crash). The dialogue menu's movie is built partly on the loading
+  thread, and its pointer is set before that's done. Now: a new movie is left alone for 0.5 s
+  (`kSettle` in Hud.cpp), the HUD messages menu's bars stand in, and a fault waits 0.5 s.
+- **The NPC's head glided at a speaker change** (before `eda313e`): the head is followed with
+  0.35 s smoothing and only snapped for a jump of 2 m or more, so between two speakers closer
+  than that (Emma Wilcox and Sarah at one table) the framing slid from one head to the other
+  for about a second after the cut (a 15% and a 42% pan of the picture, measured in the clip),
+  and `bSpeakerChangeRoot`'s prediction was worked out from the sliding point (0.5 m off; 1-7
+  cm since).
+- **The camera cycle while you sit** (before `faa7aaa`): its success test wants your head at
+  standing height (1.58 m), which a seated body never reaches, so seated it switched the game's
+  camera between first and third person four times and gave up (Sarah aboard the Cryoknox,
+  "the camera bounced around like crazy"). Seated, it isn't tried now.
+- **The small-speaker rule by height alone** (before `034dd1e`): Karl Fielding, sitting low with
+  his head 0.76 m above his feet, was taken for a robot and left to the game's camera.
+- **The settings page's Reset** (before `faa7aaa`): shown while a setting was in the
+  `_user.ini`, whatever its value, and gone once you'd reset it; hard to reach with a
+  controller and silent about what it reset to. Replaced by "Default: X".
+- **`bShowMessages` in [General]** (`8540460`-`abc15d7`, one evening): moved there with a
+  fallback to [Debug], then the fallback dropped, then both it and `bDebugLog` put in [Debug]
+  with a Debug page (`ddb70d6`). `bDebugLog` was in [General] before 1.0 and isn't read there
+  now.
 
 ## Hidden, never tested
 

@@ -5,10 +5,12 @@ of you listening, and a close-up of you. Since 0.8.13 these are CCC SF's presets
 (Frontier, Starborn, Constellation, Nebula): CCC's keep CCC's vision, with no reactions
 (off as CCC ships) and emotion close-ups only in Close, on strong lines
 (`bEmotionCloseUpsNpc` and `bReactionShotsPlayer`: -1 the preset's own, 0 off, 1 on in
-every preset). Settings are in the `[Director]` section of
-the INI. Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
+every preset). The switches are in the INI's `[Director]` section (and on the settings
+page's Director page); the numbers (chances, timings) are each preset's own, hidden until the
+preset editor after 1.0 and read from `[Advanced]` if you add them (docs/INI_SETTINGS.md). Settings ending in `Npc` are about shots of the speaker, `Player` shots of you.
 
-Last updated: 0.9.23 (2026-11-18: never the overhead of you; Frontier's listening reactions; the
+Last updated: 1.0.0 (2026-11-25: the holds of 0.9.67-0.9.69 added below; checked against the
+1.0 build). Before: 0.9.23 (2026-11-18: never the overhead of you; Frontier's listening reactions; the
 tagged option's close-up as you pick; a limit on one close-up of them; no extreme close-ups of
 you in Constellation). 0.8.5 reworked reactions to break the monotony of long
 stretches, cutting only at the edges of their lines; 0.8.6 made them inserts.
@@ -115,6 +117,23 @@ Nothing about how often. They change what you see:
 | Extreme close-ups | 1 in 3 | 40% |
 | Reaction during an emotion close-up | Never: it waits for the next line | When the 7 s are reached during a regular one, to the end of the line; never an extreme one |
 | Close-ups of you | No (your listening face is animated, but not cut to) | Half the reactions, when your face shows an expression |
+
+## The holds (0.9.67-0.9.69)
+
+Each preset has a shortest hold (Standard, Close and Frontier 2.4 s, Nebula 2.5, Constellation
+2.8, Room 3.0, Starborn 3.5; scaled by the cutting pace: -2 x1.6, -1 x1.3, +1 x0.75, +2 x0.55,
+never under 1 s), and the reactions keep to it:
+
+- **No cut back to you sooner** than the shortest hold after the last cut.
+- **A reaction that would start sooner** than that after a cut isn't made then: it stays owed
+  and goes to a later line that suits it (0.9.69; 0.9.67 delayed it to the line's end, which
+  made 0.4 s shots in scenes with three or more people).
+- **A speaker change** (scenes with three or more people) isn't a cut of its own for this: the
+  shot on screen re-aims at the new speaker, and their emotion close-up or a reaction comes at
+  their line's start as usual. While the new line is undecided (its expression and whether it's
+  a reaction), the last shot is held: at most 0.5 s with them on screen, 1 s with you.
+- **Your tagged option's close-up** lasts the longer of `fChoiceCloseUpSecondsPlayer` (2 s) and
+  the preset's shortest hold.
 
 ## Your tagged option (0.9.23)
 

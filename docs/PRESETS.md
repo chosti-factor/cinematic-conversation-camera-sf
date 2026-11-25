@@ -14,7 +14,7 @@ switch on the fly with the preset key, U, while testing).
   and camera sway, room shots kept closer, and everything this mod adds: emotion close-ups
   on every tier, reaction shots of you, close-ups of your expressions.
 
-Last updated: 0.9.31 (2026-11-20: Nebula a touch more varied, what a pace of +0.5 gave).
+Last updated: 1.0.0 (2026-11-25: overheads as accents, Nebula's back at 15; the seated sway cap).
 Before: 0.9.28 (2026-11-19; the review after the 2026-11-18 run: Starborn towards
 *Interstellar*, Nebula a space opera, close-up limits, and the rest below; 0.9.24: more shots
 in Frontier, Starborn and Constellation).
@@ -175,7 +175,12 @@ that shot. (Generated from the presets in the code.)
   above only matter there.
 - **Overheads are accents (1.0).** An overhead shot (of them or of you) can be picked, but never
   becomes a person's usual angle: the next turn or new angle moves on from it, and a reaction
-  doesn't return to it. Its framing keeps the head clear of the top letterbox bar.
+  doesn't return to it. Its framing keeps the head clear of the top letterbox bar. Nebula's
+  overheads are back at a weight of 15 each (12 in 0.9.23-0.9.77): about 1 in 55 new angles
+  for each.
+- **Someone sitting sways only so far (1.0).** Every preset keeps its own sway, but a seated
+  person's head moves the camera at most 8 cm up and down and 4 cm sideways from where it
+  rests (`fSeatedSwayCap`, hidden): leaning on a table and back no longer carries the camera.
 - **Your own mix** (hidden until the preset editor after 1.0; for testing, docs/INI_SETTINGS.md, and the shot
   names in docs/INI_HISTORY.md's appendix).
   A `[Shots]` section added to the INI changes every preset: `CloseUp=60` sets a
