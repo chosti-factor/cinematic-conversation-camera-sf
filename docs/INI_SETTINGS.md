@@ -11,7 +11,7 @@ Last updated: 1.0.0 (2026-11-24).
   don't overwrite; the settings page writes there too. Both files are read again whenever one
   changes (outside conversations, within half a second).
 - **Settings page:** SFSE Menu Framework (F1), **Cinematic Conversation Camera SF**, five pages:
-  General, Director, Camera, Interface, Scene filming (each named after its INI section). Its text size is the
+  General, Director, Camera, Interface, Scene filming, Debug (each named after its INI section). Its text size is the
   framework's own (its Settings: UI scale, font size).
 - **Hidden:** not in the shipped INI, but read if you add them to your `_user.ini`, under the
   section shown. For testing and fine-tuning; each preset's own numbers stay hidden until the
@@ -24,8 +24,6 @@ Last updated: 1.0.0 (2026-11-24).
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
 | `bEnabled` | 1 | General | The whole mod on or off (off: the game's own conversation camera) |
-| `bDebugLog` | 0 | General | Detailed log, for bug reports |
-| `bShowMessages` | 0 | General | Testing messages |
 
 ## [Director]
 
@@ -74,6 +72,8 @@ Last updated: 1.0.0 (2026-11-24).
 
 | Setting | Default | Settings page | What it does |
 |---|---|---|---|
+| `bDebugLog` | 0 | Debug | Detailed log, for bug reports |
+| `bShowMessages` | 0 | Debug | Testing messages |
 | `fMessageSeconds` | 6 |  | How long a testing message stays |
 | `iPresetKey` | 85 (U) |  | The preset key (U) |
 | `bObstacleCheck` | 1 |  | Avoid walls and objects |
@@ -189,5 +189,5 @@ Fine-tuning found by testing, rarely worth changing. Add under the section shown
 | Where | How many |
 |---|---|
 | Settings page | 24 |
-| In the INI | 54 ([General] 3, [Director] 9, [Camera] 3, [Interface] 4, [SceneFilming] 7, [Debug] 9, [Advanced] 19) |
+| In the INI | 54 ([General] 1, [Director] 9, [Camera] 3, [Interface] 4, [SceneFilming] 7, [Debug] 11, [Advanced] 19) |
 | Hidden settings | 52 (20 preset numbers, 32 technical), plus `[Shots]`, `[GameSettings]` and the per-preset cutting paces |

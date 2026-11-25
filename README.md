@@ -375,7 +375,7 @@ about: [docs/INI_HISTORY.md](docs/INI_HISTORY.md).
 The log is at
 `Documents\My Games\Starfield\SFSE\Logs\CinematicConversationCameraSF.log`. It records
 every shot the director chooses and why. Please include it with any report, with the detailed
-log on (`bDebugLog=1`, or **Detailed log** on the settings page's General page).
+log on (`bDebugLog=1`, or **Detailed log** on the settings page's Debug page).
 
 ## Building
 

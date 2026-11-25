@@ -43,13 +43,14 @@ off): at a speaker change, the shot placed against where the game's conversation
 to be, as at a conversation's start (CHANGELOG 0.9.72-0.9.73).
 
 1.0 (the user): the settings page's pages named after the INI sections, so a setting is found
-under the same name in both: General, Director, Camera, Interface, Scene filming (were General,
-Camera, Close-ups and reactions, Screen, Filming people talking), with friendly headings within
+under the same name in both: General, Director, Camera, Interface, Scene filming and Debug (were
+General, Camera, Close-ups and reactions, Screen, Filming people talking), with friendly headings within
 (Shots and cutting, Close-ups of them, Close-ups and reactions of you; Focus, Handheld feel,
 Quest scenes; Letterbox, Dialogue options). The preset, cutting pace, camera moves and the
-180-degree rule went from Camera to Director, their section. `bShowMessages` moved from [Debug]
-to [General], on the General page with the detailed log (no longer read from [Debug]: the
-user, the only tester, moved it in his `_user.ini`).
+180-degree rule went from Camera to Director, their section. `bDebugLog` moved from [General]
+to [Debug], beside `bShowMessages`, both on the Debug page; [General] and the General page hold
+only the mod's switch (no longer read from [General]: the user, the only tester, moved it in
+his `_user.ini`).
 
 Hidden since 1.0: `fSeatedSwayCap=0.08` under `[Advanced]` (0 = no cap): someone sitting sways
 with the camera only so far from where their head rests, up and down; sideways half of it (the

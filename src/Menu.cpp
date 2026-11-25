@@ -47,14 +47,9 @@ namespace CCC::Menu
 		// editor (0.9.70); docs/INI_SETTINGS.md). Every entry
 		// has a tooltip (0.9.64, the user).
 		const Entry kEntries[]{
-			// ---- General (0.9.70, the user: the mod's switch and the detailed log on a page of their own;
-			// 1.0: the testing messages with them, their key moved to [General]) ----
+			// ---- General (0.9.70, the user: the mod's switch on a page of its own) ----
 			{ "General", "The mod", "General", "bEnabled", "Cinematic conversations", Kind::kBool, 0, 1, nullptr,
 				"Off: the whole mod stands down and conversations use the game's own camera." },
-			{ "General", "Bug reports and testing", "General", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
-				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
-			{ "General", "Bug reports and testing", "General", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
-				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
 			// ---- Director (1.0, the user: each page named after its INI section, friendly headings within) ----
 			{ "Director", "Shots and cutting", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
 				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
@@ -103,6 +98,11 @@ namespace CCC::Menu
 				"As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it." },
 			{ "Scene filming", "How it starts", "SceneFilming", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
 				"Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks." },
+			// ---- Debug (1.0, the user: the detailed log and the testing messages, both in [Debug]) ----
+			{ "Debug", "Bug reports", "Debug", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
+				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
+			{ "Debug", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
+				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
 		};
 
 		// Settings that only do something while another is on (0.9.44, the user's request): drawn
@@ -540,6 +540,7 @@ namespace CCC::Menu
 		void __stdcall DrawCamera() { DrawPage("Camera"); }
 		void __stdcall DrawInterface() { DrawPage("Interface"); }
 		void __stdcall DrawFilming() { DrawPage("Scene filming"); }
+		void __stdcall DrawDebug() { DrawPage("Debug"); }
 	}
 
 	bool IsOpen()
@@ -561,6 +562,7 @@ namespace CCC::Menu
 		SFSEMenuFramework::AddSectionItem("Camera", &DrawCamera);
 		SFSEMenuFramework::AddSectionItem("Interface", &DrawInterface);
 		SFSEMenuFramework::AddSectionItem("Scene filming", &DrawFilming);
+		SFSEMenuFramework::AddSectionItem("Debug", &DrawDebug);
 		REX::INFO("Settings page: added to SFSE Menu Framework ({} settings)", kCount);
 	}
 }

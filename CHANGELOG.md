@@ -51,11 +51,12 @@ The first public release: 0.9.77, the overhead changes below, and the release it
 ### Changed (the settings page)
 - "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 - The pages are named after the INI sections, so a setting has the same home in both (the
-  user): General, Director, Camera, Interface, Scene filming (were General, Camera, Close-ups and
-  reactions, Screen, Filming people talking), with friendly headings within. The preset,
+  user): General, Director, Camera, Interface, Scene filming, Debug (were General, Camera,
+  Close-ups and reactions, Screen, Filming people talking), with friendly headings within. The preset,
   cutting pace, camera moves and the 180-degree rule are on Director with the close-ups.
-- `bShowMessages` (testing messages) is in [General] now, on the General page beside the
-  detailed log. Under [Debug] it's no longer read: move it in your `_user.ini`.
+- `bDebugLog` (the detailed log) is in [Debug] now, beside `bShowMessages` (testing messages):
+  both on the new Debug page. [General] holds only `bEnabled`, the General page only the mod's
+  switch. Under [General] `bDebugLog` is no longer read: move it in your `_user.ini`.
 
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus
