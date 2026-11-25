@@ -216,6 +216,13 @@ Wednesday the 25th, about two days earlier.
 
 ## Moved to after 1.0
 
+- From first person, seated (the brig in CF01 with Kibwe, twice; the Cryoknox): your head stays at
+  1.22-1.24 m above your feet through three requests for the full body, so it's never taken as
+  built and you stay out of frame. Find out whether the body there is already the full one (then
+  the seated check needs another test) or the game won't build it while you sit.
+- Your shot when you answer quickly: about 1 s on screen (four times in the 1.0 test's last
+  session) before the cut back to the NPC. Holding it to the preset's shortest hold would start
+  the NPC's line off screen; try it if those cuts feel abrupt.
 - Inside ships: more testing (the user, 1.0 test: the Cryoknox, Sarah, the camera bouncing; fixed
   for 1.0 by not cycling the camera while you sit). Why the full body isn't built there from first
   person, seated: find out, so you're in frame.

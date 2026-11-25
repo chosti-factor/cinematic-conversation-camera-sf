@@ -54,6 +54,10 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   height. Sitting, it isn't tried: you stay out of frame for that conversation (the user: "the
   camera bounced around like crazy").
 
+- Someone sitting low (Karl Fielding, his head 0.76 m above his feet) was taken for a small
+  robot and left to the game's camera. Someone sitting on something is never a small speaker
+  now; a low head is logged with the speaker's race, to learn from.
+
 ### Changed (the settings page)
 - "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
 - The pages are named after the INI sections, so a setting has the same home in both (the

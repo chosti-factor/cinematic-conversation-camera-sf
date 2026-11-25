@@ -1959,7 +1959,17 @@ namespace CCC
 			// human height and would miss them, so leave the game's own camera on them.
 			if (g_state.framesThisConversation == 1) {
 				const float height = npcHead->z - speaker->GetPosition().z;
-				g_state.smallSpeaker = !Camera::HasHeadBone(speaker) || height < s.minSpeakerHeight;
+				// 1.0 (the log of the user's last test: Karl Fielding, a man, taken for a robot with
+				// his head 0.76 m above his feet, and left to the game's camera): someone sitting
+				// isn't small, however low the seat.
+				const bool sitting = OnFurniture(static_cast<RE::Actor*>(speaker));
+				g_state.smallSpeaker = !Camera::HasHeadBone(speaker) || (height < s.minSpeakerHeight && !sitting);
+				if (height < s.minSpeakerHeight && s.debugLog) {
+					const auto* race = static_cast<RE::Actor*>(speaker)->race;
+					const char* raceId = race ? race->GetFormEditorID() : nullptr;
+					REX::INFO("Low head: {:.2f} m above their feet; {}; race {:08X} '{}'", height, sitting ? "sitting on something, so not a small speaker" : "not sitting on anything",
+						race ? race->formID : 0u, raceId ? raceId : "");
+				}
 				g_state.largeSpeaker = !g_state.smallSpeaker && s.largeSpeakerHeight > 0.0f && height >= s.largeSpeakerHeight;
 				if (g_state.largeSpeaker) {
 					REX::INFO("Large speaker: head {:.2f} m above their feet (fLargeSpeakerHeightNpc {:.2f}); shots of you keep to {:.0f} degrees off the line or wider, the plain one included",
