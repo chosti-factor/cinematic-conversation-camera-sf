@@ -22,7 +22,9 @@ Last updated: 1.0.0 (2026-11-25).
   no-reply address). All history was re-authored this way on 2026-11-16, with the original
   dates kept.
 - Credit Claude with a plain line, no email: end each commit message with
-  `Written with Claude <model> (Anthropic)` and the `Claude-Session:` link. Never a
+  `Written with Claude <model> (Anthropic)`, and nothing else: no `Claude-Session:` link (the
+  user, 2026-11-25: the links only open for the user's own account, but readers can't tell,
+  and the history is in the documents anyway; commits before then keep theirs). Never a
   `Co-Authored-By: ... <noreply@anthropic.com>` trailer: GitHub's Contributors panel counts
   co-authors, and that address showed up there as "noreply" (the user doesn't want it).
   Every earlier commit's trailer was rewritten this way on 2026-11-17, dates kept. This
