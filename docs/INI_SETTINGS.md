@@ -25,7 +25,7 @@ Last updated: 1.0.0 (2026-11-24).
 |---|---|---|---|
 | `bEnabled` | 1 | General | The whole mod on or off (off: the game's own conversation camera) |
 | `bDebugLog` | 0 | General | Detailed log, for bug reports |
-| `bShowMessages` | 0 | General | Testing messages (in [Debug] before 1.0, still read there) |
+| `bShowMessages` | 0 | General | Testing messages |
 
 ## [Director]
 

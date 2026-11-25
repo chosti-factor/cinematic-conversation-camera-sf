@@ -98,8 +98,8 @@ namespace CCC
 		{
 			a_s.enabled = ReadInt(a_path, L"General", L"bEnabled", a_s.enabled ? 1 : 0) != 0;
 			a_s.debugLog = ReadInt(a_path, L"General", L"bDebugLog", a_s.debugLog ? 1 : 0) != 0;
-			// [General] since 1.0 (the settings page's General page, the user); [Debug] before, still read.
-			a_s.showMessages = ReadInt(a_path, L"General", L"bShowMessages", ReadInt(a_path, L"Debug", L"bShowMessages", a_s.showMessages ? 1 : 0)) != 0;
+			// [General] since 1.0 (the settings page's General page, the user); [Debug] before.
+			a_s.showMessages = ReadInt(a_path, L"General", L"bShowMessages", a_s.showMessages ? 1 : 0) != 0;
 			a_s.presetKey = std::clamp(ReadInt(a_path, L"Debug", L"iPresetKey", a_s.presetKey), 0, 0xFE);
 			a_s.messageSeconds = std::clamp(ReadFloat(a_path, L"Debug", L"fMessageSeconds", a_s.messageSeconds), 1.0f, 30.0f);
 			a_s.filmConversations = ReadInt(a_path, L"SceneFilming", L"bFilmConversationsNpc", a_s.filmConversations ? 1 : 0) != 0;

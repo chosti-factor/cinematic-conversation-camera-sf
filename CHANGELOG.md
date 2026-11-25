@@ -55,7 +55,7 @@ The first public release: 0.9.77, the overhead changes below, and the release it
   reactions, Screen, Filming people talking), with friendly headings within. The preset,
   cutting pace, camera moves and the 180-degree rule are on Director with the close-ups.
 - `bShowMessages` (testing messages) is in [General] now, on the General page beside the
-  detailed log; a `_user.ini` with it under [Debug] still works.
+  detailed log. Under [Debug] it's no longer read: move it in your `_user.ini`.
 
 ### Release
 - The version is 1.0.0. The README's status and install sections describe the release (Nexus
