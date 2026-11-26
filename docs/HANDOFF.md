@@ -63,6 +63,10 @@ Last updated: 1.0.0 (2026-11-25).
   compiler. Watch the run with `gh run watch` and read errors with `gh run view --log-failed`
   (in the cloud session GitHub's GraphQL is refused: use the REST API, `gh api
   repos/{owner}/{repo}/actions/runs`, `.../releases`).
+- Versions (the user, 2026-11-26): test builds after 1.0 are 1.0.x (`xmake.lua` bumped with
+  each test round's first code change, the CHANGELOG entry marked "test build"); the next public
+  release is 1.1.0 (set the version to 1.1.0, write its CHANGELOG entry gathering the 1.0.x
+  ones, then the tag).
 - Releases: a `v` tag (`v1.0.0`) builds the versioned release zip, checked against the
   version in `xmake.lua`; pushed only when the user says "tag it". From the cloud session a
   tag push was refused (HTTP 403, 2026-11-25; branch pushes work), so the user pushes the tag.

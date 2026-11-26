@@ -222,7 +222,7 @@ Wednesday the 25th, about two days earlier.
 - [ ] 1.0 public beta on Nexus: Friday 27 Nov, 9-11 am Central (or Wednesday the 25th)
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
-## 1.1 (the next public release: fixes, features, and what players report)
+## To 1.1.0 (the next public release; test builds 1.0.x until then: fixes, features, and what players report)
 
 - [ ] Test filming in an elevator (the MQ101 mine lift after the character editor, or the Lodge
       or MAST lifts): the people stay in the picture as it rises.
@@ -230,7 +230,7 @@ Wednesday the 25th, about two days earlier.
 - [ ] Test the first-person lock (new game, the mine, before the character editor): the log says
       "View: the game has switched off changing view", Lin and Heller aren't filmed, and after
       the character editor "View: the game allows changing view" and filming works as before.
-      Conversations keep this mod's camera either way. 1.1 test 1 (2026-11-26): the lock read
+      Conversations keep this mod's camera either way. 1.0.1 test 1 (2026-11-26): the lock read
       only covered a moment (FFFFF818); the walk through the mine had POVSwitch on (FFFFFE3F,
       fighting, sneaking and menus off) and the stretcher scene (furniture camera) was filmed.
       Now also no filming while you sit or lie in first person: test the stretcher again. The CF01 brig too, if you get there: the

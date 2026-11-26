@@ -247,7 +247,7 @@ namespace CCC
 		DWORD g_mainThreadId = 0;
 
 		bool                                  g_lastGameplayFirstPerson = false;
-		// 1.1 (the user's new game): the game has switched off changing view, as it does in
+		// 1.0.1 (the user's new game): the game has switched off changing view, as it does in
 		// first person until you've made your character (MQ101's opening in the mine). Sampled in
 		// gameplay only (the dialogue menu switches it off too), held 1 s before it counts.
 		std::atomic<bool>                     g_viewLocked{ false };
@@ -4983,7 +4983,7 @@ namespace CCC
 			std::uint32_t                         poseLine{ 0 };
 			RE::NiPoint3                          anchor{};    // the person in shot (two-shot: between them), eased
 			RE::NiPoint3                          lookOffset{};  // the aim, relative to the anchor
-			float                                 liftBase{ 0.0f };  // the subject's height when the shot was set up (1.1)
+			float                                 liftBase{ 0.0f };  // the subject's height when the shot was set up (1.0.1)
 			float                                 lift{ 0.0f };      // how far the camera has risen or sunk with them since
 			std::vector<std::uint32_t>            group;     // the scene's people lately, for group shots (0.8.10)
 			bool                                  groupShot{ false };  // this line's shot is the group shot
@@ -5688,12 +5688,12 @@ namespace CCC
 			// the user's call): with bListenPrompt (the prompt shows), or with bAutoListen (no
 			// prompt; the key still films anyone, barks too). With both off, nothing starts.
 			const bool keyStarts = pressed && (s.listenPrompt || s.autoListen);
-			// 1.1: not while the game keeps you in first person (before you've made your
+			// 1.0.1: not while the game keeps you in first person (before you've made your
 			// character, the CF01 brig): filming switches the view to third person and hides you,
 			// and where the game has you lying or sitting somewhere (the stretcher before the
 			// character editor, which the Watchtower creation reuses) its shots would show the
 			// place empty (the user). Conversations keep this mod's camera (the user's choice).
-			// 1.1 (the user's second new-game test): nor while you sit or lie on something in
+			// 1.0.1 (the user's second new-game test): nor while you sit or lie on something in
 			// first person. Filming hides you there, so its shots showed the place empty: the
 			// stretcher you lie on in the mine before the character editor (the game's furniture
 			// camera, mode 6, where the view lock above isn't read), a bench, a bar stool.
@@ -5975,7 +5975,7 @@ namespace CCC
 					g_film.anchor.y += (subject.y - g_film.anchor.y) * k;
 					g_film.anchor.z += (subject.z - g_film.anchor.z) * k;
 				}
-				// 1.1 (the user: in an elevator the shot stayed behind, the people rising out of it,
+				// 1.0.1 (the user: in an elevator the shot stayed behind, the people rising out of it,
 				// until the next line's shot caught up): the camera rises and sinks with them, quickly
 				// and through the same dead band, so a lift or a stair carries the shot; around a
 				// standing conversation it stays put as before.

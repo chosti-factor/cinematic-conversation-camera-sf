@@ -5,9 +5,10 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.1.0 - unreleased
+## 1.0.1 - unreleased (test build)
 
-The next public release (the user): fixes and features after 1.0, and what players report.
+Test builds after 1.0 are numbered 1.0.x; the next public release is 1.1.0, with these fixes
+and features and what players report (the user).
 
 ### Changed (the user's elevator ride in MQ101)
 - Filming people talking: the camera rises and sinks with the people in shot. Each shot's camera
