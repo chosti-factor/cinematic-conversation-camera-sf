@@ -5,7 +5,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.0.1 - unreleased
+## 1.1.0 - unreleased
+
+The next public release (the user): fixes and features after 1.0, and what players report.
+
+### Changed (the user's elevator ride in MQ101)
+- Filming people talking: the camera rises and sinks with the people in shot. Each shot's camera
+  stood where it was set up, with only its aim following, so in an elevator the people rose out
+  of the picture until the next line's shot caught up. Now a lift or a stair carries the shot
+  (quickly, through a 4 cm dead band); around a standing conversation it stays put as before.
 
 ### Changed (the user's new game)
 - While the game keeps you in first person and won't let you change view (as at the start of a

@@ -271,7 +271,7 @@ Planned:
   they fire; English only, its own setting.
 
 Mulling (not decided):
-- Filming people talking while you sit, from first person: since 1.0.1 it doesn't film then
+- Filming people talking while you sit, from first person: since 1.1 it doesn't film then
   (filming hides you, so the seat showed empty). Building your full body for it instead, so it
   can film with you in it (the user, 2026-11-26).
 - The overlapping lines after filming people talking (Known issues): a way to set it off
