@@ -17,6 +17,11 @@ to the log for testing.
   reuses that scene). Your own conversations keep this mod's camera (the user's choice).
   Read from the game's input switches (changing view switched off for a second or more of
   gameplay); the log says when the game switches changing view off and on.
+- Nor while you sit or lie on something in first person (a chair, a bench, a bar stool, the
+  stretcher): filming hides you, so its shots showed the place empty. The user's second test:
+  the mine's view lock read as above only covered a moment of the opening, and the stretcher
+  scene before the character editor (the game's furniture camera) was still filmed. From third
+  person, sitting, filming goes on as before (you're in its shots).
 
 ## 1.0.0 - 2026-11-25 (public beta)
 

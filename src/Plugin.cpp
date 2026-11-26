@@ -5691,11 +5691,18 @@ namespace CCC
 			// and where the game has you lying or sitting somewhere (the stretcher before the
 			// character editor, which the Watchtower creation reuses) its shots would show the
 			// place empty (the user). Conversations keep this mod's camera (the user's choice).
-			if ((keyStarts || (wouldStart && !running)) && g_lastGameplayFirstPerson && g_viewLocked.load(std::memory_order_relaxed)) {
+			// 1.0.1 (the user's second new-game test): nor while you sit or lie on something in
+			// first person. Filming hides you there, so its shots showed the place empty: the
+			// stretcher you lie on in the mine before the character editor (the game's furniture
+			// camera, mode 6, where the view lock above isn't read), a bench, a bar stool.
+			const bool locked = g_viewLocked.load(std::memory_order_relaxed);
+			const bool onFurniture = PlayerOnFurniture();
+			if ((keyStarts || (wouldStart && !running)) && g_lastGameplayFirstPerson && (locked || onFurniture)) {
 				static std::uint64_t heldLine = 0;
 				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
 					heldLine = static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count());
-					REX::INFO("Filming people talking: {} and {} not filmed, the game keeps you in first person", TalkerName(speaker), TalkerName(listener));
+					REX::INFO("Filming people talking: {} and {} not filmed, {}", TalkerName(speaker), TalkerName(listener),
+						onFurniture ? "you're sitting or lying on something in first person (filming would show the place empty)" : "the game keeps you in first person");
 				}
 				return;
 			}
