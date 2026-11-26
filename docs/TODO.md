@@ -226,9 +226,10 @@ Wednesday the 25th, about two days earlier.
 
 - [ ] Test the first-person lock (new game, the mine, before the character editor): the log says
       "View: the game has switched off changing view", Lin and Heller aren't filmed, and after
-      the character editor "View: the game allows changing view" and everything works as before.
-      Also check an ordinary first-person conversation later on: it must stay on this mod's camera
-      (the flag read is marked unconfirmed in CommonLibSF; the log shows the flags).
+      the character editor "View: the game allows changing view" and filming works as before.
+      Conversations keep this mod's camera either way. The CF01 brig too, if you get there: the
+      guards not filmed while the game keeps you in first person (the flag read is marked
+      unconfirmed in CommonLibSF; the log shows the flags).
 
 ## Moved to after 1.0
 
