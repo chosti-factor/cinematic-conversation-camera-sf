@@ -5,7 +5,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.0.1 - unreleased (test build)
+## 1.0.2 - unreleased (test build)
 
 Test builds after 1.0 are numbered 1.0.x; the next public release is 1.1.0, with these fixes
 and features and what players report (the user).
@@ -15,6 +15,20 @@ and features and what players report (the user).
   stood where it was set up, with only its aim following, so in an elevator the people rose out
   of the picture until the next line's shot caught up. Now a lift or a stair carries the shot
   (quickly, through a 4 cm dead band); around a standing conversation it stays put as before.
+
+### Changed (the user's second new-game test)
+- Filming people talking: not while you sit or lie on something in first person (a chair, a
+  bench, a bar stool, the stretcher): filming hides you, so its shots showed the place empty.
+  The user's second test: 1.0.1's view lock only covered a moment of the opening, and the stretcher
+  scene before the character editor (the game's furniture camera) was still filmed. From third
+  person, sitting, filming goes on as before (you're in its shots).
+- A scene you walked away from (moving ends its filming, and it wasn't filmed again on its own
+  for 2 minutes) can start again once you've stood still for 2 s since, as you do to listen.
+  In the mine, Lin's talks with Bening and Troy belong to the same scene as hers with Heller, so
+  after walking away from that one they weren't filmed. Walking on, nothing restarts; a scene
+  stopped with the listen key, or left for only repeating itself, stays as before.
+
+## 1.0.1 - 2026-11-26 (test build)
 
 ### Changed (the user's new game)
 - While the game keeps you in first person and won't let you change view (as at the start of a
@@ -26,11 +40,6 @@ and features and what players report (the user).
   reuses that scene). Your own conversations keep this mod's camera (the user's choice).
   Read from the game's input switches (changing view switched off for a second or more of
   gameplay); the log says when the game switches changing view off and on.
-- Nor while you sit or lie on something in first person (a chair, a bench, a bar stool, the
-  stretcher): filming hides you, so its shots showed the place empty. The user's second test:
-  the mine's view lock read as above only covered a moment of the opening, and the stretcher
-  scene before the character editor (the game's furniture camera) was still filmed. From third
-  person, sitting, filming goes on as before (you're in its shots).
 
 ## 1.0.0 - 2026-11-25 (public beta)
 

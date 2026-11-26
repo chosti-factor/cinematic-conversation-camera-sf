@@ -4983,7 +4983,7 @@ namespace CCC
 			std::uint32_t                         poseLine{ 0 };
 			RE::NiPoint3                          anchor{};    // the person in shot (two-shot: between them), eased
 			RE::NiPoint3                          lookOffset{};  // the aim, relative to the anchor
-			float                                 liftBase{ 0.0f };  // the subject's height when the shot was set up (1.0.1)
+			float                                 liftBase{ 0.0f };  // the subject's height when the shot was set up (1.0.2)
 			float                                 lift{ 0.0f };      // how far the camera has risen or sunk with them since
 			std::vector<std::uint32_t>            group;     // the scene's people lately, for group shots (0.8.10)
 			bool                                  groupShot{ false };  // this line's shot is the group shot
@@ -5005,12 +5005,14 @@ namespace CCC
 			RE::NiPoint3                          speedFeet{};     // your speed over the last quarter second (0.8.18)
 			std::chrono::steady_clock::time_point speedAt{};
 			float                                 speed{ 0.0f };
+			std::chrono::steady_clock::time_point stillSince{};   // standing still since (1.0.2)
 			std::chrono::steady_clock::time_point autoBlockedUntil{};  // you stopped it: no auto start before
 			bool                                  autoStarted{ false };
 			std::chrono::steady_clock::time_point startedAt{};
 			const void*                           scene{ nullptr };          // the scene being filmed
 			const void*                           declinedScene{ nullptr };  // you ended it: not again on its own for 2 minutes (0.8.6)
 			std::chrono::steady_clock::time_point declinedAt{};
+			bool                                  declinedByMoving{ false };  // you walked away (not the key, not a repeat): standing still forgives it (1.0.2)
 			std::chrono::steady_clock::time_point stoppedAt{};   // when filming last stopped (0.8.15)
 			std::chrono::steady_clock::time_point ownUntil{};    // last seen in a conversation of your own (0.9.39)
 			std::vector<std::uint32_t>            people;    // who has spoken or been spoken to in what's filmed (0.8.10)
@@ -5409,6 +5411,9 @@ namespace CCC
 				g_filmMain.speedFeet = playerFeet;
 				g_filmMain.speedAt = a_now;
 			}
+			if (g_filmMain.speed > 0.3f || g_filmMain.stillSince == std::chrono::steady_clock::time_point{}) {
+				g_filmMain.stillSince = g_filmMain.speed > 0.3f ? std::chrono::steady_clock::time_point{} : a_now;
+			}
 			// Not your own conversation (0.9.39 test: the prompt showed as every conversation of
 			// yours ended). Its people kept "talking" through it and the scene stayed theirs for a
 			// few seconds after, so they looked like a conversation nearby: lines from before or
@@ -5468,7 +5473,16 @@ namespace CCC
 				const void* scene = closest->scene;
 				return latestOf([scene](const Candidate& a_c) { return a_c.scene == scene; });
 			};
-			const auto declinedNow = [&](const void* a_scene) { return a_scene && a_scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s; };
+			// 1.0.2 (the user: in the mine, Lin's talks with Bening and Troy weren't filmed, being
+			// the same scene as hers with Heller, walked away from a moment before): a scene you
+			// walked away from can start again once you've stood still for 2 s since, as you do to
+			// listen; walking on, nothing restarts. Not one stopped with the listen key (that also
+			// blocks starting on its own for a minute) or left for repeating itself.
+			const bool forgiven = g_filmMain.declinedByMoving && g_filmMain.stillSince != std::chrono::steady_clock::time_point{} &&
+			                      g_filmMain.stillSince > g_filmMain.declinedAt && a_now - g_filmMain.stillSince >= 2s;
+			const auto declinedNow = [&](const void* a_scene) {
+				return a_scene && a_scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s && !forgiven;
+			};
 			const auto filmedPerson = [&](std::uint32_t a_id) { return std::ranges::find(g_filmMain.people, a_id) != g_filmMain.people.end(); };
 			const Candidate* pick = nullptr;
 			if (filming && g_filmMain.scene) {
@@ -5572,16 +5586,18 @@ namespace CCC
 					g_filmMain.autoBlockedUntil = a_now + 60s;  // you stopped it: don't start it again on its own for a while
 					g_filmMain.declinedScene = g_filmMain.scene;
 					g_filmMain.declinedAt = a_now;
+					g_filmMain.declinedByMoving = false;
 				} else if (moved > 0.5f) {
 					StopFilming("you moved");
-					g_filmMain.declinedScene = g_filmMain.scene;  // not this scene again on its own
+					g_filmMain.declinedScene = g_filmMain.scene;  // not this scene again on its own (until you stand still, 1.0.2)
 					g_filmMain.declinedAt = a_now;
+					g_filmMain.declinedByMoving = true;
 				} else if (speaker == 0) {
 					// Over: on to the next conversation scene nearby, if there's one (and it starts
 					// on its own), without leaving the filming camera.
 					const void* filmed = g_filmMain.scene;
 					const auto* next = s.autoListen && filmed ? nearestOf([&](const Candidate& a_c) {
-						return a_c.scene && a_c.scene != filmed && !(a_c.scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s);
+						return a_c.scene && a_c.scene != filmed && !declinedNow(a_c.scene);
 					}) :
 					                                            nullptr;
 					if (next) {
@@ -5652,6 +5668,7 @@ namespace CCC
 						StopFilming("the scene is only repeating itself");
 						g_filmMain.declinedScene = g_filmMain.scene;
 						g_filmMain.declinedAt = a_now;
+						g_filmMain.declinedByMoving = false;
 					}
 				}
 				return;
@@ -5670,7 +5687,7 @@ namespace CCC
 			const bool  conversation = scene != nullptr;
 			// 0.8.6: a scene starts it on its own even while you're moving (scenes are few, and
 			// moving ends it), but not one you've already walked away from or stopped.
-			const bool declined = scene == g_filmMain.declinedScene && a_now - g_filmMain.declinedAt < 120s;
+			const bool declined = declinedNow(scene);
 			// Only on a line that started after filming last stopped (0.8.14 test: a talking
 			// flag flickering after Amoli and Gerhard's scene ended started it again for a
 			// second, a flip to third person and back).
@@ -5693,7 +5710,7 @@ namespace CCC
 			// and where the game has you lying or sitting somewhere (the stretcher before the
 			// character editor, which the Watchtower creation reuses) its shots would show the
 			// place empty (the user). Conversations keep this mod's camera (the user's choice).
-			// 1.0.1 (the user's second new-game test): nor while you sit or lie on something in
+			// 1.0.2 (the user's second new-game test): nor while you sit or lie on something in
 			// first person. Filming hides you there, so its shots showed the place empty: the
 			// stretcher you lie on in the mine before the character editor (the game's furniture
 			// camera, mode 6, where the view lock above isn't read), a bench, a bar stool.
@@ -5975,7 +5992,7 @@ namespace CCC
 					g_film.anchor.y += (subject.y - g_film.anchor.y) * k;
 					g_film.anchor.z += (subject.z - g_film.anchor.z) * k;
 				}
-				// 1.0.1 (the user: in an elevator the shot stayed behind, the people rising out of it,
+				// 1.0.2 (the user: in an elevator the shot stayed behind, the people rising out of it,
 				// until the next line's shot caught up): the camera rises and sinks with them, quickly
 				// and through the same dead band, so a lift or a stair carries the shot; around a
 				// standing conversation it stays put as before.
