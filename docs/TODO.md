@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 1.0.3 (2026-11-26). Dates assume the Friday 27 November release; for
+Last updated: 1.1.0 (2026-11-26). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -208,9 +208,8 @@ Wednesday the 25th, about two days earlier.
       CHANGELOG 1.0.0 (two crashes as conversations started, talking to someone being filmed,
       speaker changes between people close together, the seated sway, the camera cycle while
       seated, Karl Fielding taken for a robot, the settings page), the rest below
-- [ ] Nexus page and its credits section (from CREDITS.md). 2026-11-26: the description draft,
-      the AI disclosure, the permissions notes and the credits blurb done; the user is setting up
-      the page
+- [x] Nexus page and its credits section (from CREDITS.md). 2026-11-26: set up by the user but
+      for images and media
 - [ ] 60-90 s clip
 - [ ] Outreach a few days before (machinima podcast, Starfield mod YouTubers, the Starfield
       Modding Discord)
@@ -222,15 +221,20 @@ Wednesday the 25th, about two days earlier.
       from the Claude session (the tag push got HTTP 403; branch pushes work), so the user pushes
       it: `git tag -a v1.0.0 -m "Cinematic Conversation Camera SF 1.0.0 (public beta)"` on the
       release commit, then `git push origin v1.0.0`
-- [ ] 1.0 public beta on Nexus: Friday 27 Nov, 9-11 am Central (or Wednesday the 25th)
+- [ ] The `v1.1.0` tag pushed by the user (the release built from it goes on Nexus): on the
+      1.1.0 commit, `git tag -a v1.1.0 -m "Cinematic Conversation Camera SF 1.1.0 (public beta)"`,
+      then `git push origin v1.1.0`
+- [ ] Public beta on Nexus with 1.1.0 (the user, 2026-11-26: 1.0.3 tested, so the launch build is
+      1.1.0, not 1.0.0): Friday 27 Nov, 9-11 am Central. The page is set up but for images and
+      media; courtesy notes sent to hashhbbrown and rrrafau (2026-11-26)
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
-## To 1.1.0 (the next public release; test builds 1.0.x until then: fixes, features, and what players report)
+## Open tests (carried past 1.1.0)
 
 - [ ] Test filming in an elevator after character creation (the Lodge or MAST lifts): the people
       stay in the picture as it rises (in the mine it worked, 1.0.2; the mine isn't filmed since 1.0.3).
 
-- [ ] Test the opening (1.0.3, new game): nothing filmed in the mine and no conversation camera
+- [x] Test the opening (1.0.3, new game; the user, 2026-11-26: working fine, with the tilt limit): nothing filmed in the mine and no conversation camera
       of this mod until character creation is done (the log: "Opening: before character
       creation (scene 'MQ101_001_MiningScene')", "... not filmed, you haven't made your
       character yet"); after it, "Opening: past it (scene 'MQ101_005B_FaceGenComplete')" and

@@ -5,7 +5,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.0.3 - unreleased (test build)
+## 1.1.0 - 2026-11-27 (public beta, on Nexus)
+
+The first release on Nexus. 1.0.0 (GitHub only) with the fixes of test builds 1.0.1 to 1.0.3,
+all tested by the user on 2026-11-26:
+
+- Nothing of this mod's camera in the game's opening, until you've made your character (no
+  filming of people talking, conversations in the game's camera): your character has no body
+  to film there yet (1.0.3).
+- Tilts down keep the heads below the letterbox's top bar (Nebula's high close-up; 1.0.3).
+- Filming people talking: not while you sit or lie on something in first person (1.0.2), nor
+  while the game won't let you change view (1.0.1); the camera rises and sinks with the people
+  in shot, as in a lift (1.0.2); a scene you walked away from can start again once you've
+  stood still for 2 s (1.0.2).
+
+## 1.0.3 - 2026-11-26 (test build)
 
 ### Changed (the user's third new-game test)
 - Nothing of this mod's camera before you've made your character: no filming people talking

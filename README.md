@@ -16,9 +16,9 @@ who first showed it could be done in Starfield. CCC and Player Camera During Dia
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
-## Status: 1.0, public beta
+## Status: 1.1.0, public beta
 
-Last updated: 1.0.3 (2026-11-26).
+Last updated: 1.1.0 (2026-11-26).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 

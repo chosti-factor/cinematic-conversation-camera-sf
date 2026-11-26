@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 1.0.3 (2026-11-26).
+Last updated: 1.1.0 (2026-11-26).
 
 ## Working rules
 
@@ -73,7 +73,11 @@ Last updated: 1.0.3 (2026-11-26).
 - The session's stop hook flags the owner-authored commits as "Unverified" and asks for them to
   be re-authored as Claude: they stay the owner's (the rule above); say so briefly and go on.
 
-## Where things stand (2026-11-26, 1.0.3)
+## Where things stand (2026-11-26, 1.1.0)
+
+- 1.1.0 is the Nexus launch build (Friday 2026-11-27, 9-11 am Central): 1.0.0 with the tested
+  fixes of 1.0.1-1.0.3. The user pushes the `v1.1.0` tag; the Nexus page is set up but for
+  images and media.
 
 - Test builds 1.0.1-1.0.3 since the release: the elevator carry (works), standing still lets a
   scene you walked away from start again, no filming while you sit or lie in first person, and
