@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 1.0.0 (2026-11-25). Dates assume the Friday 27 November release; for
+Last updated: 1.0.2 (2026-11-26). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -248,6 +248,9 @@ Wednesday the 25th, about two days earlier.
   session) before the cut back to the NPC. Holding it to the preset's shortest hold would start
   the NPC's line off screen; try it if those cuts feel abrupt.
 - Inside ships: more testing (the user, 1.0 test).
+- The rules for filming people talking, looked at as a whole (the user, 2026-11-26; README
+  Roadmap, high priority): when it starts on its own, what ends it, when a scene you walked away
+  from may start again, sitting or lying in first person, the first-person lock, the sprint limit.
 - The SFSE Menu Framework crashed once in the 1.0 test (21:49, its own code: MenuOwnership
   SetLayerDisabled, in the window's message handling; none of this mod on the stack). Its build is
   the window-blur one; worth reporting to its author if it comes back.
@@ -258,7 +261,7 @@ Wednesday the 25th, about two days earlier.
   Wilcox table (1-4 cm standing, Bayu and Yannick); the game seems to place its camera from
   something else when you sit. Log your head and feet at the change to find out.
 
-- The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; Planned after 1.0)
+- The Ranger fading in at Neon (the user, 2026-11-19: very infrequent; README Roadmap, high priority)
 - Watch for: crashes in the game's UI engine (Scaleform's ActionScript, on another thread,
   DialogueMenu on the stack) as a conversation starts. Two in the release-candidate test
   (2026-11-24): Tank at the Trackers Alliance HQ (02:43, BSJobs, 50 ms after the letterbox bars
@@ -271,7 +274,7 @@ Wednesday the 25th, about two days earlier.
   two frames of the new speaker in a slightly wrong framing just after the cut (0.9.75; the
   0.9.74 guess was wrong; docs/MEMORY.md)
 - Your character looking at the wrong person in conversations with three or more people (the
-  user, 2026-11-23: after 1.0 unless easy; it isn't: needs the game's head tracking; README Planned)
+  user, 2026-11-23: after 1.0 unless easy; it isn't: needs the game's head tracking; README Roadmap, high priority)
 - [x] Filming people talking: the near person in over-the-shoulder shots hidden by the game's
   camera and fading back in after the cut (Walter, 0.9.29 test). The camera kept 1.4 m from
   them (0.9.29); to check in the next test, with the distance in the log

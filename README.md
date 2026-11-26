@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: 1.0, public beta
 
-Last updated: 1.0.0 (2026-11-25).
+Last updated: 1.0.2 (2026-11-26).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -218,37 +218,37 @@ How the camera starts and ends a conversation, frame by frame, with the measured
 [docs/TRANSITIONS.md](docs/TRANSITIONS.md). What was tried and removed along the way (test
 switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
-### 1.0
+### Roadmap
 
-The first public release, a beta: feature complete since 2026-11-19, then four polish passes
-(redundancy, debugging, optimization, and the INI and settings page review,
-[docs/INI_HISTORY.md](docs/INI_HISTORY.md)), the quest scenes filmed by this mod by default
-(0.9.67-0.9.77), and the release-candidate test's fixes (1.0.0: two crashes as conversations
-started, speaker changes between people close together, the seated sway, the settings page).
-Reports welcome: see Testing and logs below.
+What comes after 1.0: test builds numbered 1.0.x on the Test build release here, then 1.1.0,
+the next public release, with these and what players report.
 
-### After 1.0
-
-Planned:
+High priority:
 - Cleaner cuts in conversations with three or more people (the user, 1.0 test: good overall,
   but the cuts at speaker changes should be cleaner).
 - More testing inside ships, and your character in frame while you sit from first person
   (the game doesn't always build your full body there; Known issues).
-- The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
-  mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
-  the game's actor values, not yet confirmed for 1.16.244 (the user, 2026-11-20: after 1.0).
+- The rules for filming people talking, looked at as a whole (the user, 2026-11-26): when it
+  starts on its own, what ends it, when a scene you walked away from may start again (standing
+  still since 1.0.2), sitting or lying in first person, the game's first-person lock, the sprint
+  limit. From players' reports and a few sessions of play aimed at it.
 - Your character looking at the wrong person in conversations with three or more people
   (the user, 2026-11-23): the game turns your head to the person the conversation started
   with, not to whoever is speaking. This mod doesn't set where you look yet; it needs the
   game's head-tracking functions, not yet found for 1.16.244.
 - NPCs now and then fading in a moment after a conversation starts (seen once, the Ranger at
-  Neon, from first person): rare enough to look into after 1.0, with footage. Probably the
+  Neon, from first person): rare; to look into with footage. Probably the
   game hiding people close to its camera, the cause of the same fade while filming people
   talking (fixed there in 0.9.29 by keeping the camera further away); a fix that keeps the
   people in shot fully visible would cover both.
 - Quest scenes that direct their own camera: this mod films every quest scene since 0.9.76
   (with `bGameCameraInScenes=1` none). Better: the game's camera only while a scene's own
   camera action runs, this mod's otherwise. Built on the scene logs gathered from 0.9.20 on.
+
+Low priority:
+- The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
+  mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
+  the game's actor values, not yet confirmed for 1.16.244 (the user, 2026-11-20: after 1.0).
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
 - Large speakers measured by their actual body, replacing the height rule (height is only
   part of it: robots like Vasco are wide and bulky too). The line from the camera to your
@@ -270,10 +270,10 @@ Planned:
   picks: docs/research/your-lines-tally.tsv, summed up in docs/EMOTIONS.md) and logged when
   they fire; English only, its own setting.
 
-Mulling (not decided):
-- Filming people talking while you sit, from first person: since 1.0.1 (test builds; released in 1.1.0) it doesn't film then
-  (filming hides you, so the seat showed empty). Building your full body for it instead, so it
-  can film with you in it (the user, 2026-11-26).
+Mulling (not decided), last:
+- Filming people talking while you sit, from first person: since 1.0.2 (a test build; public
+  in 1.1.0) it doesn't film then (filming hides you, so the seat showed empty). Building your
+  full body for it instead, so it can film with you in it (the user, 2026-11-26).
 - The overlapping lines after filming people talking (Known issues): a way to set it off
   reliably, then the cause. A lead: Player Camera During Dialogue keeps camera changes away from an
   NPC's multi-part response until it has fully played, against a dialogue-skip bug of its own.
@@ -348,13 +348,13 @@ character's body and of the ship in the 1.0 test.
 
 - **A one-frame glitch at some speaker changes in scenes with three or more people.** When
   someone else takes the line, the game moves its own conversation camera to them; about half
-  the time, one frame shows this mod's shot slightly or clearly out of place. Planned after 1.0
-  (docs/MEMORY.md has what's known).
+  the time, one frame shows this mod's shot slightly or clearly out of place. On the Roadmap,
+  high priority (docs/MEMORY.md has what's known).
 - **Your character looking at the wrong person** in conversations with three or more people,
-  and **an NPC now and then fading in** a moment after a conversation starts: planned after 1.0.
+  and **an NPC now and then fading in** a moment after a conversation starts: on the Roadmap, high priority.
 - **Sitting yourself, from first person, you're sometimes not in the shots.** The game doesn't
   always build your full body while you sit (a chair in the CF01 brig, a seat aboard your
-  ship), so the mod keeps you out of frame for that conversation. Planned after 1.0.
+  ship), so the mod keeps you out of frame for that conversation. On the Roadmap, high priority.
 - **AutoZoom** ([Nexus 10543](https://www.nexusmods.com/starfield/mods/10543)): freezes of your
   character's body and of the ship with it on (Compatibility).
 

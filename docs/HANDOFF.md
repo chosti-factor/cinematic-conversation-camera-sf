@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 1.0.0 (2026-11-25).
+Last updated: 1.0.2 (2026-11-26).
 
 ## Working rules
 
@@ -85,7 +85,7 @@ Last updated: 1.0.0 (2026-11-25).
   so far (`fSeatedSwayCap`); no camera cycle while you sit; someone sitting low isn't a small
   speaker; overheads are accents; the settings page's pages named after the INI sections, with
   default buttons, and `bDebugLog` and `bShowMessages` in [Debug].
-- Known for after 1.0 (TODO "Moved to after 1.0", README): cleaner speaker changes with three or
+- Known for after 1.0 (TODO "Moved to after 1.0", README Roadmap): cleaner speaker changes with three or
   more people; you out of frame while seated from first person; more testing in ships; your
   character looking at the wrong person; NPCs now and then fading in; overlapping lines after
   filming (rare). AutoZoom is partially compatible (COMPATIBILITY.md).
@@ -114,7 +114,8 @@ Last updated: 1.0.0 (2026-11-25).
   polish passes in the release plan below (redundancy, debugging, optimization, INI
   review), each followed by a build and a test round; then testing messages and the debug
   log off; then a full test round on the release candidate. 1.0 public beta Friday
-  2026-11-27. New ideas go to README "After 1.0" (Planned or Mulling) on the user's call.
+  2026-11-27. New ideas go to the README's Roadmap (High priority, Low priority, or Mulling last) on the
+  user's call.
 - Presets settled through the 2026-11-18/19 reviews (docs/PRESETS.md): Nebula (space opera)
   is the default and calmer (what a pace of -1.5 gave; 0.9.31 half a step back, +0.5, a touch more varied); Constellation frames people larger
   and never cuts from a shot to the same shot (every preset); Frontier's extreme close-ups
@@ -269,7 +270,7 @@ Last updated: 1.0.0 (2026-11-25).
 - Filming others: ends on a move only after you've stopped.
 - To test in 0.8.17: tagged choices and persuasion close-ups, seated framing, your angle
   changing in Standard/Starborn/Constellation. The Neon ranger fading in moved to
-  after 1.0 Planned (the user, 2026-11-19: very infrequent).
+  the README Roadmap (the user, 2026-11-19: very infrequent).
 
 ## Earlier (2026-11-15, 0.8.14)
 
@@ -371,7 +372,7 @@ Last updated: 1.0.0 (2026-11-25).
   delete the user key), lists and sliders a third of the width, the notes bulleted at the end. Registered at SFSE kPostLoad; returns quietly without the framework. The SDK is in
   `extern/` (xmake adds its include dirs and `_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING`).
   Keep its ranges in step with Settings.cpp's clamps (the lens is 20-70).
-- After 1.0, planned (see README "After 1.0"): smoother start and exit styles (the user,
+- After 1.0, planned (see the README Roadmap): smoother start and exit styles (the user,
   2026-11-17: 1.0's clean cuts are good for release); large speakers measured from the
   actor's bounds rather than head height (the user, 2026-11-18); Gameplay Options (below); objects the obstacle
   check can't see (plants by nearby objects' bounding boxes along the camera-to-face line,
