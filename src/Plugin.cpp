@@ -247,6 +247,10 @@ namespace CCC
 		DWORD g_mainThreadId = 0;
 
 		bool                                  g_lastGameplayFirstPerson = false;
+		// 1.0.1 (the user's new game): the game has switched off changing view, as it does in
+		// first person until you've made your character (MQ101's opening in the mine). Sampled in
+		// gameplay only (the dialogue menu switches it off too), held 1 s before it counts.
+		std::atomic<bool>                     g_viewLocked{ false };
 		bool                                  g_restoreFirstPersonPending = false;
 		bool                                  g_filmThirdPerson = false;  // filming from first person: the game is in third person for it (0.8.8)
 		// Your own conversation started while filming had put the game in third person (0.9.38:
@@ -2001,6 +2005,14 @@ namespace CCC
 					g_state.needsBodyRepair = false;
 					g_lensActive.store(false, std::memory_order_relaxed);  // 0.9.38: not even a frame through filming's lens (the 0.9.37 log: 50 for 29.6)
 					REX::INFO("Quest scene: leaving the game's camera on this conversation");
+				}
+				// 1.0.1: in first person while the game won't let you change view (before you've
+				// made your character), the conversation stays the game's.
+				if (!g_state.smallSpeaker && !g_state.handedBack && g_state.startedFirstPerson && g_viewLocked.load(std::memory_order_relaxed)) {
+					g_state.handedBack = true;
+					g_state.needsBodyRepair = false;
+					g_lensActive.store(false, std::memory_order_relaxed);
+					REX::INFO("View locked to first person by the game: leaving the game's camera on this conversation");
 				}
 				g_state.backgroundScene = speakerInScene && !g_state.handedBack;
 				g_state.questScene = playerInScene && !ambient;  // 0.9.72: merchants filmed with the shot library in it
@@ -5682,6 +5694,16 @@ namespace CCC
 			// the user's call): with bListenPrompt (the prompt shows), or with bAutoListen (no
 			// prompt; the key still films anyone, barks too). With both off, nothing starts.
 			const bool keyStarts = pressed && (s.listenPrompt || s.autoListen);
+			// 1.0.1: not while the game keeps you in first person (before you've made your
+			// character): filming switches the view to third person.
+			if ((keyStarts || (wouldStart && !running)) && g_lastGameplayFirstPerson && g_viewLocked.load(std::memory_order_relaxed)) {
+				static std::uint64_t heldLine = 0;
+				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
+					heldLine = static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count());
+					REX::INFO("Filming people talking: {} and {} not filmed, the game keeps you in first person", TalkerName(speaker), TalkerName(listener));
+				}
+				return;
+			}
 			if (wouldStart && running && s.debugLog) {
 				static std::uint64_t heldLine = 0;
 				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
@@ -6244,6 +6266,24 @@ namespace CCC
 					const bool first = camera->QCameraEquals(RE::CameraState::kFirstPerson) || camera->QCameraEquals(RE::CameraState::kIronSights);
 					const bool third = camera->QCameraEquals(RE::CameraState::kThirdPerson);
 					if (first || third) {
+						// Changing view switched off by the game (USER_EVENT_FLAG::POVSwitch out of the
+						// input manager's enabled flags), for at least a second of gameplay.
+						if (auto* input = RE::BSInputEnableManager::GetSingleton()) {
+							static bool                                  lockedSeen = false;
+							static std::chrono::steady_clock::time_point lockedSince{};
+							const auto flags = static_cast<std::uint32_t>(std::to_underlying(input->m_cachedUserEventFlags));
+							const bool locked = (flags & static_cast<std::uint32_t>(std::to_underlying(RE::USER_EVENT_FLAG::POVSwitch))) == 0;
+							if (locked != lockedSeen) {
+								lockedSeen = locked;
+								lockedSince = now;
+							}
+							const bool held = lockedSeen && now - lockedSince >= 1s;
+							if (held != g_viewLocked.load(std::memory_order_relaxed) && (held || !lockedSeen)) {
+								g_viewLocked.store(held, std::memory_order_relaxed);
+								REX::INFO("View: the game {} changing view (enabled input flags {:08X}){}", held ? "has switched off" : "allows", flags,
+									held ? "; this mod leaves your conversations to the game's camera and doesn't film people talking while you're in first person" : "");
+							}
+						}
 						if (!g_viewCandidateKnown || g_viewCandidateFirst != first) {
 							g_viewCandidateKnown = true;
 							g_viewCandidateFirst = first;

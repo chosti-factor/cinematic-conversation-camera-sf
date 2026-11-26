@@ -222,6 +222,14 @@ Wednesday the 25th, about two days earlier.
 - [ ] 1.0 public beta on Nexus: Friday 27 Nov, 9-11 am Central (or Wednesday the 25th)
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
+## 1.0.1
+
+- [ ] Test the first-person lock (new game, the mine, before the character editor): the log says
+      "View: the game has switched off changing view", Lin and Heller aren't filmed, and after
+      the character editor "View: the game allows changing view" and everything works as before.
+      Also check an ordinary first-person conversation later on: it must stay on this mod's camera
+      (the flag read is marked unconfirmed in CommonLibSF; the log shows the flags).
+
 ## Moved to after 1.0
 
 - From first person, seated (the brig in CF01 with Kibwe, twice; aboard the Cryoknox): your head

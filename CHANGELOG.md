@@ -5,6 +5,17 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
+## 1.0.1 - unreleased
+
+### Changed (the user's new game)
+- While the game keeps you in first person and won't let you change view (as at the start of a
+  new game, until you've made your character), this mod stands back: conversations stay on the
+  game's camera, and people talking near you aren't filmed (filming switches the view to third
+  person; in the user's new game it filmed Lin and Heller in the mine several times before the
+  character editor, with "start on its own" on). Read from the game's input switches
+  (changing view switched off for a second or more of gameplay); the log says when the game
+  switches changing view off and on.
+
 ## 1.0.0 - 2026-11-25 (public beta)
 
 The first public release: 0.9.77, the release-candidate test's changes below, and the release
