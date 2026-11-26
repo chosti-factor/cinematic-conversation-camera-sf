@@ -502,6 +502,16 @@ namespace CCC::Shots
 			const float halfV = std::atan(std::tan(std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f * kDeg) / (std::max)(a_in.aspect, 0.5f));
 			aimLift = (std::min)(aimLift, distance * std::tan(halfV) / 3.0f);
 		}
+		if (a_in.move == M::kTiltDown && aimLift < 0.0f) {
+			// 1.0.3 (the user: Lin's high close-up with Barrett, Nebula's Tilt down 22, three times
+			// in one conversation, took the heads partly under the top bar): the aim sank 0.38 m at
+			// 1.9 m, about a whole half-frame, so the face rose out through the letterbox. Now the
+			// face rises at most to 0.35 of the half-frame above the middle (from 0.10 on the high
+			// close-up), so the top of the head stays below the top bar (at about 0.76).
+			const float halfV = std::atan(std::tan(std::clamp(a_in.lensDegrees, 10.0f, 150.0f) * 0.5f * kDeg) / std::clamp(a_in.aspect, 1.0f, 3.0f));
+			const float room = (std::max)(0.0f, 0.35f - spec.headroom) * distance * std::tan(halfV);
+			aimLift = (std::max)(aimLift, -room);
+		}
 
 		const auto& anchorPoint = spec.anchor == Anchor::kSubject ? subject : midpoint;
 		const auto& aimPoint = spec.aimMidpoint ? midpoint : subject;

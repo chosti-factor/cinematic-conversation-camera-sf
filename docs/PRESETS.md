@@ -147,6 +147,10 @@ that shot. (Generated from the presets in the code.)
   (0.9.23) that's the only push-in: its regular close-ups are held still, and an emotional line
   on a close-up already on screen starts the push-in from there.
 
+- **Tilts down are held to the letterbox (1.0.3).** A tilt down (Nebula's high close-up and
+  high shoulders) lets the face rise only to 0.35 of the half-frame above the middle, so the
+  head stays below the top bar; at Nebula's 22 the full tilt took Lin's head partly under it.
+
 - **Until 0.9.26 Starborn's and Close's room shots never came up** (a distance check meant
   for other shots left them out); the shares below are what they get now.
 - **Shares are before the room has its say.** Room shots (Wide, Distant, Distant low,
