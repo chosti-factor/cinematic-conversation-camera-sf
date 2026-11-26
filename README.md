@@ -271,6 +271,9 @@ Planned:
   they fire; English only, its own setting.
 
 Mulling (not decided):
+- Filming people talking while you sit, from first person: filming switches to third person and
+  hides you (your full body isn't built for it), so the stool or bench you sit on shows empty in
+  its shots. Not filming then, or building your body for it (the user, 2026-11-26).
 - The overlapping lines after filming people talking (Known issues): a way to set it off
   reliably, then the cause. A lead: Player Camera During Dialogue keeps camera changes away from an
   NPC's multi-part response until it has fully played, against a dialogue-skip bug of its own.
