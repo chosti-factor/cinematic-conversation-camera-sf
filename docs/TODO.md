@@ -208,14 +208,17 @@ Wednesday the 25th, about two days earlier.
       CHANGELOG 1.0.0 (two crashes as conversations started, talking to someone being filmed,
       speaker changes between people close together, the seated sway, the camera cycle while
       seated, Karl Fielding taken for a robot, the settings page), the rest below
-- [ ] Nexus page and its credits section (from CREDITS.md)
+- [ ] Nexus page and its credits section (from CREDITS.md). 2026-11-26: the description draft,
+      the AI disclosure, the permissions notes and the credits blurb done; the user is setting up
+      the page
 - [ ] 60-90 s clip
 - [ ] Outreach a few days before (machinima podcast, Starfield mod YouTubers, the Starfield
       Modding Discord)
 
 ## 6. Release
 
-- [ ] The `v1.0.0` tag pushed (its build makes the versioned release zip). 2026-11-25: refused
+- [x] The `v1.0.0` tag pushed by the user (2026-11-25); the release has
+      CinematicConversationCameraSF-1.0.0.zip. Tag pushes are refused
       from the Claude session (the tag push got HTTP 403; branch pushes work), so the user pushes
       it: `git tag -a v1.0.0 -m "Cinematic Conversation Camera SF 1.0.0 (public beta)"` on the
       release commit, then `git push origin v1.0.0`
