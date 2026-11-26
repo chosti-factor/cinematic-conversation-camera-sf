@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 1.0.2 (2026-11-26). Dates assume the Friday 27 November release; for
+Last updated: 1.0.3 (2026-11-26). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -224,18 +224,24 @@ Wednesday the 25th, about two days earlier.
 
 ## To 1.1.0 (the next public release; test builds 1.0.x until then: fixes, features, and what players report)
 
-- [ ] Test filming in an elevator (the MQ101 mine lift after the character editor, or the Lodge
-      or MAST lifts): the people stay in the picture as it rises.
+- [ ] Test filming in an elevator after character creation (the Lodge or MAST lifts): the people
+      stay in the picture as it rises (in the mine it worked, 1.0.2; the mine isn't filmed since 1.0.3).
 
-- [ ] Test the first-person lock (new game, the mine, before the character editor): the log says
-      "View: the game has switched off changing view", Lin and Heller aren't filmed, and after
-      the character editor "View: the game allows changing view" and filming works as before.
-      Conversations keep this mod's camera either way. 1.0.1 test 1 (2026-11-26): the lock read
-      only covered a moment (FFFFF818); the walk through the mine had POVSwitch on (FFFFFE3F,
-      fighting, sneaking and menus off) and the stretcher scene (furniture camera) was filmed.
-      Now also no filming while you sit or lie in first person: test the stretcher again. The CF01 brig too, if you get there: the
-      guards not filmed while the game keeps you in first person (the flag read is marked
-      unconfirmed in CommonLibSF; the log shows the flags).
+- [ ] Test the opening (1.0.3, new game): nothing filmed in the mine and no conversation camera
+      of this mod until character creation is done (the log: "Opening: before character
+      creation (scene 'MQ101_001_MiningScene')", "... not filmed, you haven't made your
+      character yet"); after it, "Opening: past it (scene 'MQ101_005B_FaceGenComplete')" and
+      Lin's conversation in this mod's camera. Also load a save from the mine, then a later one.
+      History: 1.0.1's view lock covered only a moment (FFFFF818; the walk had POVSwitch on,
+      FFFFFE3F); 1.0.2's "first person and lying on something" missed the stretcher (the game
+      passed through third person for 164 ms as it laid you there). The elevator carry worked in
+      the mine (the user: shots followed the ride), but you were missing from them there.
+- [ ] Later (the user, 2026-11-26): other scenes where you wake on a stretcher or table. The
+      Watchtower start (it reuses the stretcher scene) and the Ryujin questline where you wake
+      from an operation: check whether you're filmed missing or lying empty, and whether the
+      opening's check (or the first-person and furniture blocks) covers them.
+- [ ] The CF01 brig, if you get there: the guards not filmed while the game keeps you in first
+      person (the POVSwitch flag read is marked unconfirmed in CommonLibSF; the log shows the flags).
 
 ## Moved to after 1.0
 

@@ -251,6 +251,14 @@ namespace CCC
 		// first person until you've made your character (MQ101's opening in the mine). Sampled in
 		// gameplay only (the dialogue menu switches it off too), held 1 s before it counts.
 		std::atomic<bool>                     g_viewLocked{ false };
+		// 1.0.3 (the user's third new-game test): the game's opening, before you've made your
+		// character. Your character has no body the game will build yet, so the shots showed empty
+		// space where you should be (the mine, the lift, the stretcher). Set by a line from one of
+		// MQ101's opening scenes (MQ101_001 to MQ101_005, the stretcher), cleared by a line from any
+		// later or other scene (MQ101_005B_FaceGenComplete follows character creation) and by a
+		// loading screen (a later save loaded). Until then this mod neither films people talking
+		// nor takes the conversation camera.
+		std::atomic<bool>                     g_beforeCharGen{ false };
 		bool                                  g_restoreFirstPersonPending = false;
 		bool                                  g_filmThirdPerson = false;  // filming from first person: the game is in third person for it (0.8.8)
 		// Your own conversation started while filming had put the game in third person (0.9.38:
@@ -951,6 +959,33 @@ namespace CCC
 		std::uint64_t g_hookCalls = 0;
 
 		bool ReadFormInfo(std::uintptr_t a_ptr, std::uint32_t& a_type, std::uint32_t& a_id, const char*& a_editorId);
+
+		// 1.0.3: a scene heard or joined tells whether you're still in the game's opening (see
+		// g_beforeCharGen). The opening's scenes are MQ101_001 to MQ101_005 (the 1.0.2 log:
+		// 001_MiningScene, 001b_MiningWalkScene, 002_LinSupervisorScene, 004_WallDownScene,
+		// 004b_WaitingAtTunnelScene, 005_FaceGenScene); 005B_FaceGenComplete and on come after.
+		void NoteCharGenScene(const void* a_scene)
+		{
+			if (!a_scene) {
+				return;
+			}
+			std::uint32_t type = 0, id = 0;
+			const char*   editorId = nullptr;
+			if (!ReadFormInfo(reinterpret_cast<std::uintptr_t>(a_scene), type, id, editorId) || type != static_cast<std::uint32_t>(std::to_underlying(RE::FormType::kSCEN)) || !editorId) {
+				return;
+			}
+			const std::string_view name{ editorId };
+			bool before = false;
+			if (name.size() >= 10 && name.starts_with("MQ101_00") && name[8] >= '1' && name[8] <= '5') {
+				const char next = name[9];
+				before = !(name[8] == '5' && (next == 'B' || next == 'b'));
+			}
+			if (g_beforeCharGen.exchange(before, std::memory_order_relaxed) != before) {
+				REX::INFO("Opening: {} (scene '{}'){}", before ? "before character creation" : "past it", name,
+					before ? "; this mod neither films people talking nor takes conversations until you've made your character" : "; this mod's camera is back on");
+			}
+		}
+
 		std::string LineEmotion(RE::Actor* a_speaker);
 		std::uintptr_t LineInfo(RE::Actor* a_speaker);
 
@@ -1999,8 +2034,16 @@ namespace CCC
 				// keep this mod's camera, as do scenes the speaker is in without you.
 				// Crew recruits (CREW_Generic_Recruit and the like) are everyday chats too.
 				const auto sceneName = playerScene.substr(0, playerScene.find("; quest"));  // the scene's own name, not its quest's
+				NoteCharGenScene(CurrentSceneUnsafe(speaker));
+				NoteCharGenScene(CurrentSceneUnsafe(player));
+				if (!g_state.smallSpeaker && g_beforeCharGen.load(std::memory_order_relaxed)) {
+					g_state.handedBack = true;
+					g_state.needsBodyRepair = false;
+					g_lensActive.store(false, std::memory_order_relaxed);
+					REX::INFO("Before character creation: leaving the game's camera on this conversation");
+				}
 				const bool ambient = sceneName.find("'Dialogue") != std::string::npos || sceneName.find("'CREW_") != std::string::npos;
-				if (!g_state.smallSpeaker && s.gameCameraInScenes && playerInScene && !ambient) {
+				if (!g_state.smallSpeaker && !g_state.handedBack && s.gameCameraInScenes && playerInScene && !ambient) {
 					g_state.handedBack = true;
 					g_state.needsBodyRepair = false;
 					g_lensActive.store(false, std::memory_order_relaxed);  // 0.9.38: not even a frame through filming's lens (the 0.9.37 log: 50 for 29.6)
@@ -4809,6 +4852,9 @@ namespace CCC
 			constexpr std::uint64_t kGetSmartPointer = 35638;  // turns a handle into the actor
 			if (GameLoading() || !Hud::AddressKnown(kProcessListsSingleton) || !Hud::AddressKnown(kGetSmartPointer)) {
 				a_source = "nothing (loading)";
+				if (GameLoading() && g_beforeCharGen.exchange(false, std::memory_order_relaxed)) {
+					REX::INFO("Opening: a loading screen; the check for the game's opening starts over");
+				}
 				return out;
 			}
 			auto* lists = RE::ProcessLists::GetSingleton();
@@ -4946,6 +4992,7 @@ namespace CCC
 						t.pending = false;
 						t.scene = CurrentSceneUnsafe(actor.get());
 						t.lineScene = t.scene;
+						NoteCharGenScene(t.scene);
 						t.lineSaid = raw && *raw ? static_cast<std::uintptr_t>(std::hash<std::string_view>{}(std::string_view{ raw })) ^ t.lastInfo : 0;
 						t.addressed = AddressedBy(actor->formID, t, playerFeet, playerHead);
 						ReportOverheardLine(actor.get(), t, a_now, playerFeet);
@@ -5716,12 +5763,19 @@ namespace CCC
 			// camera, mode 6, where the view lock above isn't read), a bench, a bar stool.
 			const bool locked = g_viewLocked.load(std::memory_order_relaxed);
 			const bool onFurniture = PlayerOnFurniture();
-			if ((keyStarts || (wouldStart && !running)) && g_lastGameplayFirstPerson && (locked || onFurniture)) {
+			// 1.0.3: nor before you've made your character, whatever the view (the 1.0.2 test: the
+			// game passed through third person for 164 ms as it laid you on the stretcher, so the
+			// view was taken as third person and the stretcher was filmed).
+			NoteCharGenScene(scene);
+			const bool beforeCharGen = g_beforeCharGen.load(std::memory_order_relaxed);
+			if ((keyStarts || (wouldStart && !running)) && (beforeCharGen || (g_lastGameplayFirstPerson && (locked || onFurniture)))) {
 				static std::uint64_t heldLine = 0;
 				if (static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count()) != heldLine) {
 					heldLine = static_cast<std::uint64_t>(pick->lastLine.time_since_epoch().count());
 					REX::INFO("Filming people talking: {} and {} not filmed, {}", TalkerName(speaker), TalkerName(listener),
-						onFurniture ? "you're sitting or lying on something in first person (filming would show the place empty)" : "the game keeps you in first person");
+						beforeCharGen ? "you haven't made your character yet (the game's opening: no body of you to film)" :
+						onFurniture   ? "you're sitting or lying on something in first person (filming would show the place empty)" :
+										"the game keeps you in first person");
 				}
 				return;
 			}

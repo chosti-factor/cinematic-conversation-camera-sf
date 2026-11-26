@@ -5,7 +5,21 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.0.2 - unreleased (test build)
+## 1.0.3 - unreleased (test build)
+
+### Changed (the user's third new-game test)
+- Nothing of this mod's camera before you've made your character: no filming people talking
+  and no conversation camera (the game's own instead) through the game's opening in the mine,
+  until character creation is done. Your character has no body the game builds yet, so the
+  shots showed empty space where you should be (the mine walk, the lift, the stretcher). Told
+  by the game's scenes: a line from one of the opening's (`MQ101_001` to `MQ101_005`, the
+  stretcher) turns it off; one from any later scene (`MQ101_005B_FaceGenComplete`, after
+  character creation) or a loading screen turns it back on. The log says "Opening: ...".
+- Why 1.0.2's block missed the stretcher: as it laid you there, the game passed through third
+  person for 164 ms, long enough for the mod to take your view as third person, so "first
+  person and lying on something" never held.
+
+## 1.0.2 - 2026-11-26 (test build)
 
 Test builds after 1.0 are numbered 1.0.x; the next public release is 1.1.0, with these fixes
 and features and what players report (the user).

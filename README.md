@@ -18,7 +18,7 @@ this mod draws on.
 
 ## Status: 1.0, public beta
 
-Last updated: 1.0.2 (2026-11-26).
+Last updated: 1.0.3 (2026-11-26).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -173,7 +173,8 @@ What CCC also does, done differently here; where Starfield is the reason, the bu
   handed back when it only repeats itself. Letterboxed; two people filmed close (close-ups,
   three-quarters, shoulders), with a two-shot or a group shot now and then when three or
   more are talking. From first person, the view is third person while it films, with you
-  hidden, and back to first person after. The game's HUD (the crosshair, name tags, compass,
+  hidden, and back to first person after. Not in the game's opening, before you've made your
+  character (no body of you to film yet; your conversations there keep the game's camera too). The game's HUD (the crosshair, name tags, compass,
   watch, health and weapon) is hidden while it films, and with `bSubtitlesInBars` the subtitle sits in the bottom bar as in your own
   conversations. Over-the-shoulder shots keep the camera at least 1.4 m from the near person,
   outside the distance at which the game hides people close to its camera.
@@ -231,7 +232,9 @@ High priority:
 - The rules for filming people talking, looked at as a whole (the user, 2026-11-26): when it
   starts on its own, what ends it, when a scene you walked away from may start again (standing
   still since 1.0.2), sitting or lying in first person, the game's first-person lock, the sprint
-  limit. From players' reports and a few sessions of play aimed at it.
+  limit, scenes where you wake on a stretcher or table (the Watchtower start, the Ryujin
+  questline's operation; since 1.0.3 nothing is filmed before you've made your character).
+  From players' reports and a few sessions of play aimed at it.
 - Your character looking at the wrong person in conversations with three or more people
   (the user, 2026-11-23): the game turns your head to the person the conversation started
   with, not to whoever is speaking. This mod doesn't set where you look yet; it needs the
