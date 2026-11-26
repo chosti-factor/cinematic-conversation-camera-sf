@@ -427,3 +427,16 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the full text in
 It includes work from Cinematic Conversation Camera by hashhbbrown and Player Camera During
 Dialogue by rrrafau, both GPL-3.0-or-later (details in [CREDITS.md](CREDITS.md)). If you
 distribute a build, you must also publish its source.
+
+Additional terms, under section 7 of the GPL (for the parts written for this project):
+
+- Modified versions must be marked as different from the original (section 7c): they must use
+  a different name, and must not present themselves as Cinematic Conversation Camera SF or
+  CCC SF, or as made by chosti-factor.
+- No rights are granted to use the name Cinematic Conversation Camera SF, CCC SF, or the
+  author's name to promote a modified version (section 7e), beyond the credits the GPL
+  requires.
+
+Not required, but kindly asked: link to the Nexus or GitHub page rather than re-uploading, so
+players get updates and fixes; send fixes back (a pull request or a message); say so if you
+used AI tools for your changes; and please don't use this mod to train AI models.
