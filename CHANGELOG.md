@@ -5,6 +5,14 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
+## Unreleased
+
+### Changed
+- Packaging: the zip's top level is now `SFSE` (with `Plugins` inside), not `Data`, as mod
+  managers expect (the user: MO2). The licence and readme sit next to the DLL as
+  `CinematicConversationCameraSF-LICENSE.txt` and `-README.md`, not loose in Data. The 1.1.0
+  zip on Nexus was repacked this way by hand; GitHub's 1.1.0 zip still has the old layout.
+
 ## 1.1.0 - 2026-11-27 (public beta, on Nexus)
 
 The first release on Nexus. 1.0.0 (GitHub only) with the fixes of test builds 1.0.1 to 1.0.3,

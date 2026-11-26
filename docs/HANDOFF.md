@@ -75,6 +75,10 @@ Last updated: 1.1.0 (2026-11-26).
 
 ## Where things stand (2026-11-26, 1.1.0)
 
+- Zip layout (the user, 2026-11-26): `SFSE/Plugins/...` at the top of the zip, never `Data/`
+  (MO2; the licence and readme go in `SFSE/Plugins` under the mod's name). Set in
+  `.github/workflows/build.yml`'s packaging step.
+
 - 1.1.0 is the Nexus launch build (Friday 2026-11-27, 9-11 am Central): 1.0.0 with the tested
   fixes of 1.0.1-1.0.3. The user pushes the `v1.1.0` tag; the Nexus page is set up but for
   images and media.

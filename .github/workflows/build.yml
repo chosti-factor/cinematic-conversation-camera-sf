@@ -38,7 +38,10 @@ jobs:
       - name: Package mod files
         shell: pwsh
         run: |
-          $out = "package/Data/SFSE/Plugins"
+          # The zip's top level is SFSE (the user, 2026-11-26: MO2 wants SFSE at the top, not Data),
+          # so it unpacks straight into the game's Data folder. The licence and readme go next to the
+          # DLL under the mod's own name, not loose in Data.
+          $out = "package/SFSE/Plugins"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           $dll = Get-ChildItem -Recurse -Path build -Filter "CinematicConversationCameraSF.dll" | Select-Object -First 1
           $pdb = Get-ChildItem -Recurse -Path build -Filter "CinematicConversationCameraSF.pdb" | Select-Object -First 1
@@ -46,8 +49,8 @@ jobs:
           Copy-Item $dll.FullName $out
           if ($pdb) { Copy-Item $pdb.FullName $out }
           Copy-Item "data/SFSE/Plugins/CinematicConversationCameraSF.ini" $out
-          Copy-Item LICENSE package/
-          Copy-Item README.md package/
+          Copy-Item LICENSE "$out/CinematicConversationCameraSF-LICENSE.txt"
+          Copy-Item README.md "$out/CinematicConversationCameraSF-README.md"
 
 
       # One rolling pre-release, "Test build", whose file each build on main replaces: the
@@ -63,7 +66,7 @@ jobs:
           $tag = "test-build"
           $zip = "CinematicConversationCameraSF-test-build.zip"
           Compress-Archive -Path package/* -DestinationPath $zip -Force
-          $notes = "The newest build from the main branch, for testing; it can change from build to build. For the current release, see the versioned releases.`n`nBuild: $version (commit ${{ github.sha }}). Install the zip with a mod manager, or copy its Data folder into your Starfield folder."
+          $notes = "The newest build from the main branch, for testing; it can change from build to build. For the current release, see the versioned releases.`n`nBuild: $version (commit ${{ github.sha }}). Install the zip with a mod manager, or copy its SFSE folder into your Starfield Data folder."
           # Move the tag to this build, then replace the file and the notes.
           gh api -X PATCH "repos/${{ github.repository }}/git/refs/tags/$tag" -f sha=${{ github.sha }} -F force=true 2>$null
           if ($LASTEXITCODE -ne 0) {
@@ -90,7 +93,7 @@ jobs:
           if ("v$version" -ne $tag) { throw "tag $tag doesn't match xmake.lua's version $version" }
           $zip = "CinematicConversationCameraSF-$version.zip"
           Compress-Archive -Path package/* -DestinationPath $zip -Force
-          $notes = "Cinematic Conversation Camera SF $version.`n`nInstall the zip with a mod manager, or copy its Data folder into your Starfield folder. Requires Starfield 1.16.244, SFSE and Address Library for SFSE Plugins; SFSE Menu Framework is optional (the in-game settings page). What changed: CHANGELOG.md."
+          $notes = "Cinematic Conversation Camera SF $version.`n`nInstall the zip with a mod manager, or copy its SFSE folder into your Starfield Data folder. Requires Starfield 1.16.244, SFSE and Address Library for SFSE Plugins; SFSE Menu Framework is optional (the in-game settings page). What changed: CHANGELOG.md."
           gh release create $tag $zip --verify-tag --title "Cinematic Conversation Camera SF $version" --notes $notes
 
       - name: Upload mod

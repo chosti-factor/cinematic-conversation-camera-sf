@@ -331,8 +331,8 @@ Mulling (not decided), last:
 1. Download the mod from its Nexus Mods page, or `CinematicConversationCameraSF-<version>.zip`
    from the latest release under **Releases** here. (The **Test build** pre-release always has
    the newest build from the main branch, for testing.)
-2. Install the zip with your mod manager, or copy its `Data` folder into your Starfield
-   folder.
+2. Install the zip with your mod manager, or copy its `SFSE` folder into your Starfield
+   `Data` folder. (The licence and this readme are in `SFSE\Plugins`, next to the DLL.)
 
 The `.pdb` file next to the DLL is its debug symbols: a crash logger uses it to name the
 mod's functions in a crash log, which makes a crash report far more useful. It does nothing
