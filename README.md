@@ -10,9 +10,9 @@ A Starfield adaptation of **Cinematic Conversation Camera** (CCC) for Skyrim by
 and presets are the heart of this mod; everything around them is rebuilt from the ground
 up for Starfield's engine, with Starfield-specific features of its own. Taking over
 Starfield's dialogue camera builds on **Player Camera During Dialogue** by **rrrafau**
-([source](https://github.com/rrrafau1337/player-camera-during-dialogue)), and
+([source](https://github.com/rrrafau1337/player-camera-during-dialogue)). Shoutout to
 **jedijosh920**'s [Player Dialogue Camera](https://www.nexusmods.com/starfield/mods/5229)
-first showed it could be done. CCC and Player Camera During Dialogue are
+who first showed it could be done in Starfield. CCC and Player Camera During Dialogue are
 GPL-3.0-or-later, and so is this project. See [CREDITS.md](CREDITS.md) for everything
 this mod draws on.
 
@@ -52,7 +52,7 @@ What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 ### New in CCC SF
 
-What CCC doesn't do.
+New stuff compared to CCC (1.5.0)
 
 - **NPCs keep facing you:** only what's on screen moves; the game still thinks the camera is
   at your eyes.
