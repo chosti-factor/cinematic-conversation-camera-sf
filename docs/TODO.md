@@ -234,7 +234,7 @@ Wednesday the 25th, about two days earlier.
 
 ## Open tests (carried past 1.1.0)
 
-- [ ] Test 1.1.1's translations: the settings page and the listen prompt as before in English
+- [x] Test 1.1.1's translations (the user, 2026-11-28: a Spanish test file, working well): the settings page and the listen prompt as before in English
       (the log: "Translations: 0 of 92 texts translated"); then change a few values in
       CinematicConversationCameraSFStrings.json (a label, "Default: {}", "Hold"/"Press") and see
       them on the page and the prompt; a broken JSON (a missing comma) leaves it all English with
