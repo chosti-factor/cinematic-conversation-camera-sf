@@ -5,7 +5,7 @@ Updated at milestones (each minor version) and whenever a test changes what we k
 the repository is public.
 Read README.md (plan), CHANGELOG.md (what each version did) and CREDITS.md first.
 
-Last updated: 1.1.0 (2026-11-26).
+Last updated: 1.1.1 (2026-11-28).
 
 ## Working rules
 
@@ -74,6 +74,11 @@ Last updated: 1.1.0 (2026-11-26).
   be re-authored as Claude: they stay the owner's (the rule above); say so briefly and go on.
 
 ## Where things stand (2026-11-26, 1.1.0)
+
+- Translations (1.1.1, 2026-11-28, a player's request): every text the settings page and the
+  listen prompt show goes through `T()`/`Fmt()` (src/Strings.h; table text marked `N_()`), read
+  from `CinematicConversationCameraSFStrings.json`. After changing any shown text, run
+  `python tools/strings.py`: the build checks the file is current. docs/TRANSLATING.md.
 
 - Live on Nexus since 2026-11-27: https://www.nexusmods.com/starfield/mods/18926 (mod 18926,
   "Cinematic Conversation Camera for Starfield"). Next: Reddit r/starfieldmods (Saturday

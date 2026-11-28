@@ -20,7 +20,7 @@ this mod draws on.
 
 On Nexus Mods: [Cinematic Conversation Camera for Starfield](https://www.nexusmods.com/starfield/mods/18926) (since 2026-11-27).
 
-Last updated: 1.1.0 (2026-11-26).
+Last updated: 1.1.1 (2026-11-28).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
@@ -396,6 +396,10 @@ them, for testing. All of them, explained: [docs/INI_SETTINGS.md](docs/INI_SETTI
 Each setting is explained in the INI itself. Every setting, its section, default, settings
 page and whether it's hidden: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md); how the layout came
 about: [docs/INI_HISTORY.md](docs/INI_HISTORY.md).
+
+**Translations (1.1.1):** the settings page and the listen prompt can be shown in your
+language: `CinematicConversationCameraSFStrings.json` next to the INI holds every text, in
+English; a translated copy replaces it. How: [docs/TRANSLATING.md](docs/TRANSLATING.md).
 
 ## Testing and logs
 

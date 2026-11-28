@@ -3,7 +3,7 @@
 The working list from now to the 1.0 public beta. Ticked as things are done; anything that
 runs out of time moves to "Moved to after 1.0" at the bottom, on the user's call.
 
-Last updated: 1.1.0 (2026-11-26). Dates assume the Friday 27 November release; for
+Last updated: 1.1.1 (2026-11-28). Dates assume the Friday 27 November release; for
 Wednesday the 25th, about two days earlier.
 
 ## 1. Starts and exits (now to about 19 Nov)
@@ -230,6 +230,12 @@ Wednesday the 25th, about two days earlier.
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
 ## Open tests (carried past 1.1.0)
+
+- [ ] Test 1.1.1's translations: the settings page and the listen prompt as before in English
+      (the log: "Translations: 0 of 92 texts translated"); then change a few values in
+      CinematicConversationCameraSFStrings.json (a label, "Default: {}", "Hold"/"Press") and see
+      them on the page and the prompt; a broken JSON (a missing comma) leaves it all English with
+      a warning in the log.
 
 - [ ] Test filming in an elevator after character creation (the Lodge or MAST lifts): the people
       stay in the picture as it rises (in the mine it worked, 1.0.2; the mine isn't filmed since 1.0.3).

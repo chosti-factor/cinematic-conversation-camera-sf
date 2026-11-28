@@ -14,6 +14,7 @@
 #include "Face.h"
 #include "Hud.h"
 #include "Settings.h"
+#include "Strings.h"
 #include "Menu.h"
 #include "Visibility.h"
 
@@ -5837,7 +5838,8 @@ namespace CCC
 				if (pad && key.size() == 1) {
 					key = "{" + key + "}";
 				}
-				prompt = std::format("Listen in on nearby conversation. {} {}", pad ? "Hold" : "Press", key);
+				// 1.1.1: in the player's language (CinematicConversationCameraSFStrings.json).
+				prompt = Strings::Fmt("Listen in on nearby conversation. {} {}", pad ? Strings::T("Hold") : Strings::T("Press"), key);
 			}
 		}
 

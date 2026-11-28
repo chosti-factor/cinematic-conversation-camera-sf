@@ -5,7 +5,15 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## Unreleased
+## 1.1.1 - unreleased (test build)
+
+### Added (a player's request on Nexus)
+- Translations: the settings page and the listen prompt can be shown in other languages.
+  `Data\SFSE\Plugins\CinematicConversationCameraSFStrings.json` holds every text, English to
+  English; a translation replaces the values (as SFSE Menu Framework does for its own menus).
+  Anything missing or empty stays English, and a translation whose `{}` placeholders don't fit
+  falls back to English for that text. The log says how many texts were translated. How:
+  docs/TRANSLATING.md. Fonts: turn on your language's glyphs in SFSE Menu Framework's settings.
 
 ### Changed
 - Packaging: the zip's top level is now `SFSE` (with `Plugins` inside), not `Data`, as mod

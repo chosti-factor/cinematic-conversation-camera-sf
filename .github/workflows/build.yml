@@ -29,6 +29,9 @@ jobs:
           xmake-version: latest
           actions-cache-folder: .xmake-cache
 
+      - name: Check the translations template is current
+        run: python tools/strings.py --check
+
       - name: Configure
         run: xmake config -y -m releasedbg
 
@@ -49,6 +52,7 @@ jobs:
           Copy-Item $dll.FullName $out
           if ($pdb) { Copy-Item $pdb.FullName $out }
           Copy-Item "data/SFSE/Plugins/CinematicConversationCameraSF.ini" $out
+          Copy-Item "data/SFSE/Plugins/CinematicConversationCameraSFStrings.json" $out
           Copy-Item LICENSE "$out/CinematicConversationCameraSF-LICENSE.txt"
           Copy-Item README.md "$out/CinematicConversationCameraSF-README.md"
 

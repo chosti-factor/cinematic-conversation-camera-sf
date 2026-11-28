@@ -2,10 +2,12 @@
 #include "Menu.h"
 
 #include "Settings.h"
+#include "Strings.h"
 
 #include <cstdio>
 #include <ranges>
 #include <span>
+#include <vector>
 
 #include <SFSEMCP/SFSEMenuFramework.hpp>
 
@@ -13,6 +15,9 @@ namespace CCC::Menu
 {
 	namespace
 	{
+		using Strings::Fmt;
+		using Strings::T;
+
 		constexpr auto kIniPath = L".\\Data\\SFSE\\Plugins\\CinematicConversationCameraSF.ini";
 		constexpr auto kUserIniPath = L".\\Data\\SFSE\\Plugins\\CinematicConversationCameraSF_user.ini";
 
@@ -41,7 +46,7 @@ namespace CCC::Menu
 		};
 
 		constexpr const char* kPresets[]{ "Standard", "Close", "Room", "Frontier", "Starborn", "Constellation", "Nebula" };
-		constexpr const char* kFocusStyles[]{ "Wide", "Cinematic" };
+		constexpr const char* kFocusStyles[]{ N_("Wide"), N_("Cinematic") };  // shown translated, written in English
 
 		// The player-facing settings (0.9.60-0.9.63, the INI review: the main choices; the rest is
 		// in the INI's [Advanced] and [Debug], and each preset's own numbers hidden until the preset
@@ -49,61 +54,61 @@ namespace CCC::Menu
 		// has a tooltip (0.9.64, the user).
 		const Entry kEntries[]{
 			// ---- General (0.9.70, the user: the mod's switch on a page of its own) ----
-			{ "General", "The mod", "General", "bEnabled", "Cinematic conversations", Kind::kBool, 0, 1, nullptr,
-				"Off: the whole mod stands down and conversations use the game's own camera." },
+			{ N_("General"), N_("The mod"), "General", "bEnabled", N_("Cinematic conversations"), Kind::kBool, 0, 1, nullptr,
+				N_("Off: the whole mod stands down and conversations use the game's own camera.") },
 			// ---- Director (1.0, the user: each page named after its INI section, friendly headings within) ----
-			{ "Director", "Shots and cutting", "Director", "sPreset", "Preset", Kind::kChoice, 0, 0, nullptr,
-				"Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
-				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's.",
+			{ N_("Director"), N_("Shots and cutting"), "Director", "sPreset", N_("Preset"), Kind::kChoice, 0, 0, nullptr,
+				N_("Standard, Close and Room are CCC's own. Frontier (a space western), Starborn (Kubrick and Interstellar), "
+				"Constellation (a hard sci-fi documentary) and Nebula (a space opera) are CCC SF's."),
 				kPresets },
-			{ "Director", "Shots and cutting", "Director", "fCuttingPace", "Cutting pace", Kind::kFloat, -2.0f, 2.0f, "%+.1f",
-				"How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace." },
-			{ "Director", "Shots and cutting", "Director", "bCameraMoves", "Camera moves", Kind::kBool, 0, 1, nullptr,
-				"Push-ins, drifts, cranes and the like, as each preset has them." },
-			{ "Director", "Shots and cutting", "Director", "bTrue180", "180-degree rule", Kind::kBool, 0, 1, nullptr,
-				"Keep the camera on one side of the line between you. Off: each person is shot over their own side." },
-			{ "Director", "Close-ups of NPCs", "Director", "bEmotionCloseUpsNpc", "Emotion close-ups", Kind::kTri, 0, 0, nullptr,
-				"A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets." },
-			{ "Director", "Close-ups of NPCs", "Director", "bPersuasionBeatNpc", "Hold on the NPC's answer", Kind::kBool, 0, 1, nullptr,
-				"A close-up of the NPC's answer to every persuasion round, the verdict included, and to options with a skill check ([Intimidate], [Manipulate]...)." },
-			{ "Director", "Close-ups and reactions of you", "Director", "bReactionShotsPlayer", "Reaction shots of you", Kind::kTri, 0, 0, nullptr,
-				"Cutting to you listening during their longer stretches of talk, for one of their lines. The preset's own: off in CCC's presets, on in CCC SF's." },
-			{ "Director", "Close-ups and reactions of you", "Director", "bChoiceCloseUpsPlayer", "Close-up on skill choices", Kind::kTri, 0, 0, nullptr,
-				"A close-up of you when you pick a [Persuade], [Intimidate] or similar option, for the line you say. The preset's own: on in CCC SF's presets, off in CCC's." },
-			{ "Director", "Close-ups and reactions of you", "Director", "bFacePlayer", "Your expressions", Kind::kBool, 0, 1, nullptr,
-				"Your face answers the NPC's lines and your choices (the game keeps it neutral)." },
+			{ N_("Director"), N_("Shots and cutting"), "Director", "fCuttingPace", N_("Cutting pace"), Kind::kFloat, -2.0f, 2.0f, "%+.1f",
+				N_("How lively the cutting is, relative to the preset's own rhythm: -2 calmest, 0 the preset as designed, +2 liveliest. Each preset keeps its own: this changes the pace of the preset in use. Mostly felt in long speeches, as the camera cuts on each turn whatever the pace.") },
+			{ N_("Director"), N_("Shots and cutting"), "Director", "bCameraMoves", N_("Camera moves"), Kind::kBool, 0, 1, nullptr,
+				N_("Push-ins, drifts, cranes and the like, as each preset has them.") },
+			{ N_("Director"), N_("Shots and cutting"), "Director", "bTrue180", N_("180-degree rule"), Kind::kBool, 0, 1, nullptr,
+				N_("Keep the camera on one side of the line between you. Off: each person is shot over their own side.") },
+			{ N_("Director"), N_("Close-ups of NPCs"), "Director", "bEmotionCloseUpsNpc", N_("Emotion close-ups"), Kind::kTri, 0, 0, nullptr,
+				N_("A close-up of the speaker on lines with an expression: always on strong ones, now and then on milder ones (how often is the preset's). The preset's own: none in Standard and Room, strong lines only in Close, every tier in CCC SF's presets.") },
+			{ N_("Director"), N_("Close-ups of NPCs"), "Director", "bPersuasionBeatNpc", N_("Hold on the NPC's answer"), Kind::kBool, 0, 1, nullptr,
+				N_("A close-up of the NPC's answer to every persuasion round, the verdict included, and to options with a skill check ([Intimidate], [Manipulate]...).") },
+			{ N_("Director"), N_("Close-ups and reactions of you"), "Director", "bReactionShotsPlayer", N_("Reaction shots of you"), Kind::kTri, 0, 0, nullptr,
+				N_("Cutting to you listening during their longer stretches of talk, for one of their lines. The preset's own: off in CCC's presets, on in CCC SF's.") },
+			{ N_("Director"), N_("Close-ups and reactions of you"), "Director", "bChoiceCloseUpsPlayer", N_("Close-up on skill choices"), Kind::kTri, 0, 0, nullptr,
+				N_("A close-up of you when you pick a [Persuade], [Intimidate] or similar option, for the line you say. The preset's own: on in CCC SF's presets, off in CCC's.") },
+			{ N_("Director"), N_("Close-ups and reactions of you"), "Director", "bFacePlayer", N_("Your expressions"), Kind::kBool, 0, 1, nullptr,
+				N_("Your face answers the NPC's lines and your choices (the game keeps it neutral).") },
 			// ---- Camera ----
-			{ "Camera", "Focus", "Camera", "sFocusStyle", "Focus style", Kind::kChoice, 0, 0, nullptr,
-				"Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere.", kFocusStyles },
-			{ "Camera", "Handheld feel", "Camera", "iCameraSway", "Camera sway", Kind::kOwnInt, 0, 100, "%d%%",
-				"0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander." },
-			{ "Camera", "Quest scenes", "Camera", "bGameCameraInScenes", "Vanilla camera in quest scenes", Kind::kBool, 0, 1, nullptr,
-				"On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's vanilla camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation." },
+			{ N_("Camera"), N_("Focus"), "Camera", "sFocusStyle", N_("Focus style"), Kind::kChoice, 0, 0, nullptr,
+				N_("Wide: long shots keep a deep sharp zone. Cinematic: a shallow one everywhere."), kFocusStyles },
+			{ N_("Camera"), N_("Handheld feel"), "Camera", "iCameraSway", N_("Camera sway"), Kind::kOwnInt, 0, 100, "%d%%",
+				N_("0 a tripod, 100 fully handheld. The preset's own: none in CCC's presets, Starborn 15, Nebula 40, Frontier 45, Constellation 50 with a slow handheld wander.") },
+			{ N_("Camera"), N_("Quest scenes"), "Camera", "bGameCameraInScenes", N_("Vanilla camera in quest scenes"), Kind::kBool, 0, 1, nullptr,
+				N_("On: quest scenes you take part in (someone walks up and starts talking, several people taking turns) keep the game's vanilla camera, which directs them. Everyday scenes (merchants, people chatting) keep this mod's camera. Off: this mod films every conversation.") },
 			// ---- Interface ----
-			{ "Interface", "Letterbox", "Interface", "bLetterbox", "Letterbox bars", Kind::kBool, 0, 1, nullptr,
-				"Black bars across the top and bottom of the screen while a conversation is filmed, like a film frame. They sit under the dialogue menu, so its subtitles and options stay on top." },
-			{ "Interface", "Letterbox", "Interface", "fLetterboxHeight", "Bar height", Kind::kFloat, 0.02f, 0.3f, "%.2f",
-				"Each bar's share of the screen's height. 0.12 is close to a 2.39:1 film frame on a 16:9 screen." },
-			{ "Interface", "Letterbox", "Interface", "bSubtitlesInBars", "Subtitles in the bottom bar", Kind::kBool, 0, 1, nullptr,
-				"On: centred in the bottom bar while the bars are in. Off: where the game puts them (vanilla positioning, kept for mods that place subtitles themselves), which can overlap the top edge of the bottom bar." },
-			{ "Interface", "Dialogue options", "Interface", "bHideOptionsWhileSpeaking", "Hide while NPCs speak", Kind::kBool, 0, 1, nullptr,
-				"The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does." },
+			{ N_("Interface"), N_("Letterbox"), "Interface", "bLetterbox", N_("Letterbox bars"), Kind::kBool, 0, 1, nullptr,
+				N_("Black bars across the top and bottom of the screen while a conversation is filmed, like a film frame. They sit under the dialogue menu, so its subtitles and options stay on top.") },
+			{ N_("Interface"), N_("Letterbox"), "Interface", "fLetterboxHeight", N_("Bar height"), Kind::kFloat, 0.02f, 0.3f, "%.2f",
+				N_("Each bar's share of the screen's height. 0.12 is close to a 2.39:1 film frame on a 16:9 screen.") },
+			{ N_("Interface"), N_("Letterbox"), "Interface", "bSubtitlesInBars", N_("Subtitles in the bottom bar"), Kind::kBool, 0, 1, nullptr,
+				N_("On: centred in the bottom bar while the bars are in. Off: where the game puts them (vanilla positioning, kept for mods that place subtitles themselves), which can overlap the top edge of the bottom bar.") },
+			{ N_("Interface"), N_("Dialogue options"), "Interface", "bHideOptionsWhileSpeaking", N_("Hide while NPCs speak"), Kind::kBool, 0, 1, nullptr,
+				N_("The game hides your options during most of their lines, but brings them back before some lines end. On: hidden for the whole of each line, back as it ends (except their greeting, where you pick an option while they speak). Off: as the game does.") },
 			// ---- Scene filming ----
-			{ "Scene filming", "People talking near you", "SceneFilming", "bFilmConversationsNpc", "Film them", Kind::kBool, 0, 1, nullptr,
-				"Film people talking to each other near you (the game's conversation scenes, not one-liners): a new shot for each line, letterboxed. Started with the listen prompt or on its own (below); moving ends it." },
-			{ "Scene filming", "People talking near you", "SceneFilming", "fListenRange", "Range (m)", Kind::kFloat, 3, 25, "%.0f",
-				"How near a conversation has to be, in metres, to be offered or filmed." },
-			{ "Scene filming", "How it starts", "SceneFilming", "bListenPrompt", "Listen prompt", Kind::kBool, 0, 1, nullptr,
-				"A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it." },
-			{ "Scene filming", "How it starts", "SceneFilming", "bAutoListen", "Start on its own", Kind::kBool, 0, 1, nullptr,
-				"As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it." },
-			{ "Scene filming", "How it starts", "SceneFilming", "bAutoListenSprinting", "Start on its own while sprinting", Kind::kBool, 0, 1, nullptr,
-				"Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks." },
+			{ N_("Scene filming"), N_("People talking near you"), "SceneFilming", "bFilmConversationsNpc", N_("Film them"), Kind::kBool, 0, 1, nullptr,
+				N_("Film people talking to each other near you (the game's conversation scenes, not one-liners): a new shot for each line, letterboxed. Started with the listen prompt or on its own (below); moving ends it.") },
+			{ N_("Scene filming"), N_("People talking near you"), "SceneFilming", "fListenRange", N_("Range (m)"), Kind::kFloat, 3, 25, "%.0f",
+				N_("How near a conversation has to be, in metres, to be offered or filmed.") },
+			{ N_("Scene filming"), N_("How it starts"), "SceneFilming", "bListenPrompt", N_("Listen prompt"), Kind::kBool, 0, 1, nullptr,
+				N_("A prompt to start filming with the listen key (N, or hold B). Not shown while it starts on its own (the key still works then). With both off, nothing starts it.") },
+			{ N_("Scene filming"), N_("How it starts"), "SceneFilming", "bAutoListen", N_("Start on its own"), Kind::kBool, 0, 1, nullptr,
+				N_("As a conversation scene starts near you, even while you walk or jog past (it holds you still until you let go of moving). No prompt then; the listen key still starts and stops it.") },
+			{ N_("Scene filming"), N_("How it starts"), "SceneFilming", "bAutoListenSprinting", N_("Start on its own while sprinting"), Kind::kBool, 0, 1, nullptr,
+				N_("Also start as you sprint past a conversation (off: only while you walk or jog). With it on, a sprint past is stopped in its tracks.") },
 			// ---- Debug (1.0, the user: the detailed log and the testing messages, both in [Debug]) ----
-			{ "Debug", "Bug reports", "Debug", "bDebugLog", "Detailed log", Kind::kBool, 0, 1, nullptr,
-				"A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little)." },
-			{ "Debug", "Testing", "Debug", "bShowMessages", "Testing messages", Kind::kBool, 0, 1, nullptr,
-				"A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar." },
+			{ N_("Debug"), N_("Bug reports"), "Debug", "bDebugLog", N_("Detailed log"), Kind::kBool, 0, 1, nullptr,
+				N_("A detailed log of what the camera does, for bug reports: CinematicConversationCameraSF.log in Documents\\My Games\\Starfield\\SFSE\\Logs. Off normally (it costs a little).") },
+			{ N_("Debug"), N_("Testing"), "Debug", "bShowMessages", N_("Testing messages"), Kind::kBool, 0, 1, nullptr,
+				N_("A testing aid, off normally: each shot the camera uses and why, and each line's expression, in the top bar.") },
 		};
 
 		// Settings that only do something while another is on (0.9.44, the user's request): drawn
@@ -267,16 +272,16 @@ namespace CCC::Menu
 		{
 			switch (a_entry.kind) {
 			case Kind::kBool:
-				return AsInt(a_text, 0) != 0 ? "On" : "Off";
+				return AsInt(a_text, 0) != 0 ? T("On") : T("Off");
 			case Kind::kTri:
 				{
 					const int v = AsInt(a_text, -1);
-					return v < 0 ? "Preset's own" : v == 0 ? "Off" : "On";
+					return v < 0 ? T("Preset's own") : v == 0 ? T("Off") : T("On");
 				}
 			case Kind::kOwnInt:
 				{
 					const int v = AsInt(a_text, -1);
-					return v < static_cast<int>(a_entry.min) ? "Preset's own" : std::format("{}%", v);
+					return v < static_cast<int>(a_entry.min) ? std::string{ T("Preset's own") } : std::format("{}%", v);
 				}
 			case Kind::kFloat:
 				if (std::string_view{ a_entry.key } == "fCuttingPace") {
@@ -288,7 +293,7 @@ namespace CCC::Menu
 					return buffer;
 				}
 			case Kind::kChoice:
-				return a_text;
+				return T(a_text.c_str());
 			}
 			return a_text;
 		}
@@ -307,17 +312,17 @@ namespace CCC::Menu
 					Settings::SetPresetOverride("");
 				}
 				ReadAll();
-				g_status = std::format("{} is back at its default ({}).", name, Shown(e, *def));
+				g_status = Fmt("{} is back at its default ({}).", name, Shown(e, *def));
 				return;
 			}
 			if (::WritePrivateProfileStringW(section.c_str(), key.c_str(), text.c_str(), kUserIniPath)) {
 				g_values[a_index] = { a_text, true };
-				g_status = std::format("Saved {}={} to your _user.ini.", name, a_text);
+				g_status = Fmt("Saved {}={} to your _user.ini.", name, a_text);
 				if (std::string_view{ e.key } == "sPreset") {
 					Settings::SetPresetOverride("");  // the preset key's choice gives way to this one
 				}
 			} else {
-				g_status = std::format("Couldn't write {} to CinematicConversationCameraSF_user.ini (Data\\SFSE\\Plugins).", name);
+				g_status = Fmt("Couldn't write {} to CinematicConversationCameraSF_user.ini (Data\\SFSE\\Plugins).", name);
 			}
 		}
 
@@ -333,7 +338,7 @@ namespace CCC::Menu
 			}
 			ReadAll();
 			const auto def = DefaultOf(e);
-			g_status = def ? std::format("{} is back at its default ({}).", name, Shown(e, *def)) : std::format("{} back to the INI's value.", name);
+			g_status = def ? Fmt("{} is back at its default ({}).", name, Shown(e, *def)) : Fmt("{} back to the INI's value.", name);
 		}
 
 		int AsInt(const std::string& a_text, int a_default)
@@ -382,9 +387,9 @@ namespace CCC::Menu
 		void Help(const Entry& a_entry)
 		{
 			if (!g_needsNote.empty()) {
-				ImGuiMCP::SetItemTooltip("%s%s%s", g_needsNote.c_str(), a_entry.help ? "\n\n" : "", a_entry.help ? a_entry.help : "");
+				ImGuiMCP::SetItemTooltip("%s%s%s", g_needsNote.c_str(), a_entry.help ? "\n\n" : "", a_entry.help ? T(a_entry.help) : "");
 			} else if (a_entry.help) {
-				ImGuiMCP::SetItemTooltip("%s", a_entry.help);
+				ImGuiMCP::SetItemTooltip("%s", T(a_entry.help));
 			}
 		}
 
@@ -415,7 +420,7 @@ namespace CCC::Menu
 			if (!*a_on) {
 				ImGuiMCP::PushStyleColor(ImGuiMCP::ImGuiCol_Text, ImGuiMCP::GetStyle()->Colors[ImGuiMCP::ImGuiCol_TextDisabled]);
 			}
-			ImGuiMCP::TextUnformatted(a_label ? a_label : a_entry.label);
+			ImGuiMCP::TextUnformatted(a_label ? a_label : T(a_entry.label));
 			if (!*a_on) {
 				ImGuiMCP::PopStyleColor(1);
 			}
@@ -446,9 +451,9 @@ namespace CCC::Menu
 				}
 			case Kind::kTri:
 				{
-					constexpr const char* kTri[]{ "Preset's own", "Off", "On" };
-					int pick = std::clamp(AsInt(v.text, -1), -1, 1) + 1;
-					if (ImGuiMCP::Combo(e.label, &pick, kTri, 3)) {
+					const char* tri[]{ T("Preset's own"), T("Off"), T("On") };
+					int         pick = std::clamp(AsInt(v.text, -1), -1, 1) + 1;
+					if (ImGuiMCP::Combo(T(e.label), &pick, tri, 3)) {
 						Write(a_index, std::to_string(pick - 1));
 					}
 					Help(e);
@@ -466,7 +471,7 @@ namespace CCC::Menu
 						// It names the preset it belongs to (each has its own); "###" keeps the
 						// widget the same while the name changes.
 						const auto keyName = KeyOf(e);
-						const auto label = keyName.size() > 12 ? std::format("{} ({})###{}", e.label, keyName.substr(12), e.key) : std::string{ e.label };
+						const auto label = keyName.size() > 12 ? std::format("{} ({})###{}", T(e.label), keyName.substr(12), e.key) : std::format("{}###{}", T(e.label), e.key);
 						ImGuiMCP::SliderInt(label.c_str(), &steps, static_cast<int>(std::lround(e.min / kStepSize)), static_cast<int>(std::lround(e.max / kStepSize)), shown.c_str());
 						Help(e);
 						if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
@@ -477,7 +482,7 @@ namespace CCC::Menu
 						break;
 					}
 					float value = std::clamp(AsFloat(v.text, e.min), e.min, e.max);
-					ImGuiMCP::SliderFloat(e.label, &value, e.min, e.max, e.format ? e.format : "%.2f");
+					ImGuiMCP::SliderFloat(T(e.label), &value, e.min, e.max, e.format ? e.format : "%.2f");
 					Help(e);
 					if (ImGuiMCP::IsItemDeactivatedAfterEdit()) {
 						Write(a_index, std::format("{:.2f}", value));
@@ -495,17 +500,18 @@ namespace CCC::Menu
 					const int  middle = low + (high - low) / 2;
 					const int  raw = AsInt(v.text, -1);
 					bool       own = raw < low;
-					const auto ownLabel = std::format("{}: the preset's own", e.label);
+					const auto ownLabel = Fmt("{}: the preset's own", T(e.label));
+					const auto ownText = Strings::Literal("the preset's own");  // the slider's format: any % doubled
 					if (Switch(e, &own, ownLabel.c_str())) {
 						Write(a_index, own ? "-1" : std::to_string(middle));
 					}
 					int        value = own ? middle : std::clamp(raw, low, high);
 					const auto outer = g_needsNote;
 					if (own) {
-						g_needsNote = std::format("Needs \"{}\" off.", ownLabel);
+						g_needsNote = Fmt("Needs \"{}\" off.", ownLabel);
 						ImGuiMCP::BeginDisabled(true);
 					}
-					ImGuiMCP::SliderInt(e.label, &value, low, high, own ? "the preset's own" : (e.format ? e.format : "%d"));
+					ImGuiMCP::SliderInt(T(e.label), &value, low, high, own ? ownText.c_str() : (e.format ? e.format : "%d"));
 					Help(e);
 					if (own) {
 						ImGuiMCP::EndDisabled();
@@ -528,7 +534,11 @@ namespace CCC::Menu
 							pick = static_cast<int>(c);
 						}
 					}
-					if (ImGuiMCP::Combo(e.label, &pick, e.choices.data(), static_cast<int>(e.choices.size()))) {
+					std::vector<const char*> shown;  // the choices in the player's language (the preset names stay)
+					for (const char* choice : e.choices) {
+						shown.push_back(T(choice));
+					}
+					if (ImGuiMCP::Combo(T(e.label), &pick, shown.data(), static_cast<int>(shown.size()))) {
 						Write(a_index, e.choices[static_cast<std::size_t>(pick)]);
 					}
 					Help(e);
@@ -539,18 +549,18 @@ namespace CCC::Menu
 			// to): a button naming the default, there exactly while the setting isn't at it.
 			if (const auto def = DefaultOf(e); def && !Same(e, v.text, *def)) {
 				ImGuiMCP::SameLine();
-				const auto label = std::format("Default: {}", Shown(e, *def));
+				const auto label = Fmt("Default: {}", Shown(e, *def));
 				if (ImGuiMCP::SmallButton(label.c_str())) {
 					Reset(a_index);
 				}
-				const auto tip = std::format("Sets it back to its default ({}) and takes your change out of the _user.ini.", Shown(e, *def));
+				const auto tip = Fmt("Sets it back to its default ({}) and takes your change out of the _user.ini.", Shown(e, *def));
 				ImGuiMCP::SetItemTooltip("%s", tip.c_str());
 			} else if (!def && v.mine) {
 				ImGuiMCP::SameLine();
-				if (ImGuiMCP::SmallButton("Reset")) {
+				if (ImGuiMCP::SmallButton(T("Reset"))) {
 					Reset(a_index);
 				}
-				ImGuiMCP::SetItemTooltip("%s", "Back to the INI's value (removes your change from the _user.ini).");
+				ImGuiMCP::SetItemTooltip("%s", T("Back to the INI's value (removes your change from the _user.ini)."));
 			}
 			ImGuiMCP::PopID();
 		}
@@ -579,7 +589,7 @@ namespace CCC::Menu
 						ImGuiMCP::Spacing();
 					}
 					group = e.group;
-					Heading(group);
+					Heading(T(group));
 				}
 				// Indented under what it needs, greyed out while that's off (0.9.44).
 				int         depth = 0;
@@ -610,14 +620,14 @@ namespace CCC::Menu
 					ImGuiMCP::ImDrawListManager::AddLine(list, ImGuiMCP::ImVec2{ x, at.y - h * 0.35f }, ImGuiMCP::ImVec2{ x, at.y + h * 0.5f }, grey, 1.5f);
 					ImGuiMCP::ImDrawListManager::AddLine(list, ImGuiMCP::ImVec2{ x, at.y + h * 0.5f }, ImGuiMCP::ImVec2{ at.x - 6.0f, at.y + h * 0.5f }, grey, 1.5f);
 				}
-				g_needsNote = off ? std::format("Needs \"{}\" on.", off) : std::string{};
+				g_needsNote = off ? Fmt("Needs \"{}\" on.", T(off)) : std::string{};
 				if (off) {
 					ImGuiMCP::BeginDisabled(true);
 				}
 				DrawEntry(i);
 				if (off) {
 					ImGuiMCP::SameLine();
-					ImGuiMCP::TextDisabled("%s", "(off)");
+					ImGuiMCP::TextDisabled("%s", T("(off)"));
 					ImGuiMCP::EndDisabled();
 				}
 				g_needsNote.clear();
@@ -649,11 +659,11 @@ namespace CCC::Menu
 				ImGuiMCP::PopTextWrapPos();
 			};
 			if (headsUp) {
-				note("Heads up: with \"Start on its own\" on, when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back.", true);
+				note(T("Heads up: with \"Start on its own\" on, when a conversation scene starts near you, the camera is taken over to film it, and you're stopped where you are (looking around too) until you let go of the movement controls. Moving again ends the filming and gives you your controls back."), true);
 			}
-			note("Changes apply from the next conversation (made during one, from the one after).", false);
-			note("Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins).", false);
-			note("The preset key (U) switches presets on the fly during a conversation.", false);
+			note(T("Changes apply from the next conversation (made during one, from the one after)."), false);
+			note(T("Changes go to CinematicConversationCameraSF_user.ini (with Mod Organizer, in its overwrite folder). More settings, each explained, are in CinematicConversationCameraSF.ini (Data\\SFSE\\Plugins)."), false);
+			note(T("The preset key (U) switches presets on the fly during a conversation."), false);
 			if (!g_status.empty()) {
 				ImGuiMCP::TextDisabled("%s", g_status.c_str());
 			}
@@ -675,18 +685,19 @@ namespace CCC::Menu
 
 	void Register()
 	{
+		Strings::Load();  // 1.1.1: the page's text, and the listen prompt's, in the player's language
 		if (!SFSEMenuFramework::IsInstalled()) {
 			REX::INFO("Settings page: SFSE Menu Framework isn't installed; the INI is the only way to change settings");
 			return;
 		}
 		ReadAll();
 		SFSEMenuFramework::SetSection("Cinematic Conversation Camera SF");
-		SFSEMenuFramework::AddSectionItem("General", &DrawGeneral);
-		SFSEMenuFramework::AddSectionItem("Director", &DrawDirector);
-		SFSEMenuFramework::AddSectionItem("Camera", &DrawCamera);
-		SFSEMenuFramework::AddSectionItem("Interface", &DrawInterface);
-		SFSEMenuFramework::AddSectionItem("Scene filming", &DrawFilming);
-		SFSEMenuFramework::AddSectionItem("Debug", &DrawDebug);
+		SFSEMenuFramework::AddSectionItem(T("General"), &DrawGeneral);
+		SFSEMenuFramework::AddSectionItem(T("Director"), &DrawDirector);
+		SFSEMenuFramework::AddSectionItem(T("Camera"), &DrawCamera);
+		SFSEMenuFramework::AddSectionItem(T("Interface"), &DrawInterface);
+		SFSEMenuFramework::AddSectionItem(T("Scene filming"), &DrawFilming);
+		SFSEMenuFramework::AddSectionItem(T("Debug"), &DrawDebug);
 		REX::INFO("Settings page: added to SFSE Menu Framework ({} settings)", kCount);
 	}
 }
