@@ -224,6 +224,9 @@ Wednesday the 25th, about two days earlier.
 - [x] The `v1.1.0` tag pushed by the user (the release built from it goes on Nexus): on the
       1.1.0 commit, `git tag -a v1.1.0 -m "Cinematic Conversation Camera SF 1.1.0 (public beta)"`,
       then `git push origin v1.1.0`
+- [ ] 1.1.1 released (the user, 2026-11-28): the user pushes the `v1.1.1` tag
+      (`git pull`, `git tag -a v1.1.1 -m "Cinematic Conversation Camera SF 1.1.1 (public beta)"`,
+      `git push origin v1.1.1`) and uploads its zip to Nexus
 - [x] Live on Nexus, 2026-11-27: https://www.nexusmods.com/starfield/mods/18926. Public beta on Nexus with 1.1.0 (the user, 2026-11-26: 1.0.3 tested, so the launch build is
       1.1.0, not 1.0.0): Friday 27 Nov, 9-11 am Central. The page is set up but for images and
       media; courtesy notes sent to hashhbbrown and rrrafau (2026-11-26)

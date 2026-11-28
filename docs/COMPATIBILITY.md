@@ -2,7 +2,7 @@
 
 A working list for the Nexus page: which mods work with Cinematic Conversation Camera SF,
 which don't, and what still needs a test. Grouped by how sure we are. Game version
-1.16.244; CCC SF 0.9.27 to 1.1.0.
+1.16.244; CCC SF 0.9.27 to 1.1.1.
 
 Last updated: 1.1.0 (2026-11-26).
 

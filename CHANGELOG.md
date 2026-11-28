@@ -5,7 +5,7 @@ All notable changes to Cinematic Conversation Camera SF, newest first. The forma
 (a beta); every 0.x version was an alpha test build. "Diagnostic" items only add information
 to the log for testing.
 
-## 1.1.1 - unreleased (test build)
+## 1.1.1 - 2026-11-28 (public beta)
 
 ### Added (a player's request on Nexus)
 - Translations: the settings page and the listen prompt can be shown in other languages.
