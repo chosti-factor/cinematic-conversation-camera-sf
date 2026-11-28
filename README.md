@@ -223,8 +223,8 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 
 ### Roadmap
 
-What comes after 1.0: test builds numbered 1.0.x on the Test build release here, then 1.1.0,
-the next public release, with these and what players report.
+What's planned next, from testing and from what players report on Nexus. Updates are tried
+first as test builds (the Test build release here), then released.
 
 High priority (from players' reports on Nexus, 2026-11-28, first):
 - NPCs' eyes looking into the camera rather than at your character, most noticeable in
