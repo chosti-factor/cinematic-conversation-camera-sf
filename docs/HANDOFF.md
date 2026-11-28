@@ -75,6 +75,10 @@ Last updated: 1.1.0 (2026-11-26).
 
 ## Where things stand (2026-11-26, 1.1.0)
 
+- Live on Nexus since 2026-11-27: https://www.nexusmods.com/starfield/mods/18926 (mod 18926,
+  "Cinematic Conversation Camera for Starfield"). Next: Reddit r/starfieldmods (Saturday
+  9 am-1 pm Central), the clip, outreach, then players' reports.
+
 - Zip layout (the user, 2026-11-26): `SFSE/Plugins/...` at the top of the zip, never `Data/`
   (MO2; the licence and readme go in `SFSE/Plugins` under the mod's name). Set in
   `.github/workflows/build.yml`'s packaging step.

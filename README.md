@@ -18,6 +18,8 @@ this mod draws on.
 
 ## Status: 1.1.0, public beta
 
+On Nexus Mods: [Cinematic Conversation Camera for Starfield](https://www.nexusmods.com/starfield/mods/18926) (since 2026-11-27).
+
 Last updated: 1.1.0 (2026-11-26).
 
 What changed in each version: [CHANGELOG.md](CHANGELOG.md).
@@ -328,7 +330,7 @@ Mulling (not decided), last:
 
 ## Install
 
-1. Download the mod from its Nexus Mods page, or `CinematicConversationCameraSF-<version>.zip`
+1. Download the mod from its [Nexus Mods page](https://www.nexusmods.com/starfield/mods/18926), or `CinematicConversationCameraSF-<version>.zip`
    from the latest release under **Releases** here. (The **Test build** pre-release always has
    the newest build from the main branch, for testing.)
 2. Install the zip with your mod manager, or copy its `SFSE` folder into your Starfield
