@@ -237,8 +237,6 @@ High priority:
   player voice mod): the
   game hears from the camera, so distance turns it down. Keep it at your character's ears, or
   voices at a steady level.
-- **(Player feedback)** [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915): its
-  custom camera and shoulder swap stop working with this mod installed.
 - **(Player feedback)** Camera Noise and Head Bob Edition: reported incompatible; find out why, and make the two work
   together if they can.
 - Cleaner cuts in conversations with three or more people (1.0 test: good overall,
@@ -369,7 +367,10 @@ What works with CCC SF, what doesn't, and what's still to be tested:
 with it; UI mods work as long as the dialogue options list and the subtitle keep their usual
 places in the game's menus. [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (the one
 that switches to first person indoors) is only partially compatible: it caused freezes of your
-character's body and of the ship in the 1.0 test.
+character's body and of the ship in the 1.0 test. [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915)
+works with one line in its `TacticalCover.ini`, under `[Camera]`:
+`sCameraChainModules=DDC.dll,CinematicConversationCameraSF.dll` (its own camera and shoulder
+swap switch off without it).
 
 ## Known issues
 

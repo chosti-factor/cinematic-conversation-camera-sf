@@ -244,8 +244,13 @@ In order (the README Roadmap has the same):
 - [ ] Your character's voice quieter at a distance (mach1991, a player voice mod, Ikande in
       Ops): the audio listener follows the camera? Keep it at your character, or the voices'
       volume steady. Investigate first.
-- [ ] Tactical Cover: its custom camera and shoulder swap stop working (Srcharles313). Probably
-      the same third-person camera hooks.
+- [x] Tactical Cover: its custom camera and shoulder swap stopped working (Srcharles313). Its own
+      design: it hooks slot 12 of ThirdPersonState's vtable too, finds CCC SF there (loaded
+      first) and stands down unless the owner is on its sCameraChainModules (DDC.dll only).
+      CCC SF's hook always calls the original first, so chaining is safe. Fixed by the line
+      `sCameraChainModules=DDC.dll,CinematicConversationCameraSF.dll` in TacticalCover.ini
+      (tested 2026-11-28: chained, cover and conversations work). Its author asked to make it
+      the default; if not, CCC SF could hook after it (it would log the slot as lost).
 - [ ] Camera Noise and Head Bob Edition: incompatible (Chronicles5). CameraNoiseSF is in the
       test setup (its log is there), so it can be tested directly.
 - [ ] A controller button for presets (and maybe the shot) on the fly (Chronicles5: the D-pad).

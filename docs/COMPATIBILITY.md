@@ -32,6 +32,7 @@ listed here).
 
 | Mod | Area | Notes |
 | --- | --- | --- |
+| [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915) | Third-person camera (cover) | Works with one line in `Data\SFSE\Plugins\TacticalCover.ini`, under `[Camera]`: `sCameraChainModules=DDC.dll,CinematicConversationCameraSF.dll` (tested 2026-11-28 with 1.1.1: its log says its camera is chained in front of CCC SF's; cover, its camera and conversations all work). Without it, Tactical Cover finds CCC SF on the third-person camera and turns its own camera and shoulder swap off, as it's designed to with any mod it doesn't know. Its author has been asked to add CCC SF to its default list |
 | [SFSE Menu Framework](https://www.nexusmods.com/starfield/mods/18201) | Settings page | Optional; gives CCC SF its in-game settings page (F1). One crash in its own code in the 1.0 test (its window-blur build, in its window handling; none of CCC SF on the stack), not seen again |
 | [rbtUI2](https://www.nexusmods.com/starfield/mods/17873) | HUD reskin, including the HUD message layer | Letterbox, subtitle in the bar and messages all work |
 | [Enhanced Subtitles](https://www.nexusmods.com/starfield/mods/1914) | Subtitles | Tested (0.9.28): CCC SF moves its taller, higher subtitle into the bottom bar. No cost to the frame rate (59.5 fps in the same conversation as without it, once other apps were closed) |
@@ -52,7 +53,6 @@ listed here).
 | Mod | Area | What happens |
 | --- | --- | --- |
 | [Player Voice - Male And Female - English And German](https://www.nexusmods.com/starfield/mods/18804) | Your character's voice | Works, and your face's expressions go well with it (players on Nexus). Reported: your voice gets quieter when the camera is far from you (with Ikande in Ops); on the Roadmap |
-| [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915) | Third-person camera | Reported by a player (1.1.0): its custom camera and shoulder swap stop working with CCC SF installed. On the Roadmap |
 | [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (Nexus mod 10543: the plugin `AutoZoom.esm` that switches you to first person when you load into an interior and back to third person outside; not the other zoom mods of similar names) | Camera, first and third person | Conversations and filming people talking work (0.9.29), but in the 1.0 test it caused unexpected freezes of your character's body and of the ship. Use it with that in mind, or leave it off |
 
 ## Likely compatible (untested)
