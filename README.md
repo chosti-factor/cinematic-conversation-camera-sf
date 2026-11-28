@@ -227,18 +227,18 @@ What comes after 1.0: test builds numbered 1.0.x on the Test build release here,
 the next public release, with these and what players report.
 
 High priority:
-- Cleaner cuts in conversations with three or more people (the user, 1.0 test: good overall,
+- Cleaner cuts in conversations with three or more people (1.0 test: good overall,
   but the cuts at speaker changes should be cleaner).
 - More testing inside ships, and your character in frame while you sit from first person
   (the game doesn't always build your full body there; Known issues).
-- The rules for filming people talking, looked at as a whole (the user, 2026-11-26): when it
+- The rules for filming people talking, looked at as a whole (2026-11-26): when it
   starts on its own, what ends it, when a scene you walked away from may start again (standing
   still since 1.0.2), sitting or lying in first person, the game's first-person lock, the sprint
   limit, scenes where you wake on a stretcher or table (the Watchtower start, the Ryujin
   questline's operation; since 1.0.3 nothing is filmed before you've made your character).
   From players' reports and a few sessions of play aimed at it.
 - Your character looking at the wrong person in conversations with three or more people
-  (the user, 2026-11-23): the game turns your head to the person the conversation started
+  (2026-11-23): the game turns your head to the person the conversation started
   with, not to whoever is speaking. This mod doesn't set where you look yet; it needs the
   game's head-tracking functions, not yet found for 1.16.244.
 - NPCs now and then fading in a moment after a conversation starts (seen once, the Ranger at
@@ -253,7 +253,7 @@ High priority:
 Low priority:
 - The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
   mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
-  the game's actor values, not yet confirmed for 1.16.244 (the user, 2026-11-20: after 1.0).
+  the game's actor values, not yet confirmed for 1.16.244 (2026-11-20: after 1.0).
 - Most settings also in the game's own Settings menu, as Gameplay Options from a small ESM.
 - Large speakers measured by their actual body, replacing the height rule (height is only
   part of it: robots like Vasco are wide and bulky too). The line from the camera to your
@@ -278,23 +278,23 @@ Low priority:
 Mulling (not decided), last:
 - Filming people talking while you sit, from first person: since 1.0.2 (a test build; public
   in 1.1.0) it doesn't film then (filming hides you, so the seat showed empty). Building your
-  full body for it instead, so it can film with you in it (the user, 2026-11-26).
+  full body for it instead, so it can film with you in it (2026-11-26).
 - The overlapping lines after filming people talking (Known issues): a way to set it off
   reliably, then the cause. A lead: Player Camera During Dialogue keeps camera changes away from an
   NPC's multi-part response until it has fully played, against a dialogue-skip bug of its own.
 - The rare soft frame at a cut (the new shot's focus reaching the old shot's last frame): how
-  the game's own quest-scene cameras cut cleanly, as a model (the user, 2026-11-22).
-- The letterbox kept through a conversation's exit until the cut back to your view (the user,
-  2026-11-22). The bars live in the game's dialogue menu, which closes as the last line ends,
+  the game's own quest-scene cameras cut cleanly, as a model (2026-11-22).
+- The letterbox kept through a conversation's exit until the cut back to your view
+  (2026-11-22). The bars live in the game's dialogue menu, which closes as the last line ends,
   so they go 0.4 s (first person) or about 1.5 s (third person) before the cut. Stand-in bars
   were tried in 0.9.47-0.9.48 and left a one-frame flicker as the menu closed; clean exits
   come first (docs/MEMORY.md).
-- A preset editor (the user, 2026-11-21): the per-preset settings (shot choices, close-up
+- A preset editor (2026-11-21): the per-preset settings (shot choices, close-up
   chances, cutting pace and the like) edited in one place, instead of spread over the settings
   page and the INI. The 13 settings taken off the settings page for it in 0.9.60:
   docs/INI_HISTORY.md.
 - Every preset revisited with what 1.0's players report, tweaked further, and maybe new ones
-  (the user, 2026-11-20).
+  (2026-11-20).
 - Coming back from a reaction as a turn of its own, so it can bring a fresh angle (0.9.31
   test: Sarah's close-up came back after each of three reactions, five times in all).
 - A close-up of you on your own turn when your face shows a strong expression. Today the
@@ -390,7 +390,7 @@ conversations, within half a second), so changes apply without restarting the ga
 
 Each preset's own numbers (lens, distances, close-up and reaction chances and timing, your
 face's background and question looks) and changes to single shots (`[Shots]`) are hidden
-until the preset editor after 1.0 (0.9.70, the user): not in the INI, but read if you add
+until the preset editor after 1.0 (0.9.70): not in the INI, but read if you add
 them, for testing. All of them, explained: [docs/INI_SETTINGS.md](docs/INI_SETTINGS.md).
 
 Each setting is explained in the INI itself. Every setting, its section, default, settings
