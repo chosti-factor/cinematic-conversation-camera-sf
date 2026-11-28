@@ -17,14 +17,14 @@ to the log for testing.
 
 ### Changed
 - Packaging: the zip's top level is now `SFSE` (with `Plugins` inside), not `Data`, as mod
-  managers expect (the user: MO2). The licence and readme sit next to the DLL as
+  managers expect (MO2). The licence and readme sit next to the DLL as
   `CinematicConversationCameraSF-LICENSE.txt` and `-README.md`, not loose in Data. The 1.1.0
   zip on Nexus was repacked this way by hand; GitHub's 1.1.0 zip still has the old layout.
 
 ## 1.1.0 - 2026-11-27 (public beta, on Nexus)
 
 The first release on Nexus. 1.0.0 (GitHub only) with the fixes of test builds 1.0.1 to 1.0.3,
-all tested by the user on 2026-11-26:
+all tested on 2026-11-26:
 
 - Nothing of this mod's camera in the game's opening, until you've made your character (no
   filming of people talking, conversations in the game's camera): your character has no body
@@ -37,7 +37,7 @@ all tested by the user on 2026-11-26:
 
 ## 1.0.3 - 2026-11-26 (test build)
 
-### Changed (the user's third new-game test)
+### Changed (third new-game test)
 - Nothing of this mod's camera before you've made your character: no filming people talking
   and no conversation camera (the game's own instead) through the game's opening in the mine,
   until character creation is done. Your character has no body the game builds yet, so the
@@ -48,7 +48,7 @@ all tested by the user on 2026-11-26:
 - Why 1.0.2's block missed the stretcher: as it laid you there, the game passed through third
   person for 164 ms, long enough for the mod to take your view as third person, so "first
   person and lying on something" never held.
-- Tilts down keep the heads below the letterbox's top bar (the user: Lin's high close-up in
+- Tilts down keep the heads below the letterbox's top bar (Lin's high close-up in
   the conversation with Barrett, three times, Nebula's "Tilt down 22"). The tilt sank the aim
   0.38 m at 1.9 m, about half the frame, so the face rose out through the top bar. Now the face
   rises at most to 0.35 of the half-frame above the middle; the shot still tilts, by less (about
@@ -57,18 +57,18 @@ all tested by the user on 2026-11-26:
 ## 1.0.2 - 2026-11-26 (test build)
 
 Test builds after 1.0 are numbered 1.0.x; the next public release is 1.1.0, with these fixes
-and features and what players report (the user).
+and features and what players report.
 
-### Changed (the user's elevator ride in MQ101)
+### Changed (elevator ride in MQ101)
 - Filming people talking: the camera rises and sinks with the people in shot. Each shot's camera
   stood where it was set up, with only its aim following, so in an elevator the people rose out
   of the picture until the next line's shot caught up. Now a lift or a stair carries the shot
   (quickly, through a 4 cm dead band); around a standing conversation it stays put as before.
 
-### Changed (the user's second new-game test)
+### Changed (second new-game test)
 - Filming people talking: not while you sit or lie on something in first person (a chair, a
   bench, a bar stool, the stretcher): filming hides you, so its shots showed the place empty.
-  The user's second test: 1.0.1's view lock only covered a moment of the opening, and the stretcher
+  The second test: 1.0.1's view lock only covered a moment of the opening, and the stretcher
   scene before the character editor (the game's furniture camera) was still filmed. From third
   person, sitting, filming goes on as before (you're in its shots).
 - A scene you walked away from (moving ends its filming, and it wasn't filmed again on its own
@@ -79,14 +79,14 @@ and features and what players report (the user).
 
 ## 1.0.1 - 2026-11-26 (test build)
 
-### Changed (the user's new game)
+### Changed (new game)
 - While the game keeps you in first person and won't let you change view (as at the start of a
   new game, until you've made your character, and probably in the CF01 brig), people talking
   near you aren't filmed. Filming switches the view to third person and hides you, so where the
-  game has you lying or sitting somewhere, its shots showed the place empty: in the user's new
+  game has you lying or sitting somewhere, its shots showed the place empty: in a new
   game, with "start on its own" on, it filmed Lin and Heller in the mine several times before
   the character editor, the stretcher you lie on empty behind them (the Watchtower creation
-  reuses that scene). Your own conversations keep this mod's camera (the user's choice).
+  reuses that scene). Your own conversations keep this mod's camera (by choice).
   Read from the game's input switches (changing view switched off for a second or more of
   gameplay); the log says when the game switches changing view off and on.
 
@@ -95,7 +95,7 @@ and features and what players report (the user).
 The first public release: 0.9.77, the release-candidate test's changes below, and the release
 itself.
 
-### Changed (the release-candidate test, the user)
+### Changed (the release-candidate test)
 - The overhead shots are accents, as the extreme close-ups are: never a person's usual angle.
   As Agent No. 1's, the camera came back to hers after a reaction of you with its crane down
   again, 13 s after the first, and held it for 22 s over four of her lines.
@@ -134,14 +134,14 @@ itself.
 - Talking to someone while you sit, from first person, where the game didn't build your full body
   (Sarah aboard the Cryoknox): the camera cycle that builds it switched the game's camera between
   first and third person four times and gave up, as it takes a body as built only at standing
-  height. Sitting, it isn't tried: you stay out of frame for that conversation (the user: "the
+  height. Sitting, it isn't tried: you stay out of frame for that conversation ("the
   camera bounced around like crazy").
 - Someone sitting low (Karl Fielding, his head 0.76 m above his feet) was taken for a small
   robot and left to the game's camera. Someone sitting on something is never a small speaker
   now; a low head is logged with the speaker's race, to learn from.
 
 ### Changed (the settings page)
-- "Game's camera in quest scenes" is now "Vanilla camera in quest scenes" (the user).
+- "Game's camera in quest scenes" is now "Vanilla camera in quest scenes".
 - The pages are named after the INI sections, so a setting has the same home in both (the
   user): General, Director, Camera, Interface, Scene filming, Debug (were General, Camera,
   Close-ups and reactions, Screen, Filming people talking), with friendly headings within. The
@@ -149,10 +149,10 @@ itself.
 - The headings within each page are white and bold (were grey), a switch's label is greyed while
   it's off, and the notes (changes apply from the next conversation, where they're saved, the
   preset key, and the filming heads-up) are together at the end of each page, one bullet each
-  (the note on when changes apply was at the top of every page) (the user).
+  (the note on when changes apply was at the top of every page).
 - "Reset" is now a button naming the default ("Default: Wide"), shown exactly while a setting
   isn't at its default; clicking it, or setting the default by hand, takes the line out of your
-  `_user.ini` (the user: Reset was hard to reach, came and went, and didn't say what it reset
+  `_user.ini` (Reset was hard to reach, came and went, and didn't say what it reset
   to). Lists and sliders are a third as wide. "Them" is "NPCs" ("Close-ups of NPCs", "Hold on
   the NPC's answer", "Hide while NPCs speak").
 - `bDebugLog` (the detailed log) is in [Debug] now, beside `bShowMessages` (testing messages):
@@ -185,7 +185,7 @@ itself.
 
 ## 0.9.76 - 2026-11-24
 
-### Changed (the user)
+### Changed
 - `bGameCameraInScenes` is off by default: this mod films quest scenes you take part in too,
   with tonight's pacing and speaker-change fixes (0.9.67-0.9.75). 1 (or the settings page)
   leaves them to the game's own camera, as before.
@@ -198,7 +198,7 @@ itself.
   reports its camera's move at once had two or three wrong frames instead of one small jump.
   The jump stays, after 1.0 (docs/MEMORY.md).
 
-### Docs (the user)
+### Docs
 - docs/INI_SETTINGS.md is now only the current settings: every one with its section, default,
   settings page and whether it's hidden, and the counts. The old one, the reviews and the
   reasons behind the layout, is docs/INI_HISTORY.md (with the preset numbers' INI text).
@@ -210,7 +210,7 @@ itself.
 
 ## 0.9.74 - 2026-11-24
 
-### Changed (the jumps left at speaker changes; the user)
+### Changed (the jumps left at speaker changes)
 - The spot the game's camera moves to at a speaker change is learned from each change (as at a
   conversation's start), so the prediction 0.9.73 places the shot against, 2-8 cm off in the
   test, closes in over a scene: a smaller nudge before the cut where the game reports its move
@@ -239,7 +239,7 @@ itself.
 
 ## 0.9.72 - 2026-11-24
 
-### Changed (the user)
+### Changed
 - Merchants in a quest scene you take part in are filmed with the shot library, like the
   others there, not the plain shots (`bPlainShotsMerchantsNpc` still applies everywhere else,
   shopping included). In Benjamin Bayu's scene, Yannick Legrande behind his counter switched
@@ -277,12 +277,12 @@ library took turns.
 
 ## 0.9.70 - 2026-11-23
 
-### Changed (the settings page, the user)
+### Changed (the settings page)
 - A General page, first: the mod's switch (Cinematic conversations) and the detailed log (for
   bug reports). They were on the Camera and Screen pages. The testing messages stay on Screen.
 
 - Each preset's own numbers and single-shot changes are hidden until the preset editor after
-  1.0 (the user): `[PresetTuning]` (20 settings) and `[Shots]` are out of the INI. The 20 are
+  1.0: `[PresetTuning]` (20 settings) and `[Shots]` are out of the INI. The 20 are
   read from `[Advanced]` if added, `[Shots]` as before; each explained in docs/INI_SETTINGS.md
   (an appendix with the INI's text). 54 settings in the INI now, 50 hidden.
 - `[GameSettings]` is hidden: out of the INI (it had one commented example, never tried in
@@ -290,11 +290,11 @@ library took turns.
 
 ### Docs
 - README, after 1.0: your character looking at the wrong person in conversations with three
-  or more people (the user); NPCs fading in now and then was already there.
+  or more people; NPCs fading in now and then was already there.
 
 ## 0.9.69 - 2026-11-23
 
-### Fixed (0.9.67's pacing in scenes with three or more people; the user: flickers)
+### Fixed (0.9.67's pacing in scenes with three or more people; flickers)
 From the 0.9.68 test log (Ularu Chen and Imogene Salzo, Benjamin Bayu and Yannick Legrande).
 - A reaction of you that would come before the shot on them has been up the preset's shortest
   hold is left to a later line, not waited for. Waiting (0.9.67) cut to you late in the line:
@@ -318,7 +318,7 @@ From the 0.9.68 test log (Ularu Chen and Imogene Salzo, Benjamin Bayu and Yannic
   Conversations the game's camera films now end with the game's own exit, untouched. (From
   before 0.9.67; seen in its test, leaving Ularu Chen's scene, twice.)
 
-### Changed (the settings page, the user)
+### Changed (the settings page)
 - Settings that depend on another are indented four times as far (3.4 times the font size,
   136 px at the framework's 40 px; it was 34), so it keeps its proportion at any UI scale.
 - The "Heads up" note for "Start on its own" sits at the end of the page, not between that
@@ -326,7 +326,7 @@ From the 0.9.68 test log (Ularu Chen and Imogene Salzo, Benjamin Bayu and Yannic
 
 ## 0.9.67 - 2026-11-23
 
-### Changed (quest scenes, the user: shots cycling too fast, some too short)
+### Changed (quest scenes: shots cycling too fast, some too short)
 From the 0.9.60 log of quest scenes filmed by this mod (Ularu Chen and Imogene Salzo, Nyx,
 Sophia Grace, Trevor Petyarre; Nebula), every shot under 2.5 s sorted by cause. Each rule
 below waits for the preset's own shortest hold (paced), so each preset keeps its rhythm.
@@ -356,7 +356,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 - The settings page: resetting the preset to the INI's value didn't show while a preset
   chosen with the preset key was in force; the reset now clears that choice, as a change does.
 
-### Changed (the user's call)
+### Changed
 - The preset key (U) works only while a conversation or people talking near you are filmed.
   Elsewhere a U typed into a name (a ship, an outpost) switched the preset unseen.
 - Camera sway's "the preset's own" is a switch like the other on/off settings, and the sway
@@ -371,18 +371,18 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.65 - 2026-11-23
 
-### Changed (the user's call)
+### Changed
 - `[Face]` merged into `[Director]`: `bFacePlayer` (your expressions) sits after the reaction
   and tagged-choice switches, as on the settings page.
 - The testing messages' and the log's reason for an emotion close-up says so: "emotion
   close-up", "turn, emotion close-up", "emotion close-up, after the extreme close-up" (it was
-  "intense line", a word used nowhere else; the user).
+  "intense line", a word used nowhere else).
 - `[Overhear]` renamed `[SceneFilming]` (filming people talking near you). No old name is read
   (nothing released): a `_user.ini` with `[Overhear]` lines needs them under the new name.
 
 ## 0.9.64 - 2026-11-23
 
-### Changed (the settings page, the user's asks)
+### Changed (the settings page)
 - Every setting has a tooltip: added for the game's camera in quest scenes, the letterbox,
   filming people talking and its range; fuller ones for emotion close-ups (what the preset's
   own is), holding on their answer (skill checks too), reaction shots and the skill-choice
@@ -399,7 +399,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.63 - 2026-11-23
 
-### Changed (the INI, [Advanced] thinned, the user's call)
+### Changed (the INI, [Advanced] thinned)
 - Hidden (out of the INI, still read from `[Advanced]` if added; listed with their defaults in
   docs/INI_SETTINGS.md): `iMinLines`, `iMaxLines`, `fShortestHold` (the cutting pace covers
   them), `fReactionLineMinSecondsPlayer`, `fReactionLineMaxSecondsPlayer`,
@@ -415,7 +415,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.62 - 2026-11-23
 
-### Changed (the INI, section by section: [Overhear] and [Face], the user's call)
+### Changed (the INI, section by section: [Overhear] and [Face])
 - `[Overhear]` unchanged.
 - `[Face]` keeps your expressions on or off; how often your background shows on your face and
   the questioning look on questions (`iSignatureChancePlayer`, `iQuestionChancePlayer`) to
@@ -425,7 +425,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.61 - 2026-11-23
 
-### Changed (the INI, section by section: [General] and [Director], the user's call)
+### Changed (the INI, section by section: [General] and [Director])
 - A new `[PresetTuning]` section, before `[Shots]` and `[Advanced]`: each preset's own
   numbers, meant for the preset editor after 1.0. From `[Director]`: the camera's and the room
   shots' furthest distances, their emotion close-up chances by tier, the extreme share and the
@@ -433,11 +433,11 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   the close-ups of you by tier. `[Shots]` moved next to it.
 - `fChoiceCloseUpSecondsPlayer` to `[Advanced]`.
 - `bObstacleCheck`, `bAvoidBystandersNpc`, `bFollowFace` and `bFocusOnSubject` to `[Debug]`,
-  for troubleshooting (the user: no reason to turn them off otherwise), and off the settings
+  for troubleshooting (no reason to turn them off otherwise), and off the settings
   page. Without focus on the person in shot, the game's blur focuses about 2 m from the
   camera and anyone further away is soft.
 - `fConversationLens` from `[Camera]` to `[PresetTuning]`. `[Camera]` keeps the sway (back on
-  the settings page: the user wants that override at hand; a preset editor would set each
+  the settings page: that override stays at hand; a preset editor would set each
   preset's own, and this overrides them all), the game's camera in quest scenes and the focus
   style.
 - `[Body]` is gone: showing your character (`bRevealPlayer`) to `[Debug]` (off, the shots of you
@@ -449,7 +449,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.60 - 2026-11-22
 
-### Changed (the INI review, first pass: the user took the proposal in docs/INI_SETTINGS.md)
+### Changed (the INI review, first pass: the proposal in docs/INI_SETTINGS.md taken)
 - The settings page has the main choices only: 30 entries instead of 55. Off it, still in the
   INI and read as before:
   - a preset's own numbers, for a preset editor after 1.0: camera sway, lens, the furthest
@@ -476,7 +476,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   `[PlainCamera]` are gone with it, and the shot library's switch is `bDirector` there (it was
   `[Director] bEnabled`). 20 fine-tuning settings found by testing are out of the INI, still
   read from `[Advanced]` if added (listed with their defaults in the README). No old names
-  or sections are read: nothing had been released (the user).
+  or sections are read: nothing had been released.
 
 ## 0.9.59 - 2026-11-22
 
@@ -488,7 +488,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.58 - 2026-11-22
 
-### Known issue (the user's call, 2026-11-22)
+### Known issue (2026-11-22)
 - Overlapping lines in a conversation after filming people talking: rare and intermittent
   (the tests: 2 of 7 conversations after a filming, same steps; never without a filming, with
   filming off or with the mod off). Listed in the README; the hunt goes on after 1.0. The
@@ -498,7 +498,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 ### Test (out before 1.0)
 - `bFilmTestStopAfterLine` ([Debug], on in this build): moving while someone in a filmed scene
   talks gives you your controls back at once, but the view stays on the filmed shot until that
-  line ends (10 s at most), then the filming stops as usual. The user's tests (0.9.57): a
+  line ends (10 s at most), then the filming stops as usual. The tests (0.9.57): a
   filming of Walter and Vasco stopped by moving mid-line left the next conversation, with
   Cora, with lines overlapping (the 0.9.43 bug); left to end on its own, Cora was clean; with
   filming off or the mod off, clean. This tells whether the view snapping back mid-line is the
@@ -515,13 +515,13 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   two frames zoomed (the trace: all three cuts from MediumPlayer; every other cut had its lens
   on the camera on the cut's own frame). The check now leaves out the lens this mod put on.
   This was most likely behind the zooms seen since the lens was first set per shot.
-- Checked (the user's 0.9.57 clip, Nebula, DLSS on): 15 of 15 cuts clean, one frame each: no
+- Checked (0.9.57 clip, Nebula, DLSS on): 15 of 15 cuts clean, one frame each: no
   zoom (every cut's lens on the camera on its own frame, trace and clip agree, including cuts
   from 62, 65, 72 and 80 degree shots) and no blurred frame before or after a cut.
 - Checked again (the Lodge, indoors, starts from first person; Cora, Sarah and Vasco; four
   clips, about 45 cuts): no zoom and no two-step cut anywhere; one mild softening of the old
   shot just before a cut (CloseUp to OverNpcShoulderLow). Starts and exits as before.
-- Seen in that run (the user): Cora's conversation had lines overlapping, the bug fixed in
+- Seen in that run: Cora's conversation had lines overlapping, the bug fixed in
   0.9.43, after a filming of Matteo and Walter that was stopped by moving 2 minutes earlier;
   Sarah's and Vasco's conversations after it were fine. Not yet known whether it's the mod.
 
@@ -533,38 +533,38 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   was set, the render camera's lens before and after) and the focus writes. To find why a
   cut's lens lands a frame late and its focus a frame early now and then.
 
-### Found (the user's DLSS-off test, 0.9.55)
+### Found (DLSS-off test, 0.9.55)
 - Not DLSS: with the upscaler and RenoDX's neural rendering off, 21 cuts, 12 clean; 4 zooms
   (the new shot's first frame through the old lens: 1.22, 0.83, 1.56 and 1.04 times), 6 with
   the old shot's last frame drawn with the new focus (3 heavy), the worst cuts with both. Frame
-  generation wasn't on either (the user). The camera update runs on a different worker thread
+  generation wasn't on either. The camera update runs on a different worker thread
   each frame; the game seems to read the camera, its lens and the blur at three different
   moments, and a cut's three writes can straddle them.
-- The user: the game's own quest-scene cameras cut between you and the NPC cleanly; how they
+- Seen in testing: the game's own quest-scene cameras cut between you and the NPC cleanly; how they
   apply the lens and the blur is the next lead.
 
 ## 0.9.55 - 2026-11-22
 
-### Changed (the user's pick after the 0.9.54 comparison)
+### Changed (chosen after the 0.9.54 comparison)
 - The focus at a cut stays on the cut's own frame, as through 0.9.50; `bCutFocusBridge` is
   gone. Measured: off, 13 of 15 cuts clean, one blurred frame before a cut; on, its stretched
   sharp zone made those frames blurrier (4 heavy, 4 moderate of 10), and the run's three
-  zooms (1.04, 1.26 and the 1.67 the user saw, Wide to Profile) were all on its cuts.
+  zooms (1.04, 1.26 and the 1.67 seen in testing, Wide to Profile) were all on its cuts.
   The four tries and what each showed: docs/MEMORY.md.
 
 ### Found
 - One cut (CloseHigh to TwoShot) showed two odd frames before the TwoShot: the first from the
   right place but with bodies and the hedges missing (heads floating), the second with the
-  hedges back and both people missing. The user plays with DLSS frame generation; these and
+  hedges back and both people missing. The tests were played with DLSS frame generation; these and
   the other one-frame oddities at cuts may be generated frames between two shots. To test:
   the same conversation with frame generation off.
 
 ## 0.9.54 - 2026-11-22
 
-### Changed (back, the user's call)
+### Changed (back by request)
 - The focus at a cut goes on with the camera again, on the cut's own frame (0.8.10-0.9.50).
   0.9.52's no-blur frame and 0.9.53's eased blur stopped the blurred frames but made the
-  blur's change itself distracting (the user, 0.9.53 test). The lens written with the
+  blur's change itself distracting (0.9.53 test). The lens written with the
   camera (0.9.52) stays: no flicker seen at the cuts since.
 
 ### Added (a comparison test, replacing `bCutFocusEase`)
@@ -583,13 +583,13 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.53 - 2026-11-22
 
-### Added (a comparison test, the user's ask)
+### Added (a comparison test, requested in testing)
 - `bCutFocusEase` ([Debug]; **Ease the blur back after a cut**, Screen > Testing): after a
   cut's sharp frame (0.9.52), 0 brings the new shot's blur back on the next frame, 1 eases it
   back over a quarter of a second (a quick focus pull). Off by default; one stays for 1.0.
 
 ### Changed
-- The passer-by in the 0.9.51 clip is fine (the user: people walking close past the camera
+- The passer-by in the 0.9.51 clip is fine (people walking close past the camera
   add life to a scene); off the TODO.
 
 ## 0.9.52 - 2026-11-22
@@ -633,7 +633,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.50 - 2026-11-22
 
-### Removed (before the INI review, the user's call)
+### Removed (before the INI review)
 - The measuring code of the optimization pass: the cost lines (per conversation and per
   minute), the HUD's and the main-thread task's parts.
 - Finished diagnostics: the exit frame comparisons and logs (first and third person), the
@@ -651,8 +651,8 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ## 0.9.49 - 2026-11-22
 
-### Changed (back)
-- The stand-in bars through the exit are gone (the user: clean exits over bars kept to the
+### Changed (back by request)
+- The stand-in bars through the exit are gone (clean exits over bars kept to the
   cut; post-1.0 Mulling). They were this mod's addition in 0.9.47 and left a flicker: one frame
   without bars as the game closed its dialogue menu, then the stand-ins, then the cut (every
   exit in the 0.9.47-0.9.48 clips; before them the bars simply went with the menu). The bars
@@ -665,7 +665,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 ## 0.9.48 - 2026-11-22
 
 ### Changed
-- Third-person exits cut to your view on the frame the game takes over (the user's pick after
+- Third-person exits cut to your view on the frame the game takes over (chosen after
   comparing the 0.9.47 trial `iExitStyle=3`: cleaner transitions, a clean exit). The last shot
   holds, with its bars, until then; your character's pose change and the view sharpening as
   the game's conversation effect goes now happen in the cut instead of on a still camera.
@@ -680,7 +680,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
   (on the main thread; elsewhere the next tick does), and they go a tick after the cut, not on
   the tick that sees it (the camera runs on worker threads, so that tick sometimes came before
   the cut was drawn): at worst a frame after the cut, never before it.
-- From the review of 0.9.44-0.9.48 for regressions (the user's request):
+- From the review of 0.9.44-0.9.48 for regressions (requested in testing):
   - The menu event asks the game's UI nothing: which menus are open and the HUD messages
     menu itself are kept from the main task's last tick (asking the UI from inside its own
     menu event could lock the game if it holds its menu list meanwhile). The menu kept in hand
@@ -706,7 +706,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 
 ### Added (on trial)
 - `iExitStyle=3`: as 2 from first person; from third person the last shot holds and the cut
-  to your view comes on the frame the game takes over. The 0.9.46 clip (the user: a small but
+  to your view comes on the frame the game takes over. The 0.9.46 clip (a small but
   noticeable jolt of your character left): the camera now stays put at the hand-back (the
   background still to 0.15 px), but your character's pose changes over three frames as the
   game ends the conversation (arm and head), with the camera already still since the early
@@ -732,7 +732,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 ## 0.9.46 - 2026-11-22
 
 ### Fixed
-- Third-person exits: no more swing round you as the game takes over (the user: a shift and
+- Third-person exits: no more swing round you as the game takes over (a shift and
   turn as the camera settled, your body seeming to jolt as if hit). Before a conversation your
   third-person camera sat orbited off your body's heading (the 0.9.45 log: 20-24 degrees in
   all four exits); the game takes over with its camera straight behind your body, so the cut
@@ -752,7 +752,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 ## 0.9.45 - 2026-11-21
 
 ### Diagnostic
-- Third-person exits (the user: a noticeable shift and turn as the camera settles back, and
+- Third-person exits (a noticeable shift and turn as the camera settles back, and
   sometimes your body moves as if it was hit): the log compares the game's view with the one
   drawn over the second after the hand-back (every frame of the first three, then at 5, 10,
   15, 20, 30, 45 and 60), with how far your body turned and moved meanwhile, and at the
@@ -765,7 +765,7 @@ below waits for the preset's own shortest hold (paced), so each preset keeps its
 ## 0.9.44 - 2026-11-21
 
 ### Changed
-- The settings page (the user's request): a setting that only works while another is on is
+- The settings page (requested in testing): a setting that only works while another is on is
   indented under it and greyed out with "(off)" while that one is off, its tooltip saying
   which ("Start on its own while sprinting" under "Start on its own", everything of filming
   under "Film them", the letterbox's height, fade and subtitles under "Letterbox bars", your
@@ -968,7 +968,7 @@ The debugging pass (the second of the four before 1.0), first part.
 ### Added
 - A heads-up under "Start on its own" on the settings page while it's on, and in the INI:
   the camera is taken over by these scenes, and you're stopped where you are until you let go
-  of the movement controls (the user's request).
+  of the movement controls (requested in testing).
 
 ### Removed
 - Leftovers the redundancy pass missed: conversation and filming state nothing read any more,
@@ -992,7 +992,7 @@ The debugging pass (the second of the four before 1.0), first part.
   you'd slowed down (the 0.9.30 test). Now only sprinting holds it back (6.5 m/s).
 
 ### Changed
-- Filming that starts on its own stops you where you are (the user's rule): your movement
+- Filming that starts on its own stops you where you are (a design rule): your movement
   input is switched off (an input layer of the mod's own, as SFSE Menu Framework uses) until
   you let go of every movement input (W, A, S, D, the arrow keys, the left stick); moving again
   then gives you your controls back and ends the filming. So walking or jogging into a scene
@@ -1005,7 +1005,7 @@ The debugging pass (the second of the four before 1.0), first part.
   The pace setting still goes both ways from here.
 
 - With both ways to start filming off (`bListenPrompt=0`, `bAutoListen=0`), the listen key
-  no longer starts it either: nothing does (the user's call). With either on, the key works as
+  no longer starts it either: nothing does. With either on, the key works as
   before.
 
 ### Diagnostic
@@ -1074,7 +1074,7 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
 - Constellation keeps its room share but frames people larger (0.9.27 test: too far, people
   too small, less rhythm): the distant shot 95 to 65, the master 85 to 95, the long shots 65
   to 80. Wide and full-figure shots 56% of its weights; faces unchanged.
-- Nebula is calmer by default: what a cutting pace of -1.5 gave it, which the user kept
+- Nebula is calmer by default: what a cutting pace of -1.5 gave it, which was kept
   choosing (a fresh angle on 30% of the turns, was 60%; a new angle every 3 to 6 lines, was 2
   to 4; held 2.9 s at least, was 2). Its space opera is in the variety of angles, not in the
   speed of the cuts. The pace setting still goes both ways from here.
@@ -1095,7 +1095,7 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
   rounded straight back; it's a slider of half steps now. The three finest sliders (the large
   speaker height, the filming stop distance and time) move in 0.05 steps instead of 0.01, so a
   controller crosses them in a few dozen presses, not a couple of hundred.
-- The cutting pace is each preset's own (the user): `fCuttingPaceNebula`, `fCuttingPaceStarborn`
+- The cutting pace is each preset's own: `fCuttingPaceNebula`, `fCuttingPaceStarborn`
   and so on; the settings page shows and sets the pace of the preset in use, named beside it,
   and switching presets picks up that preset's pace. `fCuttingPace` still applies to any preset
   without its own. (The log printed a pace of 0 as "-0.0" at times; fixed.)
@@ -1105,7 +1105,7 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
 ## 0.9.26 - 2026-11-19
 
 ### Changed
-- Nebula is the default preset (was Standard; the user's favourite after the tests), and its
+- Nebula is the default preset (was Standard; the favourite after the tests), and its
   pace a little calmer: a fresh angle on 60% of the turns (75%), a new angle every 2 to 4
   lines (2 to 3), each shot held 2 s at least (1.6 s).
 - The cutting pace goes in half steps: `fCuttingPace`, -2 to +2 in steps of 0.5 (was
@@ -1126,8 +1126,8 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
 
 ### Changed
 - Constellation's master shot drifts instead of craning up: the documentary operator is on
-  the floor with the people (the user). Its long shots still crane up.
-- From the 0.9.24 test (the user):
+  the floor with the people. Its long shots still crane up.
+- From the 0.9.24 test:
   - Starborn overshot a little towards *Interstellar*: sway 30 to 15, faces a quarter
     off-centre (half before), and its close-up lenses half of 0.9.23's step wider than the
     original (their close-up 47.5 degrees, yours 42.5, the extreme ones 42.5 and 37.5).
@@ -1140,7 +1140,7 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
     the INI and on the settings page.
 
 ### Removed
-- The temporary NebulaTest preset: the low angles' new move is judged (the user: "they all
+- The temporary NebulaTest preset: the low angles' new move is judged ("they all
   looked great"), so it's done its job.
 
 ### Fixed
@@ -1159,7 +1159,7 @@ technical detail, is in [docs/MEMORY.md](docs/MEMORY.md).
 
 ### Changed
 - More of the shot library in three of CCC SF's presets, at low weights, each in its film's
-  style (the user's call; anything that doesn't work out in testing comes out again):
+  style (a design call; anything that doesn't work out in testing comes out again):
   - Frontier: singles with a shoulder edging in (*Firefly*, *The Expanse*), the western's
     heroic low angle on them and on you (with the push in and little tilt tested on Nebula),
     and the wide over-the-shoulders. All wider than a close-up: faces 22% to 19% of its
@@ -1230,7 +1230,7 @@ two fixes.
 
 ### Changed
 - The CCC SF preset tweaks of 0.9.19 are taken back out: they were proposals waiting on a long
-  conversation through the presets as they were, and the decision on each is the user's.
+  conversation through the presets as they were, and each is decided after playing through them.
   Back as in 0.9.18: reactions may use the overhead shot of you; Constellation's
   over-the-shoulder weight 30; `iExtremeCloseUpChancePlayer=40` for every preset (no
   "preset's own" value); Frontier's two-shot of you held as long as any angle. The large
@@ -1334,7 +1334,7 @@ two fixes.
 ## 0.9.15 - 2026-11-17
 
 ### Changed
-- `iExitStyle=2` (the cut back to your view) stays the default: the user's pick after the
+- `iExitStyle=2` (the cut back to your view) stays the default: chosen after the
   0.9.14 comparison.
 - Style 1's closing shot now comes as the dialogue menu closes: the game closes it (and the
   letterbox, which lives in it) a couple of frames before it lets go of the speaker, and the
