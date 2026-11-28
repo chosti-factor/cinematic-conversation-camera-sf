@@ -210,7 +210,7 @@ Wednesday the 25th, about two days earlier.
       seated, Karl Fielding taken for a robot, the settings page), the rest below
 - [x] Nexus page and its credits section (from CREDITS.md). 2026-11-26: set up by the user but
       for images and media
-- [ ] 60-90 s clip
+- [x] Video: three clips on YouTube, linked on the Nexus page's videos tab (2026-11-28), instead of one 60-90 s edit
 - [ ] Outreach a few days before (machinima podcast, Starfield mod YouTubers, the Starfield
       Modding Discord)
 
