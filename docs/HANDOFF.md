@@ -78,6 +78,9 @@ Last updated: 1.1.0 (2026-11-26).
 - Zip layout (the user, 2026-11-26): `SFSE/Plugins/...` at the top of the zip, never `Data/`
   (MO2; the licence and readme go in `SFSE/Plugins` under the mod's name). Set in
   `.github/workflows/build.yml`'s packaging step.
+- Releases can't be created, edited or deleted from the session (HTTP 403, 2026-11-27), like tag
+  pushes: the user replaces release files on GitHub's release page. The 1.1.0 zip was repacked
+  (SFSE at the top, the same DLL) and handed to the user for that.
 
 - 1.1.0 is the Nexus launch build (Friday 2026-11-27, 9-11 am Central): 1.0.0 with the tested
   fixes of 1.0.1-1.0.3. The user pushes the `v1.1.0` tag; the Nexus page is set up but for
