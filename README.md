@@ -264,7 +264,7 @@ High priority:
   (with `bGameCameraInScenes=1` none). Better: the game's camera only while a scene's own
   camera action runs, this mod's otherwise. Built on the scene logs gathered from 0.9.20 on.
 
-Low priority:
+Medium priority:
 - **(Player feedback)** A controller button to switch presets (and maybe the shot) on the fly, as U does on the
   keyboard (the D-pad was suggested).
 - **(Player feedback)** A key to switch between this mod's camera and the vanilla one in the

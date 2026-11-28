@@ -142,7 +142,7 @@ Last updated: 1.1.1 (2026-11-28).
   polish passes in the release plan below (redundancy, debugging, optimization, INI
   review), each followed by a build and a test round; then testing messages and the debug
   log off; then a full test round on the release candidate. 1.0 public beta Friday
-  2026-11-27. New ideas go to the README's Roadmap (High priority, Low priority, or Mulling last) on the
+  2026-11-27. New ideas go to the README's Roadmap (High priority, Medium priority, or Mulling last) on the
   user's call.
 - Presets settled through the 2026-11-18/19 reviews (docs/PRESETS.md): Nebula (space opera)
   is the default and calmer (what a pace of -1.5 gave; 0.9.31 half a step back, +0.5, a touch more varied); Constellation frames people larger
