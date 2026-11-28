@@ -232,6 +232,32 @@ Wednesday the 25th, about two days earlier.
       media; courtesy notes sent to hashhbbrown and rrrafau (2026-11-26)
 - [ ] Reddit (r/starfieldmods) the Saturday after, 9 am-1 pm Central
 
+## From players (Nexus, 2026-11-28; 45 posts read, no bug reports)
+
+In order (the README Roadmap has the same):
+- [ ] NPCs' eyes on the camera, not on you (Srcharles313, mach1991 with Ikande's interrogation,
+      TheDragonborn99; the most reported). Find the game's eye/head tracking target for
+      1.16.244 and point it at your character's head; also covers your character looking at
+      the wrong person. Promised to look into.
+- [ ] A switch to keep the camera on the NPC while your options are open (InterGalacThicc:
+      "like in the vanilla game"). Promised "in the coming days". Easy.
+- [ ] Your character's voice quieter at a distance (mach1991, a player voice mod, Ikande in
+      Ops): the audio listener follows the camera? Keep it at your character, or the voices'
+      volume steady. Investigate first.
+- [ ] Tactical Cover: its custom camera and shoulder swap stop working (Srcharles313). Probably
+      the same third-person camera hooks.
+- [ ] Camera Noise and Head Bob Edition: incompatible (Chronicles5). CameraNoiseSF is in the
+      test setup (its log is there), so it can be tested directly.
+- [ ] A controller button for presets (and maybe the shot) on the fly (Chronicles5: the D-pad).
+- [ ] A key to switch to the vanilla camera and back mid-conversation (yazdaann; what was meant
+      is to be confirmed: the reply on Nexus explained the listen settings).
+- [ ] NPCs in the background stuttering or skipping during dialogue (Chronicles5; DDC had it
+      too). Maybe people far from the game's camera updated less often; low.
+- [ ] Mulling: a cinematic camera for wait, sleep, sitting and idle (Chronicles5: maybe out of
+      scope).
+- [x] Docs: COMPATIBILITY.md has Camera Noise and Head Bob, Tactical Cover, Player Voice, and
+      Player Camera During Dialogue named as incompatible.
+
 ## Open tests (carried past 1.1.0)
 
 - [x] Test 1.1.1's translations (the user, 2026-11-28: a Spanish test file, working well): the settings page and the listen prompt as before in English

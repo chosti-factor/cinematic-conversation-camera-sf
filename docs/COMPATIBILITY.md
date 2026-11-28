@@ -4,7 +4,7 @@ A working list for the Nexus page: which mods work with Cinematic Conversation C
 which don't, and what still needs a test. Grouped by how sure we are. Game version
 1.16.244; CCC SF 0.9.27 to 1.1.1.
 
-Last updated: 1.1.0 (2026-11-26).
+Last updated: 1.1.1 (2026-11-28: players' reports on Nexus).
 
 ## What CCC SF touches (why some mods matter and most don't)
 
@@ -51,6 +51,8 @@ listed here).
 
 | Mod | Area | What happens |
 | --- | --- | --- |
+| [Player Voice - Male And Female - English And German](https://www.nexusmods.com/starfield/mods/18804) | Your character's voice | Works, and your face's expressions go well with it (players on Nexus). Reported: your voice gets quieter when the camera is far from you (with Ikande in Ops); on the Roadmap |
+| [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915) | Third-person camera | Reported by a player (1.1.0): its custom camera and shoulder swap stop working with CCC SF installed. On the Roadmap |
 | [AutoZoom](https://www.nexusmods.com/starfield/mods/10543) (Nexus mod 10543: the plugin `AutoZoom.esm` that switches you to first person when you load into an interior and back to third person outside; not the other zoom mods of similar names) | Camera, first and third person | Conversations and filming people talking work (0.9.29), but in the 1.0 test it caused unexpected freezes of your character's body and of the ship. Use it with that in mind, or leave it off |
 
 ## Likely compatible (untested)
@@ -61,13 +63,16 @@ listed here).
 
 ## Incompatible (tested)
 
-None so far.
+| Mod | Area | What happens |
+| --- | --- | --- |
+| Camera Noise and Head Bob Edition | Camera | Reported incompatible by a player (1.1.0). On the Roadmap: why, and whether they can work together |
+| [Player Camera during dialogue](https://www.nexusmods.com/starfield/mods/17856) | Dialogue camera | Another dialogue camera mod (and one CCC SF builds on): use one or the other |
 
 ## Likely incompatible (untested)
 
 | Mod or setting | Why |
 | --- | --- |
-| Other dialogue camera mods (for example Player Camera during dialogue, disabled in the test setup) and mods that turn the dialogue camera off or change its zoom | Two mods driving the same camera; use one |
+| Other dialogue camera mods (Player Camera during dialogue is listed above) and mods that turn the dialogue camera off or change its zoom | Two mods driving the same camera; use one |
 | INI tweaks to the dialogue camera or its field of view | CCC SF sets the lens while it films; the tweak will be overridden or fight it |
 | Camera shake or sway mods that act during dialogue | CCC SF has its own sway per preset; the two add up |
 | Mods that rename the dialogue options list or move the subtitle out of the HUD message layer | The letterbox, the fading options or the subtitle in the bar won't find them |

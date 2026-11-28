@@ -226,7 +226,18 @@ switches, experiments, dead ends): [docs/MEMORY.md](docs/MEMORY.md).
 What comes after 1.0: test builds numbered 1.0.x on the Test build release here, then 1.1.0,
 the next public release, with these and what players report.
 
-High priority:
+High priority (from players' reports on Nexus, 2026-11-28, first):
+- NPCs' eyes looking into the camera rather than at your character, most noticeable in
+  close-ups (several reports). Their eyes follow where the game thinks its camera is, while this
+  mod moves only what's on screen; the fix points them at your character's head. Needs the
+  game's eye and head tracking, as does your character looking at the wrong person (below).
+- An option to keep the camera on the NPC while you choose your reply, as in vanilla.
+- Your character's voice quieter when the camera is far away (with a player voice mod): the
+  game hears from the camera, so distance turns it down. Keep it at your character's ears, or
+  voices at a steady level.
+- [Tactical Cover](https://www.nexusmods.com/starfield/mods/18915): its custom camera and shoulder swap stop working with this mod installed.
+- Camera Noise and Head Bob Edition: reported incompatible; find out why, and make the two work
+  together if they can.
 - Cleaner cuts in conversations with three or more people (1.0 test: good overall,
   but the cuts at speaker changes should be cleaner).
 - More testing inside ships, and your character in frame while you sit from first person
@@ -251,6 +262,12 @@ High priority:
   camera action runs, this mod's otherwise. Built on the scene logs gathered from 0.9.20 on.
 
 Low priority:
+- A controller button to switch presets (and maybe the shot) on the fly, as U does on the
+  keyboard (the D-pad was suggested).
+- A key to switch between this mod's camera and the vanilla one in the middle of a
+  conversation (asked on Nexus; what was meant still to be confirmed).
+- NPCs walking in the background stuttering or skipping now and then during conversations
+  (another dialogue camera mod had it too, so maybe the game itself).
 - The sprint limit for filming people talking scaled by your speed multiplier (buffs, powers,
   mods that change how fast you move), so a fast jog isn't taken for a sprint. Needs reading
   the game's actor values, not yet confirmed for 1.16.244 (2026-11-20: after 1.0).
@@ -276,6 +293,8 @@ Low priority:
   they fire; English only, its own setting.
 
 Mulling (not decided), last:
+- A cinematic camera for waiting, sleeping, sitting and idling (asked on Nexus): probably
+  another mod's job.
 - Filming people talking while you sit, from first person: since 1.0.2 (a test build; public
   in 1.1.0) it doesn't film then (filming hides you, so the seat showed empty). Building your
   full body for it instead, so it can film with you in it (2026-11-26).
